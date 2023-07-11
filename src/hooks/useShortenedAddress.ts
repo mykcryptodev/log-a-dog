@@ -2,9 +2,9 @@ import { type Address } from "@thirdweb-dev/sdk";
 
 const useShortenedAddress = (addr?: string) => {
   
-  const getShortenedAddress = (addr: string | Address | undefined, preChar?: number, postChar?: number) => {
+  const getShortenedAddress = (addr: string | Address | undefined, preChar?: number) => {
     if (!addr) return '';
-    return addr.slice(0, preChar || 4)  + '...' + addr.slice(addr.length - (postChar || 4), addr.length);
+    return 'user' + addr.slice(0, preChar || 6);//  + '...' + addr.slice(addr.length - (postChar || 4), addr.length);
   }
 
   const shortenedAddress = !addr ? "" : getShortenedAddress(addr);

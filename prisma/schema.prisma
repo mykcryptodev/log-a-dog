@@ -63,6 +63,8 @@ model User {
     ProfileUserLike    ProfileUserLike[]
     ProfileUserFollows ProfileUserFollows[]
     Report             Report[]
+    Like               LikeEntry[]
+    Contest            Contest[]
 }
 
 model VerificationToken {
@@ -144,4 +146,46 @@ model Report {
 
     @@index([createdById])
     @@index([profileId])
+}
+
+model Contest {
+    id          String   @id @default(cuid())
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+    createdById String
+    name        String
+    description String
+    slug        String   @unique
+    start       DateTime
+    end         DateTime
+    entries     Entry[]
+
+    @@index([createdById])
+}
+
+model Entry {
+    id        String      @id @default(cuid())
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
+    name      String
+    image     String
+    contest   Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
+    contestId String
+    likes     LikeEntry[]
+
+    @@index([contestId])
+}
+
+model LikeEntry {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String
+    entry     Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+    entryId   String
+
+    @@unique([userId, entryId])
+    @@index([entryId])
 }

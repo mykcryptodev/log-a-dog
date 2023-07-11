@@ -19,6 +19,7 @@ interface Props {
 export const ProfileDetailsForm: FC<Props> = ({ profile }) => {
   const { popNotification } = useContext(NotificationContext);
   const updateProfile = api.profile.update.useMutation();
+  const createProfile = api.profile.create.useMutation();
   const { register, handleSubmit, watch } = useForm<IFormInput>({
     defaultValues: {
       name: profile?.name || "",
@@ -32,6 +33,19 @@ export const ProfileDetailsForm: FC<Props> = ({ profile }) => {
 
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
     try {
+      // if there is no profile, create one
+      if (!profile) {
+        await createProfile.mutateAsync({
+          name: data.name,
+          bio: data.bio,
+        });
+        popNotification({
+          title: "Success",
+          description: "Your profile has been created.",
+          type: "success"
+        });
+        return;
+      }
       await updateProfile.mutateAsync({
         id: profile?.id || "",
         userId: profile?.userId || "",

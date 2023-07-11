@@ -1,3 +1,4 @@
+import { contestRouter } from "~/server/api/routers/contest";
 import { profileRouter } from "~/server/api/routers/profile";
 import { reportRouter } from "~/server/api/routers/report";
 import { searchRouter } from "~/server/api/routers/search";
@@ -10,6 +11,7 @@ import { createTRPCRouter } from "~/server/api/trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
+  contest: contestRouter,
   user: userRouter,
   profile: profileRouter,
   report: reportRouter,

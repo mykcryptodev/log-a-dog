@@ -1,11 +1,9 @@
 import "~/styles/globals.css";
 
 import { 
-  coinbaseWallet,
   magicLink,
-  metamaskWallet,
   ThirdwebProvider,
-  walletConnect} from "@thirdweb-dev/react";
+} from "@thirdweb-dev/react";
 import { type AppType } from "next/app";
 import { useRouter } from "next/router";
 import { type Session } from "next-auth";
@@ -45,9 +43,6 @@ const MyApp: AppType<{ session: Session | null }> = ({
         activeChain={activeChain}
         supportedChains={SUPPORTED_CHAINS}
         supportedWallets={[
-          metamaskWallet(),
-          coinbaseWallet(),
-          walletConnect(),
           magicLink({
             apiKey: process.env.NEXT_PUBLIC_MAGIC_LINK_API_KEY || "",
           }),
