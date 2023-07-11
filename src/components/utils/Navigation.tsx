@@ -73,7 +73,7 @@ export const Navigation: FC = () => {
   return (
     <header className="relative isolate z-10">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-2 sm:p-6 lg:px-8 py-4" aria-label="Global">
-        <div className="navbar bg-base-100 rounded-lg">
+        <div className="navbar backdrop-blur rounded-lg">
           <div className="lg:flex-none flex-1">
             <Link href="/" className="btn btn-ghost normal-case text-xl">
               <span className="sm:flex hidden">

@@ -1,4 +1,4 @@
-import { FlagIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { FlagIcon, TrophyIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { type NextPage } from "next"
 import Link from "next/link";
 
@@ -10,6 +10,11 @@ export const Admin: NextPage = () => {
       name: "Users",
       path: "/admin/users",
       icon: <UserGroupIcon className="h-8 w-8 stroke-2" />
+    },
+    {
+      name: "Contests",
+      path: "/admin/contests",
+      icon: <TrophyIcon className="h-8 w-8 stroke-2" />
     },
     {
       name: "Reports",

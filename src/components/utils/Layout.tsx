@@ -34,6 +34,9 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="block">
+      <div className="absolute bg-brand-gradient-dark -top-[65%] -left-[65%] w-full h-full -z-10"></div>
+      <div className="fixed bg-brand-gradient-light -bottom-0 -right-[70%] w-full h-full -z-10"></div>
+      <div className="fixed bg-brand-gradient-dark -top-[-65%] -left-[35%] w-full h-full -z-10"></div>
       <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen">
         <NotificationContext.Provider value={notificationState}>
           <Notification />

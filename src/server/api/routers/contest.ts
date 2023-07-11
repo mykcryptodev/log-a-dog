@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  adminProcedure,
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
@@ -32,6 +33,14 @@ export const contestRouter = createTRPCRouter({
         },
       })
     }),
+  // get all contests and sort by created date
+  getAll: publicProcedure.query(({ ctx }) => {
+    return ctx.prisma.contest.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }),
   // get a contest by its slug
   getBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
@@ -39,6 +48,38 @@ export const contestRouter = createTRPCRouter({
       return ctx.prisma.contest.findUnique({
         where: {
           slug: input.slug,
+        },
+      });
+    }),
+  // find all contests that match a search query
+  search: publicProcedure
+    .input(z.object({ query: z.string() }))
+    .query(({ input, ctx }) => {
+      return ctx.prisma.contest.findMany({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: input.query,
+              },
+            },
+            {
+              description: {
+                contains: input.query,
+              },
+            },
+          ],
+        },
+      });
+    }),
+  // allow admins to delete contests
+  delete: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(({ input, ctx }) => {
+      if (!ctx.session.user.isAdmin) throw new Error('You are not an admin');
+      return ctx.prisma.contest.delete({
+        where: {
+          id: input.id,
         },
       });
     }),
