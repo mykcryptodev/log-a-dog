@@ -65,12 +65,6 @@ export const EditProfile: NextPage<Props> = ({
       </div>
     </div>
   )
-  
-  const profileSettings = [
-    "details",
-    "links",
-    "graphics",
-  ];
 
   const closeDrawerIfOpen = () => {
     const drawer = document.getElementById("profile-settings-drawer") as HTMLInputElement;
@@ -80,6 +74,12 @@ export const EditProfile: NextPage<Props> = ({
   }
 
   const Menu: FC = () => {    
+    const profileSettings = [
+      "details",
+      "links",
+      "graphics",
+    ];
+
     return (
       <ul className="menu p-4 w-80 min-h-full lg:bg-base-100 bg-base-200">
         <div className="lg:hidden flex text-2xl font-bold py-10">Edit Profile</div>
@@ -107,7 +107,7 @@ export const EditProfile: NextPage<Props> = ({
         {profileSettings.map((setting) => (
           <li key={setting}>
             <a 
-              className={`sm:hidden flex capitalize ${activeItem === setting ? "active" : ""}`}
+              className={`capitalize ${activeItem === setting ? "active" : ""}`}
               onClick={() => {
                 setActiveItem(setting);
                 closeDrawerIfOpen();
