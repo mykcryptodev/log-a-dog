@@ -113,44 +113,42 @@ export const Navigation: FC = () => {
                   );
                 }}
               />
-              {address && (
-                <div className="flex justify-center btn btn-lg py-2 pl-2 pr-4 rounded-r-lg rounded-l-none">
-                  <div className="dropdown dropdown-end">
-                    <label tabIndex={0} className="cursor-pointer">
-                      <Avatar width={48} height={48} address={address || ""} />
-                    </label>
-                    <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 mt-4">
+              <div className="flex justify-center btn btn-lg py-2 pl-2 pr-4 rounded-r-lg rounded-l-none">
+                <div className="dropdown dropdown-end">
+                  <label tabIndex={0} className="cursor-pointer">
+                    <Avatar width={48} height={48} address={address || ""} />
+                  </label>
+                  <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 mt-4">
+                    <li>
+                      <Link href={`/profile/${address || ""}`}>
+                        Profile
+                      </Link>
+                    </li>
+                    {isAdmin && (
                       <li>
-                        <Link href={`/profile/${address || ""}`}>
-                          Profile
+                        <Link href={'/admin'}>
+                          Admin
                         </Link>
                       </li>
-                      {isAdmin && (
-                        <li>
-                          <Link href={'/admin'}>
-                            Admin
-                          </Link>
-                        </li>
-                      )}
-                      <li>
-                        <a onClick={() => void disconnectAndSignOut()}>
-                          Sign Out
-                        </a>
-                      </li>
-                      <li className="sm:hidden block">
-                        <div className="divider my-2" />
-                      </li>
-                      <li className="sm:hidden block">
-                        <a className="flex w-full justify-center items-center">
-                          <MoonIcon className="w-8 h-8 stroke-2" />
-                          <ThemeSwitch toggle={true} />
-                          <SunIcon className="w-8 h-8 stroke-2" />
-                        </a>
-                      </li>                        
-                    </ul>
-                  </div>
+                    )}
+                    <li>
+                      <a onClick={() => void disconnectAndSignOut()}>
+                        Sign Out
+                      </a>
+                    </li>
+                    <li className="sm:hidden block">
+                      <div className="divider my-2" />
+                    </li>
+                    <li className="sm:hidden block">
+                      <a className="flex w-full justify-center items-center">
+                        <MoonIcon className="w-8 h-8 stroke-2" />
+                        <ThemeSwitch toggle={true} />
+                        <SunIcon className="w-8 h-8 stroke-2" />
+                      </a>
+                    </li>                        
+                  </ul>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
