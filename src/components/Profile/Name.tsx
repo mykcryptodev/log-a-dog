@@ -1,9 +1,7 @@
 import { type Profile } from "@prisma/client";
-import { type Chain } from "@thirdweb-dev/chains";
 import { ethers } from "ethers";
 import { type FC } from "react";
 
-import useActiveChain from "~/hooks/useActiveChain";
 import useEnsName from "~/hooks/useEnsName";
 import useShortenedAddress from "~/hooks/useShortenedAddress";
 import { api } from "~/utils/api";
@@ -11,15 +9,12 @@ import { api } from "~/utils/api";
 interface NameProps {
   address: string | undefined;
   profile?: Profile | null | undefined;
-  chain?: Chain;
   className?: string;
   shorten?: boolean;
 }
 
-export const Name: FC<NameProps> = ({ address, profile, chain, className, shorten }: NameProps) => {
-  const { activeChainData } = useActiveChain();
+export const Name: FC<NameProps> = ({ address, profile, className, shorten }: NameProps) => {
   const { data: ensName } = useEnsName(address || "");
-  const chainId = chain?.chainId || activeChainData.chainId;
   const { data: fetchedProfile, isLoading: profileIsLoading } = api.profile.get.useQuery({ 
     userId: address?.toLowerCase() || "" 
   });

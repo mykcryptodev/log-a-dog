@@ -25,6 +25,7 @@
     "@trpc/server": "^10.26.0",
     "@uniswap/sdk": "^3.0.3",
     "@uploadthing/react": "^5.1.0",
+    "eslint-plugin-simple-import-sort": "^10.0.0",
     "exifr": "^7.1.3",
     "framer-motion": "^10.12.18",
     "heic2any": "^0.0.4",

@@ -1,5 +1,5 @@
 import { ArchiveBoxIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
-import { type Collection, type Profile,type Report, ReportStatus,  } from "@prisma/client";
+import { type Profile,type Report, ReportStatus,  } from "@prisma/client";
 import { type NextPage } from "next";
 import { useRouter } from "next/router";
 import { type FC, useContext, useMemo,useState } from "react";
@@ -28,7 +28,6 @@ const AdminReports: NextPage = () => {
     contentId: id,
     take: 1
   }).data?.[0] || null;
-  const { data: collection } = api.collection.getById.useQuery(id);
   const { data: profile } = api.profile.getById.useQuery(id);
   const { mutateAsync: updateStatus } = api.report.updateStatus.useMutation();
   const { popNotification } = useContext(NotificationContext);
@@ -56,19 +55,15 @@ const AdminReports: NextPage = () => {
   }
 
   type ReportWithContent = Report & {
-    collection: Collection | null;
     profile: Profile | null;
   };
 
   const reportName = useMemo(() => {
-    if (collection) {
-      return collection.name;
-    }
     if (profile) {
       return profile.name;
     }
     return "";
-  }, [collection, profile]);
+  }, [profile]);
 
   const ignoreAll = async () => {
     if (!reports?.length) return;
@@ -268,7 +263,7 @@ const AdminReports: NextPage = () => {
             {reportName}
             {reportWithContent && (
               <div className="font-normal text-xl">
-                {getShortenedAddress(reportWithContent.collection?.address || reportWithContent.profile?.userId || "")}
+                {getShortenedAddress(reportWithContent.profile?.userId || "")}
               </div>
             )}
           </div>

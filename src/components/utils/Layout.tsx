@@ -2,13 +2,12 @@ import { useAddress } from "@thirdweb-dev/react";
 import { signOut } from "next-auth/react";
 import { type FC, type ReactNode,useEffect } from "react"
 
+import Footer from "~/components/utils/Footer";
 import Navigation from "~/components/utils/Navigation"
 import Notification from "~/components/utils/Notification";
 import NotificationContext from "~/context/Notification";
 import useNotification from "~/hooks/useNotification";
 import usePrevious from "~/hooks/usePrevious";
-
-import Footer from "~/components/utils/Footer";
 
 interface LayoutProps {
   children: ReactNode

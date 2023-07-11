@@ -1,11 +1,9 @@
 import { type Profile } from "@prisma/client";
-import { type Chain } from "@thirdweb-dev/chains";
 import { MediaRenderer } from "@thirdweb-dev/react";
 import Image from "next/image";
 import { type FC } from "react";
 import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 
-import useActiveChain from "~/hooks/useActiveChain";
 import { api } from "~/utils/api";
 
 interface AvatarProps {
@@ -15,12 +13,9 @@ interface AvatarProps {
   height?: number;
 	fill?: boolean;
   className?: string;
-  chain?: Chain;
 }
 
-export const Avatar: FC<AvatarProps> = ({ profile, address, width, height, fill, className, chain }) => {
-  const { activeChainData } = useActiveChain();
-  const chainId = chain?.chainId || activeChainData.chainId;
+export const Avatar: FC<AvatarProps> = ({ profile, address, width, height, fill, className }) => {
   const { 
     data: fetchedProfile, 
     isLoading: profileIsLoading } = api.profile.get.useQuery({ 

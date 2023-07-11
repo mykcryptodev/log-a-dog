@@ -1,12 +1,9 @@
-import { type Chain } from "@thirdweb-dev/chains";
-import { MediaRenderer } from "@thirdweb-dev/react";
 import { motion } from 'framer-motion';
 import Link from "next/link";
 import { type FC,useEffect,useMemo,useState } from "react";
 
 import Avatar from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
-import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from "~/constants/chain";
 import useDebounce from "~/hooks/useDebounce";
 import useShortenedAddress from "~/hooks/useShortenedAddress";
 import { api } from "~/utils/api";
@@ -34,19 +31,6 @@ export const Search: FC<Props> = ({ inputId }) => {
       }
     }
   }, []);
-
-  const ChainIcon: FC<{ chainId: number }> = ({ chainId }) => {
-    const chain = SUPPORTED_CHAINS.find(c => c.chainId == chainId) || DEFAULT_CHAIN;
-    const chainWithIcon = chain as Chain & { icon: { url: string } };
-  
-    return (
-      <MediaRenderer
-        src={chainWithIcon.icon.url}
-        className="rounded-lg"
-        style={{ width: "18px", height: "18px", borderRadius: "8px" }}
-      />
-    );
-  }
 
   return (
     <div className="flex flex-col w-full">

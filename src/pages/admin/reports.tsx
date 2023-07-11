@@ -110,7 +110,7 @@ const AdminReports: NextPage = () => {
                           <ReportName report={report} />
                         </div>
                         <div className="text-helper">
-                          {getShortenedAddress(report.collection?.address || report.profile?.id || "")}
+                          {getShortenedAddress(report.profile?.id || "")}
                         </div>
                       </div>
                     </Link>

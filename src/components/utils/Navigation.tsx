@@ -1,6 +1,5 @@
 import { HomeIcon, MagnifyingGlassIcon, MoonIcon, SunIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ConnectWallet, MediaRenderer, NATIVE_TOKEN_ADDRESS, useAddress, useBalance, useChain,useDisconnect  } from "@thirdweb-dev/react";
-import { Token, TokenAmount } from "@uniswap/sdk";
+import { ConnectWallet, useAddress, useDisconnect  } from "@thirdweb-dev/react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { type FC,useEffect,useMemo } from "react";
@@ -11,38 +10,17 @@ import { Portal } from "~/components/utils/Portal";
 import Search from "~/components/utils/Search";
 import ThemeSwitch from "~/components/utils/ThemeSwitch";
 import { APP_NAME } from "~/constants";
-import { DEFAULT_CHAIN } from "~/constants/chain";
 import useIsDarkTheme from "~/hooks/useIsDarkTheme";
 import { api } from "~/utils/api";
 
 export const Navigation: FC = () => {
   const address = useAddress();
   const disconnect = useDisconnect();
-  const { 
-    data: nativeBalance, 
-    isLoading: nativeBalanceIsLoading 
-  } = useBalance(NATIVE_TOKEN_ADDRESS);
   const { data: admins } = api.user.getAdmins.useQuery();
   const isAdmin = useMemo(() => {
     return admins?.some((admin) => admin.address.toLowerCase() === address?.toLowerCase());
   }, [admins, address]);
-  // unlike other parts of the app, navigation shows the chain
-  // that the user is connected to regardless of the chain they
-  // are viewing assets for
-  const chain = useChain();
   const isDarkTheme = useIsDarkTheme();
-  const natvieBalanceTokenAmount = useMemo(() => {
-    return new TokenAmount(
-      new Token(
-        Number(chain?.chainId || DEFAULT_CHAIN.chainId),
-        NATIVE_TOKEN_ADDRESS,
-        chain?.nativeCurrency?.decimals || DEFAULT_CHAIN.nativeCurrency.decimals,
-        chain?.nativeCurrency?.symbol || DEFAULT_CHAIN.nativeCurrency.symbol,
-        chain?.nativeCurrency?.name || DEFAULT_CHAIN.nativeCurrency.name,
-      ),
-      nativeBalance?.value.toString() || "0"
-    );
-  }, [nativeBalance, chain]);
 
   const disconnectAndSignOut = async () => {
     await signOut();
@@ -128,23 +106,8 @@ export const Navigation: FC = () => {
                 detailsBtn={() => {
                   return (
                     <button className="btn btn-lg flex items-center gap-2 normal-case pr-2 pl-4 rounded-r-none no-animation">
-                      <div className="flex-1 flex-col gap-1">
+                      <div className="flex-1">
                         <Name address={address || ""} shorten={true} />
-                        {nativeBalanceIsLoading ? (
-                          <div className="h-4 w-16 mt-1 ml-7 bg-base-300 animate-pulse rounded-lg" />
-                        ) : (
-                          <div className="flex items-center gap-1 justify-end">
-                            <MediaRenderer
-                              src={chain?.icon?.url || DEFAULT_CHAIN.icon?.url || ""}
-                              width="14px"
-                              height="14px"
-                              className="rounded-full"
-                            />
-                            <div className="text-xs text-end">
-                              {natvieBalanceTokenAmount.toSignificant(4, { groupSeparator: ','})} {nativeBalance?.symbol}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </button>
                   );
