@@ -16,8 +16,6 @@ export const Contest: NextPage = () => {
     contestId: contest?.id || "",
   });
 
-  console.log({ entries })
-
   if (contest) {
     return (
       <div className="px-2">

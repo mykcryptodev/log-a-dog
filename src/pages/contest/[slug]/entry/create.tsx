@@ -1,9 +1,10 @@
 import { type NextPage } from "next";
 import { useRouter } from "next/router";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import Breadcrumbs from "~/components/utils/Breadcrumbs";
+import Upload from "~/components/utils/Upload";
 import NotificationContext from "~/context/Notification";
 import withSignedInProtection from "~/hoc/withSignedInProtection";
 import { api } from "~/utils/api";
@@ -18,6 +19,7 @@ export const CreateEntry: NextPage = () => {
   const { slug } = router.query as { slug: string };
   const { data: contest } = api.contest.getBySlug.useQuery({ slug });
   const submitEntry = api.contest.submitEntry.useMutation();
+  const [imgUrl, setImg] = useState<string>("");
   const { register, handleSubmit } = useForm<FormInput>({
     defaultValues: {
       amount: 1,
@@ -30,7 +32,7 @@ export const CreateEntry: NextPage = () => {
       await submitEntry.mutateAsync({
         amount: Number(data.amount),
         contestId: contest.id,
-        image: "",
+        image: imgUrl,
       });
       popNotification({
         title: "Success",
@@ -46,8 +48,7 @@ export const CreateEntry: NextPage = () => {
         type: "error"
       });
     }
-  }
-     
+  };
 
   if (contest) {
     return (
@@ -66,11 +67,19 @@ export const CreateEntry: NextPage = () => {
           Log a Dog
         </h1>
         {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
+          <div className="py-4">
+            <Upload 
+              key="logo"
+              initialUrls={imgUrl ? [imgUrl] : []}
+              callback={(url) => setImg(url[0] || "")}
+            />
+          </div>
           <div className="flex flex-col gap-4">
-            <label htmlFor="amount">Amount</label>
+            <label htmlFor="amount" className="text-lg font-bold">Amount</label>
             <input
               id="amount"
+              className="input input-lg input-bordered"
               type="number"
               {...register("amount")}
             />
