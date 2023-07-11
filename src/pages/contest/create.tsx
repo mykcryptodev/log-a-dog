@@ -16,6 +16,7 @@ interface IFormInput {
 export const CreateContest: NextPage = () => {
   const { popNotification } = useContext(NotificationContext);
   const create = api.contest.create.useMutation();
+  const join = api.contest.join.useMutation();
   const { register, handleSubmit } = useForm<IFormInput>({
     defaultValues: {
       name: "",
@@ -28,12 +29,16 @@ export const CreateContest: NextPage = () => {
 
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
     try {
-      await create.mutateAsync({
+      const contest = await create.mutateAsync({
         name: data.name,
         description: data.description,
         slug: data.slug,
         start: data.start,
         end: data.end,
+      });
+      // make the user join the contest
+      await join.mutateAsync({
+        contestId: contest.id,
       });
       popNotification({
         title: "Success",

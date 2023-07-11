@@ -40,6 +40,23 @@ export const userRouter = createTRPCRouter({
         }
       });
     }),
+    // get the users in a contest
+    getByContest: protectedProcedure
+      .input(z.object({ contestId: z.string().optional() }))
+      .query(({ ctx, input }) => {
+        if (!input.contestId) throw new Error('No contest ID provided');
+        return ctx.prisma.userContest.findMany({
+          where: {
+            contestId: input.contestId,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            user: true,
+          },
+        });
+      }), 
     // allow users who are admins to update other users
     update: protectedProcedure
       .input(z.object({

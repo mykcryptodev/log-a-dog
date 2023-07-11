@@ -63,8 +63,10 @@ model User {
     ProfileUserLike    ProfileUserLike[]
     ProfileUserFollows ProfileUserFollows[]
     Report             Report[]
-    Like               LikeEntry[]
-    Contest            Contest[]
+    EntryLikes         LikeEntry[]
+    ContestsCreated    Contest[]
+    UserContest        UserContest[]
+    Entries            Entry[]
 }
 
 model VerificationToken {
@@ -149,32 +151,49 @@ model Report {
 }
 
 model Contest {
-    id          String   @id @default(cuid())
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+    id          String        @id @default(cuid())
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @updatedAt
+    createdBy   User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
     createdById String
     name        String
     description String
-    slug        String   @unique
+    slug        String        @unique
     start       DateTime
     end         DateTime
     entries     Entry[]
+    UserContest UserContest[]
 
     @@index([createdById])
 }
 
-model Entry {
-    id        String      @id @default(cuid())
-    createdAt DateTime    @default(now())
-    updatedAt DateTime    @updatedAt
-    name      String
-    image     String
-    contest   Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
+model UserContest {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String
+    contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
     contestId String
-    likes     LikeEntry[]
+
+    @@unique([userId, contestId])
+    @@index([contestId])
+}
+
+model Entry {
+    id          String      @id @default(cuid())
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    amount      Int
+    image       String
+    contest     Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
+    contestId   String
+    likes       LikeEntry[]
+    createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
+    createdById String
 
     @@index([contestId])
+    @@index([createdById])
 }
 
 model LikeEntry {

@@ -7,7 +7,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import NotificationContext from "~/context/Notification";
 import { api } from "~/utils/api";
 
-interface IFormInput {
+interface FormInput {
   name: string;
   bio: string;
 }
@@ -20,7 +20,7 @@ export const ProfileDetailsForm: FC<Props> = ({ profile }) => {
   const { popNotification } = useContext(NotificationContext);
   const updateProfile = api.profile.update.useMutation();
   const createProfile = api.profile.create.useMutation();
-  const { register, handleSubmit, watch } = useForm<IFormInput>({
+  const { register, handleSubmit, watch } = useForm<FormInput>({
     defaultValues: {
       name: profile?.name || "",
       bio: profile?.bio || ""
@@ -31,7 +31,7 @@ export const ProfileDetailsForm: FC<Props> = ({ profile }) => {
 
   const profileUrl = `https://${process.env.NEXT_PUBLIC_SITE_URL || ""}/profile/${name.replace(/ /g,'_')}`;
 
-  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+  const onSubmit: SubmitHandler<FormInput> = async (data) => {
     try {
       // if there is no profile, create one
       if (!profile) {

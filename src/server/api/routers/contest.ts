@@ -51,6 +51,76 @@ export const contestRouter = createTRPCRouter({
         },
       });
     }),
+  // join a contest
+  join: protectedProcedure
+    .input(z.object({ contestId: z.string() }))
+    .mutation(({ input, ctx }) => {
+      return ctx.prisma.userContest.create({
+        data: {
+          user: {
+            connect: {
+              id: ctx.session.user.id,
+            },
+          },
+          contest: {
+            connect: {
+              id: input.contestId,
+            },
+          },
+        },
+      });
+    }),
+  // create an entry
+  submitEntry: protectedProcedure
+    .input(z.object({
+      contestId: z.string(),
+      image: z.string(),
+      amount: z.number(),
+    }))
+    .mutation(({ input, ctx }) => {
+      return ctx.prisma.entry.create({
+        data: {
+          image: input.image,
+          amount: input.amount,
+          contest: {
+            connect: {
+              id: input.contestId,
+            },
+          },
+          createdBy: {
+            connect: {
+              id: ctx.session.user.id,
+            },
+          },
+        },
+      });
+    }),
+  // get all entries for a contest
+  getEntries: publicProcedure
+    .input(z.object({ contestId: z.string() }))
+    .query(({ input, ctx }) => {
+      return ctx.prisma.entry.findMany({
+        where: {
+          contestId: input.contestId,
+        },
+      });
+    }),
+  // get all entries for a contest grouped by user
+  getEntriesByUser: publicProcedure
+    .input(z.object({ contestId: z.string() }))
+    .query(({ input, ctx }) => {
+      return ctx.prisma.entry.groupBy({
+        by: ['createdById'],
+        where: {
+          contestId: input.contestId,
+        },
+        // aggregate the amount of each entry in the group
+        _sum: {
+          amount: true,
+        },
+      });
+    }),
+
   // find all contests that match a search query
   search: publicProcedure
     .input(z.object({ query: z.string() }))
