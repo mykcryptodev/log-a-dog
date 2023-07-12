@@ -1,4 +1,5 @@
 import { type NextPage } from "next";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useContext, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
@@ -8,6 +9,7 @@ import Upload from "~/components/utils/Upload";
 import NotificationContext from "~/context/Notification";
 import withSignedInProtection from "~/hoc/withSignedInProtection";
 import { api } from "~/utils/api";
+import { UploadButton } from "~/utils/uploadthing";
 
 interface FormInput {
   amount: number;
@@ -66,28 +68,49 @@ export const CreateEntry: NextPage = () => {
         <h1 className="text-5xl font-bold">
           Log a Dog
         </h1>
-        {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
-          <div className="py-4">
-            <Upload 
-              key="logo"
-              initialUrls={imgUrl ? [imgUrl] : []}
-              callback={(url) => setImg(url[0] || "")}
-            />
-          </div>
-          <div className="flex flex-col gap-4">
-            <label htmlFor="amount" className="text-lg font-bold">Amount</label>
-            <input
-              id="amount"
-              className="input input-lg input-bordered"
-              type="number"
-              {...register("amount")}
-            />
-            <button type="submit" className="btn btn-primary">
-              Submit
-            </button>
-          </div>
-        </form>
+        <div className="flex justify-center w-full">
+          {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2 max-w-sm">
+            <div className="flex flex-col gap-2">
+              <Image
+                src={imgUrl}
+                alt="Uploaded Image"
+                className="w-72 h-72 rounded-lg mx-auto"
+                width={500}
+                height={500}
+              />
+              <UploadButton
+                endpoint="imageUploader"
+                onUploadProgress={(progress) => {
+                  // Do something with the progress
+                  console.log("Progress: ", progress);
+                }}
+                onClientUploadComplete={(res) => {
+                  // Do something with the response
+                  console.log("Files: ", res);
+                  setImg(res?.[0]?.fileUrl || "");
+                  alert("Upload Completed");
+                }}
+                onUploadError={(error: Error) => {
+                  // Do something with the error.
+                  alert(`ERROR! ${error.message}`);
+                }}
+              />
+            </div>
+            <div className="flex flex-col gap-4">
+              <label htmlFor="amount" className="text-lg font-bold">Amount</label>
+              <input
+                id="amount"
+                className="input input-lg input-bordered"
+                type="number"
+                {...register("amount")}
+              />
+              <button type="submit" className="btn btn-primary">
+                Submit
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     );
   }
