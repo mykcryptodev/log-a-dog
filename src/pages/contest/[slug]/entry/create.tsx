@@ -1,13 +1,14 @@
+import exifr from 'exifr';
 import { type NextPage } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useContext, useState } from "react";
+import { useContext, useEffect,useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import Breadcrumbs from "~/components/utils/Breadcrumbs";
-import Upload from "~/components/utils/Upload";
 import NotificationContext from "~/context/Notification";
 import withSignedInProtection from "~/hoc/withSignedInProtection";
+import { type ExifData } from '~/types/imageMetadata';
 import { api } from "~/utils/api";
 import { UploadButton } from "~/utils/uploadthing";
 
@@ -22,11 +23,37 @@ export const CreateEntry: NextPage = () => {
   const { data: contest } = api.contest.getBySlug.useQuery({ slug });
   const submitEntry = api.contest.submitEntry.useMutation();
   const [imgUrl, setImg] = useState<string>("");
+  const [exifData, setExifData] = useState<ExifData | undefined>(undefined);
+  const { data: reverseGeocode } = api.geocode.reverse.useQuery({
+    lat: exifData?.latitude || 0,
+    lng: exifData?.longitude || 0,
+  });
+  console.log({ reverseGeocode });
   const { register, handleSubmit } = useForm<FormInput>({
     defaultValues: {
       amount: 1,
     },
   });
+
+  useEffect(() => {
+    if (imgUrl) {
+      void fetchImageAndExtractExif(imgUrl);
+    }imgUrl
+  }, [imgUrl]);
+
+  const fetchImageAndExtractExif = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const exif = await exifr.parse(blob);
+      
+      setExifData(exif as ExifData);
+    } catch (err) {
+      console.error('Error while fetching image and extracting EXIF data:', err);
+      setExifData(undefined);
+    }
+  };
 
   const onSubmit: SubmitHandler<FormInput> = async (data) => {
     if (!contest?.id) return;
@@ -89,13 +116,13 @@ export const CreateEntry: NextPage = () => {
                   // Do something with the response
                   console.log("Files: ", res);
                   setImg(res?.[0]?.fileUrl || "");
-                  alert("Upload Completed");
                 }}
                 onUploadError={(error: Error) => {
                   // Do something with the error.
                   alert(`ERROR! ${error.message}`);
                 }}
               />
+              {reverseGeocode && <p>{JSON.stringify(reverseGeocode)}</p>}
             </div>
             <div className="flex flex-col gap-4">
               <label htmlFor="amount" className="text-lg font-bold">Amount</label>
