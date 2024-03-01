@@ -1,6 +1,7 @@
 import { postRouter } from "~/server/api/routers/post";
 import { createTRPCRouter } from "~/server/api/trpc";
 import { attestationRouter } from "~/server/api/routers/attestation";
+import { profileRouter } from "~/server/api/routers/profile";
 
 /**
  * This is the primary router for your server.
@@ -10,6 +11,7 @@ import { attestationRouter } from "~/server/api/routers/attestation";
 export const appRouter = createTRPCRouter({
   post: postRouter,
   attestation: attestationRouter,
+  profile: profileRouter,
 });
 
 // export type definition of API

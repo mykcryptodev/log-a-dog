@@ -49,18 +49,9 @@ export const ProfileForm: FC = () => {
       />
       <TransactionButton
         transaction={() => tx}
-        onSubmitted={(s) => {
-          console.log({s})
-          toast.info("Transaction submitted")
-        }}
-        onReceipt={(r) => { 
-          console.log({r})
-          toast.success("Profile saved")
-        }}
-        onError={(e) => {
-          console.log({e});
-          toast.error(e.message)
-        }}
+        onSubmitted={(s) => toast.info("Saving...")}
+        onReceipt={(r) => toast.success("Profile saved")}
+        onError={(e) => toast.error(e.message) }
       >
         Save Profile
       </TransactionButton>

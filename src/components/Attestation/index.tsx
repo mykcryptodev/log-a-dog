@@ -8,7 +8,7 @@ type Props = {
 }
 export const Attestation: FC<Props> = ({ attestationId }) => {
   const { activeChain } = useContext(ActiveChainContext);
-  const { data } = api.attestation.getById.useQuery({
+  const { data: attestation } = api.attestation.getById.useQuery({
     attestationId,
     chainId: activeChain.id,
   }, {
@@ -16,12 +16,19 @@ export const Attestation: FC<Props> = ({ attestationId }) => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-  console.log({ data });
+  const { data: profile } = api.profile.getByAddress.useQuery({
+    chainId: activeChain.id,
+    address: attestation?.decodedAttestaton.address ?? "",
+  }, {
+    enabled: !!attestation,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
 
-  if (!data) return null;
+  if (!attestation) return null;
 
   // turn the ipfs:// uri into a gateway uri
-  const imgUri = data.decodedAttestaton.imgUri.replace("ipfs://", "https://ipfs.io/ipfs/");
+  const imgUri = attestation.decodedAttestaton.imgUri.replace("ipfs://", "https://ipfs.io/ipfs/");
 
   return (
     <div className="flex items-start gap-2">
@@ -33,9 +40,9 @@ export const Attestation: FC<Props> = ({ attestationId }) => {
         className="rounded-lg"
       />
       <div>
-        <div>Address: {data.decodedAttestaton.address}</div>
-        <div>Number of Hotdogs: {data.decodedAttestaton.numHotdogs.toString()}</div>
-        <div>Metadata: {data.decodedAttestaton.metadata}</div>
+        <div>{profile?.username ?? attestation.decodedAttestaton.address}</div>
+        <div>Hotdogs Eaten: {attestation.decodedAttestaton.numHotdogs.toString()}</div>
+        <div>Metadata: {attestation.decodedAttestaton.metadata}</div>
       </div>
     </div>
   )

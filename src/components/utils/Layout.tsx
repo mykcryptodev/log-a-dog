@@ -3,6 +3,7 @@ import { signOut } from "next-auth/react";
 import { type FC, type ReactNode,useEffect } from "react"
 import usePrevious from "~/hooks/usePrevious";
 import { ToastContainer } from 'react-toastify';
+import { ProfileButton } from "../Profile/Button";
 
 interface LayoutProps {
   children: ReactNode
@@ -31,8 +32,17 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       <div className="fixed bg-gradient-to-br from-yellow-100 via-pink-200 to-pink-500 rounded-full blur-3xl -bottom-0 -left-[55%] w-1/2 h-full -z-10"></div>
       <div className="fixed bg-gradient-to-tl from-yellow-100 via-pink-200 to-yellow-300 rounded-full blur-3xl -bottom-0 -left-[25%] w-1/2 h-full -z-10"></div>
       <div className="fixed bg-gradient-to-bl from-pink-100 to-pink-500 rounded-full -top-[-85%] blur-3xl -left-[35%] w-full h-full -z-10"></div>
-      <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen">
-        <ConnectButton />
+      <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen mt-10">
+        <div className="w-full justify-end flex">
+          <ConnectButton
+            detailsButton={{
+              render: () => <ProfileButton />
+            }}
+            connectButton={{
+              label: "Login"
+            }}
+          />
+        </div>
         <ToastContainer />
         {children}
       </div>
