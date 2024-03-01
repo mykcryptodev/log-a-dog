@@ -52,9 +52,11 @@ export const CreateAttestation: FC = () => {
       });
       const newAttestationUID = await tx.wait();
       console.log({ newAttestationUID })
-      // pop notification
+      toast.success("Dog has been logged!");
     } catch (e) {
       // pop notification
+      console.error(e);
+      toast.error("Failed to log dog");
     } finally { 
       setIsLoading(false);
       // close modal
