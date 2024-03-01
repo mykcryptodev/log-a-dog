@@ -41,7 +41,7 @@ export const CreateAttestation: FC = () => {
     try {
       setIsLoading(true);
       eas.connect(signer);
-      const tx = await eas.attest({
+      await eas.attest({
         schema: schemaUid,
         data: {
           recipient: account.address,
@@ -50,8 +50,6 @@ export const CreateAttestation: FC = () => {
           data: encodedData,
         },
       });
-      const newAttestationUID = await tx.wait();
-      console.log({ newAttestationUID })
       toast.success("Dog has been logged!");
     } catch (e) {
       // pop notification
