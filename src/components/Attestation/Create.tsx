@@ -66,7 +66,7 @@ export const CreateAttestation: FC = () => {
       setShowConfetti(true);
       setTimeout(() => {
         setShowConfetti(false);
-      }, 30000);
+      }, 5000);
     } catch (e) {
       // pop notification
       console.error(e);
