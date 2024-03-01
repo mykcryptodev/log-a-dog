@@ -19,6 +19,14 @@ export const ProfileButton: FC = () => {
 
   console.log({ data })
 
+  if (!account) return (
+    <ConnectButton 
+      connectButton={{
+        label: "Login"
+      }}
+    />
+  )
+
   if (!data?.username) return (
     <>
       {/* Open the modal using document.getElementById('ID').showModal() method */}
