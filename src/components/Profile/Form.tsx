@@ -61,9 +61,14 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
         onSubmitted={() => {
           toast.info("Saving...");
           onProfileCreated?.({username, imgUrl, metadata});
+          // close the modal
+          (document.getElementById('create_profile_modal') as HTMLDialogElement).close();
         }}
         onReceipt={() => toast.success("Profile saved")}
-        onError={(e) => toast.error(e.message) }
+        onError={(e) => {
+          toast.error(e.message);
+          (document.getElementById('create_profile_modal') as HTMLDialogElement).close();
+        }}
       >
         Save Profile
       </TransactionButton>
