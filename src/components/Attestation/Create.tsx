@@ -120,7 +120,7 @@ export const CreateAttestation: FC<Props> = ({ profile }) => {
         Create Attestation
       </button>
       <dialog id="create_attestation_modal" className="modal">
-        <div className="modal-box">
+        <div className="modal-box overflow-hidden">
           <h3 className="font-bold text-2xl mb-4">Create Attestation</h3>
           <div className="flex flex-col gap-2">
             <div className="w-full text-center">
