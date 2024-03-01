@@ -1,6 +1,6 @@
 import { EAS, SchemaEncoder, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
 import { type FC,useContext, useState, useEffect } from 'react';
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { ConnectButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
@@ -131,14 +131,24 @@ export const CreateAttestation: FC = () => {
               {/* if there is a button in form, it will close the modal */}
               <button className="btn">Close</button>
             </form>
-            <button 
-              className="btn btn-primary" 
-              disabled={isLoading}
-              onClick={() => void create(1)}
-            >
-              {isLoading && <div className="loading loading-spinner" />}
-              Create Attestation
-            </button>
+            {account ? (
+              <button 
+                className="btn btn-primary" 
+                disabled={isLoading}
+                onClick={() => void create(1)}
+              >
+                {isLoading && <div className="loading loading-spinner" />}
+                Create Attestation
+              </button>
+            ) : (
+              <div onClick={() => (document.getElementById('create_attestation_modal') as HTMLDialogElement).close() }>
+                <ConnectButton
+                  connectButton={{
+                    label: "Login to Log Dogs"
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </dialog>
