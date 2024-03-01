@@ -7,11 +7,20 @@ import { PROFILES } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 
-export const ProfileForm: FC = () => {
+type Props = {
+  onProfileCreated?: (profile: {
+    username: string;
+    imgUrl: string;
+    metadata?: string;
+  }) => void;
+}
+
+export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const [imgUrl, setImgUrl] = useState<string>("");
   const [username, setUsername] = useState<string>("");
+  const metadata = "";
 
   const contract = getContract({
     client,
@@ -49,7 +58,10 @@ export const ProfileForm: FC = () => {
       />
       <TransactionButton
         transaction={() => tx}
-        onSubmitted={() => toast.info("Saving...")}
+        onSubmitted={() => {
+          toast.info("Saving...");
+          onProfileCreated?.({username, imgUrl, metadata});
+        }}
         onReceipt={() => toast.success("Profile saved")}
         onError={(e) => toast.error(e.message) }
       >

@@ -5,10 +5,17 @@ import { api } from "~/utils/api";
 import Image from "next/image";
 import { ProfileForm } from "~/components/Profile/Form";
 
-export const ProfileButton: FC = () => {
+type Props = {
+  onProfileCreated?: (profile: {
+    username: string;
+    imgUrl: string;
+    metadata?: string;
+  }) => void;
+}
+export const ProfileButton: FC<Props> = ({ onProfileCreated }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
-  const { data } = api.profile.getByAddress.useQuery({
+  const { data, refetch } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
     address: account?.address ?? "",
   }, {
@@ -42,7 +49,12 @@ export const ProfileButton: FC = () => {
             &times;
           </button>
           <h3 className="font-bold text-2xl mb-4">Create Profile</h3>
-          <ProfileForm />
+          <ProfileForm
+            onProfileCreated={(profile) => {
+              void refetch();
+              onProfileCreated?.(profile);
+            }}
+          />
         </div>
       </dialog>
     </>
