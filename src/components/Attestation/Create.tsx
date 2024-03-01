@@ -1,5 +1,5 @@
 import { EAS, SchemaEncoder, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
-import { type FC,useContext, useState } from 'react';
+import { type FC,useContext, useState, useEffect } from 'react';
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID } from "~/constants/addresses";
@@ -7,10 +7,21 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
 import Upload from "~/components/utils/Upload";
 import { toast } from "react-toastify";
+import Confetti from 'react-confetti';
 
 export const CreateAttestation: FC = () => {
+  const [width, setWidth] = useState<number>(0);
+  const [height, setHeight] = useState<number>(0);
+  useEffect(() => {
+    if (process.browser) {
+      setWidth(window.innerWidth);
+      setHeight(window.innerHeight);
+    }
+  }, []);
+
   const [numHotdogs, setNumHotdogs] = useState<number>(1);
   const [imgUri, setImgUri] = useState<string>("");
+  const [showConfetti, setShowConfetti] = useState<boolean>(false);
 
   const account = useActiveAccount();
   const wallet = useActiveWallet();
@@ -51,6 +62,11 @@ export const CreateAttestation: FC = () => {
         },
       });
       toast.success("Dog has been logged!");
+      // show confetti and then 30s later hide it
+      setShowConfetti(true);
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 30000);
     } catch (e) {
       // pop notification
       console.error(e);
@@ -64,6 +80,7 @@ export const CreateAttestation: FC = () => {
 
   return (
     <>
+      {showConfetti && <Confetti width={width} height={height} />}
       {/* Open the modal using document.getElementById('ID').showModal() method */}
       <button className="btn" onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}>
         Create Attestation
