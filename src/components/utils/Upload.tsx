@@ -18,6 +18,7 @@ interface UploadProps {
   initialUrls?: string[];
   height?: string;
   objectCover?: boolean;
+  imageClassName?: string;
 }
 
 export const Upload: FC<UploadProps> = ({ 
@@ -29,6 +30,7 @@ export const Upload: FC<UploadProps> = ({
   initialUrls,
   height,
   objectCover,
+  imageClassName,
 }) => {
   const [urls, setUrls] = useState<string[]>([]);
   const [preparingUpload, setPreparingUpload] = useState<boolean>(false);
@@ -100,6 +102,7 @@ export const Upload: FC<UploadProps> = ({
               alt="uploaded image"
               layout="fill"
               objectFit={objectCover ? "cover" : "contain"}
+              className={imageClassName}
             />
           </div>
         ) : (
