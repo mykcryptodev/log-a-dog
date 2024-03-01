@@ -40,7 +40,18 @@ export const Attestation: FC<Props> = ({ attestationId }) => {
         className="rounded-lg"
       />
       <div>
-        <div>{profile?.username ?? attestation.decodedAttestaton.address}</div>
+        <div className="flex items-center gap-1">
+          {profile?.imgUrl && (
+            <Image
+              src={profile.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/")}
+              alt="profile"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+          )}
+          <span>{profile?.username ?? attestation.decodedAttestaton.address}</span>
+        </div>
         <div>Hotdogs Eaten: {attestation.decodedAttestaton.numHotdogs.toString()}</div>
         <div>Metadata: {attestation.decodedAttestaton.metadata}</div>
       </div>
