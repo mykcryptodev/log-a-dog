@@ -9,15 +9,9 @@ import Upload from "~/components/utils/Upload";
 import { toast } from "react-toastify";
 import Confetti from 'react-confetti';
 import { ProfileButton } from "../Profile/Button";
+import { api } from "~/utils/api";
 
-type Props = {
-  profile: {
-    username: string;
-    imgUrl: string;
-    metadata?: string;
-  } | undefined;
-}
-export const CreateAttestation: FC<Props> = ({ profile }) => {
+export const CreateAttestation: FC = () => {
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
   useEffect(() => {
@@ -34,7 +28,15 @@ export const CreateAttestation: FC<Props> = ({ profile }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
   const { activeChain } = useContext(ActiveChainContext);
-
+  const { data: profile, refetch: refetchProfile } = api.profile.getByAddress.useQuery({
+    chainId: activeChain.id,
+    address: account?.address ?? "",
+  }, {
+    enabled: !!account?.address,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+  
   const schemaUid = EAS_SCHEMA_ID[activeChain.id]!;
   const easContractAddress = EAS_ADDRESS[activeChain.id]!;
   const eas = new EAS(easContractAddress);
@@ -97,7 +99,9 @@ export const CreateAttestation: FC<Props> = ({ profile }) => {
       </div>
     )
     if (!profile?.username) return (
-      <ProfileButton />
+      <ProfileButton
+        onProfileCreated={() => void refetchProfile()}
+      />
     );
 
     return (
