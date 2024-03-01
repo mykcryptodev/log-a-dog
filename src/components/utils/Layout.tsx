@@ -1,4 +1,4 @@
-import { ConnectButton, useActiveAccount } from "thirdweb/react";
+import { useActiveAccount } from "thirdweb/react";
 import { signOut } from "next-auth/react";
 import { type FC, type ReactNode,useEffect } from "react"
 import usePrevious from "~/hooks/usePrevious";
@@ -34,14 +34,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       <div className="fixed bg-gradient-to-bl from-pink-100 to-pink-500 rounded-full -top-[-85%] blur-3xl -left-[35%] w-full h-full -z-10"></div>
       <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen mt-10">
         <div className="w-full justify-end flex">
-          <ConnectButton
-            detailsButton={{
-              render: () => <ProfileButton />
-            }}
-            connectButton={{
-              label: "Login"
-            }}
-          />
+          <ProfileButton />
         </div>
         <ToastContainer />
         {children}

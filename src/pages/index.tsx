@@ -1,7 +1,6 @@
 import Head from "next/head";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
-import { ProfileForm } from "~/components/Profile/Form";
 
 export default function Home() {
   return (
@@ -35,9 +34,6 @@ export default function Home() {
               </div>
               <ListAttestations />
             </div>
-          </div>
-          <div>
-            <ProfileForm />
           </div>
         </div>
       </main>
