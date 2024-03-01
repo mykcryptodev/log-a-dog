@@ -1,36 +1,28 @@
-import { useAddress } from "@thirdweb-dev/react";
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { signOut } from "next-auth/react";
 import { type FC, type ReactNode,useEffect } from "react"
-
-import Footer from "~/components/utils/Footer";
-import Navigation from "~/components/utils/Navigation"
-import Notification from "~/components/utils/Notification";
-import NotificationContext from "~/context/Notification";
-import useNotification from "~/hooks/useNotification";
 import usePrevious from "~/hooks/usePrevious";
+import { ToastContainer } from 'react-toastify';
 
 interface LayoutProps {
   children: ReactNode
 }
 
 export const Layout: FC<LayoutProps> = ({ children }) => {
-  const notificationContext = useNotification();
-  const notificationState = {...notificationContext};
-
   // sign out user and clear session if connected wallet changes
-  const address = useAddress();
-  const previousAddress = usePrevious(address);
+  const account = useActiveAccount();
+  const previousAccount = usePrevious(account);
   useEffect(() => {
-    if (address) {
-      if (previousAddress && address !== previousAddress) {
+    if (account) {
+      if (previousAccount && account !== previousAccount) {
         void signOut();
       }
     } else {
-      if (previousAddress) {
+      if (previousAccount) {
         void signOut();
       }
     }
-  }, [previousAddress, address]);
+  }, [previousAccount, account]);
 
   return (
     <div className="block">
@@ -38,13 +30,10 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       <div className="fixed bg-brand-gradient-light -bottom-0 -right-[70%] w-full h-full -z-10"></div>
       <div className="fixed bg-brand-gradient-dark -top-[-65%] -left-[35%] w-full h-full -z-10"></div>
       <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen">
-        <NotificationContext.Provider value={notificationState}>
-          <Notification />
-          <Navigation />
-          {children}
-        </NotificationContext.Provider>
+        <ConnectButton />
+        <ToastContainer />
+        {children}
       </div>
-      <Footer />
     </div>
   )
 }

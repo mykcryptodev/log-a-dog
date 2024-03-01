@@ -1,10 +1,6 @@
-import { contestRouter } from "~/server/api/routers/contest";
-import { geocodeRouter } from "~/server/api/routers/geocode";
-import { profileRouter } from "~/server/api/routers/profile";
-import { reportRouter } from "~/server/api/routers/report";
-import { searchRouter } from "~/server/api/routers/search";
-import { userRouter } from "~/server/api/routers/user";
+import { postRouter } from "~/server/api/routers/post";
 import { createTRPCRouter } from "~/server/api/trpc";
+import { attestationRouter } from "~/server/api/routers/attestation";
 
 /**
  * This is the primary router for your server.
@@ -12,12 +8,8 @@ import { createTRPCRouter } from "~/server/api/trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  contest: contestRouter,
-  user: userRouter,
-  profile: profileRouter,
-  report: reportRouter,
-  search: searchRouter,
-  geocode: geocodeRouter,
+  post: postRouter,
+  attestation: attestationRouter,
 });
 
 // export type definition of API

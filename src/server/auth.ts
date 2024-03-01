@@ -1,18 +1,15 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { type User } from "@prisma/client";
-import {
-  authSession,
-  ThirdwebAuthProvider,
-} from "@thirdweb-dev/auth/next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type GetServerSidePropsContext } from "next";
 import {
-  type DefaultSession,
   getServerSession,
+  type DefaultSession,
   type NextAuthOptions,
 } from "next-auth";
+import { type Adapter } from "next-auth/adapters";
+import DiscordProvider from "next-auth/providers/discord";
 
-// import { env } from "~/env.mjs";
-import { prisma } from "~/server/db";
+import { env } from "~/env";
+import { db } from "~/server/db";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -22,13 +19,11 @@ import { prisma } from "~/server/db";
  */
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: {
+    user: DefaultSession["user"] & {
       id: string;
-      address?: string;
-      isAdmin: boolean;
       // ...other properties
       // role: UserRole;
-    } & DefaultSession["user"];
+    };
   }
 
   // interface User {
@@ -44,44 +39,19 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: async({ session, token }) => {
-      const sessionWithAddress = await authSession({ session, token });
-      sessionWithAddress.user.id = sessionWithAddress.user.address?.toLowerCase() || "";
-
-      let user: User | undefined | null;
-      // if the user is logged in, check if they exist in the database
-      if (sessionWithAddress.user.id) {
-        user = await prisma.user.findUnique({
-          where: {
-            id: session.user.id,
-          },
-        });
-        // if the user does not exist, create it
-        if (!user) {
-          user = await prisma.user.create({
-            data: {
-              id: session.user.id,
-              address: session.user.id,
-              // role: UserRole.USER, <-- set other properties on the user here
-            },
-          });
-        }
-      }
-
-      return {
-        ...session,
-        user: {
-          ...sessionWithAddress.user,
-          ...user,
-          id: sessionWithAddress.user.id,
-        },
-      }
-    }
+    session: ({ session, user }) => ({
+      ...session,
+      user: {
+        ...session.user,
+        id: user.id,
+      },
+    }),
   },
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(db) as Adapter,
   providers: [
-    ThirdwebAuthProvider({
-      domain: process.env.NEXT_PUBLIC_THIRDWEB_AUTH_DOMAIN || "",
+    DiscordProvider({
+      clientId: env.DISCORD_CLIENT_ID,
+      clientSecret: env.DISCORD_CLIENT_SECRET,
     }),
     /**
      * ...add more providers here.
@@ -93,9 +63,6 @@ export const authOptions: NextAuthOptions = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  session: {
-    strategy: "jwt",
-  },
 };
 
 /**
