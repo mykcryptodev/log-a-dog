@@ -1,7 +1,7 @@
 import { useContext, type FC } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
-import { MediaRenderer } from "@thirdweb-dev/react";
+import Image from "next/image";
 
 type Props = {
   attestationId: string;
@@ -20,13 +20,17 @@ export const Attestation: FC<Props> = ({ attestationId }) => {
 
   if (!data) return null;
 
+  // turn the ipfs:// uri into a gateway uri
+  const imgUri = data.decodedAttestaton.imgUri.replace("ipfs://", "https://ipfs.io/ipfs/");
+
   return (
     <div className="flex items-start gap-2">
-      <MediaRenderer
-        src={data.decodedAttestaton.imgUri}
-        height="200px"
-        width="200px"
-        style={{ borderRadius: '8px' }}
+      <Image
+        src={imgUri}
+        alt="hotdog"
+        width={100}
+        height={100}
+        className="rounded-lg"
       />
       <div>
         <div>Address: {data.decodedAttestaton.address}</div>

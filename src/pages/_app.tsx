@@ -10,7 +10,6 @@ import { ThirdwebProviderWithActiveChain } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
 import { Layout } from "~/components/utils/Layout";
 import 'react-toastify/dist/ReactToastify.css';
-import { LegacyThirdwebProviderWithActiveChain } from "~/providers/LegacyThirdweb";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -30,12 +29,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
     <SessionProvider session={session}>
       <ActiveChainContext.Provider value={activeChainContext}>
         <ThirdwebProviderWithActiveChain>
-          {/* Legacy provider can be removed when unified sdk includes all components */}
-          <LegacyThirdwebProviderWithActiveChain>
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-          </LegacyThirdwebProviderWithActiveChain>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
         </ThirdwebProviderWithActiveChain>
       </ActiveChainContext.Provider>
     </SessionProvider>
