@@ -26,9 +26,11 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="block">
-      <div className="absolute bg-brand-gradient-dark -top-[65%] -left-[65%] w-full h-full -z-10"></div>
-      <div className="fixed bg-brand-gradient-light -bottom-0 -right-[70%] w-full h-full -z-10"></div>
-      <div className="fixed bg-brand-gradient-dark -top-[-65%] -left-[35%] w-full h-full -z-10"></div>
+      <div className="absolute bg-gradient-to-t from-yellow-100 to-yellow-300 rounded-full blur-3xl -top-[75%] -left-[45%] w-full h-full -z-10" ></div>
+      <div className="fixed bg-gradient-to-br from-yellow-100 via-pink-200 to-pink-500 rounded-full blur-3xl -bottom-0 -right-[90%] w-full h-full -z-10"></div>
+      <div className="fixed bg-gradient-to-br from-yellow-100 via-pink-200 to-pink-500 rounded-full blur-3xl -bottom-0 -left-[55%] w-1/2 h-full -z-10"></div>
+      <div className="fixed bg-gradient-to-tl from-yellow-100 via-pink-200 to-yellow-300 rounded-full blur-3xl -bottom-0 -left-[25%] w-1/2 h-full -z-10"></div>
+      <div className="fixed bg-gradient-to-bl from-pink-100 to-pink-500 rounded-full -top-[-85%] blur-3xl -left-[35%] w-full h-full -z-10"></div>
       <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen">
         <ConnectButton />
         <ToastContainer />
