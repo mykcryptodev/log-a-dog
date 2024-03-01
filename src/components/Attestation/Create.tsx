@@ -110,12 +110,6 @@ export const CreateAttestation: FC = () => {
               if (!uris) return;
               setImgUri(uris[0]!);
             }} />
-            {imgUri && (
-              <div className="w-full">
-                {imgUri}
-              </div>
-            
-            )}
           </div>
           <div className="modal-action">
             <form method="dialog">
