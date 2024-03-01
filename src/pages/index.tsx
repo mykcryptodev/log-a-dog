@@ -1,8 +1,22 @@
 import Head from "next/head";
+import { useContext } from "react";
+import { useActiveAccount } from "thirdweb/react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
+import ActiveChainContext from "~/contexts/ActiveChain";
+import { api } from "~/utils/api";
 
 export default function Home() {
+  const account = useActiveAccount();
+  const { activeChain } = useContext(ActiveChainContext);
+  const { data: profile } = api.profile.getByAddress.useQuery({
+    chainId: activeChain.id,
+    address: account?.address ?? "",
+  }, {
+    enabled: !!account?.address,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
   return (
     <>
       <Head>
@@ -23,7 +37,7 @@ export default function Home() {
               <div className="text-lg">
                 Get your friends together and see who can eat the most hot dogs.
               </div>
-              <CreateAttestation />
+              <CreateAttestation profile={profile} />
             </div>
             <div
               className="flex max-w-xs flex-col gap-4 rounded-xl opacity-90 p-4 hover:opacity-80"

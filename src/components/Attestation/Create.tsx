@@ -8,8 +8,16 @@ import { client } from "~/providers/Thirdweb";
 import Upload from "~/components/utils/Upload";
 import { toast } from "react-toastify";
 import Confetti from 'react-confetti';
+import { ProfileButton } from "../Profile/Button";
 
-export const CreateAttestation: FC = () => {
+type Props = {
+  profile: {
+    username: string;
+    imgUrl: string;
+    metadata?: string;
+  } | undefined;
+}
+export const CreateAttestation: FC<Props> = ({ profile }) => {
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
   useEffect(() => {
@@ -33,7 +41,7 @@ export const CreateAttestation: FC = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const create = async (numEaten: number) => {
+  const create = async () => {
     if (!account || !wallet || !ethers6Adapter) {
       // pop notification
       return;
@@ -45,7 +53,7 @@ export const CreateAttestation: FC = () => {
     const schemaEncoder = new SchemaEncoder("address hotdog_eater,uint256 num_hotdogs_eaten,string image_uri,string metadata");
     const encodedData = schemaEncoder.encodeData([
       { name: "hotdog_eater", value: account.address, type: "address" },
-      { name: "num_hotdogs_eaten", value: numEaten, type: "uint256" },
+      { name: "num_hotdogs_eaten", value: numHotdogs, type: "uint256" },
       { name: "image_uri", value: imgUri, type: "string"},
       { name: "metadata", value: "", type: "string" }
     ]);
@@ -76,6 +84,32 @@ export const CreateAttestation: FC = () => {
       // close modal
       (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
     }
+  };
+
+  const ActionButton: FC = () => {
+    if (!account) return (
+      <div onClick={() => (document.getElementById('create_attestation_modal') as HTMLDialogElement).close() }>
+        <ConnectButton
+          connectButton={{
+            label: "Login to Log Dogs"
+          }}
+        />
+      </div>
+    )
+    if (!profile?.username) return (
+      <ProfileButton />
+    );
+
+    return (
+      <button 
+        className="btn btn-primary" 
+        disabled={isLoading}
+        onClick={() => void create()}
+      >
+        {isLoading && <div className="loading loading-spinner" />}
+        Create Attestation
+      </button>
+    )
   };
 
   return (
@@ -131,24 +165,7 @@ export const CreateAttestation: FC = () => {
               {/* if there is a button in form, it will close the modal */}
               <button className="btn">Close</button>
             </form>
-            {account ? (
-              <button 
-                className="btn btn-primary" 
-                disabled={isLoading}
-                onClick={() => void create(1)}
-              >
-                {isLoading && <div className="loading loading-spinner" />}
-                Create Attestation
-              </button>
-            ) : (
-              <div onClick={() => (document.getElementById('create_attestation_modal') as HTMLDialogElement).close() }>
-                <ConnectButton
-                  connectButton={{
-                    label: "Login to Log Dogs"
-                  }}
-                />
-              </div>
-            )}
+            <ActionButton />
           </div>
         </div>
       </dialog>
