@@ -90,24 +90,6 @@ export const CreateAttestation: FC = () => {
     }
   };
 
-  const confet = async () => {
-    (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-    const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-    canvas.style.display = 'block';
-    console.log({ canvas });
-    const jsConfetti = new JSConfetti({ canvas });
-    console.log({ jsConfetti });
-    try {
-      console.log('confetti start...')
-      await jsConfetti.addConfetti({
-        emojis: ['🌭', '🎉', '🌈', '✨', '🌭']
-      });
-      canvas.style.display = 'none';
-    } catch (e) {
-      console.log({ e })
-    }
-  }
-
   const ActionButton: FC = () => {
     if (!account) return (
       <div onClick={() => (document.getElementById('create_attestation_modal') as HTMLDialogElement).close() }>
@@ -125,19 +107,14 @@ export const CreateAttestation: FC = () => {
     );
 
     return (
-      <>
-        <button onClick={() => void confet() }>
-          Confetti
-        </button>
-        <button 
-          className="btn btn-primary" 
-          disabled={isLoading}
-          onClick={() => void create()}
-        >
-          {isLoading && <div className="loading loading-spinner" />}
-          Create Attestation
-        </button>
-      </>
+      <button 
+        className="btn btn-primary" 
+        disabled={isLoading}
+        onClick={() => void create()}
+      >
+        {isLoading && <div className="loading loading-spinner" />}
+        Create Attestation
+      </button>
     )
   };
 
