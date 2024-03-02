@@ -18,59 +18,74 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { address, chainId } = input;
-      const profileAddress = PROFILES[chainId];
-      const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-      const moderationAddress = MODERATION[chainId];
-      if (!profileAddress || !chain || !moderationAddress) {
-        throw new Error("Chain not supported");
-      }
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
-      const profileContract = getContract({
-        client,
-        address: profileAddress,
-        chain,
-      });
-      const moderationContract = getContract({
-        client,
-        address: moderationAddress,
-        chain,
-      });
-      const [profile, isRedacted] = await Promise.all([
-        readContract({
-          contract: profileContract,
-          method: {
-            name: "profiles",
-            type: "function",
-            stateMutability: "view",
-            inputs: [{ name: "address", type: "address" }],
-            outputs: [
-              { name: "username", type: "string" },
-              { name: "imgUrl", type: "string" },
-              { name: "metadata", type: "string" },
-            ],
-          },
-          params: [address],
-        }),
-        readContract({
-          contract: moderationContract,
-          method: {
-            name: "redactedAddresses",
-            type: "function",
-            stateMutability: "view",
-            inputs: [{ name: "address", type: "address" }],
-            outputs: [{ name: "redacted", type: "bool" }],
-          },
-          params: [address],
-        }),
-      ]);
-      const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/avatar.webp";
-      const shortenedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
-      return {
-        username: isRedacted ? shortenedAddress : profile[0],
-        imgUrl: isRedacted ? redactedImage : profile[1],
-        metadata: profile[2],
-      };
+      const profile = await getProfile(address, chainId);
+      return profile;
+    }),
+  getManyByAddress: publicProcedure
+    .input(z.object({ 
+      chainId: z.number(),
+      addresses: z.array(z.string()),
+    }))
+    .query(async ({ input }) => {
+      const { addresses, chainId } = input;
+      const profiles = await Promise.all(addresses.map((address) => getProfile(address, chainId)));
+      return profiles;
     }),
 });
+
+async function getProfile (address: string, chainId: number) {
+  const profileAddress = PROFILES[chainId];
+  const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
+  const moderationAddress = MODERATION[chainId];
+  if (!profileAddress || !chain || !moderationAddress) {
+    throw new Error("Chain not supported");
+  }
+  const client = createThirdwebClient({
+    secretKey: env.THIRDWEB_SECRET_KEY,
+  });
+  const profileContract = getContract({
+    client,
+    address: profileAddress,
+    chain,
+  });
+  const moderationContract = getContract({
+    client,
+    address: moderationAddress,
+    chain,
+  });
+  const [profile, isRedacted] = await Promise.all([
+    readContract({
+      contract: profileContract,
+      method: {
+        name: "profiles",
+        type: "function",
+        stateMutability: "view",
+        inputs: [{ name: "address", type: "address" }],
+        outputs: [
+          { name: "username", type: "string" },
+          { name: "imgUrl", type: "string" },
+          { name: "metadata", type: "string" },
+        ],
+      },
+      params: [address],
+    }),
+    readContract({
+      contract: moderationContract,
+      method: {
+        name: "redactedAddresses",
+        type: "function",
+        stateMutability: "view",
+        inputs: [{ name: "address", type: "address" }],
+        outputs: [{ name: "redacted", type: "bool" }],
+      },
+      params: [address],
+    }),
+  ]);
+  const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/avatar.webp";
+  const shortenedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return {
+    username: isRedacted ? shortenedAddress : profile[0],
+    imgUrl: isRedacted ? redactedImage : profile[1],
+    metadata: profile[2],
+  };
+}

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ApolloClient, InMemoryCache, HttpLink, gql } from '@apollo/client';
 import fetch from 'cross-fetch';
 import { EAS, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
-import { EAS as EAS_ADDRESS, MODERATION } from "~/constants/addresses";
+import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID, MODERATION } from "~/constants/addresses";
 import { createThirdwebClient, getContract, readContract } from "thirdweb";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { ethers } from "ethers";
@@ -139,6 +139,84 @@ export const attestationRouter = createTRPCRouter({
 
       return {
         attestations: result.data.attestations,
+      };
+    }),
+  getLeaderboard: publicProcedure
+    .input(z.object({ 
+      chainId: z.number(),
+      attestors: z.array(z.string()).optional(),
+      cursor: z.number().optional(),
+      itemsPerPage: z.number().optional()
+    }))
+    .query(async ({ input }) => {
+      const { chainId, attestors, cursor = 0, itemsPerPage = 10 } = input;
+      const endpoint = graphqlEndpoints[chainId];
+      if (!endpoint) {
+        throw new Error("Chain not supported");
+      }
+      // Create an instance of ApolloClient
+      const client = new ApolloClient({
+        link: new HttpLink({
+          uri: endpoint,
+          fetch,
+        }),
+        cache: new InMemoryCache(),
+      });
+      
+      const GET_LEADERBOARD = gql`
+        query AggregateAttestation($by: [AttestationScalarFieldEnum!]!, $where: AttestationWhereInput, $orderBy: [AttestationOrderByWithAggregationInput!]) {
+          groupByAttestation(by: $by, where: $where, orderBy: $orderBy) {
+            attester
+            _count {
+              attester
+            }
+          }
+        }
+      `;
+
+      // Define your query variables
+      const variables = {
+        where: {
+          schemaId: {
+            equals: EAS_SCHEMA_ID[chainId],
+          },
+          revoked: {
+            equals: false
+          },
+        ...(attestors && attestors.length > 0 ? { "attester": { "in": attestors } } : {}),
+        },
+        by: "attester",
+        orderBy: [
+          {
+            _count: {
+              attester: "desc"
+            }
+          }
+        ],
+        take: itemsPerPage,
+        skip: cursor
+      };
+
+      // Execute the query
+      const response = await client.query({
+        query: GET_LEADERBOARD,
+        variables: variables,
+      });
+      const responseSchema = z.object({
+        data: z.object({
+          groupByAttestation: z.array(z.object({
+            attester: z.string(),
+            _count: z.object({
+              attester: z.number(),
+            }),
+          })),
+        }),
+      });
+      const result = responseSchema.parse(response);
+      console.log({ result });
+
+      return {
+        leaderboard: result.data.groupByAttestation,
       };
     }),
 });

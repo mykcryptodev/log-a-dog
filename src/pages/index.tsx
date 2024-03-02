@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { CreateAttestation } from "~/components/Attestation/Create";
+import { Leaderboard } from "~/components/Attestation/Leaderboard";
 import { ListAttestations } from "~/components/Attestation/List";
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             🌭 Log <span className="text-secondary">a dog</span>
           </h1>
+          <Leaderboard />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
             <div
               className="flex max-w-xs flex-col gap-4 rounded-xl opacity-90 p-4 hover:opacity-80"
