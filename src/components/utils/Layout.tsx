@@ -44,7 +44,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       <div className={`fixed bg-gradient-to-tl ${fromYellow} ${viaPink} ${toYellow} rounded-full blur-3xl -bottom-0 -left-[25%] w-1/2 h-full -z-10`}></div>
       <div className={`fixed bg-gradient-to-bl ${fromPink} ${toPink} rounded-full -top-[-85%] blur-3xl -left-[35%] w-full h-full -z-10`}></div>
       <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen mt-10">
-        <div className="w-full justify-end flex">
+        <div className="w-full justify-end flex mr-4">
           <ProfileButton />
         </div>
         <ToastContainer />
