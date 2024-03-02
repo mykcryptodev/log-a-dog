@@ -1,5 +1,5 @@
 import { useContext, useMemo } from "react";
-import { ThirdwebProvider, embeddedWalletConfig, smartWalletConfig, metamaskConfig, coinbaseConfig, walletConnectConfig } from "thirdweb/react";
+import { ThirdwebProvider, embeddedWalletConfig, smartWalletConfig, metamaskConfig, coinbaseConfig, walletConnectConfig, type EmbeddedWalletAuth } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { createThirdwebClient } from "thirdweb";
@@ -21,6 +21,11 @@ export const ThirdwebProviderWithActiveChain = ({ children } : {
     gasless: true,
   }), [activeChain]);
 
+  const isProduction = !activeChain.testnet;
+  const productionOnlySocials = ["facebook", "apple", "google"] as EmbeddedWalletAuth[];
+  const devEmbeddedWallets = ["email"] as EmbeddedWalletAuth[];
+  const allEmbeddedWallets = devEmbeddedWallets.concat(productionOnlySocials);
+
   return (
     <ThirdwebProvider 
       client={client}
@@ -31,7 +36,11 @@ export const ThirdwebProviderWithActiveChain = ({ children } : {
         logoUrl: "/logo.png",
       }}
       wallets={[
-        smartWalletConfig(embeddedWalletConfig(), smartWalletOptions),
+        smartWalletConfig(embeddedWalletConfig({
+          auth: {
+            options: isProduction ? allEmbeddedWallets : devEmbeddedWallets,
+          }
+        }), smartWalletOptions),
         metamaskConfig(),
         coinbaseConfig(),
         walletConnectConfig(),

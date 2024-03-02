@@ -1,5 +1,5 @@
 import { EAS, SchemaEncoder, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
-import { type FC,useContext, useState, useEffect } from 'react';
+import { type FC,useContext, useState } from 'react';
 import { ConnectButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID } from "~/constants/addresses";
@@ -12,15 +12,6 @@ import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
 
 export const CreateAttestation: FC = () => {
-  const [width, setWidth] = useState<number>(0);
-  const [height, setHeight] = useState<number>(0);
-  useEffect(() => {
-    if (process.browser) {
-      setWidth(window.innerWidth);
-      setHeight(window.innerHeight);
-    }
-  }, []);
-
   const [numHotdogs, setNumHotdogs] = useState<number>(1);
   const [imgUri, setImgUri] = useState<string>("");
 
@@ -120,7 +111,14 @@ export const CreateAttestation: FC = () => {
 
   return (
     <>
-      <canvas className="absolute top-0 left-0 h-full w-full hidden" id="confetti-canvas"></canvas> {/* This is the confetti canvas */}
+      <canvas 
+        className="absolute top-0 left-0 hidden" 
+        id="confetti-canvas"
+        style={{
+          height: '100vh',
+          width: '100vw',
+        }}
+      />
       {/* Open the modal using document.getElementById('ID').showModal() method */}
       <button className="btn" onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}>
         Create Attestation
