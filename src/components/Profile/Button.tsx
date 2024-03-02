@@ -27,17 +27,19 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated }) => {
   console.log({ data })
 
   if (!account) return (
-    <ConnectButton 
-      connectButton={{
-        label: "Login"
-      }}
-    />
+    <div className="mr-4">
+      <ConnectButton 
+        connectButton={{
+          label: "Login"
+        }}
+      />
+    </div>
   )
 
   if (!data?.username) return (
     <>
       {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <button className="btn" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
+      <button className="btn mr-4" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
         Create Profile
       </button>
       <dialog id="create_profile_modal" className="modal">
@@ -63,38 +65,40 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated }) => {
   const imageUrl = data.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 
   return (
-    <ConnectButton
-      connectModal={{
-        title: "Login to Log a Dog",
-        showThirdwebBranding: false,
-        titleIcon: "https://logadog.xyz/images/logo.png",
-      }}
-      detailsModal={{
-        hideSwitchToPersonalWallet: true,
-        showTestnetFaucet: false,
-      }}
-      detailsButton={{
-        render: () => (
-          <button className="btn btn-ghost">
-            <div className="flex items-center gap-2">
-              <div className="avatar">
-                <div className="w-8 rounded-full">
-                  <Image
-                    src={imageUrl}
-                    alt="profile"
-                    width={48}
-                    height={48}
-                  />
+    <div className="mr-4">
+      <ConnectButton
+        connectModal={{
+          title: "Login to Log a Dog",
+          showThirdwebBranding: false,
+          titleIcon: "https://logadog.xyz/images/logo.png",
+        }}
+        detailsModal={{
+          hideSwitchToPersonalWallet: true,
+          showTestnetFaucet: false,
+        }}
+        detailsButton={{
+          render: () => (
+            <button className="btn btn-ghost">
+              <div className="flex items-center gap-2">
+                <div className="avatar">
+                  <div className="w-8 rounded-full">
+                    <Image
+                      src={imageUrl}
+                      alt="profile"
+                      width={48}
+                      height={48}
+                    />
+                  </div>
                 </div>
+                <span>{data.username}</span>
               </div>
-              <span>{data.username}</span>
-            </div>
-          </button>
-        )
-      }}
-      connectButton={{
-        label: "Login"
-      }}
-    />
+            </button>
+          )
+        }}
+        connectButton={{
+          label: "Login"
+        }}
+      />
+    </div>
   )
 };
