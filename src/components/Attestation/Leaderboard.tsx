@@ -46,7 +46,7 @@ export const Leaderboard: FC = () => {
   }, [windowWidth]);
 
   if (!data || !profiles) return (
-    <div className="bg-base-200 rounded-lg animate-pulse w-96 h-72" />
+    <div className="bg-base-200 rounded-lg animate-pulse w-full h-72" />
   );
 
   const chartOptions = {
