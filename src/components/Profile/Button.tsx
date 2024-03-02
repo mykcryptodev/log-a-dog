@@ -64,6 +64,15 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated }) => {
 
   return (
     <ConnectButton
+      connectModal={{
+        title: "Login to Log a Dog",
+        showThirdwebBranding: false,
+        titleIcon: "https://logadog.xyz/images/logo.png",
+      }}
+      detailsModal={{
+        hideSwitchToPersonalWallet: true,
+        showTestnetFaucet: false,
+      }}
       detailsButton={{
         render: () => (
           <button className="btn btn-ghost">
