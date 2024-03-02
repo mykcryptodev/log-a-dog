@@ -1,4 +1,4 @@
-import { useContext, type FC, useState, useEffect } from "react";
+import { useContext, type FC, useState, useEffect, useMemo } from "react";
 import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import dynamic from "next/dynamic";
@@ -33,6 +33,7 @@ export const Leaderboard: FC = () => {
   const [windowWidth, setWindowWidth] = useState<number>(650);
 
   useEffect(() => {
+    setWindowWidth(window.innerWidth);
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => {
@@ -40,7 +41,9 @@ export const Leaderboard: FC = () => {
     };
   }, []);
 
-  const width = windowWidth <= 640 ? 350 : 640;
+  const width = useMemo(() => {
+    return windowWidth <= 640 ? 350 : 640;
+  }, [windowWidth]);
 
   if (!data || !profiles) return (
     <div className="bg-base-200 rounded-lg animate-pulse w-96 h-72" />
