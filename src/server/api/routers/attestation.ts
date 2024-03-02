@@ -2,8 +2,8 @@ import { z } from "zod";
 import { ApolloClient, InMemoryCache, HttpLink, gql } from '@apollo/client';
 import fetch from 'cross-fetch';
 import { EAS, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
-import { EAS as EAS_ADDRESS } from "~/constants/addresses";
-import { createThirdwebClient } from "thirdweb";
+import { EAS as EAS_ADDRESS, MODERATION } from "~/constants/addresses";
+import { createThirdwebClient, getContract, readContract } from "thirdweb";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { ethers } from "ethers";
 
@@ -32,7 +32,8 @@ export const attestationRouter = createTRPCRouter({
       const { attestationId, chainId } = input;
       const easAddress = EAS_ADDRESS[chainId];
       const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-      if (!easAddress || !chain) {
+      const moderationAddress = MODERATION[chainId];
+      if (!easAddress || !chain || !moderationAddress) {
         throw new Error("Chain not supported");
       }
       const client = createThirdwebClient({
@@ -47,12 +48,30 @@ export const attestationRouter = createTRPCRouter({
         ["address", "uint256", "string", "string"],
         attestation.data
       );
+      // check if this attestation should be redacted
+      const moderation = getContract({
+        client,
+        address: moderationAddress,
+        chain,
+      });
+      const isRedacted = await readContract({
+        contract: moderation,
+        method: {
+          name: "redactedAttestations",
+          type: "function",
+          stateMutability: "view",
+          inputs: [{ name: "attestationId", type: "bytes32" }],
+          outputs: [{ name: "redacted", type: "bool" }],
+        },
+        params: [attestationId as `0x${string}`],
+      });
+      const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/redacted.webp";
       return {
         attestation,
         decodedAttestaton: {
           address: decoded[0] as string,
           numHotdogs: decoded[1] as number,
-          imgUri: decoded[2] as string,
+          imgUri: isRedacted ? redactedImage : decoded[2] as string,
           metadata: decoded[3] as string,
         }
       };

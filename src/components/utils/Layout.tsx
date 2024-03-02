@@ -29,7 +29,6 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   useEffect(() => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
-  console.log({ userPrefersDarkMode });
 
   const fromYellow = userPrefersDarkMode ? "from-yellow-300" : "from-yellow-100";
   const toYellow = userPrefersDarkMode ? "to-yellow-800" : "to-yellow-00";

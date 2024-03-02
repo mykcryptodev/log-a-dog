@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PROFILES } from "~/constants/addresses";
+import { MODERATION, PROFILES } from "~/constants/addresses";
 import { createThirdwebClient, getContract } from "thirdweb";
 import { readContract } from "thirdweb";
 import { env } from "~/env";
@@ -20,36 +20,57 @@ export const profileRouter = createTRPCRouter({
       const { address, chainId } = input;
       const profileAddress = PROFILES[chainId];
       const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-      if (!profileAddress || !chain) {
+      const moderationAddress = MODERATION[chainId];
+      if (!profileAddress || !chain || !moderationAddress) {
         throw new Error("Chain not supported");
       }
       const client = createThirdwebClient({
         secretKey: env.THIRDWEB_SECRET_KEY,
       });
-      const contract = getContract({
+      const profileContract = getContract({
         client,
         address: profileAddress,
         chain,
       });
-      const result = await readContract({
-        contract,
-        method: {
-          name: "profiles",
-          type: "function",
-          stateMutability: "view",
-          inputs: [{ name: "address", type: "address" }],
-          outputs: [
-            { name: "username", type: "string" },
-            { name: "imgUrl", type: "string" },
-            { name: "metadata", type: "string" },
-          ],
-        },
-        params: [address],
+      const moderationContract = getContract({
+        client,
+        address: moderationAddress,
+        chain,
       });
+      const [profile, isRedacted] = await Promise.all([
+        readContract({
+          contract: profileContract,
+          method: {
+            name: "profiles",
+            type: "function",
+            stateMutability: "view",
+            inputs: [{ name: "address", type: "address" }],
+            outputs: [
+              { name: "username", type: "string" },
+              { name: "imgUrl", type: "string" },
+              { name: "metadata", type: "string" },
+            ],
+          },
+          params: [address],
+        }),
+        readContract({
+          contract: moderationContract,
+          method: {
+            name: "redactedAddresses",
+            type: "function",
+            stateMutability: "view",
+            inputs: [{ name: "address", type: "address" }],
+            outputs: [{ name: "redacted", type: "bool" }],
+          },
+          params: [address],
+        }),
+      ]);
+      const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/avatar.webp";
+      const shortenedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
       return {
-        username: result[0],
-        imgUrl: result[1],
-        metadata: result[2],
+        username: isRedacted ? shortenedAddress : profile[0],
+        imgUrl: isRedacted ? redactedImage : profile[1],
+        metadata: profile[2],
       };
     }),
 });

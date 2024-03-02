@@ -8,7 +8,7 @@ import { client } from "~/providers/Thirdweb";
 import Upload from "~/components/utils/Upload";
 import { toast } from "react-toastify";
 import Confetti from 'react-confetti';
-import { ProfileButton } from "../Profile/Button";
+import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
 
 export const CreateAttestation: FC = () => {
