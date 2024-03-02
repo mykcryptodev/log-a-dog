@@ -7,7 +7,7 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
 import Upload from "~/components/utils/Upload";
 import { toast } from "react-toastify";
-import Confetti from 'react-confetti';
+import JSConfetti from 'js-confetti';
 import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
 
@@ -23,7 +23,6 @@ export const CreateAttestation: FC = () => {
 
   const [numHotdogs, setNumHotdogs] = useState<number>(1);
   const [imgUri, setImgUri] = useState<string>("");
-  const [showConfetti, setShowConfetti] = useState<boolean>(false);
 
   const account = useActiveAccount();
   const wallet = useActiveWallet();
@@ -72,11 +71,14 @@ export const CreateAttestation: FC = () => {
         },
       });
       toast.success("Dog has been logged!");
-      // show confetti and then 30s later hide it
-      setShowConfetti(true);
-      setTimeout(() => {
-        setShowConfetti(false);
-      }, 5000);
+      (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+      const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+      canvas.style.display = 'block';
+      const jsConfetti = new JSConfetti({ canvas });
+      await jsConfetti.addConfetti({
+        emojis: ['🌭', '🎉', '🌈', '✨']
+      });
+      canvas.style.display = 'none';
     } catch (e) {
       // pop notification
       console.error(e);
@@ -87,6 +89,24 @@ export const CreateAttestation: FC = () => {
       (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
     }
   };
+
+  const confet = async () => {
+    (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+    const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+    canvas.style.display = 'block';
+    console.log({ canvas });
+    const jsConfetti = new JSConfetti({ canvas });
+    console.log({ jsConfetti });
+    try {
+      console.log('confetti start...')
+      await jsConfetti.addConfetti({
+        emojis: ['🌭', '🎉', '🌈', '✨', '🌭']
+      });
+      canvas.style.display = 'none';
+    } catch (e) {
+      console.log({ e })
+    }
+  }
 
   const ActionButton: FC = () => {
     if (!account) return (
@@ -105,20 +125,25 @@ export const CreateAttestation: FC = () => {
     );
 
     return (
-      <button 
-        className="btn btn-primary" 
-        disabled={isLoading}
-        onClick={() => void create()}
-      >
-        {isLoading && <div className="loading loading-spinner" />}
-        Create Attestation
-      </button>
+      <>
+        <button onClick={() => void confet() }>
+          Confetti
+        </button>
+        <button 
+          className="btn btn-primary" 
+          disabled={isLoading}
+          onClick={() => void create()}
+        >
+          {isLoading && <div className="loading loading-spinner" />}
+          Create Attestation
+        </button>
+      </>
     )
   };
 
   return (
     <>
-      {showConfetti && <Confetti width={width} height={height} />}
+      <canvas className="absolute top-0 left-0 h-full w-full hidden" id="confetti-canvas"></canvas> {/* This is the confetti canvas */}
       {/* Open the modal using document.getElementById('ID').showModal() method */}
       <button className="btn" onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}>
         Create Attestation
@@ -140,7 +165,7 @@ export const CreateAttestation: FC = () => {
               >
                 {/* Minus Icon */}
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
                 </svg>
               </button>
               <div className="w-full text-center">
@@ -152,7 +177,7 @@ export const CreateAttestation: FC = () => {
               >
                 {/* Plus Icon */}
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
               </button>
             </div>
