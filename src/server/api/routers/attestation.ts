@@ -65,7 +65,7 @@ export const attestationRouter = createTRPCRouter({
         },
         params: [attestationId as `0x${string}`],
       });
-      const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/redacted.webp";
+      const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
       return {
         attestation,
         decodedAttestaton: {
