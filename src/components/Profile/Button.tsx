@@ -32,6 +32,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated }) => {
         connectButton={{
           label: "Login"
         }}
+        connectModal={{
+          title: "Login to Log a Dog",
+          showThirdwebBranding: false,
+          titleIcon: "https://logadog.xyz/images/logo.png",
+        }}
       />
     </div>
   )
@@ -71,6 +76,13 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated }) => {
           title: "Login to Log a Dog",
           showThirdwebBranding: false,
           titleIcon: "https://logadog.xyz/images/logo.png",
+          welcomeScreen: {
+            title: "Log a Dog",
+            subtitle: "Login to Log a Dog",
+            img: {
+              src: "https://logadog.xyz/images/logo.png",
+            }
+          }
         }}
         detailsModal={{
           hideSwitchToPersonalWallet: true,

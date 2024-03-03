@@ -87,5 +87,6 @@ async function getProfile (address: string, chainId: number) {
     username: isRedacted ? shortenedAddress : profile[0],
     imgUrl: isRedacted ? redactedImage : profile[1],
     metadata: profile[2],
+    address,
   };
 }

@@ -1,6 +1,7 @@
 import { postRouter } from "~/server/api/routers/post";
 import { createTRPCRouter } from "~/server/api/trpc";
 import { attestationRouter } from "~/server/api/routers/attestation";
+import { contestRouter } from "~/server/api/routers/contest";
 import { profileRouter } from "~/server/api/routers/profile";
 
 /**
@@ -11,6 +12,7 @@ import { profileRouter } from "~/server/api/routers/profile";
 export const appRouter = createTRPCRouter({
   post: postRouter,
   attestation: attestationRouter,
+  contest: contestRouter,
   profile: profileRouter,
 });
 

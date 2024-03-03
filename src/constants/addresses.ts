@@ -24,3 +24,7 @@ export const PROFILES: ContractAddress = {
 export const MODERATION: ContractAddress = {
   [baseSepolia.id]: "0xB03F98Fd646CF9D454dd726AB0Ef2203D0D5CFf1",
 }
+
+export const CONTESTS: ContractAddress = {
+  [baseSepolia.id]: "0xe02bEe8348254eD0A61BBfc89BAb5feB71721CFc",
+}

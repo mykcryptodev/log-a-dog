@@ -80,11 +80,14 @@ export const attestationRouter = createTRPCRouter({
     .input(z.object({ 
       chainId: z.number(),
       schemaId: z.string(),
+      attestors: z.array(z.string()).optional(),
+      startDate: z.number().optional(),
+      endDate: z.number().optional(),
       cursor: z.number().optional(),
       itemsPerPage: z.number().optional()
     }))
     .query(async ({ input }) => {
-      const { schemaId, chainId, cursor = 0, itemsPerPage = 10 } = input;
+      const { schemaId, chainId, attestors, startDate, endDate, cursor = 0, itemsPerPage = 10 } = input;
       const endpoint = graphqlEndpoints[chainId];
       if (!endpoint) {
         throw new Error("Chain not supported");
@@ -113,7 +116,12 @@ export const attestationRouter = createTRPCRouter({
         attestationsWhere2: {
           schemaId: {
             equals: schemaId,
-          }
+          },
+          revoked: {
+            equals: false
+          },
+          ...(attestors && attestors.length > 0 ? { "attester": { "in": attestors } } : {}),
+          ...(startDate && endDate ? { "timeCreated": { "gte": startDate, "lte": endDate } } : {})
         },
         orderBy: [{ timeCreated: "desc" }],
         skip: cursor,
@@ -145,11 +153,14 @@ export const attestationRouter = createTRPCRouter({
     .input(z.object({ 
       chainId: z.number(),
       attestors: z.array(z.string()).optional(),
+      startDate: z.number().optional(),
+      endDate: z.number().optional(),
       cursor: z.number().optional(),
       itemsPerPage: z.number().optional()
     }))
     .query(async ({ input }) => {
-      const { chainId, attestors, cursor = 0, itemsPerPage = 10 } = input;
+      const { chainId, attestors, startDate, endDate, cursor = 0, itemsPerPage = 10 } = input;
+      console.log({ startDate, endDate });
       const endpoint = graphqlEndpoints[chainId];
       if (!endpoint) {
         throw new Error("Chain not supported");
@@ -184,6 +195,7 @@ export const attestationRouter = createTRPCRouter({
             equals: false
           },
         ...(attestors && attestors.length > 0 ? { "attester": { "in": attestors } } : {}),
+        ...(startDate && endDate ? { "timeCreated": { "gte": startDate, "lte": endDate } } : {})
         },
         by: "attester",
         orderBy: [

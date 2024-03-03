@@ -10,12 +10,21 @@ const ReactApexChart = dynamic(
   { ssr: false } // This line disables server-side rendering
 );
 
-export const Leaderboard: FC = () => {
+type Props = {
+  attestors?: string[];
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const { data } = api.attestation.getLeaderboard.useQuery({
     chainId: activeChain.id,
     cursor: 0,
     itemsPerPage: 10,
+    ...attestors && { attestors },
+    ...startDate && { startDate: Math.floor(startDate.getTime() / 1000) },
+    ...endDate && { endDate: Math.floor(endDate.getTime() / 1000) },
   }, {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
