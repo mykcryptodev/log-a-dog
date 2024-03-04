@@ -21,6 +21,39 @@ export const contestRouter = createTRPCRouter({
       const contest = await getContest(id, chainId);
       return contest;
     }),
+  getJoinRequests: publicProcedure
+    .input(z.object({ 
+      chainId: z.number(),
+      id: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const { id, chainId } = input;
+      const contestAddress = CONTESTS[chainId];
+      const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
+      if (!contestAddress || !chain) {
+        throw new Error("Chain not supported");
+      }
+      const client = createThirdwebClient({
+        secretKey: env.THIRDWEB_SECRET_KEY,
+      });
+      const contract = getContract({
+        client,
+        address: contestAddress,
+        chain,
+      });
+      const joinRequests = await readContract({
+        contract,
+        method: {
+          name: "getJoinRequests",
+          type: "function",
+          stateMutability: "view",
+          inputs: [{ name: "contestId", type: "uint256" }],
+          outputs: [{ name: "joinRequests", type: "address[]" }],
+        },
+        params: [BigInt(id)],
+      });
+      return joinRequests;
+    }),
 });
 
 async function getContest (id: number, chainId: number) {

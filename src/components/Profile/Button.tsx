@@ -11,8 +11,9 @@ type Props = {
     imgUrl: string;
     metadata?: string;
   }) => void;
+  loginBtnLabel?: string;
 }
-export const ProfileButton: FC<Props> = ({ onProfileCreated }) => {
+export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data, refetch } = api.profile.getByAddress.useQuery({
@@ -30,7 +31,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated }) => {
     <div className="mr-4">
       <ConnectButton 
         connectButton={{
-          label: "Login"
+          label: loginBtnLabel ?? "Login"
         }}
         connectModal={{
           title: "Login to Log a Dog",

@@ -69,6 +69,7 @@ export const AddContestants: FC<Props> = ({ contestId, onContestantsAdded }) => 
           </button>
           <h3 className="font-bold text-2xl mb-4">Add Contestants</h3>
           <div className="flex flex-col gap-2">
+            <span className="mb-2">Search for contestants to add by their username or their address. Usernames are case sensitive!</span>
             <input
               type="text"
               className="input input-bordered text-center"
