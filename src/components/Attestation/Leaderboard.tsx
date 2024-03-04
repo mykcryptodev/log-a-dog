@@ -39,6 +39,11 @@ export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate }) => {
     refetchOnMount: false,
   });
 
+  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
+  useEffect(() => {
+    setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }, []);
+
   const [windowWidth, setWindowWidth] = useState<number>(650);
 
   useEffect(() => {
@@ -84,11 +89,19 @@ export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate }) => {
       },
       xaxis: {
         categories: profiles.map((profile) => profile.username),
+        labels: {
+          style: {
+            colors: userPrefersDarkMode ? '#868D9A' : undefined,
+          },
+        },
       },
       yaxis: {
         title: {
-          text: 'Hotdogs Eaten'
-        }
+          text: 'Hotdogs Eaten',
+          style: {
+            color: userPrefersDarkMode ? '#868D9A' : undefined,
+          },
+        },
       },
       fill: {
         opacity: 0.75

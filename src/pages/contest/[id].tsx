@@ -5,7 +5,7 @@ import { api } from "~/utils/api";
 import Image from "next/image";
 import { Leaderboard } from "~/components/Attestation/Leaderboard";
 import { ListAttestations } from "~/components/Attestation/List";
-import AddContestant from "~/components/Contest/AddContestant";
+import AddContestants from "~/components/Contest/AddContestants";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params as { id: string };
@@ -18,7 +18,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 export const Contest: NextPage<{id: string}> = ({ id }) => {
   const { activeChain } = useContext(ActiveChainContext);
-  const { data: contest } = api.contest.getById.useQuery({
+  const { data: contest, refetch } = api.contest.getById.useQuery({
     id: parseInt(id),
     chainId: activeChain.id,
   }, {
@@ -46,7 +46,10 @@ export const Contest: NextPage<{id: string}> = ({ id }) => {
         endDate={new Date(contest.endDate)}
       />
       <span className="font-bold">Contestants</span>
-      <AddContestant contestId={Number(contest.id)} />
+      <AddContestants 
+        contestId={Number(contest.id)}
+        onContestantsAdded={() => refetch()}
+      />
       {profiles.map((profile) => (
         <div key={profile.username} className="flex items-center gap-1">
           <Image

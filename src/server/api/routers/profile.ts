@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MODERATION, PROFILES } from "~/constants/addresses";
-import { createThirdwebClient, getContract } from "thirdweb";
+import { createThirdwebClient, getContract, isAddress } from "thirdweb";
 import { readContract } from "thirdweb";
 import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
@@ -30,6 +30,69 @@ export const profileRouter = createTRPCRouter({
       const { addresses, chainId } = input;
       const profiles = await Promise.all(addresses.map((address) => getProfile(address, chainId)));
       return profiles;
+    }),
+  search: publicProcedure
+    .input(z.object({ 
+      chainId: z.number(),
+      query: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const { query, chainId } = input;
+      const profileAddress = PROFILES[chainId];
+      const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
+      if (!profileAddress || !chain) {
+        throw new Error("Chain not supported");
+      }
+      const client = createThirdwebClient({
+        secretKey: env.THIRDWEB_SECRET_KEY,
+      });
+      const profileContract = getContract({
+        client,
+        address: profileAddress,
+        chain,
+      });
+      if (isAddress(query)) {
+        const result = await readContract({
+          contract: profileContract,
+          method: {
+            name: "profiles",
+            type: "function",
+            stateMutability: "view",
+            inputs: [{ name: "address", type: "address" }],
+            outputs: [
+              { name: "username", type: "string" },
+              { name: "imgUrl", type: "string" },
+              { name: "metadata", type: "string" },
+            ],
+          },
+          params: [query],
+        });
+        if (result) {
+          return {
+            address: query,
+            username: result[0],
+            imgUrl: result[1],
+            metadata: result[2],
+          }
+        }
+      } else {
+        const result = await readContract({
+          contract: profileContract,
+          method: {
+            name: "usedUsernames",
+            type: "function",
+            stateMutability: "view",
+            inputs: [{ name: "username", type: "string" }],
+            outputs: [{ name: "address", type: "address" }],
+          },
+          params: [query],
+        });
+        if (result) {
+          const profile = await getProfile(result, chainId);
+          return profile
+        }
+      }
+      return null;
     }),
 });
 

@@ -52,6 +52,7 @@ async function getContest (id: number, chainId: number) {
           { name: "startDate", type: "uint256" },
           { name: "endDate", type: "uint256" },
           { name: "creator", type: "address" },
+          { name: "isInviteOnly", type: "bool" },
         ],
       },
       params: [BigInt(id)],
@@ -76,5 +77,6 @@ async function getContest (id: number, chainId: number) {
     endDate: new Date(Number(contest[4])),
     creator: contest[5],
     contestants,
+    isInviteOnly: contest[6],
   };
 }

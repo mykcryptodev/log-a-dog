@@ -18,7 +18,7 @@ export const EAS_SCHEMA_ID: ContractAddress = {
 }
 
 export const PROFILES: ContractAddress = {
-  [baseSepolia.id]: "0x844AfFF508632fD26C0c7b20E9465B7EA93C69b0",
+  [baseSepolia.id]: "0x4D0d732777B677b194A49AE8DED8A9374Cc14117",
 }
 
 export const MODERATION: ContractAddress = {
@@ -26,5 +26,5 @@ export const MODERATION: ContractAddress = {
 }
 
 export const CONTESTS: ContractAddress = {
-  [baseSepolia.id]: "0xe02bEe8348254eD0A61BBfc89BAb5feB71721CFc",
+  [baseSepolia.id]: "0xa34Fee979C734425EF137974Ca00005c7a537766",
 }

@@ -31,6 +31,7 @@ type Props = {
     metadata: string;
     startDate: number;
     endDate: number;
+    isInviteOnly: boolean;
   };
 }
 
@@ -39,6 +40,7 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
   const account = useActiveAccount();
   const [name, setName] = useState<string>("");
   const [metadata, setMetadata] = useState<string>("");
+  const [isInviteOnly, setIsInviteOnly] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<string>(getIsoStringInUserTimezone(new Date(new Date().getTime())));
   const [endDate, setEndDate] = useState<string>(getIsoStringInUserTimezone(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)));
 
@@ -48,6 +50,7 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
       setMetadata(contest.metadata);
       setStartDate(new Date(contest.startDate).getTime().toString());
       setEndDate(new Date(contest.endDate).getTime().toString());
+      setIsInviteOnly(contest.isInviteOnly);
     }
   }, [contest]);
 
@@ -61,18 +64,18 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
   });
   console.log({ contractEvents });
 
-  const createContestMethod = "function createContest(string name, string metadata, uint256 start, uint256 end)";
-  const updateContestMethod = "function updateContest(uint256 id, string name, string metadata, uint256 start, uint256 end)";
+  const createContestMethod = "function createContest(string name, string metadata, uint256 start, uint256 end, bool isInviteOnly)";
+  const updateContestMethod = "function updateContest(uint256 id, string name, string metadata, uint256 start, uint256 end, bool isInviteOnly)";
 
   const createParams = useMemo(() => {
-    type CreateParams = [string, string, bigint, bigint];
-    return [name, metadata, BigInt(new Date(startDate).getTime()), BigInt(new Date(endDate).getTime())] as CreateParams;
-  }, [name, metadata, startDate, endDate]);
+    type CreateParams = [string, string, bigint, bigint, boolean];
+    return [name, metadata, BigInt(new Date(startDate).getTime()), BigInt(new Date(endDate).getTime()), isInviteOnly] as CreateParams;
+  }, [name, metadata, startDate, endDate, isInviteOnly]);
 
   const updateParams = useMemo(() => {
-    type UpdateParams = [bigint, string, string, bigint, bigint];
-    return [BigInt(contest?.id ?? 0), name, metadata, BigInt(new Date(startDate).getTime()), BigInt(new Date(endDate).getTime())] as UpdateParams;
-  }, [contest, name, metadata, startDate, endDate]);
+    type UpdateParams = [bigint, string, string, bigint, bigint, boolean];
+    return [BigInt(contest?.id ?? 0), name, metadata, BigInt(new Date(startDate).getTime()), BigInt(new Date(endDate).getTime()), isInviteOnly] as UpdateParams;
+  }, [contest?.id, name, metadata, startDate, endDate, isInviteOnly]);
 
   const createTx = prepareContractCall({
     contract,
@@ -119,6 +122,15 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
         onChange={(e) => setEndDate(e.target.value)}
         placeholder="End Date"
       />
+      <label className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          className="toggle toggle-primary"
+          checked={isInviteOnly}
+          onChange={(e) => setIsInviteOnly(e.target.checked)}
+        />
+        <span>Is Invite Only</span>
+      </label>
       <TransactionButton
         transaction={() => action === "create" ? createTx : updateTx}
         onSubmitted={(tx) => {
