@@ -6,6 +6,8 @@ import Image from "next/image";
 import { Leaderboard } from "~/components/Attestation/Leaderboard";
 import { ListAttestations } from "~/components/Attestation/List";
 import AddContestants from "~/components/Contest/AddContestants";
+import { RemoveContestant } from "~/components/Contest/RemoveContestant";
+import { useActiveAccount } from "thirdweb/react";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params as { id: string };
@@ -17,6 +19,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 };
 
 export const Contest: NextPage<{id: string}> = ({ id }) => {
+  const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
   const { data: contest, refetch } = api.contest.getById.useQuery({
     id: parseInt(id),
@@ -65,6 +68,13 @@ export const Contest: NextPage<{id: string}> = ({ id }) => {
               <div className="badge badge-sm badge-accent">creator</div>
             )}
           </div>
+          {contest.creator === account?.address && contest.creator !== profile.address && (
+            <RemoveContestant 
+              contestId={Number(contest.id)}
+              contestantToRemove={profile}
+              onContestantRemoved={() => refetch()}
+            />
+          )}
         </div>
       ))}
       <ListAttestations 
