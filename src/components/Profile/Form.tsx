@@ -1,4 +1,4 @@
-import { useState, type FC, useContext } from "react";
+import { useState, type FC, useContext, useMemo } from "react";
 import { TransactionButton, useActiveAccount } from "thirdweb/react";
 import { getContract, prepareContractCall } from "thirdweb";
 import Upload from "~/components/utils/Upload";
@@ -21,6 +21,8 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
   const [imgUrl, setImgUrl] = useState<string>("");
   const [username, setUsername] = useState<string>("");
   const metadata = "";
+  const [error, setError] = useState<string | null>(null);
+  const [saveProfileBtnLabel, setSaveProfileBtnLabel] = useState<string>("Save Profile");
 
   const contract = getContract({
     client,
@@ -33,6 +35,10 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
     method: "function setProfile(string username, string imgUrl, string metadata)",
     params: [username, imgUrl, ""],
   });
+
+  const isValidUsername = useMemo(() => {
+    return username.length >= 3 && username.length <= 20;
+  }, [username]);
 
   if (!account) return null;
 
@@ -53,25 +59,46 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
         type="text"
         className="input input-bordered text-center"
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        onChange={(e) => {
+          setUsername(e.target.value.replace(/[^0-9a-zA-Z-_ ]/g, '').toLowerCase());
+        }}
         placeholder="username"
       />
+      {!isValidUsername && (
+        <span className="text-xs opacity-50 text-center px-8 sm:px-16">
+          Username must be 3-20 characters and only contain lowercase letters, numbers, and hyphens
+        </span>
+      )}
       <TransactionButton
+        waitForReceipt
+        style={!isValidUsername ? {
+          pointerEvents: 'none',
+          color: 'rgb(0, 0, 0, 0.5)',
+        } : {}}
         transaction={() => tx}
         onSubmitted={() => {
-          toast.info("Saving...");
+          setSaveProfileBtnLabel("Saving...");
+        }}
+        onReceipt={(receipt) => {
+          console.log({ receipt });
+          toast.success("Profile saved");
           onProfileCreated?.({username, imgUrl, metadata});
-          // close the modal
+          setSaveProfileBtnLabel("Save Profile");
+          // close modal
           (document.getElementById('create_profile_modal') as HTMLDialogElement).close();
         }}
-        onReceipt={() => toast.success("Profile saved")}
         onError={(e) => {
-          toast.error(e.message);
-          (document.getElementById('create_profile_modal') as HTMLDialogElement).close();
+          console.log({ e });
+          const errorMessage = e.message?.match(/'([^']+)'/)?.[1] ?? e.message?.split('contract:')[0]?.trim() ?? e.message;
+          setError(errorMessage);
+          setSaveProfileBtnLabel("Save Profile");
         }}
       >
-        Save Profile
+        {saveProfileBtnLabel}
       </TransactionButton>
+      {error && (
+        <span className="text-error text-center text-xs px-8 sm:px-16">{error}</span>
+      )}
     </div>
   )
 };

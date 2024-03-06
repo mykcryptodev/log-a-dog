@@ -12,8 +12,9 @@ type Props = {
     metadata?: string;
   }) => void;
   loginBtnLabel?: string;
+  createProfileBtnLabel?: string;
 }
-export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel }) => {
+export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data, refetch } = api.profile.getByAddress.useQuery({
@@ -46,7 +47,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel }) =>
     <>
       {/* Open the modal using document.getElementById('ID').showModal() method */}
       <button className="btn mr-4" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
-        Create Profile
+        {createProfileBtnLabel ?? 'Create Profile'}
       </button>
       <dialog id="create_profile_modal" className="modal">
         <div className="modal-box relative">
@@ -60,6 +61,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel }) =>
           <ProfileForm
             onProfileCreated={(profile) => {
               void refetch();
+              console.log("refetching profile", profile);
               onProfileCreated?.(profile);
             }}
           />
