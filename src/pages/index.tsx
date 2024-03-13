@@ -38,7 +38,7 @@ export default function Home() {
               <dialog id="create_contest_modal" className="modal">
                 <div className="modal-box overflow-hidden">
                   <h3 className="font-bold text-2xl mb-4">Create a Contest</h3>
-                  <div className="p-8">
+                  <div className="sm:p-8 p-2">
                     <ContestForm action="create" />
                   </div>
                   <div className="modal-action">
