@@ -1,4 +1,4 @@
-import { useContext, type FC } from "react";
+import { useContext, type FC, useEffect } from "react";
 import { EAS_SCHEMA_ID } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
@@ -8,12 +8,13 @@ type Props = {
   attestors?: string[];
   startDate?: Date;
   endDate?: Date;
+  refetchTimestamp?: number;
 }
 
-export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate }) => {
+export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, refetchTimestamp }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const schemaId = EAS_SCHEMA_ID[activeChain.id]!;
-  const { data } = api.attestation.getBySchemaId.useQuery({
+  const { data, refetch } = api.attestation.getBySchemaId.useQuery({
     schemaId,
     chainId: activeChain.id,
     ...attestors && { attestors },
@@ -27,8 +28,16 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate }) =
     refetchOnMount: false,
   });
   console.log({ data });
+  useEffect(() => {
+    if (refetchTimestamp) {
+      // wait 5 seconds for the graph to index the blockchain event
+      setTimeout(() => {
+        void refetch();
+      }, 5000);
+    }
+  }, [refetch, refetchTimestamp]);
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
       {data?.attestations.map((attestation) => (
         <Attestation key={attestation.id} attestationId={attestation.id} />
       ))}

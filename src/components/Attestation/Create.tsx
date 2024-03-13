@@ -11,8 +11,16 @@ import JSConfetti from 'js-confetti';
 import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
 
-export const CreateAttestation: FC = () => {
-  const [numHotdogs, setNumHotdogs] = useState<number>(1);
+type Props = {
+  onAttestationCreated?: (attestation: {
+    hotdogEater: string;
+    numHotdogsEaten: number;
+    imageUri: string;
+    metadata?: string;
+  }) => void;
+}
+export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
+  const [numHotdogs] = useState<number>(1);
   const [imgUri, setImgUri] = useState<string>("");
 
   const account = useActiveAccount();
@@ -61,6 +69,11 @@ export const CreateAttestation: FC = () => {
           data: encodedData,
         },
       });
+      onAttestationCreated?.({
+        hotdogEater: account.address,
+        numHotdogsEaten: numHotdogs,
+        imageUri: imgUri,
+      });
       toast.success("Dog has been logged!");
       (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
       const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
@@ -104,7 +117,7 @@ export const CreateAttestation: FC = () => {
         onClick={() => void create()}
       >
         {isLoading && <div className="loading loading-spinner" />}
-        Create Attestation
+        Log a Dog
       </button>
     )
   };
@@ -120,49 +133,26 @@ export const CreateAttestation: FC = () => {
         }}
       />
       {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <button className="btn" onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}>
-        Create Attestation
+      <button 
+        className="btn btn-primary btn-lg" 
+        onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
+      >
+        Log a Dog
       </button>
       <dialog id="create_attestation_modal" className="modal">
         <div className="modal-box overflow-hidden">
-          <h3 className="font-bold text-2xl mb-4">Create Attestation</h3>
+          <h3 className="font-bold text-2xl mb-4">Log a Dog</h3>
           <div className="flex flex-col gap-2">
-            <div className="w-full text-center">
-              Number of Hotdogs
-            </div>
-            <div className="w-full gap-2 flex justify-around items-center border rounded-lg px-4">
-              <button 
-                className="btn btn-ghost"
-                onClick={() => setNumHotdogs((quantity) => {
-                  if (quantity === 1) return 1
-                  return quantity - 1
-                })}
-              >
-                {/* Minus Icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                </svg>
-              </button>
-              <div className="w-full text-center">
-                {numHotdogs}
-              </div>
-              <button
-                className="btn btn-ghost join-item"
-                onClick={() => setNumHotdogs((quantity) => quantity + 1)}
-              >
-                {/* Plus Icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-              </button>
-            </div>
-            <div className="w-full text-center">
-              Proof
-            </div>
-            <Upload onUpload={({ uris }) => {
-              if (!uris) return;
-              setImgUri(uris[0]!);
-            }} />
+            <Upload 
+              onUpload={({ uris }) => {
+                if (!uris) return;
+                setImgUri(uris[0]!);
+              }}
+              label="📷 Take a picture of you eating it!"
+            />
+            <span className="text-center text-xs opacity-50">
+              Images uploaded here are public and will be displayed on the global leaderboard
+            </span>
           </div>
           <div className="modal-action">
             <form method="dialog">

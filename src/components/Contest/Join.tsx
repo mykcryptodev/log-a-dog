@@ -1,6 +1,6 @@
 import { useContext, type FC } from "react";
 import { toast } from "react-toastify";
-import { getContract, prepareContractCall } from "thirdweb";
+import { getContract, prepareContractCall, waitForReceipt } from "thirdweb";
 import { TransactionButton, useActiveAccount } from "thirdweb/react";
 import { CONTESTS } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
@@ -69,16 +69,16 @@ export const JoinContest: FC<Props> = ({ contest, onContestJoined }) => {
   
   return (
     <TransactionButton
+      waitForReceipt
       transaction={() => tx}
-      onSubmitted={() => {
+      onSubmitted={async (tx) => {
         toast.info(onSubmitAlert);
-        // TODO: onReceipt should be called after the transaction is confirmed then we can remove the setTimeout
-        // wait 5 seconds
-        setTimeout(() => {
-          onContestJoined?.(Number(contest.id));
-        }, 5000);
       }}
-      onReceipt={() => toast.success(onReceiptAlert)}
+      onReceipt={() => {
+        toast.dismiss();
+        toast.success(onReceiptAlert);
+        onContestJoined?.(Number(contest.id));
+      }}
       onError={(e) => {
         toast.error(e.message);
       }}

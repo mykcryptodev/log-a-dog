@@ -81,6 +81,7 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
         }}
         onReceipt={(receipt) => {
           console.log({ receipt });
+          toast.dismiss();
           toast.success("Profile saved");
           onProfileCreated?.({username, imgUrl, metadata});
           setSaveProfileBtnLabel("Save Profile");

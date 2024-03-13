@@ -144,19 +144,19 @@ export const AddContestants: FC<Props> = ({ contestId, onContestantsAdded }) => 
                   ))}
                 </div>
                 <TransactionButton
+                  waitForReceipt
                   transaction={() => tx}
                   onSubmitted={() => {
                     toast.info("Adding contestants...");
-                    // TODO: onReceipt should be called after the transaction is confirmed then we can remove the setTimeout
-                    // wait 5 seconds
-                    setTimeout(() => {
-                      onContestantsAdded?.(contestantsToAdd);
-                      setContestantsToAdd([]);
-                    }, 5000);
                     // close the modal
                     (document.getElementById('add_contestants_modal') as HTMLDialogElement).close();
                   }}
-                  onReceipt={() => toast.success("Contestants added!")}
+                  onReceipt={() => {
+                    toast.dismiss();
+                    toast.success("Contestants added!");
+                    onContestantsAdded?.(contestantsToAdd);
+                    setContestantsToAdd([]);
+                  }}
                   onError={(e) => {
                     toast.error(e.message);
                     (document.getElementById('add_contestants_modal') as HTMLDialogElement).close();
