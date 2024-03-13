@@ -1,10 +1,12 @@
 import { useState, type FC, useContext, useEffect, useMemo } from "react";
 import { TransactionButton, useActiveAccount, useContractEvents } from "thirdweb/react";
-import { getContract, prepareContractCall } from "thirdweb";
+import { getContract, prepareContractCall, waitForReceipt } from "thirdweb";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { CONTESTS } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
+import { api } from "~/utils/api";
+import { ProfileButton } from "../Profile/Button";
 
 
 const getIsoStringInUserTimezone = (date: Date) => {
@@ -38,6 +40,14 @@ type Props = {
 export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
+  const { data: profile, refetch: refetchProfile } = api.profile.getByAddress.useQuery({
+    chainId: activeChain.id,
+    address: account?.address ?? "",
+  }, {
+    enabled: !!account?.address,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
   const [name, setName] = useState<string>("");
   const [metadata, setMetadata] = useState<string>("");
   const [isInviteOnly, setIsInviteOnly] = useState<boolean>(false);
@@ -131,25 +141,32 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
         />
         <span>Is Invite Only</span>
       </label>
-      <TransactionButton
-        transaction={() => action === "create" ? createTx : updateTx}
-        onSubmitted={(tx) => {
-          console.log({ tx})
-          toast.info("Saving...");
-          // wait 5 seconds
-          setTimeout(() => {
-            void contractEvents.refetch();
-            console.log({ refetched: true, contractEvents });
-          }, 5000);
-        }}
-        onReceipt={() => toast.success("Contest saved")}
-        onError={(e) => {
-          toast.error(e.message);
-          (document.getElementById('contest_modal') as HTMLDialogElement).close();
-        }}
-      >
-        {action === 'create' ? "Create" : "Update"}
-      </TransactionButton>
+      {!profile || profile.username === "" ? (
+        <ProfileButton 
+          createProfileBtnLabel="Create profile to create contest"
+          onProfileCreated={() => void refetchProfile() }
+        />
+      ) : (
+        <TransactionButton
+          style={{ width: '100%', marginTop: '16px' }}
+          waitForReceipt
+          transaction={() => action === "create" ? createTx : updateTx}
+          onSubmitted={(tx) => {
+            toast.info("Saving...");
+          }}
+          onReceipt={(receipt) => {
+            toast.dismiss();
+            toast.success("Contest saved");
+            console.log("contest is: ", BigInt(receipt.logs[1]!.topics[1]!).toString())
+          }}
+          onError={(e) => {
+            toast.error(e.message);
+            (document.getElementById('contest_modal') as HTMLDialogElement).close();
+          }}
+        >
+          {action === 'create' ? "Create" : "Update"}
+        </TransactionButton>
+      )}
     </div>
   )
 };

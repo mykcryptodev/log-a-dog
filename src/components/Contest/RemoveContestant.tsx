@@ -76,15 +76,11 @@ export const RemoveContestant: FC<Props> = ({
               <button className="btn">Close</button>
             </form>
             <TransactionButton
+              waitForReceipt
               className="btn btn-error"
               transaction={() => tx}
               onSubmitted={() => {
                 toast.info("Removing...");
-                // TODO: onReceipt should be called after the transaction is confirmed then we can remove the setTimeout
-                // wait 5 seconds
-                setTimeout(() => {
-                  onContestantRemoved?.(contestantToRemove);
-                }, 5000);
                 // close the modal
                 (document.getElementById(`remove_contestants_modal_${contestantToRemove.address}`) as HTMLDialogElement).close();
               }}
@@ -94,7 +90,9 @@ export const RemoveContestant: FC<Props> = ({
                 (document.getElementById(`remove_contestants_modal_${contestantToRemove.address}`) as HTMLDialogElement).close();
               }}
               onReceipt={() => {
+                toast.dismiss();
                 toast.success("Contestant removed");
+                onContestantRemoved?.(contestantToRemove);
                 (document.getElementById(`remove_contestants_modal_${contestantToRemove.address}`) as HTMLDialogElement).close();
               }}
             >

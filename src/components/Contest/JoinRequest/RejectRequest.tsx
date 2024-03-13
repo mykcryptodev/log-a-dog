@@ -40,13 +40,12 @@ export const RejectJoinRequest: FC<Props> = ({ contest, requesterAddress, onRequ
       transaction={() => tx}
       onSubmitted={() => {
         toast.info("Rejecting...");
-        // TODO: onReceipt should be called after the transaction is confirmed then we can remove the setTimeout
-        // wait 5 seconds
-        setTimeout(() => {
-          onRequestRejected?.(Number(contest.id));
-        }, 5000);
       }}
-      onReceipt={() => toast.success("Rejected!")}
+      onReceipt={() => {
+        toast.dismiss();
+        toast.success("Rejected!");
+        onRequestRejected?.(Number(contest.id));
+      }}
       onError={(e) => {
         toast.error(e.message);
       }}

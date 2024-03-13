@@ -27,34 +27,34 @@ export const Attestation: FC<Props> = ({ attestationId }) => {
 
   if (!attestation) return null;
 
+  console.log({ attestation })
+
   // turn the ipfs:// uri into a gateway uri
   const imgUri = attestation.decodedAttestaton.imgUri.replace("ipfs://", "https://ipfs.io/ipfs/");
 
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex flex-col gap-2 bg-opacity-50 bg-base-200 rounded-lg p-4 h-fit">
+      <div className="flex items-center gap-1">
+        {profile?.imgUrl && (
+          <Image
+            src={profile.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/")}
+            alt="profile"
+            width={24}
+            height={24}
+            className="rounded-full"
+          />
+        )}
+        <span>{profile?.username ?? attestation.decodedAttestaton.address}</span>
+      </div>
       <Image
         src={imgUri}
         alt="hotdog"
-        width={100}
-        height={100}
-        className="rounded-lg"
+        width={250}
+        height={250}
+        className="rounded-lg w-full"
       />
-      <div>
-        <div className="flex items-center gap-1">
-          {profile?.imgUrl && (
-            <Image
-              src={profile.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/")}
-              alt="profile"
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
-          )}
-          <span>{profile?.username ?? attestation.decodedAttestaton.address}</span>
-        </div>
-        <div>Hotdogs Eaten: {attestation.decodedAttestaton.numHotdogs.toString()}</div>
-        <div>Metadata: {attestation.decodedAttestaton.metadata}</div>
-      </div>
+      <caption>
+      </caption>
     </div>
   )
 };
