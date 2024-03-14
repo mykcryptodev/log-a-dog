@@ -153,7 +153,7 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
           style={{ width: '100%', marginTop: '16px' }}
           waitForReceipt
           transaction={() => action === "create" ? createTx : updateTx}
-          onSubmitted={(tx) => {
+          onSubmitted={() => {
             toast.info("Saving...");
           }}
           onReceipt={(receipt) => {

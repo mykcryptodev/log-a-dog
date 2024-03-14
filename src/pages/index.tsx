@@ -4,7 +4,6 @@ import { useState } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { Leaderboard } from "~/components/Attestation/Leaderboard";
 import { ListAttestations } from "~/components/Attestation/List";
-import { ContestForm } from "~/components/Contest/Form";
 
 export default function Home() {
   const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);

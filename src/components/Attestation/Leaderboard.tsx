@@ -88,7 +88,7 @@ export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate }) => {
         colors: ['transparent']
       },
       xaxis: {
-        categories: profiles.map((profile) => profile.username),
+        categories: profiles.map(profile => profile.username || `${profile.address.slice(0, 6)}...${profile.address.slice(-4)}`),
         labels: {
           style: {
             colors: userPrefersDarkMode ? '#868D9A' : undefined,
