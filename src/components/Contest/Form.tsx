@@ -1,6 +1,6 @@
 import { useState, type FC, useContext, useEffect, useMemo } from "react";
 import { TransactionButton, useActiveAccount, useContractEvents } from "thirdweb/react";
-import { getContract, prepareContractCall, waitForReceipt } from "thirdweb";
+import { getContract, prepareContractCall } from "thirdweb";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { CONTESTS } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
@@ -157,19 +157,19 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
             toast.info("Saving...");
           }}
           onReceipt={(receipt) => {
+            console.log({ receipt, topics: receipt.logs[0]?.topics[1] });
             toast.dismiss();
             toast.success("Contest saved");
             onContestSaved?.({
-              id: BigInt(receipt.logs[1]!.topics[1]!).toString(),
+              id: BigInt(receipt.logs[0]?.topics[1] ?? 0).toString(),
               username: profile.username,
               imgUrl: profile.imgUrl,
               metadata,
             });
-            console.log("contest is: ", BigInt(receipt.logs[1]!.topics[1]!).toString())
           }}
           onError={(e) => {
             toast.error(e.message);
-            (document.getElementById('contest_modal') as HTMLDialogElement).close();
+            (document.getElementById('contest_modal') as HTMLDialogElement)?.close();
           }}
         >
           {action === 'create' ? "Create" : "Update"}
