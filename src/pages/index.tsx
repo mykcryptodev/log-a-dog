@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useState } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { Leaderboard } from "~/components/Attestation/Leaderboard";
@@ -27,29 +28,15 @@ export default function Home() {
             }}
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <div
+            <Link
+              href="/contest/create"
               className="flex max-w-xs flex-col gap-4 rounded-xl opacity-90 p-4 cursor-pointer hover:opacity-80"
-              onClick={()=>(document.getElementById('create_contest_modal') as HTMLDialogElement).showModal()}
             >
               <h3 className="text-2xl font-bold">Create a Contest →</h3>
               <div className="text-lg">
                 Get your friends together and see who can eat the most hot dogs.
               </div>
-              <dialog id="create_contest_modal" className="modal">
-                <div className="modal-box overflow-hidden">
-                  <h3 className="font-bold text-2xl mb-4">Create a Contest</h3>
-                  <div className="sm:p-8 p-2">
-                    <ContestForm action="create" />
-                  </div>
-                  <div className="modal-action">
-                    <form method="dialog">
-                      {/* if there is a button in form, it will close the modal */}
-                      <button className="btn">Close</button>
-                    </form>
-                  </div>
-                </div>
-              </dialog>
-            </div>
+            </Link>
             <div
               className="flex max-w-xs flex-col gap-4 rounded-xl opacity-90 p-4 cursor-pointer hover:opacity-80"
             >

@@ -4,12 +4,14 @@ import { type FC, type ReactNode,useEffect, useState } from "react"
 import usePrevious from "~/hooks/usePrevious";
 import { ToastContainer } from 'react-toastify';
 import { ProfileButton } from "../Profile/Button";
+import { useRouter } from "next/router";
 
 interface LayoutProps {
   children: ReactNode
 }
 
 export const Layout: FC<LayoutProps> = ({ children }) => {
+  const router = useRouter();
   // sign out user and clear session if connected wallet changes
   const account = useActiveAccount();
   const previousAccount = usePrevious(account);
@@ -44,7 +46,14 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       <div className={`fixed bg-gradient-to-tl ${fromYellow} ${viaPink} ${toYellow} rounded-full blur-3xl -bottom-0 -left-[25%] w-1/2 h-full -z-10`}></div>
       <div className={`fixed bg-gradient-to-bl ${fromPink} ${toPink} rounded-full -top-[-85%] blur-3xl -left-[35%] w-full h-full -z-10`}></div>
       <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen mt-10">
-        <div className="w-full justify-end flex mr-4">
+        <div className="w-full justify-between items-center flex mr-4">
+          <div>
+            {router.pathname !== '/' && (
+              <button onClick={() => router.back()} className="btn btn-ghost text-neutral ml-4">
+                🌭  Log a Dog
+              </button>
+            )}
+          </div>
           <ProfileButton />
         </div>
         <ToastContainer />

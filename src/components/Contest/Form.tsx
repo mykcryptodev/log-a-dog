@@ -22,6 +22,7 @@ const getIsoStringInUserTimezone = (date: Date) => {
 
 type Props = {
   onContestSaved?: (contest: {
+    id: string;
     username: string;
     imgUrl: string;
     metadata?: string;
@@ -96,10 +97,8 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
   const updateTx = prepareContractCall({
     contract,
     method: updateContestMethod,
-    params: updateParams ,
+    params: updateParams,
   });
-
-  if (!account) return null;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -142,10 +141,13 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
         <span>Is Invite Only</span>
       </label>
       {!profile || profile.username === "" ? (
-        <ProfileButton 
-          createProfileBtnLabel="Create profile to create contest"
-          onProfileCreated={() => void refetchProfile() }
-        />
+        <div className="flex justify-center w-full my-4">
+          <ProfileButton
+            loginBtnLabel="Login to create contests"
+            createProfileBtnLabel="Create profile to create contest"
+            onProfileCreated={() => void refetchProfile()}
+          />
+        </div>
       ) : (
         <TransactionButton
           style={{ width: '100%', marginTop: '16px' }}
@@ -157,6 +159,12 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
           onReceipt={(receipt) => {
             toast.dismiss();
             toast.success("Contest saved");
+            onContestSaved?.({
+              id: BigInt(receipt.logs[1]!.topics[1]!).toString(),
+              username: profile.username,
+              imgUrl: profile.imgUrl,
+              metadata,
+            });
             console.log("contest is: ", BigInt(receipt.logs[1]!.topics[1]!).toString())
           }}
           onError={(e) => {
