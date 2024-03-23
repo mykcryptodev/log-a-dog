@@ -15,6 +15,12 @@
   "dependencies": {
     "@apollo/client": "^3.9.5",
     "@auth/prisma-adapter": "^1.4.0",
+    "@coinbase/corekms": "https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/corekms/corekms-0.1.12.tgz",
+    "@coinbase/sandbox-rpc": "https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/sandbox-rpc/sandbox-rpc-1.1.5.tgz",
+    "@coinbase/waas-sdk-ethers": "https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/waas-sdk-ethers/waas-sdk-ethers-3.0.0.tgz",
+    "@coinbase/waas-sdk-viem": "https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/waas-sdk-viem/waas-sdk-viem-3.0.1.tgz",
+    "@coinbase/waas-sdk-web": "https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/waas-sdk-web/waas-sdk-web-3.2.1.tgz",
+    "@coinbase/waas-sdk-web-react": "https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/waas-sdk-web-react/waas-sdk-web-react-3.2.1.tgz",
     "@ethereum-attestation-service/eas-sdk": "^1.5.0",
     "@planetscale/database": "^1.16.0",
     "@prisma/adapter-planetscale": "^5.10.2",

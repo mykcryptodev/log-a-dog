@@ -1,9 +1,14 @@
-import { useContext, type FC } from "react";
-import { ConnectButton, useActiveAccount } from "thirdweb/react";
+import { useContext, type FC, useMemo } from "react";
+import { ConnectButton, smartWalletConfig, useActiveAccount } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import Image from "next/image";
 import { ProfileForm } from "~/components/Profile/Form";
+import { client } from "~/providers/Thirdweb";
+import { SMART_WALLET_FACTORY } from "~/constants/addresses";
+import { env } from "~/env";
+import { coinbaseWaasConfig } from "~/wallet/CoinbaseWaasConfig";
+import { baseSepolia } from "thirdweb/chains";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -25,8 +30,13 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+  const smartWalletOptions = useMemo(() => ({
+    chain: activeChain,
+    factoryAddress: SMART_WALLET_FACTORY[activeChain.id]!,
+    clientId: env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
+    gasless: true,
+  }), [activeChain]);
 
-  console.log({ data })
 
   if (!account) return (
     <div className="mr-4">
@@ -38,7 +48,20 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           title: "Login to Log a Dog",
           showThirdwebBranding: false,
           titleIcon: "https://logadog.xyz/images/logo.png",
+        }} 
+        client={client} 
+        appMetadata={{
+          name: "Log a Dog",
+          url: "https://logadog.xyz",
+          description: "Who can eat the most hotdogs onchain?",
+          logoUrl: "https://logadog.xyz/images/logo.png"
         }}
+        wallets={[
+          smartWalletConfig(
+            coinbaseWaasConfig(), smartWalletOptions
+          ),
+        ]}
+        chain={baseSepolia}
       />
     </div>
   )
@@ -101,8 +124,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
                       src={imageUrl}
                       alt="profile"
                       width={48}
-                      height={48}
-                    />
+                      height={48} />
                   </div>
                 </div>
                 <span>{data.username}</span>
@@ -111,8 +133,20 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           )
         }}
         connectButton={{
-          label: "Login"
+          label: loginBtnLabel ?? "Login"
+        }} 
+        client={client} 
+        appMetadata={{
+          name: "Log a Dog",
+          url: "https://logadog.xyz",
+          description: "Who can eat the most hotdogs onchain?",
+          logoUrl: "https://logadog.xyz/images/logo.png"
         }}
+        wallets={[
+          smartWalletConfig(
+            coinbaseWaasConfig(), smartWalletOptions
+          ),
+        ]}
       />
     </div>
   )
