@@ -14,10 +14,11 @@ import {
   uint8ArrayToHex,
   hexToNumber,
 } from "thirdweb";
-import { baseSepolia, defineChain } from "thirdweb/chains";
+import { baseSepolia, defineChain, getChainMetadata } from "thirdweb/chains";
 import { type AsyncStorage } from "node_modules/thirdweb/dist/types/wallets/storage/AsyncStorage.js";
 import { InitializeWaas, type Wallet as CoinbaseWaasWalletT, Logout } from "@coinbase/waas-sdk-web";
 import { type TransactionSerializable } from "viem";
+import { type ChainMetadata } from "node_modules/thirdweb/dist/types/chains/types";
 
 const COINBASE_WAAS_PROJECT_ID = "9418738b-c109-4db5-9ac0-3333e0aabbe9";
 
@@ -463,41 +464,42 @@ export class CoinbaseWaasWallet implements Wallet {
    * await wallet.switchChain(mumbai)
    * ```
    */
-  // async switchChain(chain: Chain) {
-  //   const provider = this.provider;
+  async switchChain(chain: Chain) {
+    const provider = this.provider;
 
-  //   if (!provider) {
-  //     throw new Error("Provider not initialized");
-  //   }
+    if (!provider) {
+      throw new Error("Provider not initialized");
+    }
 
-  //   const chainIdHex = numberToHex(chain.id);
+    const chainIdHex = numberToHex(chain.id);
 
-  //   try {
-  //     await provider.request({
-  //       method: "wallet_switchEthereumChain",
-  //       params: [{ chainId: chainIdHex }],
-  //     });
-  //   } catch (error) {
-  //     const apiChain = await getChainMetadata(chain);
+    try {
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: chainIdHex }],
+      });
+    } catch (error) {
+      const apiChain = await getChainMetadata(chain);
 
-  //     // Indicates chain is not added to provider
-  //     if ((error as any).code === 4902) {
-  //       // try to add the chain
-  //       await provider.request({
-  //         method: "wallet_addEthereumChain",
-  //         params: [
-  //           {
-  //             chainId: chainIdHex,
-  //             chainName: apiChain.name,
-  //             nativeCurrency: apiChain.nativeCurrency,
-  //             rpcUrls: getValidPublicRPCUrl(apiChain), // no client id on purpose here
-  //             blockExplorerUrls: apiChain.explorers?.map((x) => x.url) || [],
-  //           },
-  //         ],
-  //       });
-  //     }
-  //   }
-  // }
+      // Indicates chain is not added to provider
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+      if ((error as any).code === 4902) {
+        // try to add the chain
+        await provider.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: chainIdHex,
+              chainName: apiChain.name,
+              nativeCurrency: apiChain.nativeCurrency,
+              rpcUrls: getValidPublicRPCUrl(apiChain), // no client id on purpose here
+              blockExplorerUrls: apiChain.explorers?.map((x) => x.url) ?? [],
+            },
+          ],
+        });
+      }
+    }
+  }
 
   /**
    * @internal
@@ -584,4 +586,80 @@ function normalizeChainId(chainId: string | number | bigint): number {
     return Number(chainId);
   }
   return parseInt(chainId, 10);
+}
+
+function getValidPublicRPCUrl(chain: ChainMetadata) {
+  return getValidChainRPCs(chain).map((rpc) => {
+    try {
+      const url = new URL(rpc);
+      // remove client id from url
+      if (url.hostname.endsWith(".thirdweb.com")) {
+        url.pathname = "";
+        url.search = "";
+      }
+      return url.toString();
+    } catch (e) {
+      return rpc;
+    }
+  });
+}
+
+/**
+ * Get valid RPCs for given chain
+ * @internal
+ */
+function getValidChainRPCs(
+  chain: Pick<ChainMetadata, "rpc" | "chainId">,
+  clientId?: string,
+  mode: "http" | "ws" = "http",
+): string[] {
+  const processedRPCs: string[] = [];
+
+  chain.rpc.forEach((rpc) => {
+    // exclude RPC if mode mismatch
+    if (mode === "http" && !rpc.startsWith("http")) {
+      return;
+    }
+
+    if (mode === "ws" && !rpc.startsWith("ws")) {
+      return;
+    }
+
+    // Replace API_KEY placeholder with value
+    if (rpc.includes("${THIRDWEB_API_KEY}")) {
+      if (clientId) {
+        processedRPCs.push(
+          rpc.replace("${THIRDWEB_API_KEY}", clientId) +
+            (typeof globalThis !== "undefined" && "APP_BUNDLE_ID" in globalThis
+              ? // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error
+                `/?bundleId=${globalThis.APP_BUNDLE_ID}`
+              : ""),
+        );
+      } else {
+        // if no client id, let it through with empty string
+        // if secretKey is present, it will be used in header
+        // if none are passed, will have reduced access
+        processedRPCs.push(rpc.replace("${THIRDWEB_API_KEY}", ""));
+      }
+    }
+
+    // exclude RPCs with unknown placeholder
+    else if (rpc.includes("${")) {
+      return;
+    }
+
+    // add as is
+    else {
+      processedRPCs.push(rpc);
+    }
+  });
+
+  if (processedRPCs.length === 0) {
+    throw new Error(
+      `No RPC available for chainId "${chain.chainId}" with mode ${mode}`,
+    );
+  }
+
+  return processedRPCs;
 }
