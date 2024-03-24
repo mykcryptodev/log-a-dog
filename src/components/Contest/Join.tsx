@@ -1,6 +1,6 @@
 import { useContext, type FC } from "react";
 import { toast } from "react-toastify";
-import { getContract, prepareContractCall, waitForReceipt } from "thirdweb";
+import { getContract, prepareContractCall } from "thirdweb";
 import { TransactionButton, useActiveAccount } from "thirdweb/react";
 import { CONTESTS } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
@@ -71,7 +71,7 @@ export const JoinContest: FC<Props> = ({ contest, onContestJoined }) => {
     <TransactionButton
       waitForReceipt
       transaction={() => tx}
-      onSubmitted={async (tx) => {
+      onSubmitted={() => {
         toast.info(onSubmitAlert);
       }}
       onReceipt={() => {

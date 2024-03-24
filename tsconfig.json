@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "strictNullChecks": true,
     /* Base Options: */
     "esModuleInterop": true,
     "skipLibCheck": true,
