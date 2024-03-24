@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "preinstall": "npm i https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/sandbox-rpc/sandbox-rpc-1.1.5.tgz && npm i https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/corekms/corekms-0.1.12.tgz && npm i https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/waas-sdk-web/waas-sdk-web-3.2.1.tgz && npm i https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/waas-sdk-ethers/waas-sdk-ethers-3.0.0.tgz && npm i https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/waas-sdk-viem/waas-sdk-viem-3.0.1.tgz && npm i https://api.developer.coinbase.com/waas/consumer/1994648a1fa8a282f1c3ca917a0379f1f79fbb06/waas-sdk-web-react/waas-sdk-web-react-3.2.1.tgz",
     "build": "next build",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
