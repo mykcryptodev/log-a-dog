@@ -45,7 +45,7 @@ export const attestationRouter = createTRPCRouter({
       eas.connect(provider as TransactionSigner);
       const attestation = await eas.getAttestation(attestationId);
       const decoded = ethers.AbiCoder.defaultAbiCoder().decode(
-        ["address", "uint256", "string", "string"],
+        ["address", "string", "string"],
         attestation.data
       );
       // check if this attestation should be redacted
@@ -70,9 +70,8 @@ export const attestationRouter = createTRPCRouter({
         attestation,
         decodedAttestaton: {
           address: decoded[0] as string,
-          numHotdogs: decoded[1] as number,
-          imgUri: isRedacted ? redactedImage : decoded[2] as string,
-          metadata: decoded[3] as string,
+          imgUri: isRedacted ? redactedImage : decoded[1] as string,
+          metadata: decoded[2] as string,
         }
       };
     }),

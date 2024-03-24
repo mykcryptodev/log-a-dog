@@ -15,13 +15,11 @@ import Connect from "~/components/utils/Connect";
 type Props = {
   onAttestationCreated?: (attestation: {
     hotdogEater: string;
-    numHotdogsEaten: number;
     imageUri: string;
     metadata?: string;
   }) => void;
 }
 export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
-  const [numHotdogs] = useState<number>(1);
   const [imgUri, setImgUri] = useState<string>("");
 
   const account = useActiveAccount();
@@ -51,10 +49,9 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     const signer = await ethers6Adapter.signer.toEthers(client, account, activeChain) as TransactionSigner;
 
     // get the signer from ethers
-    const schemaEncoder = new SchemaEncoder("address hotdog_eater,uint256 num_hotdogs_eaten,string image_uri,string metadata");
+    const schemaEncoder = new SchemaEncoder("address hotdog_eater,string image_uri,string metadata");
     const encodedData = schemaEncoder.encodeData([
       { name: "hotdog_eater", value: account.address, type: "address" },
-      { name: "num_hotdogs_eaten", value: numHotdogs, type: "uint256" },
       { name: "image_uri", value: imgUri, type: "string"},
       { name: "metadata", value: "", type: "string" }
     ]);
@@ -72,7 +69,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       });
       onAttestationCreated?.({
         hotdogEater: account.address,
-        numHotdogsEaten: numHotdogs,
         imageUri: imgUri,
       });
       toast.success("Dog has been logged!");

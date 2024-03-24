@@ -9,8 +9,9 @@ import { useActiveAccount } from "thirdweb/react";
 
 type Props = {
   attestationId: string;
+  onAttestationRevoked?: () => void;
 }
-export const Attestation: FC<Props> = ({ attestationId }) => {
+export const Attestation: FC<Props> = ({ attestationId, onAttestationRevoked }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data: attestation } = api.attestation.getById.useQuery({
@@ -77,7 +78,10 @@ export const Attestation: FC<Props> = ({ attestationId }) => {
           {attestationId.slice(-5)}
         </span>
         {account?.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase() && (
-          <RevokeAttestation uid={attestationId} />
+          <RevokeAttestation 
+            uid={attestationId}
+            onAttestationRevoked={onAttestationRevoked}
+          />
         )}
       </div>
     </div>

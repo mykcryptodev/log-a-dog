@@ -39,7 +39,16 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
   return (
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
       {data?.attestations.map((attestation) => (
-        <Attestation key={attestation.id} attestationId={attestation.id} />
+        <Attestation 
+          key={attestation.id} 
+          attestationId={attestation.id} 
+          onAttestationRevoked={() => {
+            // wait 5 seconds for the graph to index the blockchain event
+            setTimeout(() => {
+              void refetch();
+            }, 5000);
+          }}
+        />
       ))}
     </div>
   );
