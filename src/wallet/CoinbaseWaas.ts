@@ -14,11 +14,17 @@ import {
   uint8ArrayToHex,
   hexToNumber,
 } from "thirdweb";
-import { baseSepolia, defineChain, getChainMetadata } from "thirdweb/chains";
+import { base, baseSepolia, defineChain, getChainMetadata } from "thirdweb/chains";
 import { type AsyncStorage } from "node_modules/thirdweb/dist/types/wallets/storage/AsyncStorage.js";
 import { InitializeWaas, type Wallet as CoinbaseWaasWalletT, Logout } from "@coinbase/waas-sdk-web";
 import { type TransactionSerializable } from "viem";
 import { type ChainMetadata } from "node_modules/thirdweb/dist/types/chains/types";
+import { DEFAULT_CHAIN } from "~/constants/chains";
+import { type LocalAccount, createWalletClient, type Chain as ViemChain, http, type WalletClient } from "viem";
+import { baseSepolia as viemBaseSepolia, base as viemBase } from "viem/chains";
+import { toViem } from "@coinbase/waas-sdk-viem";
+import { type Address, type ProtocolFamily } from "@coinbase/waas-sdk-web";
+import { viemAdapter } from "thirdweb/adapters/viem";
 
 const COINBASE_WAAS_PROJECT_ID = "9418738b-c109-4db5-9ac0-3333e0aabbe9";
 
@@ -148,7 +154,7 @@ export function coinbaseWaaS(options: CoinbaseWaasWalletOptions) {
  */
 export class CoinbaseWaasWallet implements Wallet {
   private options: CoinbaseWaasWalletOptions;
-  private provider: CoinbaseWalletProvider | undefined;
+  private provider: WalletClient | undefined;
   private chain: Chain | undefined;
   private account?: Account | undefined;
   metadata: WalletMetadata;
@@ -234,7 +240,73 @@ export class CoinbaseWaasWallet implements Wallet {
    * ```
    * @returns A Promise that resolves to connected `Account` object
    */
-  async connect(options?: CoinbaseSDKWalletConnectionOptions) {
+  async connect() {
+    return await this.onConnect();
+
+    // return this.onConnect(address.address);
+
+    // START OLD CODE
+    // const provider = await this.initProvider({
+    //   ...options,
+    // });
+
+    // provider.on("accountsChanged", this.onAccountsChanged);
+    // provider.on("chainChanged", this.onChainChanged);
+    // provider.on("disconnect", this.onDisconnect);
+    
+    // const connectedChainId = (await provider.request({
+    //   method: "eth_chainId",
+    // }));
+
+    // const chainId = normalizeChainId(connectedChainId as string);
+    // this.chain = defineChain(chainId);
+
+    // // Switch to chain if provided
+    // if (
+    //   connectedChainId &&
+    //   options?.chain &&
+    //   connectedChainId !== options?.chain.id
+    // ) {
+    //   await this.switchChain(options.chain);
+    //   this.chain = options.chain;
+    // }
+
+    // return this.onConnect(address.address);
+  }
+
+  /**
+   * @internal
+   */
+  private async initProvider(options: { account: LocalAccount, chain: ViemChain }) {
+    // const { CoinbaseWalletSDK } = await import("@coinbase/wallet-sdk");
+    // const client = new CoinbaseWalletSDK({
+    //   ...options,
+    //   appName: this.options.appName,
+    // });
+
+    // if (options.onUri) {
+    //   options.onUri(client.getQrUrl());
+    // }
+
+    // const chain = options?.chain ?? DEFAULT_CHAIN;
+
+    // this.provider = client.makeWeb3Provider(chain.rpc, chain.id);
+    const thirdwebRpc = options.chain.id === base.id ? base.rpc : baseSepolia.rpc;
+
+    // return this.provider;
+    const walletClient = createWalletClient({
+      account: options.account,
+      chain: options.chain,
+      transport: http(thirdwebRpc),
+    });
+    this.provider = walletClient;
+  }
+
+  /**
+   * @internal
+   */
+  private async onConnect() {//address: string) {
+    this.chain = baseSepolia;
     const waas = await InitializeWaas({
       collectAndReportMetrics: true,
       enableHostedBackups: true,
@@ -257,147 +329,108 @@ export class CoinbaseWaasWallet implements Wallet {
     
     const addresses = await wallet.addresses.all();
     // find the first address with protocol family is evm
-    const address = addresses.find(address => address.protocolFamily === "protocolFamilies/evm");
+    const address = addresses.find(address => 
+      address.protocolFamily === "protocolFamilies/evm"
+    ) as Address<ProtocolFamily> | undefined;
 
     if (!address) {
       throw new Error("No accounts found");
     }
 
-    return this.onConnect(address.address);
+    const viemAccount = toViem(address);
 
-    /// START OLD CODE
-    // const provider = await this.initProvider({
-    //   ...options,
-    // });
+    await this.initProvider({
+      account: viemAccount,
+      chain: viemBaseSepolia,
+    });
 
-    // provider.on("accountsChanged", this.onAccountsChanged);
-    // provider.on("chainChanged", this.onChainChanged);
-    // provider.on("disconnect", this.onDisconnect);
-
-    // const accounts = (await provider.request({
-    //   method: "eth_requestAccounts",
-    // }));
-
-    // if (!accounts[0]) {
-    //   throw new Error("No accounts found");
-    // }
-
-    // const address = getAddress(accounts[0]);
-
-    // const connectedChainId = (await provider.request({
-    //   method: "eth_chainId",
-    // })) as string | number;
-
-    // const chainId = normalizeChainId(connectedChainId);
-    // this.chain = defineChain(chainId);
-
-    // // Switch to chain if provided
-    // if (
-    //   connectedChainId &&
-    //   options?.chain &&
-    //   connectedChainId !== options?.chain.id
-    // ) {
-    //   await this.switchChain(options.chain);
-    //   this.chain = options.chain;
-    // }
-
-    // if (options?.chain && this.options.storage) {
-    //   const saveParams: SavedConnectParams = {
-    //     chain: options?.chain,
-    //   };
-
-    //   saveConnectParamsToStorage(
-    //     this.options.storage,
-    //     this.metadata.id,
-    //     saveParams,
-    //   );
-    // }
-
-    // return this.onConnect(address);
-  }
-
-  /**
-   * @internal
-   */
-  private onConnect(address: string) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const wallet = this;
-
-    const account: Account = {
-      address,
-      async sendTransaction(tx: SendTransactionOption) {
-        if (!wallet.chain || !wallet.provider || !account.address) {
-          throw new Error("Provider not setup");
-        }
-
-        const transactionHash = (await wallet.provider.request({
-          method: "eth_sendTransaction",
-          params: [
-            {
-              accessList: tx.accessList,
-              value: tx.value ? numberToHex(tx.value) : undefined,
-              gas: tx.gas ? numberToHex(tx.gas) : undefined,
-              from: this.address,
-              to: tx.to!,
-              data: tx.data,
-            },
-          ],
-        }));
-
-        return {
-          transactionHash: transactionHash as Hex,
-        };
-      },
-      async signMessage({ message }) {
-        if (!wallet.provider || !account.address) {
-          throw new Error("Provider not setup");
-        }
-
-        const messageToSign = (() => {
-          if (typeof message === "string") {
-            return stringToHex(message);
-          }
-          if (message.raw instanceof Uint8Array) {
-            return uint8ArrayToHex(message.raw);
-          }
-          return message.raw;
-        })();
-
-        return await wallet.provider.request({
-          method: "personal_sign",
-          params: [messageToSign, account.address],
-        });
-      },
-      async signTypedData(typedData) {
-        if (!wallet.provider || !account.address) {
-          throw new Error("Provider not setup");
-        }
-        const { domain, message, primaryType } =
-          typedData as unknown as SignTypedDataParameters;
-
-        const types = {
-          EIP712Domain: getTypesForEIP712Domain({ domain }),
-          ...typedData.types,
-        };
-
-        // Need to do a runtime validation check on addresses, byte ranges, integer ranges, etc
-        // as we can't statically check this with TypeScript.
-        validateTypedData({ domain, message, primaryType, types });
-
-        const stringifiedData = stringify(
-          { domain: domain ?? {}, message, primaryType, types },
-          (_, value) => (isHex(value) ? value.toLowerCase() : String(value)),
-        );
-
-        return await wallet.provider.request({
-          method: "eth_signTypedData_v4",
-          params: [account.address, stringifiedData],
-        });
-      },
-    };
-
+    // const viemChain = activeChain.id === viemBase.id ? viemBase : viemBaseSepolia;
+    const walletClient = createWalletClient({
+      account: viemAccount,
+      chain: viemBaseSepolia,
+      transport: http(baseSepolia.rpc),
+    });
+    const account = viemAdapter.walletClient.fromViem({ walletClient });
     this.account = account;
     return account;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    // const wallet = this;
+
+    // const account: Account = {
+    //   address,
+    //   async sendTransaction(tx: SendTransactionOption) {
+    //     if (!wallet.chain || !wallet.provider || !account.address) {
+    //       throw new Error("Provider not setup");
+    //     }
+
+    //     const transactionHash = (await wallet.provider.request({
+    //       method: "eth_sendTransaction",
+    //       params: [
+    //         {
+    //           accessList: tx.accessList,
+    //           value: tx.value ? numberToHex(tx.value) : undefined,
+    //           gas: tx.gas ? numberToHex(tx.gas) : undefined,
+    //           from: this.address,
+    //           to: tx.to!,
+    //           data: tx.data,
+    //         },
+    //       ],
+    //     }));
+
+    //     return {
+    //       transactionHash: transactionHash as Hex,
+    //     };
+    //   },
+    //   async signMessage({ message }) {
+    //     if (!wallet.provider || !account.address) {
+    //       throw new Error("Provider not setup");
+    //     }
+
+    //     const messageToSign = (() => {
+    //       if (typeof message === "string") {
+    //         return stringToHex(message);
+    //       }
+    //       if (message.raw instanceof Uint8Array) {
+    //         return uint8ArrayToHex(message.raw);
+    //       }
+    //       return message.raw;
+    //     })();
+
+    //     return await wallet.provider.request({
+    //       method: "personal_sign",
+    //       params: [messageToSign, account.address],
+    //     });
+    //   },
+    //   async signTypedData(typedData) {
+    //     if (!wallet.provider || !account.address) {
+    //       throw new Error("Provider not setup");
+    //     }
+    //     const { domain, message, primaryType } =
+    //       typedData as unknown as SignTypedDataParameters;
+
+    //     const types = {
+    //       EIP712Domain: getTypesForEIP712Domain({ domain }),
+    //       ...typedData.types,
+    //     };
+
+    //     // Need to do a runtime validation check on addresses, byte ranges, integer ranges, etc
+    //     // as we can't statically check this with TypeScript.
+    //     validateTypedData({ domain, message, primaryType, types });
+
+    //     const stringifiedData = stringify(
+    //       { domain: domain ?? {}, message, primaryType, types },
+    //       (_, value) => (isHex(value) ? value.toLowerCase() : String(value)),
+    //     );
+
+    //     return await wallet.provider.request({
+    //       method: "eth_signTypedData_v4",
+    //       params: [account.address, stringifiedData],
+    //     });
+    //   },
+    // };
+
+    // this.account = account;
+    // return account;
   }
 
   /**
@@ -471,13 +504,8 @@ export class CoinbaseWaasWallet implements Wallet {
       throw new Error("Provider not initialized");
     }
 
-    const chainIdHex = numberToHex(chain.id);
-
     try {
-      await provider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: chainIdHex }],
-      });
+      await provider.switchChain({ id: chain.id });
     } catch (error) {
       const apiChain = await getChainMetadata(chain);
 
@@ -485,20 +513,49 @@ export class CoinbaseWaasWallet implements Wallet {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       if ((error as any).code === 4902) {
         // try to add the chain
-        await provider.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: chainIdHex,
-              chainName: apiChain.name,
-              nativeCurrency: apiChain.nativeCurrency,
-              rpcUrls: getValidPublicRPCUrl(apiChain), // no client id on purpose here
-              blockExplorerUrls: apiChain.explorers?.map((x) => x.url) ?? [],
-            },
-          ],
+        await provider.addChain({
+          chain: {
+            chainId: chain.id,
+            chainName: apiChain.name,
+            nativeCurrency: apiChain.nativeCurrency,
+            rpcUrls: {
+              ...getValidPublicRPCUrl(apiChain),
+              default: getValidPublicRPCUrl(apiChain)[0] ?? base.rpc,
+            }, // no client id on purpose here
+            blockExplorerUrls: apiChain.explorers?.map((x) => x.url) ?? [],
+          },
         });
       }
     }
+
+    // const chainIdHex = numberToHex(chain.id);
+
+    // try {
+    //   await provider.request({
+    //     method: "wallet_switchEthereumChain",
+    //     params: [{ chainId: chainIdHex }],
+    //   });
+    // } catch (error) {
+    //   const apiChain = await getChainMetadata(chain);
+
+    //   // Indicates chain is not added to provider
+    //   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    //   if ((error as any).code === 4902) {
+    //     // try to add the chain
+    //     await provider.request({
+    //       method: "wallet_addEthereumChain",
+    //       params: [
+    //         {
+    //           chainId: chainIdHex,
+    //           chainName: apiChain.name,
+    //           nativeCurrency: apiChain.nativeCurrency,
+    //           rpcUrls: getValidPublicRPCUrl(apiChain), // no client id on purpose here
+    //           blockExplorerUrls: apiChain.explorers?.map((x) => x.url) ?? [],
+    //         },
+    //       ],
+    //     });
+    //   }
+    // }
   }
 
   /**
@@ -536,7 +593,7 @@ export class CoinbaseWaasWallet implements Wallet {
    */
   private onAccountsChanged = (accounts: string[]) => {
     if (accounts.length === 0) {
-      this.onDisconnect();
+      // this.onDisconnect();
     } else {
       // TODO: change account
     }
@@ -546,17 +603,18 @@ export class CoinbaseWaasWallet implements Wallet {
    * NOTE: must be a arrow function
    * @internal
    */
-  private onDisconnect = () => {
-    const provider = this.provider;
-    if (provider) {
-      provider.removeListener("accountsChanged", this.onAccountsChanged);
-      provider.removeListener("chainChanged", this.onChainChanged);
-      provider.removeListener("disconnect", this.onDisconnect);
-    }
+  // private onDisconnect = () => {
+  //   const provider = this.provider;
+  //   if (provider) {
+  //     // provider.removeListener("accountsChanged", this.onAccountsChanged);
+  //     // provider.removeListener("chainChanged", this.onChainChanged);
+  //     // provider.removeListener("disconnect", this.onDisconnect);
+  //   }
+  //   await Logout();
 
-    this.account = undefined;
-    this.chain = undefined;
-  };
+  //   this.account = undefined;
+  //   this.chain = undefined;
+  // };
 
   /**
    * Disconnect from the Coinbase Wallet
@@ -566,12 +624,12 @@ export class CoinbaseWaasWallet implements Wallet {
    * ```
    */
   async disconnect() {
-    if (this.provider) {
-      this.provider.disconnect();
-      await this.provider.close();
-    }
+    // if (this.provider) {
+    //   this.provider.disconnect();
+    //   await this.provider.close();
+    // }
     await Logout();
-    this.onDisconnect();
+    // this.onDisconnect();
   }
 }
 

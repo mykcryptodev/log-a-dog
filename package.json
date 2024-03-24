@@ -43,7 +43,7 @@
     "react-dropzone": "^14.2.3",
     "react-toastify": "^10.0.4",
     "superjson": "^2.2.1",
-    "thirdweb": "beta",
+    "thirdweb": "^5.0.0-beta-ba0bcfbba3d3403662961918a166a4db5f1c2974-20240324040610",
     "zod": "^3.22.4"
   },
   "devDependencies": {
