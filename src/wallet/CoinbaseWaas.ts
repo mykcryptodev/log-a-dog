@@ -1,49 +1,21 @@
-import type { Account, CoinbaseSDKWalletConnectionOptions, Wallet, WalletMetadata } from "thirdweb/wallets";
-import type { CoinbaseWalletProvider } from "@coinbase/wallet-sdk";
-import {
-  type SignTypedDataParameters,
-  getTypesForEIP712Domain,
-  validateTypedData,
-} from "viem";
+import type { Account, Wallet, WalletMetadata } from "thirdweb/wallets";
 import { coinbaseMetadata } from "./CoinbaseWaasMetadata";
 import type { Chain } from "thirdweb/chains";
 import {
   isHex,
-  numberToHex,
-  stringToHex,
-  uint8ArrayToHex,
   hexToNumber,
 } from "thirdweb";
 import { base, baseSepolia, defineChain, getChainMetadata } from "thirdweb/chains";
 import { type AsyncStorage } from "node_modules/thirdweb/dist/types/wallets/storage/AsyncStorage.js";
 import { InitializeWaas, type Wallet as CoinbaseWaasWalletT, Logout } from "@coinbase/waas-sdk-web";
-import { type TransactionSerializable } from "viem";
 import { type ChainMetadata } from "node_modules/thirdweb/dist/types/chains/types";
-import { DEFAULT_CHAIN } from "~/constants/chains";
 import { type LocalAccount, createWalletClient, type Chain as ViemChain, http, type WalletClient } from "viem";
-import { baseSepolia as viemBaseSepolia, base as viemBase } from "viem/chains";
+import { baseSepolia as viemBaseSepolia } from "viem/chains";
 import { toViem } from "@coinbase/waas-sdk-viem";
 import { type Address, type ProtocolFamily } from "@coinbase/waas-sdk-web";
 import { viemAdapter } from "thirdweb/adapters/viem";
 
 const COINBASE_WAAS_PROJECT_ID = "9418738b-c109-4db5-9ac0-3333e0aabbe9";
-
-type Hex = `0x${string}`;
-
-type SendTransactionOption = TransactionSerializable & {
-  chainId: number;
-};
-
-const stringify: typeof JSON.stringify = (value, replacer, space) => {
-  return JSON.stringify(
-    value,
-    (key, value_) => {
-      const value__ = typeof value_ === "bigint" ? value_.toString() : value_ as string;
-      return typeof replacer === "function" ? replacer(key, value__) as string : value__;
-    },
-    space
-  );
-};
 
 /**
  * Options for connecting to the CoinbaseSDK Wallet
@@ -242,58 +214,14 @@ export class CoinbaseWaasWallet implements Wallet {
    */
   async connect() {
     return await this.onConnect();
-
-    // return this.onConnect(address.address);
-
-    // START OLD CODE
-    // const provider = await this.initProvider({
-    //   ...options,
-    // });
-
-    // provider.on("accountsChanged", this.onAccountsChanged);
-    // provider.on("chainChanged", this.onChainChanged);
-    // provider.on("disconnect", this.onDisconnect);
-    
-    // const connectedChainId = (await provider.request({
-    //   method: "eth_chainId",
-    // }));
-
-    // const chainId = normalizeChainId(connectedChainId as string);
-    // this.chain = defineChain(chainId);
-
-    // // Switch to chain if provided
-    // if (
-    //   connectedChainId &&
-    //   options?.chain &&
-    //   connectedChainId !== options?.chain.id
-    // ) {
-    //   await this.switchChain(options.chain);
-    //   this.chain = options.chain;
-    // }
-
-    // return this.onConnect(address.address);
   }
 
   /**
    * @internal
    */
   private async initProvider(options: { account: LocalAccount, chain: ViemChain }) {
-    // const { CoinbaseWalletSDK } = await import("@coinbase/wallet-sdk");
-    // const client = new CoinbaseWalletSDK({
-    //   ...options,
-    //   appName: this.options.appName,
-    // });
-
-    // if (options.onUri) {
-    //   options.onUri(client.getQrUrl());
-    // }
-
-    // const chain = options?.chain ?? DEFAULT_CHAIN;
-
-    // this.provider = client.makeWeb3Provider(chain.rpc, chain.id);
     const thirdwebRpc = options.chain.id === base.id ? base.rpc : baseSepolia.rpc;
 
-    // return this.provider;
     const walletClient = createWalletClient({
       account: options.account,
       chain: options.chain,
@@ -344,7 +272,6 @@ export class CoinbaseWaasWallet implements Wallet {
       chain: viemBaseSepolia,
     });
 
-    // const viemChain = activeChain.id === viemBase.id ? viemBase : viemBaseSepolia;
     const walletClient = createWalletClient({
       account: viemAccount,
       chain: viemBaseSepolia,
@@ -353,84 +280,6 @@ export class CoinbaseWaasWallet implements Wallet {
     const account = viemAdapter.walletClient.fromViem({ walletClient });
     this.account = account;
     return account;
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    // const wallet = this;
-
-    // const account: Account = {
-    //   address,
-    //   async sendTransaction(tx: SendTransactionOption) {
-    //     if (!wallet.chain || !wallet.provider || !account.address) {
-    //       throw new Error("Provider not setup");
-    //     }
-
-    //     const transactionHash = (await wallet.provider.request({
-    //       method: "eth_sendTransaction",
-    //       params: [
-    //         {
-    //           accessList: tx.accessList,
-    //           value: tx.value ? numberToHex(tx.value) : undefined,
-    //           gas: tx.gas ? numberToHex(tx.gas) : undefined,
-    //           from: this.address,
-    //           to: tx.to!,
-    //           data: tx.data,
-    //         },
-    //       ],
-    //     }));
-
-    //     return {
-    //       transactionHash: transactionHash as Hex,
-    //     };
-    //   },
-    //   async signMessage({ message }) {
-    //     if (!wallet.provider || !account.address) {
-    //       throw new Error("Provider not setup");
-    //     }
-
-    //     const messageToSign = (() => {
-    //       if (typeof message === "string") {
-    //         return stringToHex(message);
-    //       }
-    //       if (message.raw instanceof Uint8Array) {
-    //         return uint8ArrayToHex(message.raw);
-    //       }
-    //       return message.raw;
-    //     })();
-
-    //     return await wallet.provider.request({
-    //       method: "personal_sign",
-    //       params: [messageToSign, account.address],
-    //     });
-    //   },
-    //   async signTypedData(typedData) {
-    //     if (!wallet.provider || !account.address) {
-    //       throw new Error("Provider not setup");
-    //     }
-    //     const { domain, message, primaryType } =
-    //       typedData as unknown as SignTypedDataParameters;
-
-    //     const types = {
-    //       EIP712Domain: getTypesForEIP712Domain({ domain }),
-    //       ...typedData.types,
-    //     };
-
-    //     // Need to do a runtime validation check on addresses, byte ranges, integer ranges, etc
-    //     // as we can't statically check this with TypeScript.
-    //     validateTypedData({ domain, message, primaryType, types });
-
-    //     const stringifiedData = stringify(
-    //       { domain: domain ?? {}, message, primaryType, types },
-    //       (_, value) => (isHex(value) ? value.toLowerCase() : String(value)),
-    //     );
-
-    //     return await wallet.provider.request({
-    //       method: "eth_signTypedData_v4",
-    //       params: [account.address, stringifiedData],
-    //     });
-    //   },
-    // };
-
-    // this.account = account;
-    // return account;
   }
 
   /**
@@ -445,36 +294,6 @@ export class CoinbaseWaasWallet implements Wallet {
    */
   async autoConnect() {
     return await this.connect();
-    /// START OLD CODE
-    // const savedParams: SavedConnectParams | null = this.options.storage
-    //   ? await getSavedConnectParamsFromStorage(
-    //       this.options.storage,
-    //       this.metadata.id,
-    //     )
-    //   : null;
-
-    // const provider = await this.initProvider({
-    //   chain: savedParams?.chain,
-    // });
-
-    // // connected accounts
-    // const addresses = await (provider as Ethereum).request({
-    //   method: "eth_accounts",
-    // });
-
-    // const address = addresses[0];
-
-    // if (!address) {
-    //   throw new Error("No accounts found");
-    // }
-
-    // const connectedChainId = (await provider.request({
-    //   method: "eth_chainId",
-    // })) as string | number;
-    // const chainId = normalizeChainId(connectedChainId);
-    // this.chain = defineChain(chainId);
-
-    // return this.onConnect(address);
   }
 
   /**
@@ -506,6 +325,7 @@ export class CoinbaseWaasWallet implements Wallet {
 
     try {
       await provider.switchChain({ id: chain.id });
+      this.onChainChanged(chain.id);
     } catch (error) {
       const apiChain = await getChainMetadata(chain);
 
@@ -527,56 +347,7 @@ export class CoinbaseWaasWallet implements Wallet {
         });
       }
     }
-
-    // const chainIdHex = numberToHex(chain.id);
-
-    // try {
-    //   await provider.request({
-    //     method: "wallet_switchEthereumChain",
-    //     params: [{ chainId: chainIdHex }],
-    //   });
-    // } catch (error) {
-    //   const apiChain = await getChainMetadata(chain);
-
-    //   // Indicates chain is not added to provider
-    //   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-    //   if ((error as any).code === 4902) {
-    //     // try to add the chain
-    //     await provider.request({
-    //       method: "wallet_addEthereumChain",
-    //       params: [
-    //         {
-    //           chainId: chainIdHex,
-    //           chainName: apiChain.name,
-    //           nativeCurrency: apiChain.nativeCurrency,
-    //           rpcUrls: getValidPublicRPCUrl(apiChain), // no client id on purpose here
-    //           blockExplorerUrls: apiChain.explorers?.map((x) => x.url) ?? [],
-    //         },
-    //       ],
-    //     });
-    //   }
-    // }
   }
-
-  /**
-   * @internal
-   */
-  // private async initProvider(options: CoinbaseSDKWalletConnectionOptions) {
-  //   const { CoinbaseWalletSDK } = await import("@coinbase/wallet-sdk");
-  //   const client = new CoinbaseWalletSDK({
-  //     ...options,
-  //     appName: this.options.appName,
-  //   });
-
-  //   if (options.onUri) {
-  //     options.onUri(client.getQrUrl());
-  //   }
-
-  //   const chain = options?.chain || ethereum;
-
-  //   this.provider = client.makeWeb3Provider(chain.rpc, chain.id);
-  //   return this.provider;
-  // }
 
   /**
    * NOTE: must be a arrow function
@@ -593,7 +364,7 @@ export class CoinbaseWaasWallet implements Wallet {
    */
   private onAccountsChanged = (accounts: string[]) => {
     if (accounts.length === 0) {
-      // this.onDisconnect();
+      void this.onDisconnect();
     } else {
       // TODO: change account
     }
@@ -603,18 +374,18 @@ export class CoinbaseWaasWallet implements Wallet {
    * NOTE: must be a arrow function
    * @internal
    */
-  // private onDisconnect = () => {
-  //   const provider = this.provider;
-  //   if (provider) {
-  //     // provider.removeListener("accountsChanged", this.onAccountsChanged);
-  //     // provider.removeListener("chainChanged", this.onChainChanged);
-  //     // provider.removeListener("disconnect", this.onDisconnect);
-  //   }
-  //   await Logout();
+  private onDisconnect = async () => {
+    const provider = this.provider;
+    if (provider) {
+      // provider.removeListener("accountsChanged", this.onAccountsChanged);
+      // provider.removeListener("chainChanged", this.onChainChanged);
+      // provider.removeListener("disconnect", this.onDisconnect);
+    }
+    await Logout();
 
-  //   this.account = undefined;
-  //   this.chain = undefined;
-  // };
+    this.account = undefined;
+    this.chain = undefined;
+  };
 
   /**
    * Disconnect from the Coinbase Wallet
@@ -624,12 +395,7 @@ export class CoinbaseWaasWallet implements Wallet {
    * ```
    */
   async disconnect() {
-    // if (this.provider) {
-    //   this.provider.disconnect();
-    //   await this.provider.close();
-    // }
-    await Logout();
-    // this.onDisconnect();
+    void this.onDisconnect();
   }
 }
 
