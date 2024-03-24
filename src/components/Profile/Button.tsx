@@ -9,6 +9,7 @@ import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { env } from "~/env";
 import { coinbaseWaasConfig } from "~/wallet/CoinbaseWaasConfig";
 import { baseSepolia } from "thirdweb/chains";
+import Connect from "~/components/utils/Connect";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -39,29 +40,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
 
   if (!account) return (
     <div className="mr-4">
-      <ConnectButton 
-        connectButton={{
-          label: loginBtnLabel ?? "Login"
-        }}
-        connectModal={{
-          title: "Login to Log a Dog",
-          showThirdwebBranding: false,
-          titleIcon: "https://logadog.xyz/images/logo.png",
-        }} 
-        client={client} 
-        appMetadata={{
-          name: "Log a Dog",
-          url: "https://logadog.xyz",
-          description: "Who can eat the most hotdogs onchain?",
-          logoUrl: "https://logadog.xyz/images/logo.png"
-        }}
-        wallets={[
-          smartWalletConfig(
-            coinbaseWaasConfig(), smartWalletOptions
-          ),
-        ]}
-        chain={baseSepolia}
-      />
+      <Connect />
     </div>
   )
 

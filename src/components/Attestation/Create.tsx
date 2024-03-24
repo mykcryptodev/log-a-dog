@@ -1,6 +1,6 @@
 import { EAS, SchemaEncoder, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
 import { type FC,useContext, useState } from 'react';
-import { ConnectButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
+import Connect from "~/components/utils/Connect";
 
 type Props = {
   onAttestationCreated?: (attestation: {
@@ -47,7 +48,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       return;
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    const signer = await ethers6Adapter.signer.toEthers(client, wallet) as TransactionSigner;
+    const signer = await ethers6Adapter.signer.toEthers(client, account, activeChain) as TransactionSigner;
 
     // get the signer from ethers
     const schemaEncoder = new SchemaEncoder("address hotdog_eater,uint256 num_hotdogs_eaten,string image_uri,string metadata");
@@ -97,11 +98,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const ActionButton: FC = () => {
     if (!account) return (
       <div onClick={() => (document.getElementById('create_attestation_modal') as HTMLDialogElement).close() }>
-        <ConnectButton
-          connectButton={{
-            label: "Login to Log Dogs"
-          }}
-        />
+        <Connect loginBtnLabel="Login to Log Dogs" />
       </div>
     )
     if (!profile?.username) return (
