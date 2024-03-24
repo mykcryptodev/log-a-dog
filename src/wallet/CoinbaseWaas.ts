@@ -335,14 +335,14 @@ export class CoinbaseWaasWallet implements Wallet {
         // try to add the chain
         await provider.addChain({
           chain: {
-            chainId: chain.id,
-            chainName: apiChain.name,
+            id: chain.id,
+            name: apiChain.name,
             nativeCurrency: apiChain.nativeCurrency,
             rpcUrls: {
-              ...getValidPublicRPCUrl(apiChain),
-              default: getValidPublicRPCUrl(apiChain)[0] ?? base.rpc,
+              default: { http: getValidPublicRPCUrl(apiChain) },
             }, // no client id on purpose here
-            blockExplorerUrls: apiChain.explorers?.map((x) => x.url) ?? [],
+            blockExplorers: {
+              default: apiChain?.explorers![0] ?? base.blockExplorers![0] ?? { name: 'base', url: 'http://basescan.org' }            },
           },
         });
       }
