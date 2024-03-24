@@ -10,7 +10,6 @@ import { ThirdwebProviderWithActiveChain } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
 import { Layout } from "~/components/utils/Layout";
 import 'react-toastify/dist/ReactToastify.css';
-import { WalletProvider } from "@coinbase/waas-sdk-web-react";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -29,18 +28,11 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <SessionProvider session={session}>
       <ActiveChainContext.Provider value={activeChainContext}>
-        <WalletProvider
-          collectAndReportMetrics
-          enableHostedBackups
-          projectId={"9418738b-c109-4db5-9ac0-3333e0aabbe9"}
-          prod={false}
-        >
-          <ThirdwebProviderWithActiveChain>
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-          </ThirdwebProviderWithActiveChain>
-        </WalletProvider>
+        <ThirdwebProviderWithActiveChain>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </ThirdwebProviderWithActiveChain>
       </ActiveChainContext.Provider>
     </SessionProvider>
   );
