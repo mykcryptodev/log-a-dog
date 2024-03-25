@@ -12,7 +12,7 @@ import { type ChainMetadata } from "node_modules/thirdweb/dist/types/chains/type
 import { type LocalAccount, createWalletClient, type Chain as ViemChain, http, type WalletClient } from "viem";
 import { baseSepolia as viemBaseSepolia } from "viem/chains";
 import { toViem } from "@coinbase/waas-sdk-viem";
-import { type Address, type ProtocolFamily } from "@coinbase/waas-sdk-web";
+import { ProtocolFamily } from "@coinbase/waas-sdk-web";
 import { viemAdapter } from "thirdweb/adapters/viem";
 
 const COINBASE_WAAS_PROJECT_ID = "9418738b-c109-4db5-9ac0-3333e0aabbe9";
@@ -255,11 +255,7 @@ export class CoinbaseWaasWallet implements Wallet {
       wallet = await waas.wallets.create();
     }
     
-    const addresses = await wallet.addresses.all();
-    // find the first address with protocol family is evm
-    const address = addresses.find(address => 
-      address.protocolFamily === "protocolFamilies/evm"
-    ) as Address<ProtocolFamily> | undefined;
+    const address = await wallet.addresses.for(ProtocolFamily.EVM);
 
     if (!address) {
       throw new Error("No accounts found");
