@@ -49,9 +49,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     const signer = await ethers6Adapter.signer.toEthers(client, account, activeChain) as TransactionSigner;
 
     // get the signer from ethers
-    const schemaEncoder = new SchemaEncoder("address hotdog_eater,string image_uri,string metadata");
+    const schemaEncoder = new SchemaEncoder("string image_uri,string metadata");
     const encodedData = schemaEncoder.encodeData([
-      { name: "hotdog_eater", value: account.address, type: "address" },
       { name: "image_uri", value: imgUri, type: "string"},
       { name: "metadata", value: "", type: "string" }
     ]);

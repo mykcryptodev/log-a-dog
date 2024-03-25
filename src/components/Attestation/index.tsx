@@ -6,7 +6,7 @@ import RevokeAttestation from "./Revoke";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { useActiveAccount } from "thirdweb/react";
-import AffirmAttestation from "~/components/Attestation/Affirm";
+import JudgeAttestation from "~/components/Attestation/Judge";
 
 type Props = {
   attestationId: string;
@@ -15,7 +15,7 @@ type Props = {
 export const Attestation: FC<Props> = ({ attestationId, refreshAttestations }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
-  const { data: attestation } = api.attestation.getById.useQuery({
+  const { data: attestation, refetch } = api.attestation.getById.useQuery({
     attestationId,
     chainId: activeChain.id,
   }, {
@@ -49,17 +49,27 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations }) =
 
   return (
     <div className="flex flex-col gap-2 bg-opacity-50 bg-base-200 rounded-lg p-4 h-fit">
-      <div className="flex items-center gap-1">
-        {profile?.imgUrl && (
-          <Image
-            src={profile.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/")}
-            alt="profile"
-            width={24}
-            height={24}
-            className="rounded-full"
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {profile?.imgUrl && (
+            <Image
+              src={profile.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/")}
+              alt="profile"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+          )}
+          <span className="font-bold text-sm">
+            {profile?.username ?? attestation.decodedAttestaton.address}
+          </span>
+        </div>
+        {account?.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase() && (
+          <RevokeAttestation 
+            uid={attestationId}
+            onAttestationRevoked={refreshAttestations}
           />
         )}
-        <span>{profile?.username ?? attestation.decodedAttestaton.address}</span>
       </div>
       <Image
         src={imgUri}
@@ -76,20 +86,23 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations }) =
           <TagIcon className="w-4 h-4" />
           {attestationId.slice(-5)}
         </span>
-        {account?.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase() ? (
-          <RevokeAttestation 
-            uid={attestationId}
-            onAttestationRevoked={refreshAttestations}
-          />
-        ) : (
-          <>
-            <AffirmAttestation 
-              attestation={attestation}
-              onAttestationAffirmed={refreshAttestations}
-              onAttestationAffirmationRevoked={refreshAttestations}
-            />
-          </>
-        )}
+        <JudgeAttestation
+          attestation={attestation}
+          onAttestationAffirmed={() => {
+            // give the blockchain 5 seconds
+            setTimeout(() => {
+              void refetch();
+              refreshAttestations?.();
+            }, 5000);
+          }}
+          onAttestationAffirmationRevoked={() => {
+            // give the blockchain 5 seconds
+            setTimeout(() => {
+              void refetch();
+              refreshAttestations?.();
+            }, 5000);
+          }}
+        />
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { type NextPage, type GetServerSideProps} from "next";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import Image from "next/image";
@@ -39,6 +39,12 @@ export const Contest: NextPage<{id: string}> = ({ id }) => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+  const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
+  const refreshData = () => {
+    void refetch();
+    setRefetchTimestamp(Date.now());
+  };
+
   if (!contest || !profiles) return null;
   return (
     <div className="flex flex-col gap-2">
@@ -49,19 +55,20 @@ export const Contest: NextPage<{id: string}> = ({ id }) => {
         attestors={contest.contestants as string[]}
         startDate={new Date(contest.startDate)}
         endDate={new Date(contest.endDate)}
+        refetchTimestamp={refetchTimestamp}
       />
       <AddContestants 
         contestId={Number(contest.id)}
-        onContestantsAdded={() => refetch()}
+        onContestantsAdded={() => refreshData()}
       />
       <JoinContest 
         contest={contest}
-        onContestJoined={() => refetch()}
+        onContestJoined={() => refreshData()}
       />
       <JoinRequestList
         contest={contest}
-        onRequestAccepted={() => refetch()}
-        onRequestRejected={() => refetch()}
+        onRequestAccepted={() => refreshData()}
+        onRequestRejected={() => refreshData()}
       />
       <span className="font-bold">Contestants</span>
       {profiles.map((profile) => (
@@ -83,7 +90,7 @@ export const Contest: NextPage<{id: string}> = ({ id }) => {
             <RemoveContestant 
               contestId={Number(contest.id)}
               contestantToRemove={profile}
-              onContestantRemoved={() => refetch()}
+              onContestantRemoved={() => refreshData()}
             />
           )}
         </div>

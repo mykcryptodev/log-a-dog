@@ -14,11 +14,12 @@ type Props = {
   attestors?: string[];
   startDate?: Date;
   endDate?: Date;
+  refetchTimestamp: number;
 }
 
-export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate }) => {
+export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate, refetchTimestamp }) => {
   const { activeChain } = useContext(ActiveChainContext);
-  const { data } = api.attestation.getLeaderboard.useQuery({
+  const { data, refetch } = api.attestation.getLeaderboard.useQuery({
     chainId: activeChain.id,
     cursor: 0,
     itemsPerPage: 10,
@@ -29,6 +30,15 @@ export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate }) => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+
+  useEffect(() => {
+    if (refetchTimestamp) {
+      // wait 5 seconds for the graph to index the blockchain event
+      setTimeout(() => {
+        void refetch();
+      }, 5000);
+    }
+  }, [refetch, refetchTimestamp]);
 
   const { data: profiles } = api.profile.getManyByAddress.useQuery({
     chainId: activeChain.id,

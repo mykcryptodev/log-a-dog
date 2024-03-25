@@ -14,7 +14,8 @@ export const EAS: ContractAddress = {
 
 export const EAS_SCHEMA_ID: ContractAddress = {
   // [baseSepolia.id]: "0x7be7e2f8a4642f6164331217da4793255d6687b9aac8252adb9c11d0640e043e",
-  [baseSepolia.id]: "0x66d64054922501f25a33e90672a4366c2d4015b8ba06a2f9c11ccd3a6a07894e",
+  // [baseSepolia.id]: "0x66d64054922501f25a33e90672a4366c2d4015b8ba06a2f9c11ccd3a6a07894e",
+  [baseSepolia.id]: "0x50acf16935a1112c80894722eaf5643ff82b96ff5dae5e2201df269d7c0b87f5",
   [sepolia.id]: "0x70f012660a0e3aff1cbd3ecf2662062d725ef436d73f66200a2f612537d167d7",
 }
 
