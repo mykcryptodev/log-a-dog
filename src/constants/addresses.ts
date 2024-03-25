@@ -18,6 +18,10 @@ export const EAS_SCHEMA_ID: ContractAddress = {
   [sepolia.id]: "0x70f012660a0e3aff1cbd3ecf2662062d725ef436d73f66200a2f612537d167d7",
 }
 
+export const EAS_AFFIMRATION_SCHEMA_ID: ContractAddress = {
+  [baseSepolia.id]: "0x978ab70659ff76860c1e5cc7c21d5c6c09c49a95747b00a155302cfe6d937d6c",
+}
+
 export const PROFILES: ContractAddress = {
   // [baseSepolia.id]: "0x4D0d732777B677b194A49AE8DED8A9374Cc14117",
   [baseSepolia.id]: "0x1A4C2C84bEF821bF3b18b2e85fc80523EC27eE16",

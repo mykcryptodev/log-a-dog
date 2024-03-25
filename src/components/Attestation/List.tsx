@@ -42,7 +42,7 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
         <Attestation 
           key={attestation.id} 
           attestationId={attestation.id} 
-          onAttestationRevoked={() => {
+          refreshAttestations={() => {
             // wait 5 seconds for the graph to index the blockchain event
             setTimeout(() => {
               void refetch();

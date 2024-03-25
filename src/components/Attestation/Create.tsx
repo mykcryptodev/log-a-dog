@@ -43,9 +43,9 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const create = async () => {
     if (!account || !wallet || !ethers6Adapter) {
       // pop notification
+      toast.error("You must login to log dogs");
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const signer = await ethers6Adapter.signer.toEthers(client, account, activeChain) as TransactionSigner;
 
     // get the signer from ethers

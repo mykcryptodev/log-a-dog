@@ -6,12 +6,13 @@ import RevokeAttestation from "./Revoke";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { useActiveAccount } from "thirdweb/react";
+import AffirmAttestation from "~/components/Attestation/Affirm";
 
 type Props = {
   attestationId: string;
-  onAttestationRevoked?: () => void;
+  refreshAttestations?: () => void;
 }
-export const Attestation: FC<Props> = ({ attestationId, onAttestationRevoked }) => {
+export const Attestation: FC<Props> = ({ attestationId, refreshAttestations }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data: attestation } = api.attestation.getById.useQuery({
@@ -42,8 +43,6 @@ export const Attestation: FC<Props> = ({ attestationId, onAttestationRevoked }) 
   }
 
   if (!attestation) return null;
-
-  console.log({ attestation })
 
   // turn the ipfs:// uri into a gateway uri
   const imgUri = attestation.decodedAttestaton.imgUri.replace("ipfs://", "https://ipfs.io/ipfs/");
@@ -77,11 +76,19 @@ export const Attestation: FC<Props> = ({ attestationId, onAttestationRevoked }) 
           <TagIcon className="w-4 h-4" />
           {attestationId.slice(-5)}
         </span>
-        {account?.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase() && (
+        {account?.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase() ? (
           <RevokeAttestation 
             uid={attestationId}
-            onAttestationRevoked={onAttestationRevoked}
+            onAttestationRevoked={refreshAttestations}
           />
+        ) : (
+          <>
+            <AffirmAttestation 
+              attestation={attestation}
+              onAttestationAffirmed={refreshAttestations}
+              onAttestationAffirmationRevoked={refreshAttestations}
+            />
+          </>
         )}
       </div>
     </div>
