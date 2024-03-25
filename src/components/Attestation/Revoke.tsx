@@ -58,7 +58,7 @@ export const RevokeAttestation: FC<Props> = ({ uid, onAttestationRevoked }) => {
         className="btn btn-xs btn-ghost w-fit" 
         onClick={()=>(document.getElementById(`revoke_attestation_modal_${uid}`) as HTMLDialogElement).showModal()}
       >
-        <TrashIcon className="w-4 h-4" />
+        <TrashIcon className="w-4 h-4 opacity-50" />
       </button>
       <dialog id={`revoke_attestation_modal_${uid}`} className="modal">
         <div className="modal-box overflow-hidden">
