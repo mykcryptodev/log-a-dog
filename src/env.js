@@ -29,6 +29,8 @@ export const env = createEnv({
       process.env.VERCEL ? z.string() : z.string().url()
     ),
     THIRDWEB_SECRET_KEY: z.string(),
+    COINBASE_API_KEY: z.string(),
+    COINBASE_PRIVATE_KEY: z.string(),
   },
 
   /**
@@ -38,6 +40,7 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID: z.string(),
+    NEXT_PUBLIC_THIRDWEB_AUTH_DOMAIN: z.string(),
   },
 
   /**
@@ -51,6 +54,9 @@ export const env = createEnv({
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     THIRDWEB_SECRET_KEY: process.env.THIRDWEB_SECRET_KEY,
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
+    NEXT_PUBLIC_THIRDWEB_AUTH_DOMAIN: process.env.NEXT_PUBLIC_THIRDWEB_AUTH_DOMAIN,
+    COINBASE_API_KEY: process.env.COINBASE_API_KEY,
+    COINBASE_PRIVATE_KEY: process.env.COINBASE_PRIVATE_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
