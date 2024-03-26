@@ -15,7 +15,6 @@ type Props = {
   loginBtnLabel?: string;
 }
 export const Connect: FC<Props> = ({ loginBtnLabel }) => {
-  const account = useActiveAccount();
   const smartWalletOptions: SmartWalletOptions = useMemo(() => {
     return {
       client,
@@ -24,7 +23,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       gasless: true,
     }
   }, []);
-  const { connect, isConnecting, error } = useConnect();
+  const { connect, isConnecting } = useConnect();
   const isAutoConnecting = useIsAutoConnecting();
   console.log({ isAutoConnecting });
 
@@ -51,39 +50,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
             });
             // connect wallet
             const personalAccount = await wallet.connect();
-            const userId = wallet.userId;
-            console.log({ userId });
-
-            // persist connection
-            try {
-              const loginPayloadRes = await fetch('/api/persist/generatePayload', {
-                method: "POST",
-                body: JSON.stringify({ address: personalAccount.address }),
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-              });
-              const loginPayloadJson = await loginPayloadRes.json() as LoginPayload;
-              console.log({ loginPayloadJson });
-              const { signature, payload } = await signLoginPayload({
-                payload: loginPayloadJson,
-                account: personalAccount,
-              });
-              const jwtRes = await fetch('/api/persist/generateJwt', {
-                method: "POST",
-                body: JSON.stringify({ 
-                  payload: { payload, signature },
-                  userId,
-                }),
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-              });
-              const jwtJson = await jwtRes.json() as { jwt: string };
-              console.log({ jwtJson });
-            } catch (e) {
-              console.log('not persisting', e);
-            }
             
             // connect personal acct to smart wallet
             const aaWallet = smartWallet(smartWalletOptions);

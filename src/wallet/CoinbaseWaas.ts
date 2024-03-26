@@ -303,19 +303,12 @@ export class CoinbaseWaasWallet implements Wallet {
       projectId: COINBASE_WAAS_PROJECT_ID,
     });
 
-    const fetchAuthServerToken = async () => {
-      const resp = await fetch("/api/persist/retrieveToken", {
-        method: "post",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-      }).then(r => r.json()) as { token: string };
-      return resp.token;
-    };
-    const token = await fetchAuthServerToken();
-    console.log({ token });
+    const user = waas.auth.user;
+
+    if (!user) {
+      throw new Error("No user found");
+    }
     
-    // Login the user with a `provideAuthToken` lambda.
-    const user = await waas.auth.login({ provideAuthToken: fetchAuthServerToken });
-    console.log({ user, waas });
     let wallet: CoinbaseWaasWalletT;
 
     if (waas.wallets.wallet) {
@@ -439,18 +432,6 @@ export class CoinbaseWaasWallet implements Wallet {
       // provider.removeListener("disconnect", this.onDisconnect);
     }
 
-    document.cookie = "logDogXyz=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "logDogUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-    const deletePersistCookies = async () => {
-      const resp = await fetch("/api/persist/deletePersist", {
-        method: "delete",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-      }).then(r => r.json()) as { message: string };
-      return resp.message;
-    };
-
-    await deletePersistCookies();
     await Logout();
 
     this.account = undefined;

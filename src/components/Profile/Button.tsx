@@ -36,22 +36,8 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-  const smartWalletOptions = {
-    chain: baseSepolia,
-    factoryAddress: SMART_WALLET_FACTORY[baseSepolia.id]!,
-    clientId: env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
-    gasless: true,
-  }
-  const deletePersistCookies = async () => {
-    const resp = await fetch("/api/persist/deletePersist", {
-      method: "delete",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
-    }).then(r => r.json()) as { message: string };
-    return resp.message;
-  };
 
   const logout = async () => {
-    await deletePersistCookies();
     if (wallet) {
       void disconnect(wallet);
     }
