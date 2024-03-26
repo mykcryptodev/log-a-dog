@@ -38,7 +38,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   }, []);
 
 
-  const { connect, isConnecting, error } = useConnect();
+  const { connect, isConnecting } = useConnect();
 
   const smartWalletOptions: SmartWalletOptions = useMemo(() => {
     return {
@@ -97,7 +97,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               </button>
             )}
           </div>
-          {customAutoConnectIsLoading ? (
+          {customAutoConnectIsLoading || isConnecting ? (
             <button className="btn mr-4" disabled>
               <div className="loading loading-spinner" /> Login
             </button>
