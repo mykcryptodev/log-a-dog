@@ -7,15 +7,15 @@ import {
 } from "thirdweb";
 import { base, baseSepolia, defineChain, getChainMetadata } from "thirdweb/chains";
 import { type AsyncStorage } from "node_modules/thirdweb/dist/types/wallets/storage/AsyncStorage.js";
-import { InitializeWaas, type Wallet as CoinbaseWaasWalletT, Logout } from "@coinbase/waas-sdk-web";
+import { InitializeWaas, type Wallet as CoinbaseWaasWalletT, Logout, type User, type Waas } from "@coinbase/waas-sdk-web";
 import { type ChainMetadata } from "node_modules/thirdweb/dist/types/chains/types";
 import { type LocalAccount, createWalletClient, type Chain as ViemChain, http, type WalletClient } from "viem";
-import { baseSepolia as viemBaseSepolia } from "viem/chains";
+import { baseSepolia as viemBaseSepolia, base as viemBase } from "viem/chains";
 import { toViem } from "@coinbase/waas-sdk-viem";
 import { ProtocolFamily } from "@coinbase/waas-sdk-web";
 import { viemAdapter } from "thirdweb/adapters/viem";
-
-const COINBASE_WAAS_PROJECT_ID = "9418738b-c109-4db5-9ac0-3333e0aabbe9";
+import { COINBASE_WAAS_PROJECT_ID } from "~/constants";
+import { DEFAULT_CHAIN } from "~/constants/chains";
 
 /**
  * Options for connecting to the CoinbaseSDK Wallet
@@ -93,6 +93,11 @@ export type CoinbaseWaasWalletOptions = {
   appName: string;
 
   /**
+   * Chain ID of the blockchain that the wallet should connect to.
+   */
+  chainId: number;
+
+  /**
    * URL to your application's logo. This will be displayed in the Coinbase Wallet app/extension when connecting to your app.
    */
   appLogoUrl?: string | null;
@@ -147,6 +152,7 @@ export class CoinbaseWaasWallet implements Wallet {
    */
   constructor(options: CoinbaseWaasWalletOptions) {
     this.options = options;
+    this.chain = defineChain(options.chainId);
     this.metadata = coinbaseMetadata;
   }
 
@@ -214,7 +220,18 @@ export class CoinbaseWaasWallet implements Wallet {
    * @returns A Promise that resolves to connected `Account` object
    */
   async connect() {
-    return await this.onConnect();
+    const waas = await InitializeWaas({
+      collectAndReportMetrics: true,
+      enableHostedBackups: true,
+      prod: false,
+      projectId: COINBASE_WAAS_PROJECT_ID[this.chain?.id ?? DEFAULT_CHAIN.id],
+    });
+    
+    // Login the user.
+    const user = await waas.auth.login();
+
+    // connect the user
+    return await this.onConnect(waas, user);
   }
 
   getUserId() {
@@ -230,7 +247,7 @@ export class CoinbaseWaasWallet implements Wallet {
     const walletClient = createWalletClient({
       account: options.account,
       chain: options.chain,
-      transport: http(thirdwebRpc),
+      transport: http(this.chain?.rpc ?? thirdwebRpc),
     });
     this.provider = walletClient;
   }
@@ -238,17 +255,7 @@ export class CoinbaseWaasWallet implements Wallet {
   /**
    * @internal
    */
-  private async onConnect() {//address: string) {
-    this.chain = baseSepolia;
-    const waas = await InitializeWaas({
-      collectAndReportMetrics: true,
-      enableHostedBackups: true,
-      prod: false,
-      projectId: COINBASE_WAAS_PROJECT_ID,
-    });
-    
-    // Login the user.
-    const user = await waas.auth.login();
+  private async onConnect(waas:Waas, user: User) {
     this.userId = user.id;
     
     let wallet: CoinbaseWaasWalletT;
@@ -269,14 +276,16 @@ export class CoinbaseWaasWallet implements Wallet {
 
     const viemAccount = toViem(address);
 
+    const viemChain = this.chain?.id === viemBaseSepolia.id ? viemBaseSepolia : viemBase;
+
     await this.initProvider({
       account: viemAccount,
-      chain: viemBaseSepolia,
+      chain: viemChain,
     });
 
     const walletClient = createWalletClient({
       account: viemAccount,
-      chain: viemBaseSepolia,
+      chain: viemChain,
       transport: http(baseSepolia.rpc),
     });
     const account = viemAdapter.walletClient.fromViem({ walletClient });
@@ -295,12 +304,11 @@ export class CoinbaseWaasWallet implements Wallet {
    * @returns A Promise that resolves to the connected `Account`
    */
   async autoConnect() {
-    console.log("autoConnect...");
     const waas = await InitializeWaas({
       collectAndReportMetrics: true,
       enableHostedBackups: true,
       prod: false,
-      projectId: COINBASE_WAAS_PROJECT_ID,
+      projectId: COINBASE_WAAS_PROJECT_ID[this.chain?.id ?? DEFAULT_CHAIN.id],
     });
 
     const user = waas.auth.user;
@@ -308,42 +316,8 @@ export class CoinbaseWaasWallet implements Wallet {
     if (!user) {
       throw new Error("No user found");
     }
-    
-    let wallet: CoinbaseWaasWalletT;
 
-    if (waas.wallets.wallet) {
-      wallet = waas.wallets.wallet;
-      console.log("wallet is resumed");
-    } else if (user.hasWallet) {
-      wallet = await waas.wallets.restoreFromHostedBackup();
-      console.log("wallet is restored");
-    } else {
-      wallet = await waas.wallets.create();
-      console.log("wallet is created");
-    }
-
-    console.log({ walletAddresses: await wallet.addresses.all() });
-    const address = await wallet.addresses.for(ProtocolFamily.EVM);
-
-    if (!address) {
-      throw new Error("No accounts found");
-    }
-
-    const viemAccount = toViem(address);
-
-    await this.initProvider({
-      account: viemAccount,
-      chain: viemBaseSepolia,
-    });
-
-    const walletClient = createWalletClient({
-      account: viemAccount,
-      chain: viemBaseSepolia,
-      transport: http(baseSepolia.rpc),
-    });
-    const account = viemAdapter.walletClient.fromViem({ walletClient });
-    this.account = account;
-    return account;
+    return await this.onConnect(waas, user);
   }
 
   /**
