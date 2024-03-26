@@ -295,8 +295,62 @@ export class CoinbaseWaasWallet implements Wallet {
    * @returns A Promise that resolves to the connected `Account`
    */
   async autoConnect() {
-    // return await this.connect();
-    return Promise.resolve(null);
+    console.log("autoConnect...");
+    const waas = await InitializeWaas({
+      collectAndReportMetrics: true,
+      enableHostedBackups: true,
+      prod: false,
+      projectId: COINBASE_WAAS_PROJECT_ID,
+    });
+
+    const fetchAuthServerToken = async () => {
+      const resp = await fetch("/api/persist/retrieveToken", {
+        method: "post",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+      }).then(r => r.json()) as { token: string };
+      return resp.token;
+    };
+    const token = await fetchAuthServerToken();
+    console.log({ token });
+    
+    // Login the user with a `provideAuthToken` lambda.
+    const user = await waas.auth.login({ provideAuthToken: fetchAuthServerToken });
+    console.log({ user, waas });
+    let wallet: CoinbaseWaasWalletT;
+
+    if (waas.wallets.wallet) {
+      wallet = waas.wallets.wallet;
+      console.log("wallet is resumed");
+    } else if (user.hasWallet) {
+      wallet = await waas.wallets.restoreFromHostedBackup();
+      console.log("wallet is restored");
+    } else {
+      wallet = await waas.wallets.create();
+      console.log("wallet is created");
+    }
+
+    console.log({ walletAddresses: await wallet.addresses.all() });
+    const address = await wallet.addresses.for(ProtocolFamily.EVM);
+
+    if (!address) {
+      throw new Error("No accounts found");
+    }
+
+    const viemAccount = toViem(address);
+
+    await this.initProvider({
+      account: viemAccount,
+      chain: viemBaseSepolia,
+    });
+
+    const walletClient = createWalletClient({
+      account: viemAccount,
+      chain: viemBaseSepolia,
+      transport: http(baseSepolia.rpc),
+    });
+    const account = viemAdapter.walletClient.fromViem({ walletClient });
+    this.account = account;
+    return account;
   }
 
   /**
@@ -384,10 +438,15 @@ export class CoinbaseWaasWallet implements Wallet {
       // provider.removeListener("chainChanged", this.onChainChanged);
       // provider.removeListener("disconnect", this.onDisconnect);
     }
+
+    document.cookie = "logDogXyz=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "logDogUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
     await Logout();
 
     this.account = undefined;
     this.chain = undefined;
+    this.userId = undefined;
   };
 
   /**

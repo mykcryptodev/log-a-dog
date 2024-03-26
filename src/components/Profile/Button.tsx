@@ -23,6 +23,7 @@ type Props = {
 export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
+  console.log({ account });
   const { data, refetch } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
     address: account?.address ?? "",

@@ -5,6 +5,7 @@ import { createAuth } from 'thirdweb/auth';
 import { createThirdwebClient } from "thirdweb";
 import { issueUserToken } from "@coinbase/waas-server-auth";
 import { privateKeyAccount } from "thirdweb/wallets";
+import cookie from 'cookie';
 
 const apiKeyName = env.COINBASE_API_KEY;
 const privateKey = env.COINBASE_PRIVATE_KEY;
@@ -29,21 +30,17 @@ export default async function retrieveToken(req: NextApiRequest, res: NextApiRes
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
-  const schema = z.object({
-    jwt: z.string(),
-    userId: z.string(),
-  });
-
-  const validationResult = schema.safeParse(req.body);
-
-  if (!validationResult.success) {
-    return res.status(400).json({ error: 'Invalid payload' });
-  }
-
-  const { jwt, userId } = validationResult.data;
+  const cookies = cookie.parse(req.headers.cookie ?? '');
+  const jwt = cookies.logDogXyz;
+  const userId = cookies.logDogUser;
+  console.log({ jwt, userId });
 
   if (!jwt) {
     return res.status(400).json({ error: 'No jwt' });
+  }
+
+  if (!userId) {
+    return res.status(400).json({ error: 'No userId' });
   }
 
   const { valid } = await auth.verifyJWT({ jwt });
@@ -53,6 +50,7 @@ export default async function retrieveToken(req: NextApiRequest, res: NextApiRes
   }
 
   const token = await issueUserToken({ apiKeyName, privateKey, userID: userId });
+  console.log({ token });
 
   return res.status(200).json({ token });
 }
