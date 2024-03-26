@@ -27,6 +27,7 @@ export default async function generateJwt(req: NextApiRequest, res: NextApiRespo
 
   const schema = z.object({
     payload: z.custom<VerifyLoginPayloadParams>().optional(),
+    userId: z.string(),
   });
 
   const validationResult = schema.safeParse(req.body);
@@ -35,7 +36,7 @@ export default async function generateJwt(req: NextApiRequest, res: NextApiRespo
     return res.status(400).json({ error: 'Invalid payload' });
   }
 
-  const { payload } = validationResult.data;
+  const { payload, userId } = validationResult.data;
 
   if (!payload) {
     return res.status(400).json({ error: 'No payload' });
@@ -50,6 +51,15 @@ export default async function generateJwt(req: NextApiRequest, res: NextApiRespo
   const jwt = await auth.generateJWT({
     payload: verifiedPayload.payload
   });
+
+  // set cookies
+  const date = new Date();
+  date.setDate(date.getDate() + 7); // Set expire date 7 days from now
+  const cookieData = env.NODE_ENV === 'production' ? 'HttpOnly; Secure;' : '';
+  res.setHeader('Set-Cookie', [
+    `logDogXyz=${jwt}; Expires=${date.toUTCString()}; Path=/; ${cookieData} SameSite=Strict`,
+    `logDogUser=${userId}; Expires=${date.toUTCString()}; Path=/; ${cookieData} SameSite=Strict`
+  ]);
 
   return res.status(200).json({ jwt });
 }

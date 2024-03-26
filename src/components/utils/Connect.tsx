@@ -28,26 +28,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const isAutoConnecting = useIsAutoConnecting();
   console.log({ isAutoConnecting });
 
-  // const autoConnect = useCallback(async () => {
-  //   await connect(async () => {
-  //     const wallet = coinbaseWaaS({
-  //       appName: "Log a Dog",
-  //     });
-  //     const personalAccount = await wallet.autoConnect();
-  //     const aaWallet = smartWallet(smartWalletOptions);
-  //     await aaWallet.connect({ personalAccount });
-  //     return aaWallet;
-  //   });
-  // }, [connect, smartWalletOptions]);
-
-  // useEffect(() => {
-  //   const logDogXyz = document.cookie.split('; ').find(row => row.startsWith('logDogXyz='));
-  //   const logDogUser = document.cookie.split('; ').find(row => row.startsWith('logDogUser='));
-  //   if (logDogXyz && logDogUser && !account) {
-  //     void autoConnect();
-  //   }
-  // }, [account, autoConnect]);
-
   return (
     <>
       {/* <AutoConnect
@@ -62,6 +42,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       /> */}
       <button
         className="btn"
+        disabled={isConnecting}
         onClick={() =>
           connect(async () => {
             // instantiate wallet
@@ -100,13 +81,8 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
               });
               const jwtJson = await jwtRes.json() as { jwt: string };
               console.log({ jwtJson });
-              const date = new Date();
-              date.setDate(date.getDate() + 7); // Set expire date 7 days from now
-              const cookieData = env.NODE_ENV === 'production' ? 'HttpOnly; Secure;' : '';
-              document.cookie = `logDogXyz=${jwtJson.jwt}; Expires=${date.toUTCString()}; Path=/; ${cookieData} SameSite=Strict`;
-              document.cookie = `logDogUser=${userId}; Expires=${date.toUTCString()}; Path=/; ${cookieData} SameSite=Strict`;
             } catch (e) {
-              console.log('not persisting');
+              console.log('not persisting', e);
             }
             
             // connect personal acct to smart wallet

@@ -442,6 +442,15 @@ export class CoinbaseWaasWallet implements Wallet {
     document.cookie = "logDogXyz=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "logDogUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
+    const deletePersistCookies = async () => {
+      const resp = await fetch("/api/persist/deletePersist", {
+        method: "delete",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+      }).then(r => r.json()) as { message: string };
+      return resp.message;
+    };
+
+    await deletePersistCookies();
     await Logout();
 
     this.account = undefined;

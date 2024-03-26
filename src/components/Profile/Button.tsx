@@ -1,5 +1,5 @@
 import { useContext, type FC } from "react";
-import { ConnectButton, smartWalletConfig, useActiveAccount } from "thirdweb/react";
+import { ConnectButton, smartWalletConfig, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import Image from "next/image";
@@ -10,6 +10,7 @@ import { env } from "~/env";
 import { coinbaseWaasConfig } from "~/wallet/CoinbaseWaasConfig";
 import { baseSepolia } from "thirdweb/chains";
 import Connect from "~/components/utils/Connect";
+import { useDisconnect } from "thirdweb/react";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -23,7 +24,10 @@ type Props = {
 export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
+  const wallet = useActiveWallet();
   console.log({ account });
+  const { disconnect } = useDisconnect();
+
   const { data, refetch } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
     address: account?.address ?? "",
@@ -38,10 +42,24 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     clientId: env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
     gasless: true,
   }
+  const deletePersistCookies = async () => {
+    const resp = await fetch("/api/persist/deletePersist", {
+      method: "delete",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+    }).then(r => r.json()) as { message: string };
+    return resp.message;
+  };
+
+  const logout = async () => {
+    await deletePersistCookies();
+    if (wallet) {
+      void disconnect(wallet);
+    }
+  }
 
   if (!account) return (
     <div className="mr-4">
-      <Connect />
+      <Connect loginBtnLabel={loginBtnLabel} />
     </div>
   )
 
@@ -76,7 +94,26 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
 
   return (
     <div className="mr-4">
-      <ConnectButton
+      <div className="dropdown dropdown-end">
+        <div tabIndex={0} role="button" className="btn btn-ghost">
+          <div className="flex items-center gap-2">
+            <div className="avatar">
+              <div className="w-8 rounded-full">
+                <Image
+                  src={imageUrl}
+                  alt="profile"
+                  width={48}
+                  height={48} />
+              </div>
+            </div>
+            <span>{data.username}</span>
+          </div>
+        </div>
+        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a onClick={() => void logout()}>Logout</a></li>
+        </ul>
+      </div>
+      {/* <ConnectButton
         connectModal={{
           title: "Login to Log a Dog",
           showThirdwebBranding: false,
@@ -126,7 +163,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
             coinbaseWaasConfig(), smartWalletOptions
           ),
         ]}
-      />
+      /> */}
     </div>
   )
 };

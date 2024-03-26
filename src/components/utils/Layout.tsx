@@ -49,22 +49,31 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
     }
   }, []);
   
+  const [customAutoConnectIsLoading, setCustomAutoConnectIsLoading] = useState<boolean>(false);
   const autoConnect = useCallback(async () => {
-    await connect(async () => {
-      const wallet = coinbaseWaaS({
-        appName: "Log a Dog",
+    setCustomAutoConnectIsLoading(true);
+    try {
+      await connect(async () => {
+        const wallet = coinbaseWaaS({
+          appName: "Log a Dog",
+        });
+        const personalAccount = await wallet.autoConnect();
+        const aaWallet = smartWallet(smartWalletOptions);
+        await aaWallet.connect({ personalAccount });
+        return aaWallet;
       });
-      const personalAccount = await wallet.autoConnect();
-      const aaWallet = smartWallet(smartWalletOptions);
-      await aaWallet.connect({ personalAccount });
-      return aaWallet;
-    });
+    } catch (e) {
+      console.log('error auto connecting', e);
+    } finally {
+      setCustomAutoConnectIsLoading(false);
+    }
   }, [connect, smartWalletOptions]);
 
   useEffect(() => {
-    const logDogXyz = document.cookie.split('; ').find(row => row.startsWith('logDogXyz='));
-    const logDogUser = document.cookie.split('; ').find(row => row.startsWith('logDogUser='));
-    if (logDogXyz && logDogUser && !account) {
+    // const logDogXyz = document.cookie.split('; ').find(row => row.startsWith('logDogXyz='));
+    // const logDogUser = document.cookie.split('; ').find(row => row.startsWith('logDogUser='));
+    // console.log({ logDogUser, logDogXyz })
+    if (!account) {
       void autoConnect();
     }
   }, [account, autoConnect]);
@@ -91,7 +100,13 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               </button>
             )}
           </div>
-          <ProfileButton />
+          {customAutoConnectIsLoading ? (
+            <button className="btn mr-4" disabled>
+              <div className="loading loading-spinner" /> Login
+            </button>
+          ) : (
+            <ProfileButton />
+          )}
         </div>
         <ToastContainer />
         {children}

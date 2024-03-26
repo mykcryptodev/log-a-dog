@@ -50,7 +50,7 @@ export default async function retrieveToken(req: NextApiRequest, res: NextApiRes
   }
 
   const token = await issueUserToken({ apiKeyName, privateKey, userID: userId });
-  console.log({ token });
+  console.log({ mike: true, token });
 
   return res.status(200).json({ token });
 }
