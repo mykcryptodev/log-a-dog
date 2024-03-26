@@ -5,4 +5,5 @@ export const SUPPORTED_CHAINS = [
   baseSepolia,
 ];
 
-export const DEFAULT_CHAIN = process.env.NODE_ENV === "production" ? base : baseSepolia;
+// TODO: go to Base on production when ready
+export const DEFAULT_CHAIN = process.env.NODE_ENV === "production" ? baseSepolia : baseSepolia;
