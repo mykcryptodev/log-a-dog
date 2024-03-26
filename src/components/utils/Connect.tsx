@@ -28,25 +28,25 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const isAutoConnecting = useIsAutoConnecting();
   console.log({ isAutoConnecting });
 
-  const autoConnect = useCallback(async () => {
-    await connect(async () => {
-      const wallet = coinbaseWaaS({
-        appName: "Log a Dog",
-      });
-      const personalAccount = await wallet.autoConnect();
-      const aaWallet = smartWallet(smartWalletOptions);
-      await aaWallet.connect({ personalAccount });
-      return aaWallet;
-    });
-  }, [connect, smartWalletOptions]);
+  // const autoConnect = useCallback(async () => {
+  //   await connect(async () => {
+  //     const wallet = coinbaseWaaS({
+  //       appName: "Log a Dog",
+  //     });
+  //     const personalAccount = await wallet.autoConnect();
+  //     const aaWallet = smartWallet(smartWalletOptions);
+  //     await aaWallet.connect({ personalAccount });
+  //     return aaWallet;
+  //   });
+  // }, [connect, smartWalletOptions]);
 
-  useEffect(() => {
-    const logDogXyz = document.cookie.split('; ').find(row => row.startsWith('logDogXyz='));
-    const logDogUser = document.cookie.split('; ').find(row => row.startsWith('logDogUser='));
-    if (logDogXyz && logDogUser && !account) {
-      void autoConnect();
-    }
-  }, [account, autoConnect]);
+  // useEffect(() => {
+  //   const logDogXyz = document.cookie.split('; ').find(row => row.startsWith('logDogXyz='));
+  //   const logDogUser = document.cookie.split('; ').find(row => row.startsWith('logDogUser='));
+  //   if (logDogXyz && logDogUser && !account) {
+  //     void autoConnect();
+  //   }
+  // }, [account, autoConnect]);
 
   return (
     <>
