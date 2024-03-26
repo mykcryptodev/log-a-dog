@@ -10,6 +10,7 @@ import { type SmartWalletOptions, smartWallet } from "thirdweb/wallets";
 import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import ActiveChainContext from "~/contexts/ActiveChain";
+import Changelog from "~/components/utils/Changelog";
 
 interface LayoutProps {
   children: ReactNode
@@ -99,13 +100,16 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               </button>
             )}
           </div>
-          {customAutoConnectIsLoading || isConnecting ? (
-            <button className="btn mr-4" disabled>
-              <div className="loading loading-spinner" /> Login
-            </button>
-          ) : (
-            <ProfileButton />
-          )}
+          <div className="flex items-center gap-2">
+            {customAutoConnectIsLoading || isConnecting ? (
+              <button className="btn mr-4" disabled>
+                <div className="loading loading-spinner" /> Login
+              </button>
+            ) : (
+              <ProfileButton />
+            )}
+            <Changelog />
+          </div>
         </div>
         <ToastContainer />
         {children}
