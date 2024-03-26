@@ -70,9 +70,6 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   }, [connect, smartWalletOptions]);
 
   useEffect(() => {
-    // const logDogXyz = document.cookie.split('; ').find(row => row.startsWith('logDogXyz='));
-    // const logDogUser = document.cookie.split('; ').find(row => row.startsWith('logDogUser='));
-    // console.log({ logDogUser, logDogXyz })
     if (!account) {
       void autoConnect();
     }

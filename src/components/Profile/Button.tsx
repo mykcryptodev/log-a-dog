@@ -1,14 +1,9 @@
 import { useContext, type FC } from "react";
-import { ConnectButton, smartWalletConfig, useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import Image from "next/image";
 import { ProfileForm } from "~/components/Profile/Form";
-import { client } from "~/providers/Thirdweb";
-import { SMART_WALLET_FACTORY } from "~/constants/addresses";
-import { env } from "~/env";
-import { coinbaseWaasConfig } from "~/wallet/CoinbaseWaasConfig";
-import { baseSepolia } from "thirdweb/chains";
 import Connect from "~/components/utils/Connect";
 import { useDisconnect } from "thirdweb/react";
 
@@ -99,57 +94,6 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           <li><a onClick={() => void logout()}>Logout</a></li>
         </ul>
       </div>
-      {/* <ConnectButton
-        connectModal={{
-          title: "Login to Log a Dog",
-          showThirdwebBranding: false,
-          titleIcon: "https://logadog.xyz/images/logo.png",
-          welcomeScreen: {
-            title: "Log a Dog",
-            subtitle: "Login to Log a Dog",
-            img: {
-              src: "https://logadog.xyz/images/logo.png",
-            }
-          }
-        }}
-        detailsModal={{
-          hideSwitchToPersonalWallet: true,
-          showTestnetFaucet: false,
-        }}
-        detailsButton={{
-          render: () => (
-            <button className="btn btn-ghost">
-              <div className="flex items-center gap-2">
-                <div className="avatar">
-                  <div className="w-8 rounded-full">
-                    <Image
-                      src={imageUrl}
-                      alt="profile"
-                      width={48}
-                      height={48} />
-                  </div>
-                </div>
-                <span>{data.username}</span>
-              </div>
-            </button>
-          )
-        }}
-        connectButton={{
-          label: loginBtnLabel ?? "Login"
-        }} 
-        client={client} 
-        appMetadata={{
-          name: "Log a Dog",
-          url: "https://logadog.xyz",
-          description: "Who can eat the most hotdogs onchain?",
-          logoUrl: "https://logadog.xyz/images/logo.png"
-        }}
-        wallets={[
-          smartWalletConfig(
-            coinbaseWaasConfig(), smartWalletOptions
-          ),
-        ]}
-      /> */}
     </div>
   )
 };
