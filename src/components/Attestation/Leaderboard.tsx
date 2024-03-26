@@ -70,7 +70,7 @@ export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate, refetchT
   }, [windowWidth]);
 
   if (!data || !profiles) return (
-    <div className="bg-base-200 rounded-lg animate-pulse w-full h-72" />
+    <div className="bg-base-200 rounded-lg animate-pulse w-[640px] h-72" />
   );
 
   const chartOptions = {
