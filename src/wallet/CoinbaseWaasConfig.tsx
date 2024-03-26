@@ -1,6 +1,8 @@
 import { coinbaseMetadata } from "~/wallet/CoinbaseWaasMetadata"
 import { type WalletConfig } from "node_modules/thirdweb/dist/types/react/core/types/wallets.js";
 import { coinbaseWaaS } from "~/wallet/CoinbaseWaas";
+import { DEFAULT_CHAIN } from "~/constants/chains";
+import { type Chain } from "thirdweb";
 
 export type CoinbaseConfigOptions = {
   /**
@@ -8,6 +10,7 @@ export type CoinbaseConfigOptions = {
    * or [`ConnectEmbed`](https://portal.thirdweb.com/typescript/v5/react/components/ConnectEmbed) 's UI
    */
   recommended?: boolean;
+  chain: Chain;
 };
 
 /**
@@ -42,6 +45,7 @@ export const coinbaseWaasConfig = (
     create(createOptions) {
       return coinbaseWaaS({
         appName: createOptions.appMetadata.name,
+        chainId: options?.chain.id ?? DEFAULT_CHAIN.id,
       });
     },
     isInstalled() {

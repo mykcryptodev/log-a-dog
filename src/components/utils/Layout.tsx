@@ -1,6 +1,6 @@
 import { useActiveAccount, useConnect } from "thirdweb/react";
 import { signOut } from "next-auth/react";
-import { type FC, type ReactNode,useEffect, useState, useMemo, useCallback } from "react"
+import { type FC, type ReactNode,useEffect, useState, useMemo, useCallback, useContext } from "react"
 import usePrevious from "~/hooks/usePrevious";
 import { ToastContainer } from 'react-toastify';
 import { ProfileButton } from "../Profile/Button";
@@ -8,8 +8,8 @@ import { useRouter } from "next/router";
 import { coinbaseWaaS } from "~/wallet/CoinbaseWaas";
 import { type SmartWalletOptions, smartWallet } from "thirdweb/wallets";
 import { SMART_WALLET_FACTORY } from "~/constants/addresses";
-import { baseSepolia } from "thirdweb/chains";
 import { client } from "~/providers/Thirdweb";
+import ActiveChainContext from "~/contexts/ActiveChain";
 
 interface LayoutProps {
   children: ReactNode
@@ -17,6 +17,7 @@ interface LayoutProps {
 
 export const Layout: FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
+  const { activeChain } = useContext(ActiveChainContext);
   // sign out user and clear session if connected wallet changes
   const account = useActiveAccount();
   const previousAccount = usePrevious(account);
@@ -43,11 +44,11 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   const smartWalletOptions: SmartWalletOptions = useMemo(() => {
     return {
       client,
-      chain: baseSepolia,
-      factoryAddress: SMART_WALLET_FACTORY[baseSepolia.id]!,
+      chain: activeChain,
+      factoryAddress: SMART_WALLET_FACTORY[activeChain.id]!,
       gasless: true,
     }
-  }, []);
+  }, [activeChain]);
   
   const [customAutoConnectIsLoading, setCustomAutoConnectIsLoading] = useState<boolean>(false);
   const autoConnect = useCallback(async () => {
@@ -56,6 +57,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       await connect(async () => {
         const wallet = coinbaseWaaS({
           appName: "Log a Dog",
+          chainId: activeChain.id,
         });
         const personalAccount = await wallet.autoConnect();
         const aaWallet = smartWallet(smartWalletOptions);
@@ -67,7 +69,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
     } finally {
       setCustomAutoConnectIsLoading(false);
     }
-  }, [connect, smartWalletOptions]);
+  }, [activeChain.id, connect, smartWalletOptions]);
 
   useEffect(() => {
     if (!account) {

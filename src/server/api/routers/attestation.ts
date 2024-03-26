@@ -11,15 +11,15 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "~/server/api/trpc";
-import { baseSepolia, sepolia } from "thirdweb/chains";
+import { baseSepolia, base } from "thirdweb/chains";
 import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
 type Endpoints = Record<number, string>;
 
 const graphqlEndpoints = {
+  [base.id]: 'https://base.easscan.org/graphql',
   [baseSepolia.id]: 'https://base-sepolia.easscan.org/graphql',
-  [sepolia.id]: 'https://sepolia.easscan.org/graphql',
 } as Endpoints;
 
 type AttestationData = {
