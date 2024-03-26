@@ -1,10 +1,15 @@
-import { useActiveAccount } from "thirdweb/react";
+import { useActiveAccount, useConnect } from "thirdweb/react";
 import { signOut } from "next-auth/react";
-import { type FC, type ReactNode,useEffect, useState } from "react"
+import { type FC, type ReactNode,useEffect, useState, useMemo, useCallback } from "react"
 import usePrevious from "~/hooks/usePrevious";
 import { ToastContainer } from 'react-toastify';
 import { ProfileButton } from "../Profile/Button";
 import { useRouter } from "next/router";
+import { coinbaseWaaS } from "~/wallet/CoinbaseWaas";
+import { type SmartWalletOptions, smartWallet } from "thirdweb/wallets";
+import { SMART_WALLET_FACTORY } from "~/constants/addresses";
+import { baseSepolia } from "thirdweb/chains";
+import { client } from "~/providers/Thirdweb";
 
 interface LayoutProps {
   children: ReactNode
@@ -32,6 +37,44 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
 
+
+  const { connect, isConnecting } = useConnect();
+
+  const smartWalletOptions: SmartWalletOptions = useMemo(() => {
+    return {
+      client,
+      chain: baseSepolia,
+      factoryAddress: SMART_WALLET_FACTORY[baseSepolia.id]!,
+      gasless: true,
+    }
+  }, []);
+  
+  const [customAutoConnectIsLoading, setCustomAutoConnectIsLoading] = useState<boolean>(false);
+  const autoConnect = useCallback(async () => {
+    setCustomAutoConnectIsLoading(true);
+    try {
+      await connect(async () => {
+        const wallet = coinbaseWaaS({
+          appName: "Log a Dog",
+        });
+        const personalAccount = await wallet.autoConnect();
+        const aaWallet = smartWallet(smartWalletOptions);
+        await aaWallet.connect({ personalAccount });
+        return aaWallet;
+      });
+    } catch (e) {
+      console.log('error auto connecting', e);
+    } finally {
+      setCustomAutoConnectIsLoading(false);
+    }
+  }, [connect, smartWalletOptions]);
+
+  useEffect(() => {
+    if (!account) {
+      void autoConnect();
+    }
+  }, [account, autoConnect]);
+
   const fromYellow = userPrefersDarkMode ? "from-yellow-300" : "from-yellow-100";
   const toYellow = userPrefersDarkMode ? "to-yellow-800" : "to-yellow-00";
   const fromPink = userPrefersDarkMode ? "from-pink-300" : "from-pink-100";
@@ -54,7 +97,13 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               </button>
             )}
           </div>
-          <ProfileButton />
+          {customAutoConnectIsLoading || isConnecting ? (
+            <button className="btn mr-4" disabled>
+              <div className="loading loading-spinner" /> Login
+            </button>
+          ) : (
+            <ProfileButton />
+          )}
         </div>
         <ToastContainer />
         {children}

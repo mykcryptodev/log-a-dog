@@ -126,8 +126,6 @@ export const attestationRouter = createTRPCRouter({
       const affirmations = filterJudgments(judgements, true);
       const refutations = filterJudgments(judgements, false);
 
-      console.log({ affirmations, refutations });
-
       return {
         attestation,
         decodedAttestaton: {

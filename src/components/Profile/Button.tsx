@@ -1,15 +1,11 @@
 import { useContext, type FC } from "react";
-import { ConnectButton, smartWalletConfig, useActiveAccount } from "thirdweb/react";
+import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import Image from "next/image";
 import { ProfileForm } from "~/components/Profile/Form";
-import { client } from "~/providers/Thirdweb";
-import { SMART_WALLET_FACTORY } from "~/constants/addresses";
-import { env } from "~/env";
-import { coinbaseWaasConfig } from "~/wallet/CoinbaseWaasConfig";
-import { baseSepolia } from "thirdweb/chains";
 import Connect from "~/components/utils/Connect";
+import { useDisconnect } from "thirdweb/react";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -23,6 +19,10 @@ type Props = {
 export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
+  const wallet = useActiveWallet();
+  console.log({ account });
+  const { disconnect } = useDisconnect();
+
   const { data, refetch } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
     address: account?.address ?? "",
@@ -31,16 +31,16 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-  const smartWalletOptions = {
-    chain: baseSepolia,
-    factoryAddress: SMART_WALLET_FACTORY[baseSepolia.id]!,
-    clientId: env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
-    gasless: true,
+
+  const logout = async () => {
+    if (wallet) {
+      void disconnect(wallet);
+    }
   }
 
   if (!account) return (
     <div className="mr-4">
-      <Connect />
+      <Connect loginBtnLabel={loginBtnLabel} />
     </div>
   )
 
@@ -75,57 +75,25 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
 
   return (
     <div className="mr-4">
-      <ConnectButton
-        connectModal={{
-          title: "Login to Log a Dog",
-          showThirdwebBranding: false,
-          titleIcon: "https://logadog.xyz/images/logo.png",
-          welcomeScreen: {
-            title: "Log a Dog",
-            subtitle: "Login to Log a Dog",
-            img: {
-              src: "https://logadog.xyz/images/logo.png",
-            }
-          }
-        }}
-        detailsModal={{
-          hideSwitchToPersonalWallet: true,
-          showTestnetFaucet: false,
-        }}
-        detailsButton={{
-          render: () => (
-            <button className="btn btn-ghost">
-              <div className="flex items-center gap-2">
-                <div className="avatar">
-                  <div className="w-8 rounded-full">
-                    <Image
-                      src={imageUrl}
-                      alt="profile"
-                      width={48}
-                      height={48} />
-                  </div>
-                </div>
-                <span>{data.username}</span>
+      <div className="dropdown dropdown-end">
+        <div tabIndex={0} role="button" className="btn btn-ghost">
+          <div className="flex items-center gap-2">
+            <div className="avatar">
+              <div className="w-8 rounded-full">
+                <Image
+                  src={imageUrl}
+                  alt="profile"
+                  width={48}
+                  height={48} />
               </div>
-            </button>
-          )
-        }}
-        connectButton={{
-          label: loginBtnLabel ?? "Login"
-        }} 
-        client={client} 
-        appMetadata={{
-          name: "Log a Dog",
-          url: "https://logadog.xyz",
-          description: "Who can eat the most hotdogs onchain?",
-          logoUrl: "https://logadog.xyz/images/logo.png"
-        }}
-        wallets={[
-          smartWalletConfig(
-            coinbaseWaasConfig(), smartWalletOptions
-          ),
-        ]}
-      />
+            </div>
+            <span>{data.username}</span>
+          </div>
+        </div>
+        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a onClick={() => void logout()}>Logout</a></li>
+        </ul>
+      </div>
     </div>
   )
 };

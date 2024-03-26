@@ -1,47 +1,51 @@
-import { type FC } from "react";
+import { type FC, useMemo } from "react";
 import { baseSepolia } from "thirdweb/chains";
-import { ConnectButton, smartWalletConfig } from "thirdweb/react";
+import { useConnect } from "thirdweb/react";
 import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
-import { coinbaseWaasConfig } from "~/wallet/CoinbaseWaasConfig";
-import { env } from "~/env";
+import { coinbaseWaaS } from "~/wallet/CoinbaseWaas";
+import { smartWallet, type SmartWalletOptions } from "thirdweb/wallets";
 
 type Props = {
   loginBtnLabel?: string;
 }
 export const Connect: FC<Props> = ({ loginBtnLabel }) => {
-  const smartWalletOptions = {
-    chain: baseSepolia,
-    factoryAddress: SMART_WALLET_FACTORY[baseSepolia.id]!,
-    clientId: env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
-    gasless: true,
-  }
-  
+  const smartWalletOptions: SmartWalletOptions = useMemo(() => {
+    return {
+      client,
+      chain: baseSepolia,
+      factoryAddress: SMART_WALLET_FACTORY[baseSepolia.id]!,
+      gasless: true,
+    }
+  }, []);
+  const { connect, isConnecting } = useConnect();
+
   return (
-    <ConnectButton 
-      connectButton={{
-        label: loginBtnLabel ?? "Login"
-      }}
-      connectModal={{
-        title: "Login to Log a Dog",
-        showThirdwebBranding: false,
-        titleIcon: "https://logadog.xyz/images/logo.png",
-      }} 
-      client={client} 
-      appMetadata={{
-        name: "Log a Dog",
-        url: "https://logadog.xyz",
-        description: "Who can eat the most hotdogs onchain?",
-        logoUrl: "https://logadog.xyz/images/logo.png"
-      }}
-      wallets={[
-        smartWalletConfig(
-          coinbaseWaasConfig(), smartWalletOptions
-        ),
-      ]}
-      chain={baseSepolia}
-    />
-  );
+    <button
+      className="btn"
+      disabled={isConnecting}
+      onClick={() =>
+        connect(async () => {
+          // instantiate wallet
+          const wallet = coinbaseWaaS({
+            appName: "Log a Dog",
+          });
+          // connect wallet
+          const personalAccount = await wallet.connect();
+          
+          // connect personal acct to smart wallet
+          const aaWallet = smartWallet(smartWalletOptions);
+          await aaWallet.connect({ personalAccount });
+
+          // return the smart wallet
+          return aaWallet;
+        })
+      }
+    >
+      {isConnecting && (<div className="loading loading-spinner" />)}
+      {loginBtnLabel ?? "Login"}
+    </button>
+  )
 };
 
 export default Connect;

@@ -129,6 +129,7 @@ export class CoinbaseWaasWallet implements Wallet {
   private provider: WalletClient | undefined;
   private chain: Chain | undefined;
   private account?: Account | undefined;
+  userId?: string | undefined;
   metadata: WalletMetadata;
 
   /**
@@ -216,6 +217,10 @@ export class CoinbaseWaasWallet implements Wallet {
     return await this.onConnect();
   }
 
+  getUserId() {
+    return this.userId;
+  }
+
   /**
    * @internal
    */
@@ -244,6 +249,7 @@ export class CoinbaseWaasWallet implements Wallet {
     
     // Login the user.
     const user = await waas.auth.login();
+    this.userId = user.id;
     
     let wallet: CoinbaseWaasWalletT;
     
@@ -289,7 +295,55 @@ export class CoinbaseWaasWallet implements Wallet {
    * @returns A Promise that resolves to the connected `Account`
    */
   async autoConnect() {
-    return await this.connect();
+    console.log("autoConnect...");
+    const waas = await InitializeWaas({
+      collectAndReportMetrics: true,
+      enableHostedBackups: true,
+      prod: false,
+      projectId: COINBASE_WAAS_PROJECT_ID,
+    });
+
+    const user = waas.auth.user;
+
+    if (!user) {
+      throw new Error("No user found");
+    }
+    
+    let wallet: CoinbaseWaasWalletT;
+
+    if (waas.wallets.wallet) {
+      wallet = waas.wallets.wallet;
+      console.log("wallet is resumed");
+    } else if (user.hasWallet) {
+      wallet = await waas.wallets.restoreFromHostedBackup();
+      console.log("wallet is restored");
+    } else {
+      wallet = await waas.wallets.create();
+      console.log("wallet is created");
+    }
+
+    console.log({ walletAddresses: await wallet.addresses.all() });
+    const address = await wallet.addresses.for(ProtocolFamily.EVM);
+
+    if (!address) {
+      throw new Error("No accounts found");
+    }
+
+    const viemAccount = toViem(address);
+
+    await this.initProvider({
+      account: viemAccount,
+      chain: viemBaseSepolia,
+    });
+
+    const walletClient = createWalletClient({
+      account: viemAccount,
+      chain: viemBaseSepolia,
+      transport: http(baseSepolia.rpc),
+    });
+    const account = viemAdapter.walletClient.fromViem({ walletClient });
+    this.account = account;
+    return account;
   }
 
   /**
@@ -377,10 +431,12 @@ export class CoinbaseWaasWallet implements Wallet {
       // provider.removeListener("chainChanged", this.onChainChanged);
       // provider.removeListener("disconnect", this.onDisconnect);
     }
+
     await Logout();
 
     this.account = undefined;
     this.chain = undefined;
+    this.userId = undefined;
   };
 
   /**

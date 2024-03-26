@@ -63,8 +63,6 @@ export const JudgeAttestation: FC<Props> = ({
     setUsersRefutation(usersRefutation);
   }, [account?.address, attestation.refutations]);
 
-  console.log({ usersAffirmation, usersRefutation, attestation });
-
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const castJudgement = async (isAffirmed: boolean) => {
