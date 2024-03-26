@@ -1,4 +1,4 @@
-import { useContext, useEffect, type FC, useState } from "react";
+import { useContext, type FC } from "react";
 import { ConnectButton, smartWalletConfig, useActiveAccount } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
@@ -10,7 +10,6 @@ import { env } from "~/env";
 import { coinbaseWaasConfig } from "~/wallet/CoinbaseWaasConfig";
 import { baseSepolia } from "thirdweb/chains";
 import Connect from "~/components/utils/Connect";
-import { type VerifyLoginPayloadParams, signLoginPayload } from "thirdweb/auth";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -38,48 +37,6 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     clientId: env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
     gasless: true,
   }
-
-  // persist the login locally
-  const { data: loginPayload } = api.auth.receivePayload.useQuery({
-    address: account?.address ?? "",
-  }, {
-    enabled: !!account?.address,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
-  const [signedPayload, setSignedPayload] = useState<VerifyLoginPayloadParams>();
-  const { data: authTokens } = api.auth.receiveToken.useQuery({
-    payload: {
-      signature: signedPayload?.signature ?? "",
-      loginPayload: signedPayload?.payload as unknown as string ?? "",
-    },
-  }, {
-    enabled: !!signedPayload,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
-
-  console.log({ loginPayload, authTokens, account });
-
-  useEffect(() => {
-    const sign = async () => {
-      if (loginPayload && account) {
-        const { signature, payload } = await signLoginPayload({
-          payload: loginPayload,
-          account: account,
-        });
-        setSignedPayload({ payload, signature });
-      }
-    }
-    if (!account || !loginPayload) return;
-    void sign();
-  }, [account, loginPayload]);
-
-  useEffect(() => {
-    if (document && authTokens) {
-      document.cookie = `logDogXyz=${authTokens.jwt}; Path=/; HttpOnly; Secure; SameSite=Strict`;
-    }
-  }, [authTokens]);
 
   if (!account) return (
     <div className="mr-4">

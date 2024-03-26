@@ -129,6 +129,7 @@ export class CoinbaseWaasWallet implements Wallet {
   private provider: WalletClient | undefined;
   private chain: Chain | undefined;
   private account?: Account | undefined;
+  userId?: string | undefined;
   metadata: WalletMetadata;
 
   /**
@@ -216,6 +217,10 @@ export class CoinbaseWaasWallet implements Wallet {
     return await this.onConnect();
   }
 
+  getUserId() {
+    return this.userId;
+  }
+
   /**
    * @internal
    */
@@ -244,6 +249,7 @@ export class CoinbaseWaasWallet implements Wallet {
     
     // Login the user.
     const user = await waas.auth.login();
+    this.userId = user.id;
     
     let wallet: CoinbaseWaasWalletT;
     
@@ -289,7 +295,8 @@ export class CoinbaseWaasWallet implements Wallet {
    * @returns A Promise that resolves to the connected `Account`
    */
   async autoConnect() {
-    return await this.connect();
+    // return await this.connect();
+    return Promise.resolve(null);
   }
 
   /**
