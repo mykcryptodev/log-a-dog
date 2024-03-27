@@ -38,28 +38,62 @@ export const Upload: FC<UploadProps> = ({
   useEffect(() => {
     if (initialUrls && initialUrls.length > 0) {
       setUrls(initialUrls);
-      // onUpload?.(initialUrls);
     }
-  }, [onUpload, initialUrls]);
+  }, [initialUrls]);
+
+  const resizeImageFile = async (file: File): Promise<File> => {
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size <= maxSize) return file; // Return original file if it doesn't exceed the limit
+
+    const img = document.createElement('img');
+    const canvas = document.createElement('canvas');
+    const src = URL.createObjectURL(file);
+    img.src = src;
+    await new Promise((resolve) => {
+      img.onload = resolve;
+    });
+
+    let quality = 0.9; // Start with high quality
+    let resizedFile = file;
+
+    do {
+      const ctx = canvas.getContext('2d');
+      const width = img.width * quality;
+      const height = img.height * quality;
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      const blob = await new Promise<Blob>((resolve, reject) => 
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create blob from canvas'));
+          }
+        }, 'image/jpeg', quality)
+      );
+      resizedFile = new File([blob], file.name, { type: 'image/jpeg' });
+      quality -= 0.1; // Reduce quality progressively
+    } while (resizedFile.size > maxSize && quality > 0.1);
+
+    URL.revokeObjectURL(src);
+    return resizedFile;
+  };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    // clear the urls from state
     setUrls([]);
     setPreparingUpload(true);
-    // Perform file size validation
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-    const oversizedFiles = acceptedFiles.filter(file => file.size > maxSize);
-    if (oversizedFiles.length > 0) {
-      console.warn("File size exceeds 5MB limit:", oversizedFiles);
-      toast("File size exceeds 5MB limit", { type: "error" });
-      setPreparingUpload(false);
-      // You can show an error message or handle the oversized files in a desired way
-      return;
-    }
+
+    const resizedFilesPromises = acceptedFiles.map(async (file) => {
+      return await resizeImageFile(file);
+    });
+
+    const resizedFiles = await Promise.all(resizedFilesPromises);
 
     try {
       const uris = await upload({
-        files: acceptedFiles,
+        files: resizedFiles,
         client,
       });
       const resolvedUrls = await Promise.all(uris.map(uri => (
@@ -72,13 +106,12 @@ export const Upload: FC<UploadProps> = ({
       setUrls(resolvedUrls);
       onUpload?.({ resolvedUrls, uris });
     } catch (e) {
-      // toast error
       toast("Error uploading file", { type: "error" });
     }
   }, [onUpload]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"], video: ["video/*"] }});
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
 
   const currentLabel = useMemo(() => {
     if (preparingUpload) {

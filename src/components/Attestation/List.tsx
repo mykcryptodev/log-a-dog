@@ -46,6 +46,10 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
       if (entries?.[0]?.isIntersecting && data?.nextCursor) {
         setCursor(data.nextCursor);
       }
+    }, {
+      root: null,
+      rootMargin: '0px',
+      threshold: 1.0
     });
     if (node) observer.current.observe(node);
   }, [isLoading, data?.nextCursor]);
@@ -91,10 +95,10 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
         <AttestationWrapper 
           key={index} 
           attestation={attestation} 
-          ref={index === attestations.length - 1 ? lastAttestationRef : null}
+          ref={attestations.length === index + 1 ? lastAttestationRef : null}
         />
       ))}
-      {isLoading && <div className="loading loading-spinner mx-auto" />}
+      {isLoading && <div className="loading loading-spinner mx-auto col-span-2 w-5 h-5" />}
     </div>
   );
 };
