@@ -13,7 +13,7 @@ export const SMART_WALLET_ENTRYPOINT: ContractAddress = {
 }
 
 export const SMART_WALLET_BUNDLER_URL: ContractAddress = {
-  [base.id]: "",
+  [base.id]: "https://api.developer.coinbase.com/rpc/v1/base/A10WpgQTkaHJltNKqtNhT2RQ-E-KgEjs",
   [baseSepolia.id]: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/Av-Z_3kkdy_jHZd62vCmczjEfXBPtJPC",
 }
 
