@@ -1,7 +1,5 @@
 import { useActiveAccount, useConnect } from "thirdweb/react";
-import { signOut } from "next-auth/react";
 import { type FC, type ReactNode,useEffect, useState, useMemo, useCallback, useContext } from "react"
-import usePrevious from "~/hooks/usePrevious";
 import { ToastContainer } from 'react-toastify';
 import { ProfileButton } from "../Profile/Button";
 import { useRouter } from "next/router";
@@ -21,18 +19,6 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   const { activeChain } = useContext(ActiveChainContext);
   // sign out user and clear session if connected wallet changes
   const account = useActiveAccount();
-  const previousAccount = usePrevious(account);
-  useEffect(() => {
-    if (account) {
-      if (previousAccount && account !== previousAccount) {
-        void signOut();
-      }
-    } else {
-      if (previousAccount) {
-        void signOut();
-      }
-    }
-  }, [previousAccount, account]);
 
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   useEffect(() => {
@@ -76,7 +62,8 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
     if (!account) {
       void autoConnect();
     }
-  }, [account, autoConnect]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fromYellow = userPrefersDarkMode ? "from-yellow-300" : "from-yellow-100";
   const toYellow = userPrefersDarkMode ? "to-yellow-800" : "to-yellow-00";
