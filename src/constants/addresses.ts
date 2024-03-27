@@ -3,7 +3,8 @@ import { baseSepolia, base } from "thirdweb/chains";
 type ContractAddress = Record<number, string>;
 
 export const SMART_WALLET_FACTORY: ContractAddress = {
-  [baseSepolia.id]: '0xc52d241baf9f2adf8f20105b13d044e5db3f736f',
+  [base.id]: "0x9153DbD27d9895BD1ca2839D2Dd0A7E68eE2e24f",
+  [baseSepolia.id]: "0xc52d241baf9f2adf8f20105b13d044e5db3f736f",
 }
 
 export const EAS: ContractAddress = {
