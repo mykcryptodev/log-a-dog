@@ -13,6 +13,6 @@ export const DEFAULT_CHAIN = process.env.NODE_ENV === "production" ? {
 };
 
 export const MAX_PRIORITY_FEE_PER_GAS = {
-  [base.id]: BigInt(555000),
+  [base.id]: BigInt(1110000),
   [baseSepolia.id]: undefined,
 } as Record<number, bigint | undefined>;

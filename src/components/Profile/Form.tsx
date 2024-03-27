@@ -35,7 +35,7 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
     contract,
     method: "function setProfile(string username, string imgUrl, string metadata)",
     params: [username, imgUrl, ""],
-    // maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
 
   const isValidUsername = useMemo(() => {
