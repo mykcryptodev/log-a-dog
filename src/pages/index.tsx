@@ -38,14 +38,15 @@ export default function Home() {
                 Get your friends together and see who can eat the most hot dogs.
               </div>
             </Link>
-            <div
+            <Link
+              href="/contest/my"
               className="flex max-w-xs flex-col gap-4 rounded-xl opacity-90 p-4 cursor-pointer hover:opacity-80"
             >
-              <h3 className="text-2xl font-bold">Join a Contest →</h3>
-              <div className="text-lg">
-                Join your friends in an existing contest.
+              <h3 className="text-2xl font-bold">My Contests →</h3>
+              <div className="text-lg flex flex-col">
+                Contests that you are a part of. Everyone is in this global contest.
               </div>
-            </div>
+            </Link>
           </div>
           <h3 className="text-2xl font-bold">🌎 Global Leaderboard</h3>
           <Leaderboard refetchTimestamp={refetchTimestamp} />

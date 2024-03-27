@@ -154,7 +154,6 @@ export const attestationRouter = createTRPCRouter({
       itemsPerPage: z.number().optional()
     }))
     .query(async ({ input }) => {
-      console.log({ input });
       const defaultPageSize = 10;
       const { attestations, total } = await getAttestationsBySchemaId(input);
       const hasNextPage = attestations.length > (input.itemsPerPage ?? defaultPageSize);

@@ -9,6 +9,7 @@ import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import Changelog from "~/components/utils/Changelog";
+import Link from "next/link";
 
 interface LayoutProps {
   children: ReactNode
@@ -82,9 +83,9 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
         <div className="w-full justify-between items-center flex mr-4">
           <div>
             {router.pathname !== '/' && (
-              <button onClick={() => router.back()} className="btn btn-ghost text-neutral ml-4">
+              <Link href="/" className="btn btn-ghost text-neutral ml-4">
                 🌭  Log a Dog
-              </button>
+              </Link>
             )}
           </div>
           <div className="flex items-center gap-2">

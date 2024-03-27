@@ -19,7 +19,57 @@ export const contestRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { id, chainId } = input;
       const contest = await getContest(id, chainId);
+      console.log({ contest });
       return contest;
+    }),
+  getByUser: publicProcedure
+    .input(z.object({ 
+      chainId: z.number(),
+      address: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const { address, chainId } = input;
+      const contestAddress = CONTESTS[chainId];
+      const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
+      if (!contestAddress || !chain) {
+        throw new Error("Chain not supported");
+      }
+      const client = createThirdwebClient({
+        secretKey: env.THIRDWEB_SECRET_KEY,
+      });
+      const contract = getContract({
+        client,
+        address: contestAddress,
+        chain,
+      });
+      const contests = await readContract({
+        contract,
+        method: {
+          name: "getUserContests",
+          type: "function",
+          stateMutability: "view",
+          inputs: [{ name: "_participant", type: "address" }],
+          outputs: [
+            { 
+              name: "contests", 
+              type: "tuple[]", 
+              components: [
+                { name: "id", type: "uint256" },
+                { name: "name", type: "string" },
+                { name: "metadata", type: "string" },
+                { name: "startDate", type: "uint256" },
+                { name: "endDate", type: "uint256" },
+                { name: "creator", type: "address" },
+                { name: "contestants", type: "address[]" },
+                { name: "isInviteOnly", type: "bool" }
+              ]
+            }
+          ],
+        },
+        params: [address],
+      });
+      console.log({ contests });
+      return contests;
     }),
   getJoinRequests: publicProcedure
     .input(z.object({ 
