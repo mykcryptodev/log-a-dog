@@ -9,7 +9,7 @@ export const DEFAULT_CHAIN = process.env.NODE_ENV === "production" ? {
   ...base
 } : {
   ...baseSepolia,
-  // rpc: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/Av-Z_3kkdy_jHZd62vCmczjEfXBPtJPC",
+  rpc: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/Av-Z_3kkdy_jHZd62vCmczjEfXBPtJPC",
 };
 
 export const MAX_PRIORITY_FEE_PER_GAS = {

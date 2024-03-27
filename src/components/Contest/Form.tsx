@@ -1,5 +1,5 @@
 import { useState, type FC, useContext, useEffect, useMemo } from "react";
-import { TransactionButton, useActiveAccount, useContractEvents } from "thirdweb/react";
+import { TransactionButton, useActiveAccount } from "thirdweb/react";
 import { getContract, prepareContractCall } from "thirdweb";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { CONTESTS } from "~/constants/addresses";
@@ -70,10 +70,6 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
     address: CONTESTS[activeChain.id]!,
     chain: activeChain,
   });
-  const contractEvents = useContractEvents({
-    contract
-  });
-  console.log({ contractEvents });
 
   const createContestMethod = "function createContest(string name, string metadata, uint256 start, uint256 end, bool isInviteOnly)";
   const updateContestMethod = "function updateContest(uint256 id, string name, string metadata, uint256 start, uint256 end, bool isInviteOnly)";
