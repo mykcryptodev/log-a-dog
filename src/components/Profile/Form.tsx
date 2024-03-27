@@ -7,6 +7,7 @@ import { PROFILES } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
+import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -30,6 +31,8 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
     address: PROFILES[activeChain.id]!,
     chain: activeChain,
   });
+
+  const rpcRequest = getRpcClient({ client, chain: activeChain });
 
   const tx = prepareContractCall({
     contract,
@@ -77,7 +80,17 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
           pointerEvents: 'none',
           color: 'rgb(0, 0, 0, 0.5)',
         } : {}}
-        transaction={() => tx}
+        transaction={async () => {
+          const maxPriorityFeePerGas = await eth_maxPriorityFeePerGas(rpcRequest);
+          console.log({
+            fetchedMax: maxPriorityFeePerGas,
+            default: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
+          });
+          return {
+            ...tx,
+            maxPriorityFeePerGas,
+          }
+        }}
         onSubmitted={() => {
           setSaveProfileBtnLabel("Saving...");
         }}
