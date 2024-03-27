@@ -33,7 +33,6 @@ export const MODERATION: ContractAddress = {
 }
 
 export const CONTESTS: ContractAddress = {
-  [base.id]: "0xb18627080be9b71deBc1E85DAa5789F51345933E",
-  // [baseSepolia.id]: "0x4b7bC8173d6668f672129705F0D23547a95aAF53",
+  [base.id]: "0x5F0CCD30CB0776b87b19A97AC4Bd589705d7CC33",
   [baseSepolia.id]: "0xF25668d782C79d9359e239931cE3Ff133a8B688C",
 }
