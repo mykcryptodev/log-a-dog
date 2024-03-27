@@ -21,56 +21,45 @@ type AttestationT = {
 export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, refetchTimestamp }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const schemaId = EAS_SCHEMA_ID[activeChain.id]!;
-  const [cursor, setCursor] = useState<number>(0);
   const [attestations, setAttestations] = useState<AttestationT[]>([]);
+  const [cursor, setCursor] = useState<string>();
   const { data, refetch, isLoading } = api.attestation.getBySchemaId.useQuery({
     schemaId,
     chainId: activeChain.id,
     ...attestors && { attestors },
     ...startDate && { startDate: Math.floor(startDate.getTime() / 1000) },
     ...endDate && { endDate: Math.floor(endDate.getTime() / 1000) },
+    itemsPerPage: 4,
     cursor,
-    itemsPerPage: 10,
   }, {
     enabled: !!schemaId && !!activeChain.id,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
 
+  const hasNextPage = (data?.total ?? 0) > attestations.length;
+
   const observer = useRef<IntersectionObserver | null>(null);
   const lastAttestationRef = useCallback((node: HTMLElement | null) => {
-    if (isLoading) return;
-    if (!data?.nextCursor) return;
+    console.log({ hasNextPage, shouldFetch: 'not yet...' });
+    if (isLoading || !hasNextPage) {
+      console.log('Loading or no next page, return early');
+      return;
+    }
     if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
-      if (entries?.[0]?.isIntersecting && data?.nextCursor) {
-        setCursor(data.nextCursor);
+    observer.current = new IntersectionObserver(entries => {
+      console.log({ shouldFetch: entries?.[0]?.isIntersecting })
+      if (entries?.[0]?.isIntersecting) {
+        console.log('Intersection observed, fetching next page');
+        setCursor(attestations[attestations.length - 1]?.id);
       }
-    }, {
-      root: null,
-      rootMargin: '0px',
-      threshold: 1.0
     });
-    if (node) observer.current.observe(node);
-  }, [isLoading, data?.nextCursor]);
-
-  const resetCursor = useCallback(() => {
-    setCursor(0);
-  }, []);
-
-  const refetchAndReset = useCallback(async () => {
-    setCursor(0);
-    const newData = await refetch();
-    if (newData.data?.attestations) {
-      setAttestations(newData.data.attestations);
+    if (node) {
+      console.log('Observing node:', node);
+      observer.current.observe(node);
     }
-  }, [refetch]);
-
-  useEffect(() => {
-    if (cursor === 0) {
-      void refetchAndReset();
-    }
-  }, [cursor, refetchAndReset]);
+  }, [hasNextPage, attestations, isLoading]);
+  
 
   useEffect(() => {
     if (data?.attestations) {
@@ -80,13 +69,11 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
 
   useEffect(() => {
     if (refetchTimestamp) {
-      setTimeout(() => {
-        // wait 5 seconds for the blockchain
-        void resetCursor();
-      }, 5000);
+      setCursor(undefined);
+      setAttestations([]);
+      void refetch();
     }
-  }, [resetCursor, refetchTimestamp]);
-
+  }, [refetch, refetchTimestamp]);
   type AttestationWrapperProps = {
     attestation: AttestationT;
   }
@@ -99,8 +86,13 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
           refreshAttestations={() => {
             // wait 5 seconds for the blockchain
             setTimeout(() => {
-              void resetCursor();
+              setCursor(undefined);
+              setAttestations([]);
+              void refetch();
             }, 5000);
+          }}
+          onAttestationRevoked={(attestationId) => {
+            setAttestations(prev => prev.filter(att => att.id !== attestationId));
           }}
         />
       </div>
@@ -122,4 +114,4 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
       {isLoading && <div className="loading loading-spinner mx-auto col-span-2 w-5 h-5" />}
     </div>
   );
-};
+}

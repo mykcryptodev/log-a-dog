@@ -11,8 +11,9 @@ import JudgeAttestation from "~/components/Attestation/Judge";
 type Props = {
   attestationId: string;
   refreshAttestations?: () => void;
+  onAttestationRevoked?: (attestatinId: string) => void;
 }
-export const Attestation: FC<Props> = ({ attestationId, refreshAttestations }) => {
+export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onAttestationRevoked, }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data: attestation, refetch } = api.attestation.getById.useQuery({
@@ -67,7 +68,7 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations }) =
         {account?.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase() && (
           <RevokeAttestation 
             uid={attestationId}
-            onAttestationRevoked={refreshAttestations}
+            onAttestationRevoked={() => void onAttestationRevoked?.(attestationId)}
           />
         )}
       </div>

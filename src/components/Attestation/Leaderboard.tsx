@@ -33,10 +33,7 @@ export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate, refetchT
 
   useEffect(() => {
     if (refetchTimestamp) {
-      // wait 5 seconds for the graph to index the blockchain event
-      setTimeout(() => {
-        void refetch();
-      }, 5000);
+      void refetch();
     }
   }, [refetch, refetchTimestamp]);
 

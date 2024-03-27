@@ -89,7 +89,7 @@ export const attestationRouter = createTRPCRouter({
       });
       const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
       
-      let cursor = 0;
+      let cursor: string | undefined;
       const itemsPerPage = 100;
       let judgements: AttestationData[] = [];
       let hasMore = true;
@@ -104,7 +104,7 @@ export const attestationRouter = createTRPCRouter({
         });
 
         judgements = [...judgements, ...result.attestations];
-        cursor += itemsPerPage;
+        cursor = result.attestations[result.attestations.length - 1]?.id;
         hasMore = result.attestations.length === itemsPerPage;
       }
 
@@ -150,15 +150,18 @@ export const attestationRouter = createTRPCRouter({
       attestors: z.array(z.string()).optional(),
       startDate: z.number().optional(),
       endDate: z.number().optional(),
-      cursor: z.number().optional(),
+      cursor: z.string().optional(),
       itemsPerPage: z.number().optional()
     }))
     .query(async ({ input }) => {
-      const { cursor = 0 } = input;
+      console.log({ input });
+      const defaultPageSize = 10;
       const { attestations, total } = await getAttestationsBySchemaId(input);
+      const hasNextPage = attestations.length > (input.itemsPerPage ?? defaultPageSize);
       return {
-        attestations,
-        nextCursor: cursor + attestations.length < total ? cursor + attestations.length : undefined,
+        attestations: input.cursor ? attestations.slice(1) : attestations,
+        total,
+        hasNextPage,
       };
     }),
   getLeaderboard: publicProcedure
@@ -251,10 +254,10 @@ async function getAttestationsBySchemaId(input: {
   refUID?: string,
   startDate?: number,
   endDate?: number,
-  cursor?: number,
+  cursor?: string,
   itemsPerPage?: number
 }) {
-  const { schemaId, chainId, attestors, refUID, startDate, endDate, cursor = 0, itemsPerPage = 10 } = input;
+  const { schemaId, chainId, attestors, refUID, startDate, endDate, cursor, itemsPerPage = 10 } = input;
   const endpoint = graphqlEndpoints[chainId];
   if (!endpoint) {
     throw new Error("Chain not supported");
@@ -269,8 +272,8 @@ async function getAttestationsBySchemaId(input: {
   });
   
   const GET_ATTESTATIONS = gql`
-    query Attestations($where: AttestationWhereInput, $take: Int, $skip: Int, $orderBy: [AttestationOrderByWithRelationInput!]) {
-      attestations(where: $where, take: $take, skip: $skip, orderBy: $orderBy) {
+    query Attestations($where: AttestationWhereInput, $orderBy: [AttestationOrderByWithRelationInput!], $take: Int, $cursor: AttestationWhereUniqueInput) {
+      attestations(where: $where, orderBy: $orderBy, take: $take, cursor: $cursor) {
         id
         attester
         timeCreated
@@ -298,10 +301,11 @@ async function getAttestationsBySchemaId(input: {
       ...(startDate && endDate ? { "timeCreated": { "gte": startDate, "lte": endDate } } : {})
     },
     orderBy: [{ timeCreated: "desc" }],
-    skip: cursor,
+    cursor: cursor ? { id: cursor } : undefined,
     take: itemsPerPage,
   };
 
+  try {
   // Execute the query
   const response = await client.query({
     query: GET_ATTESTATIONS,
@@ -313,4 +317,8 @@ async function getAttestationsBySchemaId(input: {
     attestations: result.data.attestations,
     total: result.data.aggregateAttestation._count._all,
   };
+  } catch (e) {
+    console.log(JSON.stringify(e));
+    throw e;
+  }
 }

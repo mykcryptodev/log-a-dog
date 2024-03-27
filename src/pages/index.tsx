@@ -22,8 +22,10 @@ export default function Home() {
           </h1>
           <CreateAttestation
             onAttestationCreated={() => {
-              console.log('on create called');
-              setRefetchTimestamp(Date.now());
+              // give the blockchain 5 seconds
+              setTimeout(() => {
+                setRefetchTimestamp(new Date().getTime())
+              }, 5000);
             }}
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
@@ -47,8 +49,7 @@ export default function Home() {
           </div>
           <h3 className="text-2xl font-bold">🌎 Global Leaderboard</h3>
           <Leaderboard refetchTimestamp={refetchTimestamp} />
-          <ListAttestations refetchTimestamp={refetchTimestamp} />
-          {/* key={refetchTimestamp} /> */}
+          <ListAttestations refetchTimestamp={refetchTimestamp} key={refetchTimestamp} />
         </div>
       </main>
     </>
