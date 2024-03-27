@@ -6,6 +6,7 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { PROFILES } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
+import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -34,6 +35,7 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
     contract,
     method: "function setProfile(string username, string imgUrl, string metadata)",
     params: [username, imgUrl, ""],
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
 
   const isValidUsername = useMemo(() => {

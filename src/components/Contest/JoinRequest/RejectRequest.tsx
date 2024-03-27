@@ -5,6 +5,7 @@ import { CONTESTS } from "~/constants/addresses";
 import { toast } from "react-toastify";
 import { TransactionButton } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
+import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 
 type Props = {
   contest: {
@@ -33,6 +34,7 @@ export const RejectJoinRequest: FC<Props> = ({ contest, requesterAddress, onRequ
     contract,
     method: "function denyJoinRequest(uint256 id, address participant)",
     params: [BigInt(contest.id), requesterAddress],
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
 
   return (

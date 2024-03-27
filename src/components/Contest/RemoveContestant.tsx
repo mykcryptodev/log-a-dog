@@ -6,6 +6,7 @@ import { TransactionButton } from "thirdweb/react";
 import { CONTESTS } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
+import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 
 type Props = {
   contestId: number;
@@ -39,6 +40,7 @@ export const RemoveContestant: FC<Props> = ({
     contract,
     method: "function removeFromContest(uint256 id, address contestant)",
     params: [BigInt(contestId), contestantToRemove.address],
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
   
   return (

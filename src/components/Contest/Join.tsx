@@ -7,6 +7,7 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
 import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
+import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 
 type Props = {
   contest: {
@@ -43,6 +44,7 @@ export const JoinContest: FC<Props> = ({ contest, onContestJoined }) => {
     contract,
     method: "function joinContest(uint256 id)",
     params: [BigInt(contest.id)],
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
 
   const label = contest.isInviteOnly ? "Request to join" : "Join";

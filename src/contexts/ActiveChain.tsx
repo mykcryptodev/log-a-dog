@@ -5,7 +5,7 @@ import { DEFAULT_CHAIN } from "~/constants/chains";
 
 type IActiveChainContext = {
   activeChain: Chain;
-  updateActiveChain: (chainName: string) => void;
+  updateActiveChain: (chainName: string | number) => void;
 }
 const defaultState = {
   activeChain: DEFAULT_CHAIN,

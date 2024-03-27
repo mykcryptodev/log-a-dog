@@ -7,7 +7,7 @@ import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import { api } from "~/utils/api";
 import { ProfileButton } from "../Profile/Button";
-
+import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 
 const getIsoStringInUserTimezone = (date: Date) => {
   // if the date is invalid, return today
@@ -94,12 +94,14 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
     contract,
     method: createContestMethod,
     params: createParams,
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
 
   const updateTx = prepareContractCall({
     contract,
     method: updateContestMethod,
     params: updateParams,
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
 
   return (
