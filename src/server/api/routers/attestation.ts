@@ -154,7 +154,6 @@ export const attestationRouter = createTRPCRouter({
       itemsPerPage: z.number().optional()
     }))
     .query(async ({ input }) => {
-      console.log({ input })
       const { cursor = 0 } = input;
       const { attestations, total } = await getAttestationsBySchemaId(input);
       return {
@@ -173,7 +172,6 @@ export const attestationRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { chainId, attestors, startDate, endDate, cursor = 0, itemsPerPage = 10 } = input;
-      console.log({ startDate, endDate });
       const endpoint = graphqlEndpoints[chainId];
       if (!endpoint) {
         throw new Error("Chain not supported");

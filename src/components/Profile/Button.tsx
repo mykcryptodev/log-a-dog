@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ProfileForm } from "~/components/Profile/Form";
 import Connect from "~/components/utils/Connect";
 import { useDisconnect } from "thirdweb/react";
+import { Logout } from "@coinbase/waas-sdk-web";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -35,6 +36,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   const logout = async () => {
     if (wallet) {
       void disconnect(wallet);
+      void Logout();
     }
   }
 

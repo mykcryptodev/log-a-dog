@@ -32,7 +32,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
             appName: "Log a Dog",
             chainId: activeChain.id,
           });
-          console.log({ activeChain});
+          console.log({ activeChain });
           // connect wallet
           const personalAccount = await wallet.connect();
           
