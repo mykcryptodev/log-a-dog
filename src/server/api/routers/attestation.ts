@@ -37,6 +37,11 @@ const graphqlAttestationSchema = z.object({
       timeCreated: z.number(),
       decodedDataJson: z.string(),
     })),
+    aggregateAttestation: z.object({
+      _count: z.object({
+        _all: z.number(),
+      }),
+    }),
   }),
 });
 
@@ -149,7 +154,13 @@ export const attestationRouter = createTRPCRouter({
       itemsPerPage: z.number().optional()
     }))
     .query(async ({ input }) => {
-      return await getAttestationsBySchemaId(input);
+      console.log({ input })
+      const { cursor = 0 } = input;
+      const { attestations, total } = await getAttestationsBySchemaId(input);
+      return {
+        attestations,
+        nextCursor: cursor + attestations.length < total ? cursor + attestations.length : undefined,
+      };
     }),
   getLeaderboard: publicProcedure
     .input(z.object({ 
@@ -260,19 +271,24 @@ async function getAttestationsBySchemaId(input: {
   });
   
   const GET_ATTESTATIONS = gql`
-    query AttestationQuery($attestationsWhere2: AttestationWhereInput, $orderBy: [AttestationOrderByWithRelationInput!], $skip: Int, $take: Int) {
-      attestations(where: $attestationsWhere2, orderBy: $orderBy, skip: $skip, take: $take) {
+    query Attestations($where: AttestationWhereInput, $take: Int, $skip: Int, $orderBy: [AttestationOrderByWithRelationInput!]) {
+      attestations(where: $where, take: $take, skip: $skip, orderBy: $orderBy) {
         id
         attester
         timeCreated
         decodedDataJson
+      }
+      aggregateAttestation(where: $where) {
+        _count {
+          _all
+        }
       }
     }
   `;
 
   // Define your query variables
   const variables = {
-    attestationsWhere2: {
+    where: {
       schemaId: {
         equals: schemaId,
       },
@@ -297,5 +313,6 @@ async function getAttestationsBySchemaId(input: {
 
   return {
     attestations: result.data.attestations,
+    total: result.data.aggregateAttestation._count._all,
   };
 }
