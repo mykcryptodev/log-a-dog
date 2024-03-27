@@ -35,11 +35,11 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       chain: activeChain,
       factoryAddress: SMART_WALLET_FACTORY[activeChain.id]!,
       gasless: true,
-      overrides: {
-        entrypointAddress: SMART_WALLET_ENTRYPOINT[activeChain.id],
-        bundlerUrl: SMART_WALLET_BUNDLER_URL[activeChain.id],
-        paymasterAddress: SMART_WALLET_BUNDLER_URL[activeChain.id],
-      }
+      // overrides: {
+      //   entrypointAddress: SMART_WALLET_ENTRYPOINT[activeChain.id],
+      //   bundlerUrl: SMART_WALLET_BUNDLER_URL[activeChain.id],
+      //   paymasterAddress: SMART_WALLET_BUNDLER_URL[activeChain.id],
+      // }
     }
   }, [activeChain]);
   
