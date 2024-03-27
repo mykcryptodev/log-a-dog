@@ -48,6 +48,7 @@ export default function Home() {
           <h3 className="text-2xl font-bold">🌎 Global Leaderboard</h3>
           <Leaderboard refetchTimestamp={refetchTimestamp} />
           <ListAttestations refetchTimestamp={refetchTimestamp} />
+          {/* key={refetchTimestamp} /> */}
         </div>
       </main>
     </>

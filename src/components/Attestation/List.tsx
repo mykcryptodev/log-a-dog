@@ -54,6 +54,24 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
     if (node) observer.current.observe(node);
   }, [isLoading, data?.nextCursor]);
 
+  const resetCursor = useCallback(() => {
+    setCursor(0);
+  }, []);
+
+  const refetchAndReset = useCallback(async () => {
+    setCursor(0);
+    const newData = await refetch();
+    if (newData.data?.attestations) {
+      setAttestations(newData.data.attestations);
+    }
+  }, [refetch]);
+
+  useEffect(() => {
+    if (cursor === 0) {
+      void refetchAndReset();
+    }
+  }, [cursor, refetchAndReset]);
+
   useEffect(() => {
     if (data?.attestations) {
       setAttestations(prev => [...prev, ...data.attestations]);
@@ -64,10 +82,10 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
     if (refetchTimestamp) {
       setTimeout(() => {
         // wait 5 seconds for the blockchain
-        void refetch();
+        void resetCursor();
       }, 5000);
     }
-  }, [refetch, refetchTimestamp]);
+  }, [resetCursor, refetchTimestamp]);
 
   type AttestationWrapperProps = {
     attestation: AttestationT;
@@ -81,7 +99,7 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
           refreshAttestations={() => {
             // wait 5 seconds for the blockchain
             setTimeout(() => {
-              void refetch();
+              void resetCursor();
             }, 5000);
           }}
         />
@@ -98,6 +116,9 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
           ref={attestations.length === index + 1 ? lastAttestationRef : null}
         />
       ))}
+      {(isLoading && attestations.length === 0) ? Array.from({ length: 10 }, (_, i) => (
+        <div key={i} className="animate-pulse bg-base-200 rounded-lg h-96" />
+      )) : null}
       {isLoading && <div className="loading loading-spinner mx-auto col-span-2 w-5 h-5" />}
     </div>
   );
