@@ -7,6 +7,16 @@ export const SMART_WALLET_FACTORY: ContractAddress = {
   [baseSepolia.id]: "0xc52d241baf9f2adf8f20105b13d044e5db3f736f",
 }
 
+export const SMART_WALLET_ENTRYPOINT: ContractAddress = {
+  [base.id]: "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+  [baseSepolia.id]: "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+}
+
+export const SMART_WALLET_BUNDLER_URL: ContractAddress = {
+  [base.id]: "",
+  [baseSepolia.id]: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/Av-Z_3kkdy_jHZd62vCmczjEfXBPtJPC",
+}
+
 export const EAS: ContractAddress = {
   [base.id]: "0x4200000000000000000000000000000000000021",
   [baseSepolia.id]: "0x4200000000000000000000000000000000000021",

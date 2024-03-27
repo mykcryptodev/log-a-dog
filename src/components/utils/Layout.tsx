@@ -5,7 +5,7 @@ import { ProfileButton } from "../Profile/Button";
 import { useRouter } from "next/router";
 import { coinbaseWaaS } from "~/wallet/CoinbaseWaas";
 import { type SmartWalletOptions, smartWallet } from "thirdweb/wallets";
-import { SMART_WALLET_FACTORY } from "~/constants/addresses";
+import { SMART_WALLET_BUNDLER_URL, SMART_WALLET_ENTRYPOINT, SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import Changelog from "~/components/utils/Changelog";
@@ -35,6 +35,11 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       chain: activeChain,
       factoryAddress: SMART_WALLET_FACTORY[activeChain.id]!,
       gasless: true,
+      // overrides: {
+      //   entrypointAddress: SMART_WALLET_ENTRYPOINT[activeChain.id],
+      //   bundlerUrl: SMART_WALLET_BUNDLER_URL[activeChain.id],
+      //   paymasterAddress: SMART_WALLET_BUNDLER_URL[activeChain.id],
+      // }
     }
   }, [activeChain]);
   
