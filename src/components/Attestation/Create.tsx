@@ -82,7 +82,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     } catch (e) {
       // pop notification
       console.error(e);
-      toast.error("Failed to log dog");
+      toast.error("Failed to log dog, try logging out and logging back in!");
     } finally { 
       setIsLoading(false);
       // close modal
