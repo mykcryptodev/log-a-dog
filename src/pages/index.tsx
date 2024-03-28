@@ -4,6 +4,8 @@ import { useState } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { Leaderboard } from "~/components/Attestation/Leaderboard";
 import { ListAttestations } from "~/components/Attestation/List";
+import Instructions from "~/components/Help/Instructions";
+import Rules from "~/components/Help/Rules";
 
 export default function Home() {
   const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
@@ -29,6 +31,8 @@ export default function Home() {
               }, 5000);
             }}
           />
+          <Rules />
+          <Instructions />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
             <Link
               href="/contest/create"

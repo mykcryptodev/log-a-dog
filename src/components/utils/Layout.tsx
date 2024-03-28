@@ -86,7 +86,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       <div className={`fixed bg-gradient-to-bl ${fromPink} ${toPink} rounded-full -top-[-85%] blur-3xl -left-[35%] w-full h-full -z-10 ${userPrefersDarkMode ? 'opacity-30' : ''}`}></div>
       <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen mt-10">
         <div className="w-full justify-between items-center flex mr-4">
-          <div>
+          <div className="flex items-center gap-2">
             {router.pathname !== '/' && (
               <Link href="/" className="btn btn-ghost text-neutral ml-4">
                 🌭  Log a Dog
