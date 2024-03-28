@@ -1,4 +1,4 @@
-import { useContext, type FC } from "react";
+import { useContext, type FC, useState } from "react";
 import { MediaRenderer, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
@@ -23,6 +23,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   const wallet = useActiveWallet();
   console.log({ account });
   const { disconnect } = useDisconnect();
+  const [createdProfileImgUrl, setCreatedProfileImgUrl] = useState<string>();
 
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
@@ -66,6 +67,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
               void refetch();
               console.log("refetching profile", profile);
               onProfileCreated?.(profile);
+              setCreatedProfileImgUrl(profile.imgUrl);
             }}
           />
         </div>
@@ -88,7 +90,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
             ) : (
               <>
                 <MediaRenderer
-                  src={imageUrl}
+                  src={createdProfileImgUrl ?? imageUrl}
                   alt="Profile Pic"
                   width={"24px"}
                   height={"24px"} 
