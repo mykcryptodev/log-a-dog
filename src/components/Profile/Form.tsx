@@ -109,7 +109,12 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
         {saveProfileBtnLabel}
       </TransactionButton>
       {error && (
-        <span className="text-error text-center text-xs px-8 sm:px-16">{error}</span>
+        <div className="flex flex-col gap-1">
+          <span className="text-error text-center text-xs px-8 sm:px-16">
+            Most errors are fixed by logging out and logging back in!
+          </span>
+          <span className="text-error text-center text-xs px-8 sm:px-16">{error}</span>
+        </div>
       )}
     </div>
   )
