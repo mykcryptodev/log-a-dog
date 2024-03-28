@@ -80,17 +80,14 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
       <div className="dropdown dropdown-end">
         <div tabIndex={0} role="button" className="btn btn-ghost">
           <div className="flex items-center gap-2">
-            <div className="avatar">
-              <div className="w-8 rounded-full">
-                <MediaRenderer
-                  src={imageUrl}
-                  alt="Profile Pic"
-                  width={"48px"}
-                  height={"48px"} 
-                  client={client}
-                />
-              </div>
-            </div>
+            <MediaRenderer
+              src={imageUrl}
+              alt="Profile Pic"
+              width={"24px"}
+              height={"24px"} 
+              className="rounded-full"
+              client={client}
+            />
             <span>{data.username}</span>
           </div>
         </div>
