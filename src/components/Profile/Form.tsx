@@ -82,10 +82,6 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
         } : {}}
         transaction={async () => {
           const maxPriorityFeePerGas = await eth_maxPriorityFeePerGas(rpcRequest);
-          console.log({
-            fetchedMax: maxPriorityFeePerGas,
-            default: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
-          });
           return {
             ...tx,
             maxPriorityFeePerGas,

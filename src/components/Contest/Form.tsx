@@ -84,8 +84,6 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
     return [BigInt(contest?.id ?? 0), name, metadata, BigInt(new Date(startDate).getTime()), BigInt(new Date(endDate).getTime()), isInviteOnly] as UpdateParams;
   }, [contest?.id, name, metadata, startDate, endDate, isInviteOnly]);
 
-  console.log({ createParams });
-
   const createTx = prepareContractCall({
     contract,
     method: createContestMethod,
