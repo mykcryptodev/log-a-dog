@@ -8,6 +8,7 @@ import { useDisconnect } from "thirdweb/react";
 import { Logout } from "@coinbase/waas-sdk-web";
 import { client } from "~/providers/Thirdweb";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -107,6 +108,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           </div>
         </div>
         <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li>
+            <Link href={`/profile/${data.username}`}>
+              Profile
+            </Link>
+          </li>
           <li><a onClick={() => void logout()}>Logout</a></li>
         </ul>
       </div>

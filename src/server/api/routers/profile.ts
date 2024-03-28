@@ -21,6 +21,42 @@ export const profileRouter = createTRPCRouter({
       const profile = await getProfile(address, chainId);
       return profile;
     }),
+  getByUsername: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      username: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const chain = SUPPORTED_CHAINS.find((c) => c.id === input.chainId);
+      const profileAddress = PROFILES[input.chainId];
+      if (!profileAddress || !chain) {
+        throw new Error("Chain not supported");
+      }
+      const client = createThirdwebClient({
+        secretKey: env.THIRDWEB_SECRET_KEY,
+      });
+      const profileContract = getContract({
+        client,
+        address: profileAddress,
+        chain,
+      });
+      const address = await readContract({
+        contract: profileContract,
+        method: {
+          name: "usedUsernames",
+          type: "function",
+          stateMutability: "view",
+          inputs: [{ name: "username", type: "string" }],
+          outputs: [{ name: "address", type: "address" }],
+        },
+        params: [input.username],
+      });
+      if (address) {
+        const profile = await getProfile(address, input.chainId);
+        return profile;
+      }
+      return null;
+    }),
   getManyByAddress: publicProcedure
     .input(z.object({ 
       chainId: z.number(),
