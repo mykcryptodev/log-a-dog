@@ -1,12 +1,12 @@
 import { useContext, type FC } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
-import Image from "next/image";
 import RevokeAttestation from "./Revoke";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
-import { useActiveAccount } from "thirdweb/react";
+import { MediaRenderer, useActiveAccount } from "thirdweb/react";
 import JudgeAttestation from "~/components/Attestation/Judge";
+import { client } from "~/providers/Thirdweb";
 
 type Props = {
   attestationId: string;
@@ -53,12 +53,13 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {profile?.imgUrl && (
-            <Image
-              src={profile.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/")}
-              alt="profile"
-              width={24}
-              height={24}
+            <MediaRenderer
+              src={profile.imgUrl}
+              alt={profile.username}
               className="rounded-full"
+              width={"24px"}
+              height={"24px"} 
+              client={client}
             />
           )}
           <span className="font-bold text-sm">
@@ -72,12 +73,13 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
           />
         )}
       </div>
-      <Image
+      <MediaRenderer
         src={imgUri}
         alt="hotdog"
-        width={250}
-        height={250}
         className="rounded-lg w-full"
+        width={"250px"}
+        height={"250px"} 
+        client={client}
       />
       <div className="flex items-center justify-between opacity-50">
         <span 
