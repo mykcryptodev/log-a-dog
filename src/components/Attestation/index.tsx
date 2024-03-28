@@ -4,7 +4,7 @@ import { api } from "~/utils/api";
 import RevokeAttestation from "./Revoke";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
-import { MediaRenderer, useActiveAccount } from "thirdweb/react";
+import { useActiveAccount } from "thirdweb/react";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import { client } from "~/providers/Thirdweb";
 import dynamic from "next/dynamic";
@@ -12,7 +12,8 @@ import dynamic from "next/dynamic";
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
   { ssr: false }
-)
+);
+
 type Props = {
   attestationId: string;
   refreshAttestations?: () => void;
@@ -55,7 +56,7 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {profile?.imgUrl && (
-            <MediaRenderer
+            <CustomMediaRenderer
               src={profile.imgUrl}
               alt={profile.username}
               className="rounded-full"
@@ -75,14 +76,6 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
           />
         )}
       </div>
-      {/* <MediaRenderer
-        src={imgUri}
-        alt="hotdog"
-        className="rounded-lg w-full"
-        width={"250px"}
-        height={"250px"} 
-        client={client}
-      /> */}
       <CustomMediaRenderer
         src={attestation.decodedAttestaton.imgUri}
         alt="hotdog"

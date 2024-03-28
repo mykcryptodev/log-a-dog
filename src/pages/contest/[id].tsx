@@ -10,7 +10,12 @@ import { useActiveAccount } from "thirdweb/react";
 import JoinContest from "~/components/Contest/Join";
 import JoinRequestList from "~/components/Contest/JoinRequest/List";
 import { client } from "~/providers/Thirdweb";
-import CustomMediaRenderer from "~/components/utils/CustomMediaRenderer";
+import dynamic from "next/dynamic";
+
+const CustomMediaRenderer = dynamic(
+  () => import('~/components/utils/CustomMediaRenderer'),
+  { ssr: false }
+);
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params as { id: string };

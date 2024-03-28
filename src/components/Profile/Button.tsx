@@ -1,5 +1,5 @@
 import { useContext, type FC, useState } from "react";
-import { MediaRenderer, useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { ProfileForm } from "~/components/Profile/Form";
@@ -8,7 +8,12 @@ import { useDisconnect } from "thirdweb/react";
 import { Logout } from "@coinbase/waas-sdk-web";
 import { client } from "~/providers/Thirdweb";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
 
+const CustomMediaRenderer = dynamic(
+  () => import('~/components/utils/CustomMediaRenderer'),
+  { ssr: false }
+);
 type Props = {
   onProfileCreated?: (profile: {
     username: string;
@@ -93,7 +98,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
               </>
             ) : (
               <>
-                <MediaRenderer
+                <CustomMediaRenderer
                   src={createdProfileImgUrl ?? imageUrl}
                   alt="Profile Pic"
                   width={"24px"}

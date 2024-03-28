@@ -9,8 +9,8 @@ type Props = {
   client: ThirdwebClient;
   alt?: string;
   className?: string;
-  width?: string | number;
-  height?: string | number;
+  width?: string;
+  height?: string;
   style?: React.CSSProperties;
 }
 export const CustomMediaRenderer: FC<Props> = ({ 
@@ -48,7 +48,12 @@ export const CustomMediaRenderer: FC<Props> = ({
         if (!singleBlob) {
           throw new Error("Conversion failed, no blob was produced.");
         }
-        const objectURL = URL.createObjectURL(singleBlob);
+        let objectURL;
+        if (typeof window !== 'undefined') {
+          objectURL = URL.createObjectURL(singleBlob);
+        } else {
+          return src;
+        }
         setUseImageComponent(true);
         return objectURL;
       } catch (e) {
@@ -66,11 +71,9 @@ export const CustomMediaRenderer: FC<Props> = ({
     void convertHeicToJpeg(src).then(setImageSrc);
   }, [src]);
 
-  console.log({ src, isLoading, endWith: src.endsWith(".heic") });
-
   if (isLoading) {
     return (
-      <div className={`w-[${width ?? '250px'}] h-[${height ?? '300px'}] bg-base-300 rounded-lg animate-pulse ${className}`} />
+      <div className={`w-64 h-64 bg-base-300 rounded-lg animate-pulse ${className}`} />
     )
   }
 
@@ -81,7 +84,8 @@ export const CustomMediaRenderer: FC<Props> = ({
           src={imageSrc}
           alt={alt ?? "Image"}
           className={className}
-          fill
+          width={Number(width?.replace("px", "") ?? 250)}
+          height={Number(height?.replace("px", "") ?? 300)}
           style={style}
         />
       </div>
@@ -93,8 +97,8 @@ export const CustomMediaRenderer: FC<Props> = ({
       src={imageSrc}
       alt={alt}
       className={className}
-      width={width as string}
-      height={height as string}
+      width={width}
+      height={height}
       style={style}
       client={client}
     />
