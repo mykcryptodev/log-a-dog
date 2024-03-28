@@ -1,6 +1,7 @@
 import { type NextPage } from "next";
 import { type GetServerSideProps } from "next";
-import { useContext } from "react";
+import { useContext, useState } from "react";
+import { ProfileForm } from "~/components/Profile/Form";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 
@@ -15,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 export const Profile: NextPage<{ username: string }> = ({ username }) => {
   const { activeChain } = useContext(ActiveChainContext);
-  const { data, isLoading } = api.profile.getByUsername.useQuery({
+  const { data, isLoading, refetch } = api.profile.getByUsername.useQuery({
     username,
     chainId: activeChain.id,
   }, {
@@ -23,6 +24,7 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+  const [showProfileForm, setShowProfileForm] = useState<boolean>(false);
 
   if (isLoading) return (
     <main className="flex flex-col items-center justify-center">
@@ -42,9 +44,20 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
     <main className="flex flex-col items-center justify-center">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-bold">{data?.username}</h1>
-          <div>Start Date: 2022-01-01 00:00:00</div>
-          <div>End Date: 2022-01-01 00:00:00</div>
+          <h1 className="text-2xl font-bold">{data?.username}</h1>
+          {showProfileForm && (
+            <ProfileForm
+              onProfileUpdated={() => {
+                void refetch();
+                setShowProfileForm(false);
+              }}
+              existingImgUrl={data?.imgUrl}
+              existingUsername={data?.username}
+            />
+          )}
+          <button className="btn" onClick={() => setShowProfileForm(!showProfileForm)}>
+            {showProfileForm ? 'Hide' : 'Edit Profile'}
+          </button>
         </div>
       </div>
     </main>

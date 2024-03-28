@@ -16,13 +16,20 @@ type Props = {
     imgUrl: string;
     metadata?: string;
   }) => void;
+  onProfileUpdated?: (profile: {
+    username: string;
+    imgUrl: string;
+    metadata?: string;
+  }) => void;
+  existingUsername?: string;
+  existingImgUrl?: string;
 }
 
-export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
+export const ProfileForm: FC<Props> = ({ onProfileCreated, onProfileUpdated, existingUsername, existingImgUrl }) => {
   const { activeChain, updateActiveChainRpc } = useContext(ActiveChainContext);
   const account = useActiveAccount();
-  const [imgUrl, setImgUrl] = useState<string>("");
-  const [username, setUsername] = useState<string>("");
+  const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? "");
+  const [username, setUsername] = useState<string>(existingUsername ?? "");
   const metadata = "";
   const [error, setError] = useState<string | null>(null);
   const [saveProfileBtnLabel, setSaveProfileBtnLabel] = useState<string>("Save Profile");
@@ -46,6 +53,10 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
     return username.length >= 3 && username.length <= 20;
   }, [username]);
 
+  const withGateway = (url: string) => {
+    return url.startsWith("ipfs://") ? `https://ipfs.io/ipfs/${url.slice(7)}` : url;
+  }
+
   if (!account) return null;
 
   return (
@@ -56,6 +67,7 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
           label="📷"
           additionalClasses="rounded-full"
           imageClassName="rounded-full"
+          initialUrls={imgUrl ? [withGateway(imgUrl)] : []}
           onUpload={({ uris }) => {
             setImgUrl(uris[0]!);
           }}
