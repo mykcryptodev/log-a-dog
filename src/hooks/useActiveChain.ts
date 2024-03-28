@@ -12,9 +12,17 @@ const useActiveChain = () => {
     setActiveChain(chainById ?? chainByName ?? DEFAULT_CHAIN);
   }
 
+  const updateActiveChainRpc = (rpc: string) => {
+    setActiveChain({
+      ...activeChain,
+      rpc,
+    });
+  };
+
   return {
     activeChain,
     updateActiveChain,
+    updateActiveChainRpc,
   }
 }
 

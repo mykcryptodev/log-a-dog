@@ -8,6 +8,7 @@ import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
+import { base } from "thirdweb/chains";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -18,7 +19,7 @@ type Props = {
 }
 
 export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
-  const { activeChain } = useContext(ActiveChainContext);
+  const { activeChain, updateActiveChainRpc } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const [imgUrl, setImgUrl] = useState<string>("");
   const [username, setUsername] = useState<string>("");
@@ -104,6 +105,11 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated }) => {
           const errorMessage = e.message?.match(/'([^']+)'/)?.[1] ?? e.message?.split('contract:')[0]?.trim() ?? e.message;
           setError(errorMessage);
           setSaveProfileBtnLabel("Save Profile");
+          if (activeChain.id === base.id) {
+            // try switching the rpc of the chain
+            const newRpc = "https://chain-proxy.wallet.coinbase.com?targetName=base";
+            updateActiveChainRpc(newRpc);
+          }
         }}
       >
         {saveProfileBtnLabel}
