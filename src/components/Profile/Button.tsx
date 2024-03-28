@@ -24,7 +24,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   console.log({ account });
   const { disconnect } = useDisconnect();
 
-  const { data, refetch } = api.profile.getByAddress.useQuery({
+  const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
     address: account?.address ?? "",
   }, {
@@ -80,15 +80,24 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
       <div className="dropdown dropdown-end">
         <div tabIndex={0} role="button" className="btn btn-ghost">
           <div className="flex items-center gap-2">
-            <MediaRenderer
-              src={imageUrl}
-              alt="Profile Pic"
-              width={"24px"}
-              height={"24px"} 
-              className="rounded-full"
-              client={client}
-            />
-            <span>{data.username}</span>
+            {isLoading ? (
+              <>
+                <div className="h-8 w-8 bg-base-200 rounded-full animate-pulse" />
+                <div className="h-5 w-24 bg-base-200 rounded-lg animate-pulse" />
+              </>
+            ) : (
+              <>
+                <MediaRenderer
+                  src={imageUrl}
+                  alt="Profile Pic"
+                  width={"24px"}
+                  height={"24px"} 
+                  className="rounded-full"
+                  client={client}
+                />
+                <span>{data?.username}</span>
+              </>
+            )}
           </div>
         </div>
         <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
