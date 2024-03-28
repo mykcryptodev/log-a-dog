@@ -38,6 +38,7 @@
     "apexcharts": "^3.46.0",
     "cross-fetch": "^4.0.0",
     "graphql": "^16.8.1",
+    "heic2any": "^0.0.4",
     "js-confetti": "^0.12.0",
     "next": "^14.1.0",
     "next-auth": "^4.24.6",
@@ -46,6 +47,7 @@
     "react-dom": "18.2.0",
     "react-dropzone": "^14.2.3",
     "react-toastify": "^10.0.4",
+    "sharp": "^0.33.3",
     "superjson": "^2.2.1",
     "thirdweb": "^5.0.0-beta-6c11f9f6ca5c537b25fd3ad9d7ac555f6b1b84e0-20240326214117",
     "zod": "^3.22.4"
