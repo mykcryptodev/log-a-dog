@@ -224,11 +224,16 @@ export class CoinbaseWaasWallet implements Wallet {
       collectAndReportMetrics: true,
       enableHostedBackups: true,
       prod: process.env.NODE_ENV === 'production',
-      projectId: COINBASE_WAAS_PROJECT_ID[this.chain?.id ?? DEFAULT_CHAIN.id],
+      projectId: COINBASE_WAAS_PROJECT_ID[baseSepolia.id],
     });
     
     // Login the user.
-    const user = await waas.auth.login();
+    await waas.auth.login();
+    
+    const user = waas.auth.user;
+    if (!user) {
+      throw new Error("No user found");
+    }
 
     // connect the user
     return await this.onConnect(waas, user);
@@ -308,7 +313,7 @@ export class CoinbaseWaasWallet implements Wallet {
       collectAndReportMetrics: true,
       enableHostedBackups: true,
       prod: process.env.NODE_ENV === 'production',
-      projectId: COINBASE_WAAS_PROJECT_ID[this.chain?.id ?? DEFAULT_CHAIN.id],
+      projectId: COINBASE_WAAS_PROJECT_ID[baseSepolia.id],
     });
 
     const user = waas.auth.user;

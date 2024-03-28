@@ -7,6 +7,7 @@ import Connect from "~/components/utils/Connect";
 import { useDisconnect } from "thirdweb/react";
 import { Logout } from "@coinbase/waas-sdk-web";
 import { client } from "~/providers/Thirdweb";
+import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -50,8 +51,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   if (!data?.username) return (
     <>
       {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <button className="btn mr-4" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
+      <button className="btn mr-2" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
         {createProfileBtnLabel ?? 'Create Profile'}
+      </button>
+      <button className="btn btn-ghost mr-4" onClick={() => void logout()}>
+        Logout <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
       </button>
       <dialog id="create_profile_modal" className="modal">
         <div className="modal-box relative">
