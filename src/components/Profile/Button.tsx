@@ -1,12 +1,12 @@
 import { useContext, type FC } from "react";
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { MediaRenderer, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
-import Image from "next/image";
 import { ProfileForm } from "~/components/Profile/Form";
 import Connect from "~/components/utils/Connect";
 import { useDisconnect } from "thirdweb/react";
 import { Logout } from "@coinbase/waas-sdk-web";
+import { client } from "~/providers/Thirdweb";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -82,11 +82,13 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           <div className="flex items-center gap-2">
             <div className="avatar">
               <div className="w-8 rounded-full">
-                <Image
+                <MediaRenderer
                   src={imageUrl}
-                  alt="profile"
-                  width={48}
-                  height={48} />
+                  alt="Profile Pic"
+                  width={"48px"}
+                  height={"48px"} 
+                  client={client}
+                />
               </div>
             </div>
             <span>{data.username}</span>
