@@ -6,10 +6,16 @@ import { Leaderboard } from "~/components/Attestation/Leaderboard";
 import { ListAttestations } from "~/components/Attestation/List";
 import AddContestants from "~/components/Contest/AddContestants";
 import { RemoveContestant } from "~/components/Contest/RemoveContestant";
-import { MediaRenderer, useActiveAccount } from "thirdweb/react";
+import { useActiveAccount } from "thirdweb/react";
 import JoinContest from "~/components/Contest/Join";
 import JoinRequestList from "~/components/Contest/JoinRequest/List";
 import { client } from "~/providers/Thirdweb";
+import dynamic from "next/dynamic";
+
+const CustomMediaRenderer = dynamic(
+  () => import('~/components/utils/CustomMediaRenderer'),
+  { ssr: false }
+);
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params as { id: string };
@@ -75,9 +81,9 @@ export const Contest: NextPage<{id: string}> = ({ id }) => {
           <span className="font-bold">Contestants</span>
           {profiles.map((profile) => (
             <div key={profile.username} className="flex items-center gap-2">
-              <MediaRenderer
+              <CustomMediaRenderer
                 src={profile.imgUrl}
-                alt="profile"
+                alt={profile.username}
                 width={"24px"}
                 height={"24px"}
                 className="rounded-full"

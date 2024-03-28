@@ -4,9 +4,15 @@ import { api } from "~/utils/api";
 import RevokeAttestation from "./Revoke";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
-import { MediaRenderer, useActiveAccount } from "thirdweb/react";
+import { useActiveAccount } from "thirdweb/react";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import { client } from "~/providers/Thirdweb";
+import dynamic from "next/dynamic";
+
+const CustomMediaRenderer = dynamic(
+  () => import('~/components/utils/CustomMediaRenderer'),
+  { ssr: false }
+);
 
 type Props = {
   attestationId: string;
@@ -45,15 +51,12 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
 
   if (!attestation) return null;
 
-  // turn the ipfs:// uri into a gateway uri
-  const imgUri = attestation.decodedAttestaton.imgUri.replace("ipfs://", "https://ipfs.io/ipfs/");
-
   return (
     <div className="flex flex-col gap-2 bg-opacity-50 bg-base-200 rounded-lg p-4 h-fit">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {profile?.imgUrl && (
-            <MediaRenderer
+            <CustomMediaRenderer
               src={profile.imgUrl}
               alt={profile.username}
               className="rounded-full"
@@ -73,8 +76,8 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
           />
         )}
       </div>
-      <MediaRenderer
-        src={imgUri}
+      <CustomMediaRenderer
+        src={attestation.decodedAttestaton.imgUri}
         alt="hotdog"
         className="rounded-lg w-full"
         width={"250px"}
