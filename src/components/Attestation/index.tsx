@@ -7,7 +7,12 @@ import { toast } from "react-toastify";
 import { MediaRenderer, useActiveAccount } from "thirdweb/react";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import { client } from "~/providers/Thirdweb";
+import dynamic from "next/dynamic";
 
+const CustomMediaRenderer = dynamic(
+  () => import('~/components/utils/CustomMediaRenderer'),
+  { ssr: false }
+)
 type Props = {
   attestationId: string;
   refreshAttestations?: () => void;
@@ -45,9 +50,6 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
 
   if (!attestation) return null;
 
-  // turn the ipfs:// uri into a gateway uri
-  const imgUri = attestation.decodedAttestaton.imgUri.replace("ipfs://", "https://ipfs.io/ipfs/");
-
   return (
     <div className="flex flex-col gap-2 bg-opacity-50 bg-base-200 rounded-lg p-4 h-fit">
       <div className="flex items-center justify-between">
@@ -73,8 +75,16 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
           />
         )}
       </div>
-      <MediaRenderer
+      {/* <MediaRenderer
         src={imgUri}
+        alt="hotdog"
+        className="rounded-lg w-full"
+        width={"250px"}
+        height={"250px"} 
+        client={client}
+      /> */}
+      <CustomMediaRenderer
+        src={attestation.decodedAttestaton.imgUri}
         alt="hotdog"
         className="rounded-lg w-full"
         width={"250px"}
