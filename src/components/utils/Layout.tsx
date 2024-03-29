@@ -81,12 +81,13 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
   const isOnSafari = useMemo(() => {
+    if (!isMounted) return false;
     const ua = navigator.userAgent;
     const iOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i);
     const webkit = !!ua.match(/WebKit/i);
     const iOSSafari = iOS && webkit && !ua.match(/CriOS/i);
     return iOSSafari;
-  }, []);
+  }, [isMounted]);
   useEffect(() => {
     if (isOnSafari && !alertDismissed) {
       setShowAlert(true);
