@@ -272,6 +272,8 @@ export class CoinbaseWaasWallet implements Wallet {
     } else {
       wallet = await waas.wallets.create();
     }
+
+    console.log('wallet id', waas.auth.user?.id);
     
     const address = await wallet.addresses.for(ProtocolFamily.EVM);
 
