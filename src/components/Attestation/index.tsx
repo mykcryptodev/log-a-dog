@@ -1,14 +1,14 @@
-import { useContext, type FC } from "react";
+import { useContext, type FC, useMemo } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import RevokeAttestation from "./Revoke";
 import { TagIcon } from "@heroicons/react/24/outline";
-import { toast } from "react-toastify";
 import { useActiveAccount } from "thirdweb/react";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import { client } from "~/providers/Thirdweb";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { base } from "thirdweb/chains";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -40,15 +40,12 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
     refetchOnMount: false,
   });
 
-  const copyAttestationId = async () => {
-    try {
-      await navigator.clipboard.writeText(attestationId);
-      toast.success("Dog ID copied to clipboard!");
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to copy Dog ID to clipboard!");
+  const easUrl = useMemo(() => {
+    if (activeChain.id === base.id) {
+      return 'https://base.easscan.org';
     }
-  }
+    return 'https://base-sepolia.easscan.org';
+  }, [activeChain]);
 
   if (!attestation) return null;
 
@@ -92,13 +89,15 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
         client={client}
       />
       <div className="flex items-center justify-between opacity-50">
-        <span 
+        <Link 
+          href={`${easUrl}/attestation/view/${attestationId}`}
+          target="_blank"
+          rel="noreferrer"
           className="text-xs flex items-center cursor-pointer"
-          onClick={() => void copyAttestationId()}
         >
           <TagIcon className="w-4 h-4" />
           {attestationId.slice(-5)}
-        </span>
+        </Link>
         <JudgeAttestation
           attestation={attestation}
           onAttestationAffirmed={() => {
