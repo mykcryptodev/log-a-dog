@@ -77,6 +77,26 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   const toPink = userPrefersDarkMode ? "to-pink-800" : "to-pink-500";
   const viaPink = userPrefersDarkMode ? "via-pink-300" : "via-pink-200";
 
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+  const isOnSafari = useMemo(() => {
+    const ua = navigator.userAgent;
+    const iOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i);
+    const webkit = !!ua.match(/WebKit/i);
+    const iOSSafari = iOS && webkit && !ua.match(/CriOS/i);
+    return iOSSafari;
+  }, []);
+  useEffect(() => {
+    if (isOnSafari && !alertDismissed) {
+      setShowAlert(true);
+    }
+  }, [alertDismissed, isOnSafari, showAlert]);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  if (!isMounted) return null;
+
   return (
     <div className="block">
       <div className={`absolute bg-gradient-to-t ${fromYellow} ${toYellow} rounded-full blur-3xl -top-[75%] -left-[45%] w-full h-full -z-10 ${userPrefersDarkMode ? 'opacity-30' : ''}`} ></div>
@@ -84,6 +104,19 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       <div className={`fixed bg-gradient-to-br ${fromYellow} ${viaPink} ${toPink} rounded-full blur-3xl -bottom-0 -left-[55%] w-1/2 h-full -z-10 ${userPrefersDarkMode ? 'opacity-30' : ''}`}></div>
       <div className={`fixed bg-gradient-to-tl ${fromYellow} ${viaPink} ${toYellow} rounded-full blur-3xl -bottom-0 -left-[25%] w-1/2 h-full -z-10 ${userPrefersDarkMode ? 'opacity-30' : ''}`}></div>
       <div className={`fixed bg-gradient-to-bl ${fromPink} ${toPink} rounded-full -top-[-85%] blur-3xl -left-[35%] w-full h-full -z-10 ${userPrefersDarkMode ? 'opacity-30' : ''}`}></div>
+      {showAlert && (
+        <div className="alert alert-warning rounded-none w-full flex sm:hidden">
+          <span className="text-center w-full text-xs">
+            There is currently an issue with logging in on mobile safari. Try switching to Chrome.
+          </span>
+          <button onClick={() => {
+            setShowAlert(false);
+            setAlertDismissed(true);
+          }} className="btn btn-ghost btn-xs btn-circle absolute top-1 right-1">
+            &times;
+          </button>
+        </div>
+      )}
       <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen mt-10">
         <div className="w-full justify-between items-center flex mr-4">
           <div className="flex items-center gap-2">
