@@ -266,12 +266,13 @@ export class CoinbaseWaasWallet implements Wallet {
     let wallet: CoinbaseWaasWalletT;
     
     if (waas.wallets.wallet) {
+      console.log('wallet exists, no restoring necessary...');
       wallet = waas.wallets.wallet;
     } else if (user.hasWallet) {
       console.log('restoring from hosted backup...');
       wallet = await waas.wallets.restoreFromHostedBackup();
     } else {
-      console.log('not restoring...');
+      console.log('creating, not restoring...');
       wallet = await waas.wallets.create();
     }
     
