@@ -222,7 +222,7 @@ export class CoinbaseWaasWallet implements Wallet {
   async connect() {
     const waas = await InitializeWaas({
       collectAndReportMetrics: true,
-      enableHostedBackups: true,
+      enableHostedBackups: true, // DO NOT CHANGE THIS TO FALSE
       prod: process.env.NODE_ENV === 'production',
       projectId: COINBASE_WAAS_PROJECT_ID[DEFAULT_CHAIN.id],
     });
@@ -314,7 +314,7 @@ export class CoinbaseWaasWallet implements Wallet {
   async autoConnect() {
     const waas = await InitializeWaas({
       collectAndReportMetrics: true,
-      enableHostedBackups: true,
+      enableHostedBackups: true, // DO NOT CHANGE THIS TO FALSE
       prod: process.env.NODE_ENV === 'production',
       projectId: COINBASE_WAAS_PROJECT_ID[DEFAULT_CHAIN.id],
     });
