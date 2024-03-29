@@ -8,6 +8,7 @@ import { useActiveAccount } from "thirdweb/react";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import { client } from "~/providers/Thirdweb";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -65,9 +66,15 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
               client={client}
             />
           )}
-          <span className="font-bold text-sm">
-            {profile?.username ?? `${attestation.decodedAttestaton.address.slice(0, 4)}...${attestation.decodedAttestaton.address.slice(-4)}`}
-          </span>
+          {profile ? (
+            <Link href={`/profile/${profile.username}`} className="font-bold text-sm">
+              {profile.username}
+            </Link>
+          ) : (
+            <span className="font-bold text-sm">
+              {attestation.decodedAttestaton.address.slice(0, 4)}...{attestation.decodedAttestaton.address.slice(-4)}
+            </span>
+          )}
         </div>
         {account?.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase() && (
           <RevokeAttestation 
