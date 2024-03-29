@@ -11,12 +11,7 @@ import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
 import { base } from "thirdweb/chains";
 
 type Props = {
-  onProfileCreated?: (profile: {
-    username: string;
-    imgUrl: string;
-    metadata?: string;
-  }) => void;
-  onProfileUpdated?: (profile: {
+  onProfileSaved?: (profile: {
     username: string;
     imgUrl: string;
     metadata?: string;
@@ -25,7 +20,7 @@ type Props = {
   existingImgUrl?: string;
 }
 
-export const ProfileForm: FC<Props> = ({ onProfileCreated, onProfileUpdated, existingUsername, existingImgUrl }) => {
+export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, existingImgUrl }) => {
   const { activeChain, updateActiveChainRpc } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? "");
@@ -107,7 +102,7 @@ export const ProfileForm: FC<Props> = ({ onProfileCreated, onProfileUpdated, exi
           console.log({ receipt });
           toast.dismiss();
           toast.success("Profile saved");
-          onProfileCreated?.({username, imgUrl, metadata});
+          onProfileSaved?.({username, imgUrl, metadata});
           setSaveProfileBtnLabel("Save Profile");
           // close modal
           (document.getElementById('create_profile_modal') as HTMLDialogElement).close();

@@ -73,7 +73,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           </button>
           <h3 className="font-bold text-2xl mb-4">Create Profile</h3>
           <ProfileForm
-            onProfileCreated={(profile) => {
+            onProfileSaved={(profile) => {
               void refetch();
               console.log("refetching profile", profile);
               onProfileCreated?.(profile);
