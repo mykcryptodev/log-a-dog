@@ -9,6 +9,7 @@ import { Logout } from "@coinbase/waas-sdk-web";
 import { client } from "~/providers/Thirdweb";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -72,7 +73,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           </button>
           <h3 className="font-bold text-2xl mb-4">Create Profile</h3>
           <ProfileForm
-            onProfileCreated={(profile) => {
+            onProfileSaved={(profile) => {
               void refetch();
               console.log("refetching profile", profile);
               onProfileCreated?.(profile);
@@ -112,6 +113,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           </div>
         </div>
         <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li>
+            <Link href={`/profile/${data.username}`}>
+              Profile
+            </Link>
+          </li>
           <li><a onClick={() => void logout()}>Logout</a></li>
         </ul>
       </div>
