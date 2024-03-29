@@ -79,7 +79,7 @@ export const CustomMediaRenderer: FC<Props> = ({
 
   if (useImageComponent) {
     return (
-      <div className={`w-[${width ?? '250px'}] h-[${height ?? '300px'}] relative`}>
+      <div className={`w-64 h-auto`}>
         <Image
           src={imageSrc}
           alt={alt ?? "Image"}
