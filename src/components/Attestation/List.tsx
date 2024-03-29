@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useRef, type FC, useCallback, forwardRef } from "react";
+import { useContext, useState, useEffect, type FC } from "react";
 import { EAS_SCHEMA_ID } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
@@ -39,28 +39,6 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
 
   const hasNextPage = (data?.total ?? 0) > attestations.length;
 
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastAttestationRef = useCallback((node: HTMLElement | null) => {
-    console.log({ hasNextPage, shouldFetch: 'not yet...' });
-    if (isLoading || !hasNextPage) {
-      console.log('Loading or no next page, return early');
-      return;
-    }
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      console.log({ shouldFetch: entries?.[0]?.isIntersecting })
-      if (entries?.[0]?.isIntersecting) {
-        console.log('Intersection observed, fetching next page');
-        setCursor(attestations[attestations.length - 1]?.id);
-      }
-    });
-    if (node) {
-      console.log('Observing node:', node);
-      observer.current.observe(node);
-    }
-  }, [hasNextPage, attestations, isLoading]);
-  
-
   useEffect(() => {
     if (data?.attestations) {
       setAttestations(prev => [...prev, ...data.attestations]);
@@ -74,13 +52,19 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
       void refetch();
     }
   }, [refetch, refetchTimestamp]);
+
+  const loadMore = () => {
+    if (hasNextPage && !isLoading) {
+      setCursor(attestations[attestations.length - 1]?.id);
+    }
+  };
+
   type AttestationWrapperProps = {
     attestation: AttestationT;
   }
-  const AttestationWrapper = forwardRef<HTMLDivElement, AttestationWrapperProps>((props, ref) => {
-    AttestationWrapper.displayName = "AttestationWrapper";
+  const AttestationWrapper = (props: AttestationWrapperProps) => {
     return (
-      <div ref={ref}>
+      <div>
         <Attestation 
           attestationId={props.attestation.id} 
           refreshAttestations={() => {
@@ -97,7 +81,7 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
         />
       </div>
     );
-  });
+  };
 
   return (
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
@@ -105,13 +89,13 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
         <AttestationWrapper 
           key={index} 
           attestation={attestation} 
-          ref={attestations.length === index + 1 ? lastAttestationRef : null}
         />
       ))}
       {(isLoading && attestations.length === 0) ? Array.from({ length: 10 }, (_, i) => (
         <div key={i} className="animate-pulse bg-base-200 rounded-lg h-96" />
       )) : null}
       {isLoading && <div className="loading loading-spinner mx-auto col-span-2 w-5 h-5" />}
+      {hasNextPage && !isLoading && <button onClick={loadMore} className="btn btn-ghost col-span-2">Load More</button>}
     </div>
   );
 }
