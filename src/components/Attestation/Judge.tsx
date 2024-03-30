@@ -41,13 +41,15 @@ export const JudgeAttestation: FC<Props> = ({
 }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
+  const { activeChain, updateActiveChainRpc } = useContext(ActiveChainContext);
   const schemaUid = EAS_AFFIMRATION_SCHEMA_ID[activeChain.id]!;
   const easContractAddress = EAS_ADDRESS[activeChain.id]!;
   const eas = new EAS(easContractAddress);
 
   const [usersAffirmation, setUsersAffirmation] = useState<Judgement>();
   const [usersRefutation, setUsersRefutation] = useState<Judgement>();
+  const [showImmediateFeedback, setShowImmediateFeedback] = useState<boolean>(false);
+  const [showImmediateExtraAffirmation, setShowImmediateExtraAffirmation] = useState<boolean>(false);
 
   useEffect(() => {
     const usersAffirmation = attestation.affirmations.find((affirmation) =>
@@ -84,6 +86,10 @@ export const JudgeAttestation: FC<Props> = ({
     ]);
     try {
       setIsLoading(true);
+      setShowImmediateFeedback(true);
+      if (isAffirmed) {
+        setShowImmediateExtraAffirmation(true);
+      }
       eas.connect(signer);
       await eas.attest({
         schema: schemaUid,
@@ -99,12 +105,15 @@ export const JudgeAttestation: FC<Props> = ({
     } catch (e) {
       // pop notification
       console.error(e);
-      toast.error("Failed to attest to dog");
+      toast.error("Failed to attest to dog, try again!");
+      updateActiveChainRpc(activeChain.rpcToUpdate);
     } finally {
       // callbacks wait 5s for the blockchain to catch up
       // so keep act like your loading so that the user isnt confused
       setTimeout(() => {
         setIsLoading(false);
+        setShowImmediateFeedback(false);
+        setShowImmediateExtraAffirmation(false);
       }, 5000);
     }
   };
@@ -133,7 +142,7 @@ export const JudgeAttestation: FC<Props> = ({
     } catch (e) {
       // pop notification
       console.error(e);
-      toast.error("Failed to revoke dog");
+      toast.error("Failed to revoke dog, try again!");
     } finally { 
       // callbacks wait 5s for the blockchain to catch up
       // so keep act like your loading so that the user isnt confused
@@ -232,6 +241,35 @@ export const JudgeAttestation: FC<Props> = ({
           void castJudgement(true);
         }}
       />
+    )
+  }
+
+  if (showImmediateFeedback) {
+    if (showImmediateExtraAffirmation) {
+      return (
+        <div className="flex items-center">
+          <button className="btn btn-ghost btn-xs">
+            <div className="badge badge-ghost badge-xs">{attestation.affirmations.length + 1}</div>
+            <HandThumbUpIconFilled className="w-4 h-4 cursor-not-allowed" />
+          </button>
+          <button className="btn btn-ghost btn-xs">
+            <HandThumbDownIcon className="w-4 h-4 cursor-not-allowed" />
+            <div className="badge badge-ghost badge-xs">{attestation.refutations.length}</div>
+          </button>
+        </div>
+      )
+    }
+    return (
+      <div className="flex items-center">
+        <button className="btn btn-ghost btn-xs">
+          <div className="badge badge-ghost badge-xs">{attestation.affirmations.length}</div>
+          <HandThumbUpIcon className="w-4 h-4 cursor-not-allowed" />
+        </button>
+        <button className="btn btn-ghost btn-xs">
+          <HandThumbDownIconFilled className="w-4 h-4 cursor-not-allowed" />
+          <div className="badge badge-ghost badge-xs">{attestation.refutations.length + 1}</div>
+        </button>
+      </div>
     )
   }
 

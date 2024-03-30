@@ -8,7 +8,6 @@ import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
-import { base } from "thirdweb/chains";
 
 type Props = {
   onProfileSaved?: (profile: {
@@ -112,11 +111,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
           const errorMessage = e.message?.match(/'([^']+)'/)?.[1] ?? e.message?.split('contract:')[0]?.trim() ?? e.message;
           setError(errorMessage);
           setSaveProfileBtnLabel("Save Profile");
-          if (activeChain.id === base.id) {
-            // try switching the rpc of the chain
-            const newRpc = "https://chain-proxy.wallet.coinbase.com?targetName=base";
-            updateActiveChainRpc(newRpc);
-          }
+          updateActiveChainRpc(activeChain.rpcToUpdate);
         }}
       >
         {saveProfileBtnLabel}
@@ -124,7 +119,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
       {error && (
         <div className="flex flex-col gap-1">
           <span className="text-error text-center text-xs px-8 sm:px-16">
-            Most errors are fixed by logging out and logging back in!
+            Wait a second and then try again!
           </span>
           <span className="text-error text-center text-xs px-8 sm:px-16">{error}</span>
         </div>

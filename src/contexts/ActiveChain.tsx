@@ -4,7 +4,7 @@ import { createContext } from "react";
 import { DEFAULT_CHAIN } from "~/constants/chains";
 
 type IActiveChainContext = {
-  activeChain: Chain;
+  activeChain: Chain & { rpcToUpdate: string };
   updateActiveChain: (chainName: string | number) => void;
   updateActiveChainRpc: (rpc: string) => void;
 }
