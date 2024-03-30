@@ -40,15 +40,17 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
   const hasNextPage = (data?.total ?? 0) > attestations.length;
 
   useEffect(() => {
-    if (data?.attestations) {
+    if (!cursor) {
+      setAttestations(data?.attestations ?? []);
+    }
+    if (data?.attestations && cursor) {
       setAttestations(prev => [...prev, ...data.attestations]);
     }
-  }, [data?.attestations]);
+  }, [cursor, data?.attestations]);
 
   useEffect(() => {
     if (refetchTimestamp) {
       setCursor(undefined);
-      setAttestations([]);
       void refetch();
     }
   }, [refetch, refetchTimestamp]);
@@ -71,7 +73,6 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
             // wait 5 seconds for the blockchain
             setTimeout(() => {
               setCursor(undefined);
-              setAttestations([]);
               void refetch();
             }, 5000);
           }}
