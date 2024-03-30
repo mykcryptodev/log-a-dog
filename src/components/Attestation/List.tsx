@@ -41,6 +41,7 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
 
   useEffect(() => {
     if (!cursor) {
+      setAttestations([]);
       setAttestations(data?.attestations ?? []);
     }
     if (data?.attestations && cursor) {
