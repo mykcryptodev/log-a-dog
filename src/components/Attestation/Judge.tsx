@@ -11,6 +11,7 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { EAS as EAS_ADDRESS, EAS_AFFIMRATION_SCHEMA_ID } from "~/constants/addresses";
 import { toast } from "react-toastify";
 import { client } from "~/providers/Thirdweb";
+import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
 
 type Judgement = {
   id: string,
@@ -50,6 +51,8 @@ export const JudgeAttestation: FC<Props> = ({
   const [usersRefutation, setUsersRefutation] = useState<Judgement>();
   const [showImmediateFeedback, setShowImmediateFeedback] = useState<boolean>(false);
   const [showImmediateExtraAffirmation, setShowImmediateExtraAffirmation] = useState<boolean>(false);
+
+  const rpcRequest = getRpcClient({ client, chain: activeChain });
 
   useEffect(() => {
     const usersAffirmation = attestation.affirmations.find((affirmation) =>
@@ -91,6 +94,7 @@ export const JudgeAttestation: FC<Props> = ({
         setShowImmediateExtraAffirmation(true);
       }
       eas.connect(signer);
+      const maxPriorityFeePerGas = await eth_maxPriorityFeePerGas(rpcRequest);
       await eas.attest({
         schema: schemaUid,
         data: {
@@ -100,6 +104,8 @@ export const JudgeAttestation: FC<Props> = ({
           refUID: attestation.decodedAttestaton.uid,
           data: encodedData,
         },
+      }, {
+        maxPriorityFeePerGas,
       });
       onAttestationAffirmed?.();
     } catch (e) {

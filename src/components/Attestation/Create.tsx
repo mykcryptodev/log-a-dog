@@ -11,6 +11,7 @@ import JSConfetti from 'js-confetti';
 import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
 import Connect from "~/components/utils/Connect";
+import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
 
 type Props = {
   onAttestationCreated?: (attestation: {
@@ -40,6 +41,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const rpcRequest = getRpcClient({ client, chain: activeChain });
+
   const create = async () => {
     if (!account || !wallet || !ethers6Adapter) {
       // pop notification
@@ -57,6 +60,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     try {
       setIsLoading(true);
       eas.connect(signer);
+      const maxPriorityFeePerGas = await eth_maxPriorityFeePerGas(rpcRequest);
       await eas.attest({
         schema: schemaUid,
         data: {
@@ -65,6 +69,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           revocable: true,
           data: encodedData,
         },
+      }, {
+        maxPriorityFeePerGas,
       });
       onAttestationCreated?.({
         hotdogEater: account.address,
