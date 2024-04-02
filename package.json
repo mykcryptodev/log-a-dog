@@ -44,7 +44,7 @@
     "react-toastify": "^10.0.4",
     "sharp": "^0.33.3",
     "superjson": "^2.2.1",
-    "thirdweb": "^5.0.0-beta-6c11f9f6ca5c537b25fd3ad9d7ac555f6b1b84e0-20240326214117",
+    "thirdweb": "^5.0.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {

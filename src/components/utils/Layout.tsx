@@ -1,13 +1,7 @@
-import { useActiveAccount, useConnect } from "thirdweb/react";
-import { type FC, type ReactNode,useEffect, useState, useMemo, useCallback, useContext } from "react"
+import { type FC, type ReactNode,useEffect, useState, useMemo } from "react"
 import { ToastContainer } from 'react-toastify';
 import { ProfileButton } from "../Profile/Button";
 import { useRouter } from "next/router";
-import { coinbaseWaaS } from "~/wallet/CoinbaseWaas";
-import { type SmartWalletOptions, smartWallet } from "thirdweb/wallets";
-import { SMART_WALLET_BUNDLER_URL, SMART_WALLET_ENTRYPOINT, SMART_WALLET_FACTORY } from "~/constants/addresses";
-import { client } from "~/providers/Thirdweb";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import Changelog from "~/components/utils/Changelog";
 import Link from "next/link";
 
@@ -17,58 +11,10 @@ interface LayoutProps {
 
 export const Layout: FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
-  const { activeChain } = useContext(ActiveChainContext);
-  // sign out user and clear session if connected wallet changes
-  const account = useActiveAccount();
 
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   useEffect(() => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
-  }, []);
-
-
-  const { connect, isConnecting } = useConnect();
-
-  const smartWalletOptions: SmartWalletOptions = useMemo(() => {
-    return {
-      client,
-      chain: activeChain,
-      factoryAddress: SMART_WALLET_FACTORY[activeChain.id]!,
-      gasless: true,
-      overrides: {
-        entrypointAddress: SMART_WALLET_ENTRYPOINT[activeChain.id],
-        bundlerUrl: SMART_WALLET_BUNDLER_URL[activeChain.id],
-        paymasterAddress: SMART_WALLET_BUNDLER_URL[activeChain.id],
-      }
-    }
-  }, [activeChain]);
-  
-  const [customAutoConnectIsLoading, setCustomAutoConnectIsLoading] = useState<boolean>(false);
-  const autoConnect = useCallback(async () => {
-    setCustomAutoConnectIsLoading(true);
-    try {
-      await connect(async () => {
-        const wallet = coinbaseWaaS({
-          appName: "Log a Dog",
-          chainId: activeChain.id,
-        });
-        const personalAccount = await wallet.autoConnect();
-        const aaWallet = smartWallet(smartWalletOptions);
-        await aaWallet.connect({ personalAccount });
-        return aaWallet;
-      });
-    } catch (e) {
-      console.log('error auto connecting', e);
-    } finally {
-      setCustomAutoConnectIsLoading(false);
-    }
-  }, [activeChain.id, connect, smartWalletOptions]);
-
-  useEffect(() => {
-    if (!account) {
-      void autoConnect();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fromYellow = userPrefersDarkMode ? "from-yellow-300" : "from-yellow-100";
@@ -128,13 +74,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {customAutoConnectIsLoading || isConnecting ? (
-              <button className="btn mr-4" disabled>
-                <div className="loading loading-spinner" /> Login
-              </button>
-            ) : (
-              <ProfileButton />
-            )}
+            <ProfileButton />
             <Changelog />
           </div>
         </div>

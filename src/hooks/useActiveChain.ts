@@ -4,7 +4,7 @@ import { type Chain } from 'thirdweb';
 import { DEFAULT_CHAIN } from '~/constants/chains';
 
 const useActiveChain = () => {
-  const [activeChain, setActiveChain] = useState<Chain & { rpcToUpdate: string }>(DEFAULT_CHAIN);
+  const [activeChain, setActiveChain] = useState<Chain>(DEFAULT_CHAIN);
 
   const updateActiveChain = (chainIdOrName: number | string) => {
     // const chainById = SUPPORTED_CHAINS.find(chain => chain.id === chainIdOrName);
@@ -14,17 +14,9 @@ const useActiveChain = () => {
     setActiveChain(DEFAULT_CHAIN); // no switching chains for now
   }
 
-  const updateActiveChainRpc = (rpc: string) => {
-    setActiveChain({
-      ...activeChain,
-      rpc,
-    });
-  };
-
   return {
     activeChain,
     updateActiveChain,
-    updateActiveChainRpc,
   }
 }
 

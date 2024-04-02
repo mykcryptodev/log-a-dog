@@ -9,7 +9,6 @@ import { getContract, prepareContractCall } from "thirdweb";
 import { client } from "~/providers/Thirdweb";
 import { CONTESTS } from "~/constants/addresses";
 import { toast } from "react-toastify";
-import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 
 type Props = {
   contestId: number;
@@ -52,7 +51,6 @@ export const AddContestants: FC<Props> = ({ contestId, onContestantsAdded }) => 
     contract,
     method: "function addToContest(uint256 id, address[] participants)",
     params: [BigInt(contestId), contestantsToAdd.map((c) => c.address)],
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
 
   return (
@@ -146,14 +144,13 @@ export const AddContestants: FC<Props> = ({ contestId, onContestantsAdded }) => 
                   ))}
                 </div>
                 <TransactionButton
-                  waitForReceipt
                   transaction={() => tx}
-                  onSubmitted={() => {
+                  onTransactionSent={() => {
                     toast.info("Adding contestants...");
                     // close the modal
                     (document.getElementById('add_contestants_modal') as HTMLDialogElement).close();
                   }}
-                  onReceipt={() => {
+                  onTransactionConfirmed={() => {
                     toast.dismiss();
                     toast.success("Contestants added!");
                     onContestantsAdded?.(contestantsToAdd);

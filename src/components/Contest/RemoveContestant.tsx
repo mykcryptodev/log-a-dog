@@ -6,7 +6,6 @@ import { TransactionButton } from "thirdweb/react";
 import { CONTESTS } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
-import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 
 type Props = {
   contestId: number;
@@ -40,7 +39,6 @@ export const RemoveContestant: FC<Props> = ({
     contract,
     method: "function removeFromContest(uint256 id, address contestant)",
     params: [BigInt(contestId), contestantToRemove.address],
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
   
   return (
@@ -78,10 +76,9 @@ export const RemoveContestant: FC<Props> = ({
               <button className="btn">Close</button>
             </form>
             <TransactionButton
-              waitForReceipt
               className="btn btn-error"
               transaction={() => tx}
-              onSubmitted={() => {
+              onTransactionSent={() => {
                 toast.info("Removing...");
                 // close the modal
                 (document.getElementById(`remove_contestants_modal_${contestantToRemove.address}`) as HTMLDialogElement).close();
@@ -91,7 +88,7 @@ export const RemoveContestant: FC<Props> = ({
                 // close the modal
                 (document.getElementById(`remove_contestants_modal_${contestantToRemove.address}`) as HTMLDialogElement).close();
               }}
-              onReceipt={() => {
+              onTransactionConfirmed={() => {
                 toast.dismiss();
                 toast.success("Contestant removed");
                 onContestantRemoved?.(contestantToRemove);

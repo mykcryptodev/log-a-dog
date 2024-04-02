@@ -3,16 +3,7 @@ import { base, baseSepolia } from "thirdweb/chains";
 export const DEFAULT_CHAIN = process.env.NODE_ENV === "production" ? {
   ...base,
   rpc: "https://api.developer.coinbase.com/rpc/v1/base/A10WpgQTkaHJltNKqtNhT2RQ-E-KgEjs",
-  rpcToUpdate: "https://chain-proxy.wallet.coinbase.com?targetName=base",
   // rpc: "https://chain-proxy.wallet.coinbase.com?targetName=base",
-} : {
-  ...baseSepolia,
-  rpcToUpdate: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/Av-Z_3kkdy_jHZd62vCmczjEfXBPtJPC",
-};
+} : baseSepolia;
 
 export const SUPPORTED_CHAINS = [DEFAULT_CHAIN];
-
-export const MAX_PRIORITY_FEE_PER_GAS = {
-  [base.id]: BigInt(1110000),
-  [baseSepolia.id]: undefined,
-} as Record<number, bigint | undefined>;
