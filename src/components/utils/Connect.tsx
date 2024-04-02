@@ -11,7 +11,6 @@ import { baseSepolia as viemBaseSepolia, base as viemBase } from "viem/chains";
 import { viemAdapter } from "thirdweb/adapters/viem";
 import { InitializeWaas, type Wallet } from "@coinbase/waas-sdk-web";
 import { COINBASE_WAAS_PROJECT_ID } from "~/constants";
-import { baseSepolia } from "thirdweb/chains";
 
 type Props = {
   loginBtnLabel?: string;
