@@ -42,7 +42,7 @@ export const JudgeAttestation: FC<Props> = ({
 }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  const { activeChain, updateActiveChainRpc } = useContext(ActiveChainContext);
+  const { activeChain } = useContext(ActiveChainContext);
   const schemaUid = EAS_AFFIMRATION_SCHEMA_ID[activeChain.id]!;
   const easContractAddress = EAS_ADDRESS[activeChain.id]!;
   const eas = new EAS(easContractAddress);
@@ -112,7 +112,6 @@ export const JudgeAttestation: FC<Props> = ({
       // pop notification
       console.error(e);
       toast.error("Failed to attest to dog, try again!");
-      updateActiveChainRpc(activeChain.rpcToUpdate);
     } finally {
       // callbacks wait 5s for the blockchain to catch up
       // so keep act like your loading so that the user isnt confused

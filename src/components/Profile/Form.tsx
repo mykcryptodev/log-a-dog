@@ -6,7 +6,6 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { PROFILES } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
-import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
 import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
 
 type Props = {
@@ -20,7 +19,7 @@ type Props = {
 }
 
 export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, existingImgUrl }) => {
-  const { activeChain, updateActiveChainRpc } = useContext(ActiveChainContext);
+  const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? "");
   const [username, setUsername] = useState<string>(existingUsername ?? "");
@@ -40,7 +39,6 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
     contract,
     method: "function setProfile(string username, string imgUrl, string metadata)",
     params: [username, imgUrl, ""],
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS[activeChain.id],
   });
 
   const isValidUsername = useMemo(() => {
@@ -109,16 +107,12 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
           const errorMessage = e.message?.match(/'([^']+)'/)?.[1] ?? e.message?.split('contract:')[0]?.trim() ?? e.message;
           setError(errorMessage);
           setSaveProfileBtnLabel("Save Profile");
-          updateActiveChainRpc(activeChain.rpcToUpdate);
         }}
       >
         {saveProfileBtnLabel}
       </TransactionButton>
       {error && (
         <div className="flex flex-col gap-1">
-          <span className="text-error text-center text-xs px-8 sm:px-16">
-            Wait a second and then try again!
-          </span>
           <span className="text-error text-center text-xs px-8 sm:px-16">{error}</span>
         </div>
       )}
