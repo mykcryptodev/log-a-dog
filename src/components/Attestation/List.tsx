@@ -96,8 +96,8 @@ export const ListAttestations: FC<Props> = ({ attestors, startDate, endDate, ref
       {(isLoading && attestations.length === 0) ? Array.from({ length: 10 }, (_, i) => (
         <div key={i} className="animate-pulse bg-base-200 rounded-lg h-96" />
       )) : null}
-      {isLoading && <div className="loading loading-spinner mx-auto col-span-2 w-5 h-5" />}
-      {hasNextPage && !isLoading && <button onClick={loadMore} className="btn btn-ghost col-span-2">Load More</button>}
+      {isLoading && <div className="loading loading-spinner mx-auto md:col-span-2 w-5 h-5" />}
+      {hasNextPage && !isLoading && <button onClick={loadMore} className="btn btn-ghost md:col-span-2">Load More</button>}
     </div>
   );
 }
