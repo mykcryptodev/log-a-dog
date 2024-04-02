@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { api } from "~/utils/api";
 import { ProfileButton } from "../Profile/Button";
 import { MAX_PRIORITY_FEE_PER_GAS } from "~/constants/chains";
+import { type TransactionReceipt } from 'ethers';
 
 const getIsoStringInUserTimezone = (date: Date) => {
   // if the date is invalid, return today
@@ -149,16 +150,16 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
       ) : (
         <TransactionButton
           style={{ width: '100%', marginTop: '16px' }}
-          waitForReceipt
           transaction={() => action === "create" ? createTx : updateTx}
-          onSubmitted={() => {
+          onTransactionSent={() => {
             toast.info("Saving...");
           }}
-          onReceipt={(receipt) => {
+          onTransactionConfirmed={(receipt) => {
+            const r = receipt as unknown as TransactionReceipt;
             toast.dismiss();
             toast.success("Contest saved");
             onContestSaved?.({
-              id: BigInt(receipt.logs[1]?.topics[1] ?? 0).toString(),
+              id: BigInt((r.logs?.[1]?.topics?.[1] ?? "0")).toString(),
               username: profile.username,
               imgUrl: profile.imgUrl,
               metadata,

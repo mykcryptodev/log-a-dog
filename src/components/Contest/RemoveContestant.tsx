@@ -78,10 +78,9 @@ export const RemoveContestant: FC<Props> = ({
               <button className="btn">Close</button>
             </form>
             <TransactionButton
-              waitForReceipt
               className="btn btn-error"
               transaction={() => tx}
-              onSubmitted={() => {
+              onTransactionSent={() => {
                 toast.info("Removing...");
                 // close the modal
                 (document.getElementById(`remove_contestants_modal_${contestantToRemove.address}`) as HTMLDialogElement).close();
@@ -91,7 +90,7 @@ export const RemoveContestant: FC<Props> = ({
                 // close the modal
                 (document.getElementById(`remove_contestants_modal_${contestantToRemove.address}`) as HTMLDialogElement).close();
               }}
-              onReceipt={() => {
+              onTransactionConfirmed={() => {
                 toast.dismiss();
                 toast.success("Contestant removed");
                 onContestantRemoved?.(contestantToRemove);

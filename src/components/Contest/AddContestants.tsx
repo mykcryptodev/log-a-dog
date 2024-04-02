@@ -146,14 +146,13 @@ export const AddContestants: FC<Props> = ({ contestId, onContestantsAdded }) => 
                   ))}
                 </div>
                 <TransactionButton
-                  waitForReceipt
                   transaction={() => tx}
-                  onSubmitted={() => {
+                  onTransactionSent={() => {
                     toast.info("Adding contestants...");
                     // close the modal
                     (document.getElementById('add_contestants_modal') as HTMLDialogElement).close();
                   }}
-                  onReceipt={() => {
+                  onTransactionConfirmed={() => {
                     toast.dismiss();
                     toast.success("Contestants added!");
                     onContestantsAdded?.(contestantsToAdd);

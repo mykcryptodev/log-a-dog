@@ -82,7 +82,6 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
         </span>
       )}
       <TransactionButton
-        waitForReceipt
         style={!isValidUsername ? {
           pointerEvents: 'none',
           color: 'rgb(0, 0, 0, 0.5)',
@@ -94,11 +93,10 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
             maxPriorityFeePerGas,
           }
         }}
-        onSubmitted={() => {
+        onTransactionSent={() => {
           setSaveProfileBtnLabel("Saving...");
         }}
-        onReceipt={(receipt) => {
-          console.log({ receipt });
+        onTransactionConfirmed={() => {
           toast.dismiss();
           toast.success("Profile saved");
           onProfileSaved?.({username, imgUrl, metadata});

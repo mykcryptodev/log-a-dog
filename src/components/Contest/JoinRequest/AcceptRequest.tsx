@@ -40,10 +40,10 @@ export const AcceptJoinRequest: FC<Props> = ({ contest, requesterAddress, onRequ
   return (
     <TransactionButton
       transaction={() => tx}
-      onSubmitted={() => {
+      onTransactionSent={() => {
         toast.info("Accepting...");
       }}
-      onReceipt={() => {
+      onTransactionConfirmed={() => {
         toast.dismiss();
         toast.success("Accepted!");
         onRequestAccepted?.(Number(contest.id));

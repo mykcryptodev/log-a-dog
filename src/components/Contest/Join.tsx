@@ -71,12 +71,11 @@ export const JoinContest: FC<Props> = ({ contest, onContestJoined }) => {
   
   return (
     <TransactionButton
-      waitForReceipt
       transaction={() => tx}
-      onSubmitted={() => {
+      onTransactionSent={() => {
         toast.info(onSubmitAlert);
       }}
-      onReceipt={() => {
+      onTransactionConfirmed={() => {
         toast.dismiss();
         toast.success(onReceiptAlert);
         onContestJoined?.(Number(contest.id));
