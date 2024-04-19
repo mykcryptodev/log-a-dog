@@ -225,7 +225,7 @@ export const attestationRouter = createTRPCRouter({
       // Execute the query
       const response = await client.query({
         query: GET_LEADERBOARD,
-        variables: variables,
+        variables,
       });
       const responseSchema = z.object({
         data: z.object({
@@ -238,13 +238,104 @@ export const attestationRouter = createTRPCRouter({
         }),
       });
       const result = responseSchema.parse(response);
-      console.log({ result });
-
       return {
         leaderboard: result.data.groupByAttestation,
       };
     }),
 });
+
+async function getAttestationJudgements(input: {
+  chainId: number,
+  refUIDs?: string[],
+}) {
+  const { chainId, refUIDs } = input;
+  const endpoint = graphqlEndpoints[chainId];
+  if (!endpoint) {
+    throw new Error("Chain not supported");
+  }
+  const client = new ApolloClient({
+    link: new HttpLink({
+      uri: endpoint,
+      fetch,
+    }),
+    cache: new InMemoryCache(),
+  });
+
+  const GET_JUDGEMENTS = gql`
+    query AggregateAttestation($by: [AttestationScalarFieldEnum!]!, $whereAffirmed: AttestationWhereInput, $whereRefuted: AttestationWhereInput) {
+      affirmedAttestations: groupByAttestation(by: $by, where: $whereAffirmed) {
+        refUID
+        _count {
+          _all
+        }
+      }
+      refutedAttestations: groupByAttestation(by: $by, where: $whereRefuted) {
+        refUID
+        _count {
+          _all
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    whereAffirmed: {
+      schemaId: {
+        equals: EAS_AFFIMRATION_SCHEMA_ID[chainId],
+      },
+      revoked: {
+        equals: false
+      },
+      data: {
+        endsWith: "1"
+      },
+      ...(refUIDs ? { "refUIDs": { "in": refUIDs } } : {}),
+    },
+    whereRefuted: {
+      schemaId: {
+        equals: EAS_AFFIMRATION_SCHEMA_ID[chainId],
+      },
+      revoked: {
+        equals: false
+      },
+      data: {
+        endsWith: "0"
+      },
+      ...(refUIDs ? { "refUIDs": { "in": refUIDs } } : {}),
+    },
+    orderBy: [{ timeCreated: "desc" }],
+  };
+
+  try {
+    // Execute the query
+    const response = await client.query({
+      query: GET_JUDGEMENTS,
+      variables: variables,
+    });
+
+    const graphqlJudgementsSchema = z.object({
+      data: z.object({
+        affirmedAttestations: z.array(z.object({
+          refUID: z.string(),
+          _count: z.object({
+            _all: z.number(),
+          }),
+        })),
+        refutedAttestations: z.array(z.object({
+          refUID: z.string(),
+          _count: z.object({
+            _all: z.number(),
+          }),
+        })),
+      }),
+    });
+    const result = graphqlJudgementsSchema.parse(response);
+    return result;
+  } catch (e) {
+    console.log(JSON.stringify(e));
+    throw e;
+  }
+}
 
 async function getAttestationsBySchemaId(input: {
   schemaId: string,
@@ -305,17 +396,17 @@ async function getAttestationsBySchemaId(input: {
   };
 
   try {
-  // Execute the query
-  const response = await client.query({
-    query: GET_ATTESTATIONS,
-    variables: variables,
-  });
-  const result = graphqlAttestationSchema.parse(response);
+    // Execute the query
+    const response = await client.query({
+      query: GET_ATTESTATIONS,
+      variables: variables,
+    });
+    const result = graphqlAttestationSchema.parse(response);
 
-  return {
-    attestations: result.data.attestations,
-    total: result.data.aggregateAttestation._count._all,
-  };
+    return {
+      attestations: result.data.attestations,
+      total: result.data.aggregateAttestation._count._all,
+    };
   } catch (e) {
     console.log(JSON.stringify(e));
     throw e;
