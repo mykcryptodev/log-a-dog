@@ -108,7 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const attestationTx = await eas.attest({
         schema: schemaUid,
         data: {
-          recipient: account.address,
+          recipient: data.recipientAddress,
           expirationTime: BigInt(0),
           revocable: true,
           data: encodedData,
@@ -126,7 +126,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       void eas.attest({
         schema: affirmSchemaUid,
         data: {
-          recipient: account.address,
+          recipient: data.recipientAddress,
           expirationTime: BigInt(0),
           revocable: true,
           refUID: attestationId,
