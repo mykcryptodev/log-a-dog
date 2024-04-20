@@ -91,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // send the image url to maker to decide if it is of someone eating a hotdog or not
       // this could be time intensive so we have another endpoint that receives the answer
-      void fetch(makerUrl, {
+      await fetch(makerUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
