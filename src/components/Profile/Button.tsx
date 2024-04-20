@@ -29,7 +29,6 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  console.log({ account });
   const { waas } = useWalletContext();
   const { disconnect } = useDisconnect();
   const [createdProfileImgUrl, setCreatedProfileImgUrl] = useState<string>();

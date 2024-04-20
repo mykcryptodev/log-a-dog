@@ -62,7 +62,10 @@ export const attestationRouter = createTRPCRouter({
       const client = createThirdwebClient({
         secretKey: env.THIRDWEB_SECRET_KEY,
       });
-      const provider = await ethers6Adapter.provider.toEthers(client, chain) as TransactionSigner;
+      const provider = ethers6Adapter.provider.toEthers({
+        client,
+        chain,
+      }) as unknown as TransactionSigner;
       const eas = new EAS(easAddress);
       eas.connect(provider);
       const attestation = await eas.getAttestation(attestationId);
@@ -238,7 +241,6 @@ export const attestationRouter = createTRPCRouter({
         }),
       });
       const result = responseSchema.parse(response);
-      console.log({ result });
 
       return {
         leaderboard: result.data.groupByAttestation,
@@ -317,7 +319,6 @@ async function getAttestationsBySchemaId(input: {
     total: result.data.aggregateAttestation._count._all,
   };
   } catch (e) {
-    console.log(JSON.stringify(e));
     throw e;
   }
 }

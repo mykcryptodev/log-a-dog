@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MODERATION, PROFILES } from "~/constants/addresses";
+import { BETA_PROFILES, MODERATION, PROFILES } from "~/constants/addresses";
 import { createThirdwebClient, getContract, isAddress } from "thirdweb";
 import { readContract } from "thirdweb";
 import { env } from "~/env";
@@ -9,6 +9,7 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "~/server/api/trpc";
+import { usedUsernames } from "~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849";
 
 export const profileRouter = createTRPCRouter({
   getByAddress: publicProcedure
@@ -40,16 +41,9 @@ export const profileRouter = createTRPCRouter({
         address: profileAddress,
         chain,
       });
-      const address = await readContract({
+      const address = await usedUsernames({
         contract: profileContract,
-        method: {
-          name: "usedUsernames",
-          type: "function",
-          stateMutability: "view",
-          inputs: [{ name: "username", type: "string" }],
-          outputs: [{ name: "address", type: "address" }],
-        },
-        params: [input.username],
+        arg_0: input.username,
       });
       if (address) {
         const profile = await getProfile(address, input.chainId);
@@ -134,6 +128,7 @@ export const profileRouter = createTRPCRouter({
 
 async function getProfile (address: string, chainId: number) {
   const profileAddress = PROFILES[chainId];
+  const betaProfileAddress = BETA_PROFILES[chainId]!;
   const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
   const moderationAddress = MODERATION[chainId];
   if (!profileAddress || !chain || !moderationAddress) {
@@ -141,6 +136,11 @@ async function getProfile (address: string, chainId: number) {
   }
   const client = createThirdwebClient({
     secretKey: env.THIRDWEB_SECRET_KEY,
+  });
+  const betaProfileContract = getContract({
+    client,
+    address: betaProfileAddress,
+    chain,
   });
   const profileContract = getContract({
     client,
@@ -152,7 +152,22 @@ async function getProfile (address: string, chainId: number) {
     address: moderationAddress,
     chain,
   });
-  const [profile, isRedacted] = await Promise.all([
+  const [legacyProfile, profile, isRedacted] = await Promise.all([
+    readContract({
+      contract: betaProfileContract,
+      method: {
+        name: "profiles",
+        type: "function",
+        stateMutability: "view",
+        inputs: [{ name: "address", type: "address" }],
+        outputs: [
+          { name: "username", type: "string" },
+          { name: "imgUrl", type: "string" },
+          { name: "metadata", type: "string" },
+        ],
+      },
+      params: [address],
+    }),
     readContract({
       contract: profileContract,
       method: {
@@ -180,12 +195,14 @@ async function getProfile (address: string, chainId: number) {
       params: [address],
     }),
   ]);
+  const usedProfile = profile?.[0] !== '' ? profile : legacyProfile;
+  console.log({ usedProfile, profile, legacyProfile, address });
   const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/avatar.webp";
   const shortenedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   return {
-    username: isRedacted ? shortenedAddress : profile[0],
-    imgUrl: isRedacted ? redactedImage : profile[1],
-    metadata: profile[2],
+    username: isRedacted ? shortenedAddress : usedProfile[0],
+    imgUrl: isRedacted ? redactedImage : usedProfile[1],
+    metadata: usedProfile[2],
     address,
   };
 }

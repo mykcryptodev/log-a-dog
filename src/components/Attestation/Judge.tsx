@@ -80,7 +80,11 @@ export const JudgeAttestation: FC<Props> = ({
       toast.warning("You cannot judge your own logs");
       return;
     }
-    const signer = await ethers6Adapter.signer.toEthers(client, account, activeChain) as TransactionSigner;
+    const signer = await ethers6Adapter.signer.toEthers({
+      client,
+      account,
+      chain: activeChain,
+    }) as TransactionSigner;
 
     // get the signer from ethers
     const schemaEncoder = new SchemaEncoder("bool isAffirmed");
@@ -133,7 +137,11 @@ export const JudgeAttestation: FC<Props> = ({
       toast.warning("You cannot judge your own logs");
       return;
     }
-    const signer = await ethers6Adapter.signer.toEthers(client, account, activeChain) as TransactionSigner;
+    const signer = await ethers6Adapter.signer.toEthers({
+      client,
+      account,
+      chain: activeChain,
+    }) as TransactionSigner;
 
     try {
       setIsLoading(true);

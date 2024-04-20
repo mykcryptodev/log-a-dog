@@ -49,7 +49,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       toast.error("You must login to log dogs");
       return;
     }
-    const signer = await ethers6Adapter.signer.toEthers(client, account, activeChain) as TransactionSigner;
+    const signer = await ethers6Adapter.signer.toEthers({ client, account, chain: activeChain }) as TransactionSigner;
 
     // get the signer from ethers
     const schemaEncoder = new SchemaEncoder("string image_uri,string metadata");
