@@ -23,6 +23,7 @@ const requestBodySchema = z.object({
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
+      console.log(' maker responded ... ')
       // Validate and parse the request body
       const data = requestBodySchema.parse(req.body);
 
@@ -58,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
         try {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const simulation = await simulateTransaction({ transaction, account });
+          await simulateTransaction({ transaction, account });
           const resp = await fetch(
             `${ENGINE_URL}/contract/${DEFAULT_CHAIN.id}/${contract.address}/write`,
             {
@@ -116,6 +117,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const attestationId = await attestationTx.wait();
 
       // create the judgement
+      // TODO: we eventually want a service that judges all new attestations automatically
+      // when that happens, we will get rid of this because it should run on our attestation above
       const judgementSchemaEncoder = new SchemaEncoder("bool isAffirmed");
       const encodedJudgementData = judgementSchemaEncoder.encodeData([
         { name: "isAffirmed", value: data.isAffirmed, type: "bool" },
