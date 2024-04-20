@@ -103,7 +103,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           recipientAddressUsername: post.data.author.username,
         }),
       });
-      console.log(' fetched to maker ');
+      console.log(' fetched to maker ', { 
+        image, 
+        recipientAddress: address,
+        recipientImage: post.data.author.pfp_url,
+        recipientAddressUsername: post.data.author.username,
+      });
 
       res.status(200).json({ message: 'Success' });
     } catch (error) {
