@@ -33,9 +33,14 @@ export const EAS_AFFIMRATION_SCHEMA_ID: ContractAddress = {
   [baseSepolia.id]: "0x978ab70659ff76860c1e5cc7c21d5c6c09c49a95747b00a155302cfe6d937d6c",
 }
 
-export const PROFILES: ContractAddress = {
+export const BETA_PROFILES: ContractAddress = {
   [base.id]: "0xFe1ba8d23414A80Eb1156dbEdcA7B300912F59c6",
   [baseSepolia.id]: "0x1A4C2C84bEF821bF3b18b2e85fc80523EC27eE16",
+}
+
+export const PROFILES: ContractAddress = {
+  [base.id]: "0x2dA5e4bbA4e18f9A8F985651A846f64129459849",
+  [baseSepolia.id]: "0xD829ed82F6Bc06D61cC4e80165344225333149Eb",
 }
 
 export const MODERATION: ContractAddress = {
