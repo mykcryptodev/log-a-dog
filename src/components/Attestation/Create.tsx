@@ -57,6 +57,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       { name: "image_uri", value: imgUri, type: "string"},
       { name: "metadata", value: "", type: "string" }
     ]);
+    console.log({ imgUri });
     try {
       setIsLoading(true);
       eas.connect(signer);
@@ -145,6 +146,10 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
               onUpload={({ uris }) => {
                 if (!uris) return;
                 setImgUri(uris[0]!);
+              }}
+              onUploadError={() => {
+                // close the modal
+                (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
               }}
               label="📷 Take a picture of you eating it!"
             />

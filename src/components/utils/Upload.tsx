@@ -13,8 +13,10 @@ interface UploadProps {
   onUpload?: ({
     resolvedUrls,
     uris,
-  }: { resolvedUrls: string[], uris: string[]
+  } : { 
+    resolvedUrls: string[], uris: string[]
   }) => void;
+  onUploadError?: (error: Error) => void;
   initialUrls?: string[];
   height?: string;
   objectCover?: boolean;
@@ -26,6 +28,7 @@ export const Upload: FC<UploadProps> = ({
   label, 
   hoverLabel, 
   onUpload,
+  onUploadError,
   additionalClasses,
   initialUrls,
   height,
@@ -96,7 +99,10 @@ export const Upload: FC<UploadProps> = ({
         files: resizedFiles,
         client,
       });
-      const resolvedUrls = await Promise.all(uris.map(uri => (
+      const resolvedUrls = typeof uris === 'string' ? [resolveScheme({
+        uri: uris,
+        client,
+      })] : await Promise.all(uris.map(uri => (
         resolveScheme({
           uri,
           client,
@@ -104,11 +110,12 @@ export const Upload: FC<UploadProps> = ({
       )));
       setPreparingUpload(false);
       setUrls(resolvedUrls);
-      onUpload?.({ resolvedUrls, uris });
+      onUpload?.({ resolvedUrls, uris: typeof uris === 'string' ? [uris] : uris });
     } catch (e) {
       toast("Error uploading file", { type: "error" });
+      onUploadError?.(e as Error);
     }
-  }, [onUpload]);
+  }, [onUpload, onUploadError]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});

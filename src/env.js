@@ -29,7 +29,6 @@ export const env = createEnv({
       process.env.VERCEL ? z.string() : z.string().url()
     ),
     THIRDWEB_SECRET_KEY: z.string(),
-    THIRDWEB_PRIVATE_KEY: z.string(),
     ENGINE_ACCESS_TOKEN: z.string(),
     BACKEND_WALLET_ADDRESS: z.string(),
     BACKEND_PROFILE_WALLET_ADDRESS: z.string(),
@@ -44,7 +43,6 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID: z.string(),
-    NEXT_PUBLIC_THIRDWEB_AUTH_DOMAIN: z.string(),
   },
 
   /**
@@ -56,7 +54,6 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    THIRDWEB_PRIVATE_KEY: process.env.THIRDWEB_PRIVATE_KEY,
     THIRDWEB_SECRET_KEY: process.env.THIRDWEB_SECRET_KEY,
     ENGINE_ACCESS_TOKEN: process.env.ENGINE_ACCESS_TOKEN,
     NEYNAR_WEBHOOK_SECRET: process.env.NEYNAR_WEBHOOK_SECRET,
@@ -64,7 +61,6 @@ export const env = createEnv({
     BACKEND_WALLET_ADDRESS: process.env.BACKEND_WALLET_ADDRESS,
     BACKEND_PROFILE_WALLET_ADDRESS: process.env.BACKEND_PROFILE_WALLET_ADDRESS,
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
-    NEXT_PUBLIC_THIRDWEB_AUTH_DOMAIN: process.env.NEXT_PUBLIC_THIRDWEB_AUTH_DOMAIN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
