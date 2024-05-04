@@ -54,8 +54,6 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
     </main>
   )
 
-  console.log({ data })
-
   if (!data) return null;
   return (
     <main className="flex flex-col items-center justify-center">
