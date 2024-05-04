@@ -6,6 +6,7 @@ import { EAS as EAS_ADDRESS, EAS_AFFIMRATION_SCHEMA_ID, EAS_SCHEMA_ID, MODERATIO
 import { createThirdwebClient, getContract, readContract } from "thirdweb";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { ethers } from "ethers";
+import { DuneClient, QueryParameter } from "@duneanalytics/client-sdk";
 
 import {
   createTRPCRouter,
@@ -14,6 +15,12 @@ import {
 import { baseSepolia, base } from "thirdweb/chains";
 import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
+
+const dune = new DuneClient(env.DUNE_API_KEY);
+const DUNE_QUERY_ID = {
+  [base.id]: 3591387,
+  [baseSepolia.id]: 3591387,
+}
 
 type Endpoints = Record<number, string>;
 
@@ -165,6 +172,57 @@ export const attestationRouter = createTRPCRouter({
         total,
         hasNextPage,
       };
+    }),
+  getGlobalLeaderboard: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      startDate: z.number().optional(),
+      endDate: z.number().optional(),
+    }))
+    .query(async ({ input }) => {
+      try {
+        const duneQueryResult = await dune.getLatestResult({
+          queryId: DUNE_QUERY_ID[input.chainId]!,
+          query_parameters: [
+            QueryParameter.date("start_date", new Date(input.startDate ?? 0)),
+            QueryParameter.date("end_date", new Date(input.endDate ?? Date.now())),
+          ]
+        });
+        if (!duneQueryResult.result) {
+          return {
+            result: [],
+            ok: true,
+          };
+        }
+        return {
+          result: duneQueryResult.result.rows as { 
+            PositiveAttestationCount: number, 
+            recipient: string 
+          }[],
+          ok: true,
+        };
+      } catch (e: unknown) {
+        console.log({ errorInDune: e });
+        return {
+          result: [],
+          ok: false,
+        }
+      }
+    }),
+  executeDuneQuery: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      startDate: z.number().optional(),
+      endDate: z.number().optional(),
+    }))
+    .query(async ({ input }) => {
+      // execute the query if the latest result is not available
+      return await dune.exec.executeQuery(DUNE_QUERY_ID[input.chainId]!, {
+        query_parameters: [
+          QueryParameter.date("start_date", new Date(input.startDate ?? 0)),
+          QueryParameter.date("end_date", new Date(input.endDate ?? Date.now())),
+        ]
+      });
     }),
   getLeaderboard: publicProcedure
     .input(z.object({ 

@@ -196,7 +196,6 @@ async function getProfile (address: string, chainId: number) {
     }),
   ]);
   const usedProfile = profile?.[0] !== '' ? profile : legacyProfile;
-  console.log({ usedProfile, profile, legacyProfile, address });
   const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/avatar.webp";
   const shortenedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   return {

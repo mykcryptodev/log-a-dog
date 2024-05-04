@@ -34,6 +34,7 @@ export const env = createEnv({
     BACKEND_PROFILE_WALLET_ADDRESS: z.string(),
     NEYNAR_WEBHOOK_SECRET: z.string(),
     ADMIN_PRIVATE_KEY: z.string(),
+    DUNE_API_KEY: z.string(),
   },
 
   /**
@@ -61,6 +62,7 @@ export const env = createEnv({
     BACKEND_WALLET_ADDRESS: process.env.BACKEND_WALLET_ADDRESS,
     BACKEND_PROFILE_WALLET_ADDRESS: process.env.BACKEND_PROFILE_WALLET_ADDRESS,
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
+    DUNE_API_KEY: process.env.DUNE_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

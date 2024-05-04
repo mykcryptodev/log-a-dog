@@ -40,7 +40,8 @@ export const BETA_PROFILES: ContractAddress = {
 
 export const PROFILES: ContractAddress = {
   [base.id]: "0x2dA5e4bbA4e18f9A8F985651A846f64129459849",
-  [baseSepolia.id]: "0xD829ed82F6Bc06D61cC4e80165344225333149Eb",
+  [baseSepolia.id]: "0x1A4C2C84bEF821bF3b18b2e85fc80523EC27eE16",
+  // [baseSepolia.id]: "0xD829ed82F6Bc06D61cC4e80165344225333149Eb",
 }
 
 export const MODERATION: ContractAddress = {
