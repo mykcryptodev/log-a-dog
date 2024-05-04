@@ -52,7 +52,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
             <h3 className="font-bold text-lg">Login to Log a Dog</h3>
           </div>
           <div className="rounded-lg flex flex-col gap-2 pt-8 items-center justify-center">
-            <div className="flex items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
+            <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
               <span className="text-sm flex items-start gap-2">
                 <DevicePhoneMobileIcon className="h-5 w-5 stroke-2 mt-2" />
                 <div className="flex flex-col">
@@ -79,7 +79,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
+            <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
               <span className="text-sm flex items-start gap-2">
                 <AtSymbolIcon className="h-5 w-5 stroke-2 mt-2" />
                 <div className="flex flex-col">
@@ -106,7 +106,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
+            <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
               <span className="text-sm flex items-start gap-2">
                 <GoogleIcon className="h-5 w-5 mt-2" />
                 <div className="flex flex-col">
