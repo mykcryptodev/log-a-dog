@@ -1,4 +1,4 @@
-import { type FC, useMemo, useContext, useState, type SVGProps } from "react";
+import { type FC, useMemo, useContext, useState, type SVGProps, useEffect } from "react";
 import { ConnectButton, useConnect } from "thirdweb/react";
 import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
@@ -25,6 +25,10 @@ type Props = {
 export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const { isOnMobileSafari } = useIsOnMobileSafari();
+  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
+  useEffect(() => {
+    setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }, []);
 
   const smartWalletOptions: SmartWalletOptions = useMemo(() => {
     return {
@@ -74,6 +78,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                   accountAbstraction={smartWalletOptions}
                   client={client}
                   chain={activeChain}
+                  theme={userPrefersDarkMode ? "dark" : "light"}
                   connectButton={{
                     label: "Get texted a code",
                     className: "thirdweb-btn",
@@ -101,6 +106,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                   accountAbstraction={smartWalletOptions}
                   client={client}
                   chain={activeChain}
+                  theme={userPrefersDarkMode ? "dark" : "light"}
                   connectButton={{
                     label: "Get emailed a code",
                     className: "thirdweb-btn",
@@ -181,9 +187,10 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
             <ConnectButton
               client={client}
               chain={activeChain}
+              theme={userPrefersDarkMode ? "dark" : "light"}
               connectButton={{
                 label: "Login with a crypto wallet",
-                className: "thirdweb-btn-xs-ghost",
+                className: "thirdweb-btn-xs-link",
               }}
               connectModal={{
                 title: "Login to Log a Dog",
@@ -194,6 +201,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                     src: "/images/logo.png",
                   }
                 },
+                showThirdwebBranding: false,
               }}
               recommendedWallets={[createWallet("com.coinbase.wallet")]}
               wallets={cryptoWallets}

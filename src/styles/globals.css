@@ -6,6 +6,6 @@
   @apply btn !important;
 }
 
-.thirdweb-btn-xs-ghost {
-  @apply btn btn-link btn-xs text-neutral-content !important;
+.thirdweb-btn-xs-link {
+  @apply btn btn-link btn-xs text-base-content !important;
 }
