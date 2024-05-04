@@ -11,6 +11,31 @@ import {
 } from "~/server/api/trpc";
 import { usedUsernames } from "~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849";
 
+type NeynarUserResponse = Record<string, [
+  {
+    object: string;
+    fid: number;
+    custody_address: string;
+    username: string;
+    display_name: string;
+    pfp_url: string;
+    profile: {
+      bio: {
+        text: string;
+      };
+    };
+    follower_count: number;
+    following_count: number;
+    verifications: string[];
+    verified_addresses: {
+      eth_addresses: string[];
+      sol_addresses: string[];
+    };
+    active_status: string;
+    power_badge: boolean;
+  }
+]>;
+
 export const profileRouter = createTRPCRouter({
   getByAddress: publicProcedure
     .input(z.object({ 
@@ -127,6 +152,8 @@ export const profileRouter = createTRPCRouter({
 });
 
 async function getProfile (address: string, chainId: number) {
+  console.log({ address });
+  console.log(`🌈🌈🌈🌈🌈🌈`)
   const profileAddress = PROFILES[chainId];
   const betaProfileAddress = BETA_PROFILES[chainId]!;
   const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
@@ -195,8 +222,30 @@ async function getProfile (address: string, chainId: number) {
       params: [address],
     }),
   ]);
+  if (profile[0] === '' && legacyProfile[0] === '') {
+    // check if the user has a neynar profile and return that if they do
+    const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk-by-address?addresses=${address}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        api_key: 'NEYNAR_API_DOCS',
+      },
+    });
+
+    const neynarUser = await response.json() as NeynarUserResponse;
+    if (neynarUser[address]) {
+      const user = neynarUser[address]?.[0];
+      if (user) {
+        return {
+          username: user.username,
+          imgUrl: user.pfp_url,
+          metadata: '',
+          address,
+        };
+      }
+    }
+  }
   const usedProfile = profile?.[0] !== '' ? profile : legacyProfile;
-  console.log({ usedProfile, profile, legacyProfile, address });
   const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/avatar.webp";
   const shortenedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   return {
