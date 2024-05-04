@@ -152,8 +152,6 @@ export const profileRouter = createTRPCRouter({
 });
 
 async function getProfile (address: string, chainId: number) {
-  console.log({ address });
-  console.log(`🌈🌈🌈🌈🌈🌈`)
   const profileAddress = PROFILES[chainId];
   const betaProfileAddress = BETA_PROFILES[chainId]!;
   const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);

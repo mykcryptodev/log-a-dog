@@ -5,3 +5,7 @@
 .thirdweb-btn {
   @apply btn !important;
 }
+
+.thirdweb-btn-xs-ghost {
+  @apply btn btn-link btn-xs text-neutral-content !important;
+}
