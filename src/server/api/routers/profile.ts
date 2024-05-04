@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BETA_PROFILES, MODERATION, PROFILES } from "~/constants/addresses";
-import { createThirdwebClient, getContract, isAddress } from "thirdweb";
+import { ADDRESS_ZERO, createThirdwebClient, getContract, isAddress } from "thirdweb";
 import { readContract } from "thirdweb";
 import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
@@ -66,12 +66,24 @@ export const profileRouter = createTRPCRouter({
         address: profileAddress,
         chain,
       });
-      const address = await usedUsernames({
-        contract: profileContract,
-        arg_0: input.username,
+      const legacyProfileContract = getContract({
+        client,
+        address: BETA_PROFILES[input.chainId]!,
+        chain,
       });
-      if (address) {
-        const profile = await getProfile(address, input.chainId);
+      const [address, legacyAddress] = await Promise.all([
+        usedUsernames({
+          contract: profileContract,
+          arg_0: input.username,
+        }),
+        usedUsernames({
+          contract: legacyProfileContract,
+          arg_0: input.username,
+        }),
+      ]);
+      const usedAddress = address !== ADDRESS_ZERO ? address : legacyAddress;
+      if (usedAddress) {
+        const profile = await getProfile(usedAddress, input.chainId);
         return profile;
       }
       return null;
