@@ -105,7 +105,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
             ) : (
               <>
                 <CustomMediaRenderer
-                  src={createdProfileImgUrl ?? imageUrl}
+                  src={createdProfileImgUrl ?? imageUrl ?? '/images/logo.png'}
                   alt="Profile Pic"
                   width={"24px"}
                   height={"24px"} 
