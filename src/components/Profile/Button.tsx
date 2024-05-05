@@ -1,4 +1,4 @@
-import { useContext, type FC, useState } from "react";
+import { useContext, type FC, useState, useMemo } from "react";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
@@ -41,6 +41,14 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+
+  const imageUrl = data?.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+
+  const hasNoAvatar = useMemo(() => {
+    if (createdProfileImgUrl && createdProfileImgUrl !== '') return false;
+    if (imageUrl && imageUrl !== '') return false;
+    return true;
+  }, [createdProfileImgUrl, imageUrl]);
 
   const logout = async () => {
     console.log('logging out...')
@@ -90,7 +98,6 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     </>
   );
 
-  const imageUrl = data.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
   const img = () => {
     if (createdProfileImgUrl && createdProfileImgUrl !== '') return createdProfileImgUrl;
     if (imageUrl && imageUrl !== '') return imageUrl;
@@ -109,15 +116,20 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
               </>
             ) : (
               <>
-                <CustomMediaRenderer
-                  src={img()}
-                  alt="Profile Pic"
-                  width={"24px"}
-                  height={"24px"} 
-                  className="rounded-full"
-                  client={client}
-                />
-                <span>{data?.username}</span>
+              <div className="indicator">
+                {hasNoAvatar && <span className="indicator-item badge badge-accent"></span>}
+                <div className="flex gap-2 items-center">
+                  <CustomMediaRenderer
+                    src={img()}
+                    alt="Profile Pic"
+                    width={"24px"}
+                    height={"24px"} 
+                    className="rounded-full"
+                    client={client}
+                  />
+                  <span className={`${hasNoAvatar ? 'pr-4' :''}`}>{data?.username}</span>
+                </div>
+              </div>
               </>
             )}
           </div>
@@ -125,7 +137,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
         <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li>
             <Link href={`/profile/${data.username}`}>
-              Profile
+              Profile {hasNoAvatar && <div className="badge badge-accent">add avatar</div>}
             </Link>
           </li>
           <li><a onClick={() => void logout()}>Logout</a></li>
