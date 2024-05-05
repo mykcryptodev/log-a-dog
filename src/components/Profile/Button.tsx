@@ -91,6 +91,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   );
 
   const imageUrl = data.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+  const img = () => {
+    if (createdProfileImgUrl && createdProfileImgUrl !== '') return createdProfileImgUrl;
+    if (imageUrl && imageUrl !== '') return imageUrl;
+    return '/images/logo.png';
+  }
 
   return (
     <div className="mr-4">
@@ -105,7 +110,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
             ) : (
               <>
                 <CustomMediaRenderer
-                  src={createdProfileImgUrl ?? imageUrl ?? '/images/logo.png'}
+                  src={img()}
                   alt="Profile Pic"
                   width={"24px"}
                   height={"24px"} 

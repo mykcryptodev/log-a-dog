@@ -9,7 +9,7 @@ export const Instructions: FC = () => {
           <li className="step">
             <div className="grid grid-rows-2">
               <span className="font-bold text-start md:text-center">Login</span>
-              <span className="text-xs">Connect your Google account to Log a Dog</span>
+              <span className="text-xs">Choose from several different login methods</span>
             </div>
           </li>
           <li className="step">
