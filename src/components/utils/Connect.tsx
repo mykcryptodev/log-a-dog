@@ -65,7 +65,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
             <h3 className="font-bold text-lg">Login to Log a Dog</h3>
           </div>
           <div className="sm:max-h-[26rem] max-h-96 p-4 overflow-y-scroll rounded-lg shadow-inner relative">
-            <div className="h-full w-full top-0 left-0 absolute bg-gradient-to-br from-pink-100 to-yellow-100 -z-10" />
+            <div className={`h-full w-full top-0 left-0 absolute bg-gradient-to-br from-pink-100 to-yellow-100 -z-10 sm:block hidden ${userPrefersDarkMode ? 'invisible' : ''}`} />
             <div className="rounded-lg flex flex-col gap-2 pt-0 items-center justify-center">
               <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content bg-base-100">
                 <span className="text-sm flex items-start gap-2">
@@ -219,7 +219,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                 theme={userPrefersDarkMode ? "dark" : "light"}
                 connectButton={{
                   label: "Login with a crypto wallet",
-                  className: "thirdweb-btn-xs-link-neutral",
+                  className: `thirdweb-btn-xs-link-neutral${userPrefersDarkMode ? '-content' : ''}`,
                 }}
                 connectModal={{
                   title: "Login to Log a Dog",

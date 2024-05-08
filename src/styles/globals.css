@@ -9,3 +9,7 @@
 .thirdweb-btn-xs-link-neutral {
   @apply btn btn-link btn-xs text-neutral !important;
 }
+
+.thirdweb-btn-xs-link-neutral-content {
+  @apply btn btn-link btn-xs text-neutral-content !important;
+}
