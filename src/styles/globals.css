@@ -6,6 +6,10 @@
   @apply btn !important;
 }
 
-.thirdweb-btn-xs-link {
-  @apply btn btn-link btn-xs text-base-content !important;
+.thirdweb-btn-xs-link-neutral {
+  @apply btn btn-link btn-xs text-neutral !important;
+}
+
+.thirdweb-btn-xs-link-neutral-content {
+  @apply btn btn-link btn-xs text-neutral-content !important;
 }

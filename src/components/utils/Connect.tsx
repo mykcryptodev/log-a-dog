@@ -60,153 +60,183 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           <label htmlFor="login_modal" className="btn btn-sm btn-circle btn-ghost absolute right-5 top-5 text-lg">
             &times;
           </label>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center pb-2">
             <Image src="/images/logo.png" alt="Logo" width={24} height={24} />
             <h3 className="font-bold text-lg">Login to Log a Dog</h3>
           </div>
-          <div className="rounded-lg flex flex-col gap-2 pt-8 items-center justify-center">
-            <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
-              <span className="text-sm flex items-start gap-2">
-                <DevicePhoneMobileIcon className="h-5 w-5 stroke-2 mt-2" />
-                <div className="flex flex-col">
-                  <span className="font-bold text-lg">Login with phone</span>
-                  <span className="text-xs flex items-center opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/thirdweb.png"} alt={"Thirdweb"} /> Thirdweb</span>
+          <div className="sm:max-h-[26rem] max-h-96 p-4 overflow-y-scroll rounded-lg shadow-inner relative">
+            <div className={`h-full w-full top-0 left-0 absolute bg-gradient-to-br from-pink-100 to-yellow-100 -z-10 sm:block hidden ${userPrefersDarkMode ? 'invisible' : ''}`} />
+            <div className="rounded-lg flex flex-col gap-2 pt-0 items-center justify-center">
+              <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content bg-base-100">
+                <span className="text-sm flex items-start gap-2">
+                  <DevicePhoneMobileIcon className="h-5 w-5 stroke-2 mt-2" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg">Login with phone</span>
+                    <span className="text-xs flex items-center opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/thirdweb.png"} alt={"Thirdweb"} /> Thirdweb</span>
+                  </div>
+                </span>
+                <div className="flex justify-end">
+                  <ConnectButton
+                    accountAbstraction={smartWalletOptions}
+                    client={client}
+                    chain={activeChain}
+                    theme={userPrefersDarkMode ? "dark" : "light"}
+                    connectButton={{
+                      label: "Get texted a code",
+                      className: "thirdweb-btn",
+                    }}
+                    wallets={[
+                      inAppWallet({
+                        auth: {
+                          options: ['phone']
+                        }
+                      }),
+                    ]}
+                  />
                 </div>
-              </span>
-              <div className="flex justify-end">
-                <ConnectButton
-                  accountAbstraction={smartWalletOptions}
-                  client={client}
-                  chain={activeChain}
-                  theme={userPrefersDarkMode ? "dark" : "light"}
-                  connectButton={{
-                    label: "Get texted a code",
-                    className: "thirdweb-btn",
+              </div>
+              <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content bg-base-100">
+                <span className="text-sm flex items-start gap-2">
+                  <AtSymbolIcon className="h-5 w-5 stroke-2 mt-2" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg">Login with email</span>
+                    <span className="text-xs flex items-center opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/thirdweb.png"} alt={"Thirdweb"} /> Thirdweb</span>
+                  </div>
+                </span>
+                <div className="flex justify-end">
+                  <ConnectButton
+                    accountAbstraction={smartWalletOptions}
+                    client={client}
+                    chain={activeChain}
+                    theme={userPrefersDarkMode ? "dark" : "light"}
+                    connectButton={{
+                      label: "Get emailed a code",
+                      className: "thirdweb-btn",
+                    }}
+                    wallets={[
+                      inAppWallet({
+                        auth: {
+                          options: ['email']
+                        }
+                      }),
+                    ]}
+                  />
+                </div>
+              </div>
+              <div className={`flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content bg-base-100`}>
+                <span className="text-sm flex items-start gap-2">
+                  <GoogleIcon className="h-5 w-5 mt-2" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg">Login with Google</span>
+                    <span className="flex items-center text-xs opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/coinbase.png"} alt={"Coinbase"} /> Coinbase</span>
+                  </div>
+                </span>
+                <button
+                  className={`btn`}
+                  disabled={isConnecting || isOnMobileSafari}
+                  onClick={async () => {
+                    setIsConnecting(true);
+                    // connect embedded wallet
+                    const waas = await InitializeWaas({
+                      collectAndReportMetrics: true,
+                      enableHostedBackups: true, // DO NOT CHANGE THIS TO FALSE
+                      projectId: COINBASE_WAAS_PROJECT_ID[activeChain.id],
+                      prod: process.env.NODE_ENV === "production",
+                    });
+                    const user = await waas.auth.login();
+                    let wallet: Wallet;
+                    if (waas.wallets.wallet) {
+                      wallet = waas.wallets.wallet;
+                      console.log("wallet is resumed");
+                    } else if (user.hasWallet) {
+                      wallet = await waas.wallets.restoreFromHostedBackup();
+                      console.log("wallet is restored");
+                    } else {
+                      wallet = await waas.wallets.create();
+                      console.log("wallet is created");
+                    }
+                    if (!wallet) return;
+                    // convert the wallet to viem
+                    const address = await wallet.addresses.for(ProtocolFamily.EVM);
+                    const viemAccount = toViem(address);
+                    const viemChain = activeChain.id === viemBaseSepolia.id ? viemBaseSepolia : viemBase;
+              
+                    const walletClient = createWalletClient({
+                      account: viemAccount,
+                      chain: viemChain,
+                      transport: http(activeChain.rpc),
+                    });
+                    // convert the viem account to personal account
+                    const personalAccount = viemAdapter.walletClient.fromViem({ walletClient });
+                    // connect the smart wallet and return the smart account
+                    return await connect(async () => {
+                      // connect personal acct to smart wallet
+                      const aaWallet = smartWallet(smartWalletOptions);
+                      await aaWallet.connect({ personalAccount, client });
+                      // return the smart wallet
+                      return aaWallet;
+                    });
                   }}
-                  wallets={[
-                    inAppWallet({
-                      auth: {
-                        options: ['phone']
-                      }
-                    }),
-                  ]}
-                />
+                >
+                  {isConnecting && (
+                    <div className="loading loading-spinner" />
+                  )}
+                  {isOnMobileSafari ? "Not available on mobile safari" : "Connect with Google"}
+                </button>
+              </div>
+              <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content bg-base-100">
+                <span className="text-sm flex items-start gap-2">
+                  <Image 
+                    src="/images/coinbase-wallet.png"
+                    className="h-6 w-6 mt-2 rounded"
+                    width={40}
+                    height={40} 
+                    alt={"Coinbase Wallet"}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg">Login with Smart Wallet</span>
+                    <span className="flex items-center text-xs opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/coinbase.png"} alt={"Coinbase"} /> Coinbase</span>
+                  </div>
+                </span>
+                <div className="flex justify-end">
+                  <ConnectButton
+                    client={client}
+                    chain={activeChain}
+                    theme={userPrefersDarkMode ? "dark" : "light"}
+                    connectButton={{
+                      label: "Sign with passkey",
+                      className: "thirdweb-btn",
+                    }}
+                    wallets={[createWallet("com.coinbase.wallet")]}
+                  />
+                </div>
               </div>
             </div>
-            <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
-              <span className="text-sm flex items-start gap-2">
-                <AtSymbolIcon className="h-5 w-5 stroke-2 mt-2" />
-                <div className="flex flex-col">
-                  <span className="font-bold text-lg">Login with email</span>
-                  <span className="text-xs flex items-center opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/thirdweb.png"} alt={"Thirdweb"} /> Thirdweb</span>
-                </div>
-              </span>
-              <div className="flex justify-end">
-                <ConnectButton
-                  accountAbstraction={smartWalletOptions}
-                  client={client}
-                  chain={activeChain}
-                  theme={userPrefersDarkMode ? "dark" : "light"}
-                  connectButton={{
-                    label: "Get emailed a code",
-                    className: "thirdweb-btn",
-                  }}
-                  wallets={[
-                    inAppWallet({
-                      auth: {
-                        options: ['email']
-                      }
-                    }),
-                  ]}
-                />
-              </div>
-            </div>
-            <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content text-neutral-content bg-neutral">
-              <span className="text-sm flex items-start gap-2">
-                <GoogleIcon className="h-5 w-5 mt-2" />
-                <div className="flex flex-col">
-                  <span className="font-bold text-lg">Login with Google</span>
-                  <span className="flex items-center text-xs opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/coinbase.png"} alt={"Coinbase"} /> Coinbase</span>
-                </div>
-              </span>
-              <button
-                className="btn"
-                disabled={isConnecting || isOnMobileSafari}
-                onClick={async () => {
-                  setIsConnecting(true);
-                  // connect embedded wallet
-                  const waas = await InitializeWaas({
-                    collectAndReportMetrics: true,
-                    enableHostedBackups: true, // DO NOT CHANGE THIS TO FALSE
-                    projectId: COINBASE_WAAS_PROJECT_ID[activeChain.id],
-                    prod: process.env.NODE_ENV === "production",
-                  });
-                  const user = await waas.auth.login();
-                  let wallet: Wallet;
-                  if (waas.wallets.wallet) {
-                    wallet = waas.wallets.wallet;
-                    console.log("wallet is resumed");
-                  } else if (user.hasWallet) {
-                    wallet = await waas.wallets.restoreFromHostedBackup();
-                    console.log("wallet is restored");
-                  } else {
-                    wallet = await waas.wallets.create();
-                    console.log("wallet is created");
-                  }
-                  if (!wallet) return;
-                  // convert the wallet to viem
-                  const address = await wallet.addresses.for(ProtocolFamily.EVM);
-                  const viemAccount = toViem(address);
-                  const viemChain = activeChain.id === viemBaseSepolia.id ? viemBaseSepolia : viemBase;
-            
-                  const walletClient = createWalletClient({
-                    account: viemAccount,
-                    chain: viemChain,
-                    transport: http(activeChain.rpc),
-                  });
-                  // convert the viem account to personal account
-                  const personalAccount = viemAdapter.walletClient.fromViem({ walletClient });
-                  // connect the smart wallet and return the smart account
-                  return await connect(async () => {
-                    // connect personal acct to smart wallet
-                    const aaWallet = smartWallet(smartWalletOptions);
-                    await aaWallet.connect({ personalAccount, client });
-                    // return the smart wallet
-                    return aaWallet;
-                  });
+            <div className="flex items-center justify-center w-full">
+              <ConnectButton
+                client={client}
+                chain={activeChain}
+                theme={userPrefersDarkMode ? "dark" : "light"}
+                connectButton={{
+                  label: "Login with a crypto wallet",
+                  className: `thirdweb-btn-xs-link-neutral${userPrefersDarkMode ? '-content' : ''}`,
                 }}
-              >
-                {isConnecting && (
-                  <div className="loading loading-spinner" />
-                )}
-                {isOnMobileSafari ? "Not available on mobile safari" : "Connect with Google"}
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center justify-center w-full">
-            <ConnectButton
-              client={client}
-              chain={activeChain}
-              theme={userPrefersDarkMode ? "dark" : "light"}
-              connectButton={{
-                label: "Login with a crypto wallet",
-                className: "thirdweb-btn-xs-link",
-              }}
-              connectModal={{
-                title: "Login to Log a Dog",
-                titleIcon: "/images/logo.png",
-                welcomeScreen: {
+                connectModal={{
                   title: "Login to Log a Dog",
-                  img: {
-                    src: "/images/logo.png",
-                  }
-                },
-                showThirdwebBranding: false,
-              }}
-              recommendedWallets={[createWallet("com.coinbase.wallet")]}
-              wallets={cryptoWallets}
-              showAllWallets={true}
-            />
+                  titleIcon: "/images/logo.png",
+                  welcomeScreen: {
+                    title: "Login to Log a Dog",
+                    img: {
+                      src: "/images/logo.png",
+                    }
+                  },
+                  showThirdwebBranding: false,
+                }}
+                recommendedWallets={[createWallet("com.coinbase.wallet")]}
+                wallets={cryptoWallets}
+                showAllWallets={true}
+              />
+            </div>
           </div>
           <div className="modal-action">
             <label htmlFor="login_modal" className="btn btn-ghost">Cancel</label>
