@@ -1,8 +1,8 @@
 import { type FC, useMemo, useContext, useState, type SVGProps, useEffect } from "react";
-import { ConnectButton, useConnect } from "thirdweb/react";
+import { ConnectButton, useConnect, useSetActiveWallet } from "thirdweb/react";
 import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
-import { createWallet, inAppWallet, smartWallet, walletConnect, type SmartWalletOptions } from "thirdweb/wallets";
+import { createWallet, inAppWallet, smartWallet, walletConnect, type SmartWalletOptions, createWalletAdapter } from "thirdweb/wallets";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toViem } from "@coinbase/waas-sdk-viem";
 import { ProtocolFamily } from "@coinbase/waas-sdk-web";
@@ -29,6 +29,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   useEffect(() => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
+  const setActiveWallet = useSetActiveWallet();
 
   const smartWalletOptions: SmartWalletOptions = useMemo(() => {
     return {
@@ -167,12 +168,30 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                       transport: http(activeChain.rpc),
                     });
                     // convert the viem account to personal account
-                    const personalAccount = viemAdapter.walletClient.fromViem({ walletClient });
+                    const adaptedAccount = viemAdapter.walletClient.fromViem({
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+                      walletClient: walletClient as any,
+                    });
+                    // create the thirdweb wallet with the adapted account
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+                    const thirdwebWallet = createWalletAdapter({
+                      client,
+                      adaptedAccount,
+                      chain: activeChain,
+                      onDisconnect: async () => {
+                        await waas.auth.logout();
+                      },
+                      switchChain: async (_chain) => {
+                        await waas.auth.logout();
+                      },
+                    });
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                    void setActiveWallet(thirdwebWallet);
                     // connect the smart wallet and return the smart account
                     return await connect(async () => {
                       // connect personal acct to smart wallet
                       const aaWallet = smartWallet(smartWalletOptions);
-                      await aaWallet.connect({ personalAccount, client });
+                      await aaWallet.connect({ personalAccount: adaptedAccount, client });
                       // return the smart wallet
                       return aaWallet;
                     });
