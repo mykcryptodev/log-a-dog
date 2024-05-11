@@ -41,6 +41,8 @@ export const Upload: FC<UploadProps> = ({
   useEffect(() => {
     if (initialUrls && initialUrls.length > 0) {
       setUrls(initialUrls);
+    } else {
+      setUrls([]);
     }
   }, [initialUrls]);
 
@@ -131,6 +133,13 @@ export const Upload: FC<UploadProps> = ({
   }, [hoverLabel, isDragActive, label, preparingUpload]);
 
 
+  const previewImageSrc = (src: string) => {
+    if (src.startsWith("ipfs://")) {
+      return `https://ipfs.io/ipfs/${src.replace("ipfs://", "")}`;
+    }
+    return src;
+  }
+
   return (
     <div {...getRootProps()} className={className ?? `bg-base-200 rounded-lg ${height ? height : 'h-64'} w-full grid place-content-center cursor-pointer relative ${additionalClasses ?? ""}`}>
       <input {...getInputProps()} />
@@ -138,7 +147,7 @@ export const Upload: FC<UploadProps> = ({
         urls.length && urls.length > 0 && urls[0] !== "" ? (
           <div className="absolute inset-0 w-full h-full bg-cover overflow-hidden rounded-lg">
             <Image
-              src={urls[0]!}
+              src={previewImageSrc(urls[0]!)}
               alt="uploaded image"
               layout="fill"
               objectFit={objectCover ? "cover" : "contain"}

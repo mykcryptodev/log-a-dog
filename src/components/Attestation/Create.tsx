@@ -21,7 +21,7 @@ type Props = {
   }) => void;
 }
 export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
-  const [imgUri, setImgUri] = useState<string>("");
+  const [imgUri, setImgUri] = useState<string | undefined>();
 
   const account = useActiveAccount();
   const wallet = useActiveWallet();
@@ -47,6 +47,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     if (!account || !wallet || !ethers6Adapter) {
       // pop notification
       toast.error("You must login to log dogs");
+      return;
+    }
+    if (!imgUri) {
+      // pop notification
+      toast.error("You must upload an image to log a dog");
       return;
     }
     const signer = await ethers6Adapter.signer.toEthers({ client, account, chain: activeChain }) as TransactionSigner;
@@ -92,6 +97,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       toast.error("Failed to log dog, try logging out and logging back in!");
     } finally { 
       setIsLoading(false);
+      setImgUri(undefined);
       // close modal
       (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
     }
@@ -145,8 +151,9 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
             <Upload 
               onUpload={({ uris }) => {
                 if (!uris) return;
-                setImgUri(uris[0]!);
+                setImgUri(uris[0]);
               }}
+              initialUrls={imgUri ? [imgUri] : undefined}
               onUploadError={() => {
                 // close the modal
                 (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
