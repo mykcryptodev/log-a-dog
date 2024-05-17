@@ -12,6 +12,7 @@ import { env } from '~/env';
 const requestBodySchema = z.object({
   attestationId: z.string(),
   recipientAddress: z.string(),
+  judgement: z.boolean(),
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -50,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // create the judgement
       const judgementSchemaEncoder = new SchemaEncoder("bool isAffirmed");
       const encodedJudgementData = judgementSchemaEncoder.encodeData([
-        { name: "isAffirmed", value: true, type: "bool" },
+        { name: "isAffirmed", value: data.judgement, type: "bool" },
       ]);
       void eas.attest({
         schema: affirmSchemaUid,
