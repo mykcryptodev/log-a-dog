@@ -22,10 +22,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Validate and parse the request body
       const data = requestBodySchema.parse(req.body);
 
+      console.log({ data })
+
       // if the request header x-secret doesnt match the MAKER_AFFIRM_SECRET env var, return 401
       if (req.headers['x-secret'] !== env.MAKER_AFFIRM_SECRET) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
+
+      console.log( ' secret passed! ');
 
       const client = createThirdwebClient({
         secretKey: env.THIRDWEB_SECRET_KEY,
@@ -71,8 +75,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: encodedJudgementData,
         },
       });
+      console.log('attested!');
       res.status(200).json({ message: 'Success' });
     } catch (error) {
+      console.log('error!', error);
       res.status(400).json({ error });
     }
   } else {
