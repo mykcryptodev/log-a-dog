@@ -4,7 +4,7 @@ import { createThirdwebClient, getContract, simulateTransaction } from 'thirdweb
 import { ethers6Adapter } from 'thirdweb/adapters/ethers6';
 import { type Account, privateKeyToAccount } from 'thirdweb/wallets';
 import { z } from 'zod';
-import { PROFILES, EAS as EAS_ADDRESS, EAS_SCHEMA_ID, EAS_AFFIMRATION_SCHEMA_ID } from '~/constants/addresses';
+import { PROFILES, EAS as EAS_ADDRESS, EAS_SCHEMA_ID } from '~/constants/addresses';
 import { DEFAULT_CHAIN } from '~/constants/chains';
 import { env } from '~/env';
 import { profiles, setProfileOnBehalf } from '~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849';
@@ -93,7 +93,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }) as TransactionSigner;
       
       const schemaUid = EAS_SCHEMA_ID[DEFAULT_CHAIN.id]!;
-      const affirmSchemaUid = EAS_AFFIMRATION_SCHEMA_ID[DEFAULT_CHAIN.id]!;
 
       const easContractAddress = EAS_ADDRESS[DEFAULT_CHAIN.id]!;
       const eas = new EAS(easContractAddress);
@@ -105,32 +104,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         { name: "image_uri", value: data.image, type: "string"},
         { name: "metadata", value: "", type: "string" }
       ]);
-      const attestationTx = await eas.attest({
+      void eas.attest({
         schema: schemaUid,
         data: {
           recipient: data.recipientAddress,
           expirationTime: BigInt(0),
           revocable: true,
           data: encodedData,
-        },
-      });
-      const attestationId = await attestationTx.wait();
-
-      // create the judgement
-      // TODO: we eventually want a service that judges all new attestations automatically
-      // when that happens, we will get rid of this because it should run on our attestation above
-      const judgementSchemaEncoder = new SchemaEncoder("bool isAffirmed");
-      const encodedJudgementData = judgementSchemaEncoder.encodeData([
-        { name: "isAffirmed", value: data.isAffirmed, type: "bool" },
-      ]);
-      void eas.attest({
-        schema: affirmSchemaUid,
-        data: {
-          recipient: data.recipientAddress,
-          expirationTime: BigInt(0),
-          revocable: true,
-          refUID: attestationId,
-          data: encodedJudgementData,
         },
       });
       res.status(200).json({ message: 'Success' });
