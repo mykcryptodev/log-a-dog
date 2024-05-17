@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const encodedJudgementData = judgementSchemaEncoder.encodeData([
         { name: "isAffirmed", value: data.judgement, type: "bool" },
       ]);
-      void eas.attest({
+      await eas.attest({
         schema: affirmSchemaUid,
         data: {
           recipient: data.recipientAddress,
