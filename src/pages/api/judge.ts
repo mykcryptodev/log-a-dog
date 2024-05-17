@@ -5,7 +5,7 @@ import { ethers6Adapter } from 'thirdweb/adapters/ethers6';
 import { type Account, privateKeyToAccount } from 'thirdweb/wallets';
 import { z } from 'zod';
 import { EAS as EAS_ADDRESS, EAS_AFFIMRATION_SCHEMA_ID } from '~/constants/addresses';
-import { DEFAULT_CHAIN } from '~/constants/chains';
+import { SUPPORTED_CHAINS } from '~/constants/chains';
 import { env } from '~/env';
 
 // Define the schema for the request body
@@ -37,10 +37,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         privateKey: env.ADMIN_PRIVATE_KEY,
       }) as unknown as Account;
 
+      const chain = SUPPORTED_CHAINS.find((c) => c.id === data.chainId);
+      if (!chain) {
+        throw new Error("Chain not supported");
+      }
+
       const signer = await ethers6Adapter.signer.toEthers({
         client,
         account,
-        chain: DEFAULT_CHAIN,
+        chain,
       }) as TransactionSigner;
       
       const affirmSchemaUid = EAS_AFFIMRATION_SCHEMA_ID[data.chainId];
