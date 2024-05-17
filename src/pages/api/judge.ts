@@ -13,6 +13,7 @@ const requestBodySchema = z.object({
   attestationId: z.string(),
   recipientAddress: z.string(),
   judgement: z.boolean(),
+  chainId: z.number(),
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -42,9 +43,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         chain: DEFAULT_CHAIN,
       }) as TransactionSigner;
       
-      const affirmSchemaUid = EAS_AFFIMRATION_SCHEMA_ID[DEFAULT_CHAIN.id]!;
-
-      const easContractAddress = EAS_ADDRESS[DEFAULT_CHAIN.id]!;
+      const affirmSchemaUid = EAS_AFFIMRATION_SCHEMA_ID[data.chainId];
+      const easContractAddress = EAS_ADDRESS[data.chainId];
+      if (!affirmSchemaUid || !easContractAddress) {
+        throw new Error("Chain not supported");
+      }
       const eas = new EAS(easContractAddress);
       eas.connect(signer);
 

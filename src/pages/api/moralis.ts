@@ -107,10 +107,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log({ imgUri })
 
-      const resolvedImgUrl = resolveScheme({
-        client,
-        uri: imgUri,
-      });
+      let resolvedImgUrl;
+      try {
+        resolvedImgUrl = resolveScheme({
+          client,
+          uri: imgUri,
+        });
+      } catch (e) {
+        if (imgUri.startsWith("ipfs://")) {
+          resolvedImgUrl = `https://ipfs.io/ipfs/${imgUri.slice(7)}`;
+        } else {
+          resolvedImgUrl = imgUri;
+        }
+      }
 
       console.log({ resolvedImgUrl });
       
@@ -123,12 +132,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           image: resolvedImgUrl,
           attestationId: attestationId,
           recipientAddress: attestation.recipient,
+          chainId,
         }),
       });
       console.log(' fetched to maker ', { 
         image: resolvedImgUrl,
         attestationId: attestationId,
         recipientAddress: attestation.recipient,
+        chainId,
       });
 
       res.status(200).json({ message: 'Success' });
