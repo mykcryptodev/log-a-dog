@@ -5,62 +5,27 @@ import { env } from '~/env';
 
 // Define the schema for the request body
 const requestBodySchema = z.object({
-  created_at: z.number(),
-  type: z.string(),
   data: z.object({
-    object: z.string(),
-    hash: z.string(),
-    thread_hash: z.string(),
-    parent_hash: z.string().nullable(),
-    parent_url: z.string().url(),
-    root_parent_url: z.string().url(),
-    parent_author: z.object({
-      fid: z.number().nullable(),
-    }),
     author: z.object({
-      object: z.string(),
-      fid: z.number(),
       custody_address: z.string(),
-      username: z.string(),
-      display_name: z.string(),
       pfp_url: z.string().url(),
-      profile: z.object({
-        bio: z.object({
-          text: z.string(),
-          mentioned_profiles: z.array(z.any()),
-        }),
-      }),
-      follower_count: z.number(),
-      following_count: z.number(),
-      verifications: z.array(z.string()),
+      username: z.string(),
       verified_addresses: z.object({
         eth_addresses: z.array(z.string()),
-        sol_addresses: z.array(z.string()),
       }),
-      active_status: z.string(),
-      power_badge: z.boolean(),
     }),
-    text: z.string(),
-    timestamp: z.string(),
     embeds: z.array(
       z.object({
         url: z.string().url(),
       })
     ),
-    reactions: z.object({
-      likes: z.array(z.any()),
-      recasts: z.array(z.any()),
-    }),
-    replies: z.object({
-      count: z.number(),
-    }),
-    mentioned_profiles: z.array(z.any()),
   }),
 });
 
 const makerUrl = `https://hook.us1.make.com/1wysoq8t7gwnhttw9kpxxvmv35ek57wk`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('caught warpcast hook...');
   const body = JSON.stringify(req.body);
 
   const sig = req.headers['x-neynar-signature'];
@@ -75,6 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const isValid = generatedSignature === sig;
   if (!isValid) {
+    console.log('not a valid signature');
     return res.status(400).json({ error: "Invalid webhook signature" });
   }
 
@@ -82,6 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       // Validate and parse the request body
       const post = requestBodySchema.parse(req.body);
+      console.log({ post: JSON.stringify(post) });
       // grab the first image posted
       const image = post.data.embeds[0]?.url;
       if (!image) return res.status(200).json({ message: "No image found in post" });
