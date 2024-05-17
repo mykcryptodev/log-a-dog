@@ -53,10 +53,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const image = post.data.embeds[0]?.url;
       if (!image) return res.status(200).json({ message: "No image found in post" });
 
-      // check that the image is an image
-      const isImage = image.match(/\.(jpeg|jpg|gif|png)$/) != null;
-      if (!isImage) return res.status(200).json({ message: "Not an image" });
-
       // get this users address. default to the first verified ethereum address and fall back on the custody address
       const address = post.data.author.verified_addresses.eth_addresses[0] ?? post.data.author.custody_address;
 
