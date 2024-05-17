@@ -6,4 +6,4 @@ export const DEFAULT_CHAIN = process.env.NODE_ENV === "production" ? {
   // rpc: "https://chain-proxy.wallet.coinbase.com?targetName=base",
 } : baseSepolia;
 
-export const SUPPORTED_CHAINS = [DEFAULT_CHAIN];
+export const SUPPORTED_CHAINS = [base, baseSepolia];
