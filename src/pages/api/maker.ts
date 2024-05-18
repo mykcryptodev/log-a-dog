@@ -14,7 +14,6 @@ const ENGINE_URL = `https://engine-production-3357.up.railway.app`;
 // Define the schema for the request body
 const requestBodySchema = z.object({
   image: z.string().url(),
-  isAffirmed: z.boolean(),
   recipientAddress: z.string(),
   recipientUsername: z.string(),
   recipientImage: z.string(),
