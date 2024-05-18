@@ -27,6 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Validate and parse the request body
       const data = requestBodySchema.parse(req.body);
 
+      // if the request header x-secret doesnt match the MAKER_AFFIRM_SECRET env var, return 401
+      if (req.headers['x-secret'] !== env.MAKER_AFFIRM_SECRET) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
       const client = createThirdwebClient({
         secretKey: env.THIRDWEB_SECRET_KEY,
       });
