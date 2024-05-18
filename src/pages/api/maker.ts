@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           await simulateTransaction({ transaction, account });
-          const resp = await fetch(
+          const resp = void fetch(
             `${ENGINE_URL}/contract/${DEFAULT_CHAIN.id}/${contract.address}/write`,
             {
               method: "POST",
@@ -104,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         { name: "image_uri", value: data.image, type: "string"},
         { name: "metadata", value: "", type: "string" }
       ]);
-      void eas.attest({
+      await eas.attest({
         schema: schemaUid,
         data: {
           recipient: data.recipientAddress,
