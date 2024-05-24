@@ -18,6 +18,11 @@ export const SMART_WALLET_BUNDLER_URL: ContractAddress = {
   [baseSepolia.id]: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/Av-Z_3kkdy_jHZd62vCmczjEfXBPtJPC",
 }
 
+export const LOG_A_DOG: ContractAddress = {
+  [base.id]: "0xd408a3f4730ba0ff985e23ea246d25c4e8ea7ef0",
+  [baseSepolia.id]: "0xdc0b97c9121f83cbe6852a844d91f7cae9ee422f",
+}
+
 export const EAS: ContractAddress = {
   [base.id]: "0x4200000000000000000000000000000000000021",
   [baseSepolia.id]: "0x4200000000000000000000000000000000000021",

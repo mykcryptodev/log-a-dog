@@ -13,3 +13,8 @@
 .thirdweb-btn-xs-link-neutral-content {
   @apply btn btn-link btn-xs text-neutral-content !important;
 }
+
+.thirdweb_btn_btn-circle_btn-ghost_btn-xs_w-fit {
+  @apply btn btn-circle btn-ghost btn-xs w-fit !important;
+}
+
