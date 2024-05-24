@@ -226,6 +226,9 @@ export async function attestations(
 export type GetHotdogLogsParams = {
   startTime: AbiParameterToPrimitiveType<{"internalType":"uint256","name":"startTime","type":"uint256"}>
 endTime: AbiParameterToPrimitiveType<{"internalType":"uint256","name":"endTime","type":"uint256"}>
+user: AbiParameterToPrimitiveType<{"internalType":"address","name":"user","type":"address"}>
+start: AbiParameterToPrimitiveType<{"internalType":"uint256","name":"start","type":"uint256"}>
+limit: AbiParameterToPrimitiveType<{"internalType":"uint256","name":"limit","type":"uint256"}>
 };
 
 /**
@@ -239,6 +242,9 @@ endTime: AbiParameterToPrimitiveType<{"internalType":"uint256","name":"endTime",
  * const result = await getHotdogLogs({
  *  startTime: ...,
  *  endTime: ...,
+ *  user: ...,
+ *  start: ...,
+ *  limit: ...,
  * });
  * 
  * ```
@@ -249,7 +255,7 @@ export async function getHotdogLogs(
   return readContract({
     contract: options.contract,
     method: [
-  "0x677637b6",
+  "0x3a5c39f7",
   [
     {
       "internalType": "uint256",
@@ -259,6 +265,21 @@ export async function getHotdogLogs(
     {
       "internalType": "uint256",
       "name": "endTime",
+      "type": "uint256"
+    },
+    {
+      "internalType": "address",
+      "name": "user",
+      "type": "address"
+    },
+    {
+      "internalType": "uint256",
+      "name": "start",
+      "type": "uint256"
+    },
+    {
+      "internalType": "uint256",
+      "name": "limit",
       "type": "uint256"
     }
   ],
@@ -322,7 +343,7 @@ export async function getHotdogLogs(
     }
   ]
 ],
-    params: [options.startTime, options.endTime]
+    params: [options.startTime, options.endTime, options.user, options.start, options.limit]
   });
 };
 
@@ -371,41 +392,14 @@ export async function getLeaderboard(
   ],
   [
     {
-      "components": [
-        {
-          "internalType": "uint256",
-          "name": "logId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "imageUri",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "metadataUri",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "timestamp",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "eater",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "logger",
-          "type": "address"
-        }
-      ],
-      "internalType": "struct LogADog.HotdogLog[]",
-      "name": "logs",
-      "type": "tuple[]"
+      "internalType": "address[]",
+      "name": "users",
+      "type": "address[]"
+    },
+    {
+      "internalType": "uint256[]",
+      "name": "validLogCounts",
+      "type": "uint256[]"
     }
   ]
 ],
@@ -465,6 +459,68 @@ export async function getTotalPages(
   ]
 ],
     params: [options.user, options.pageSize]
+  });
+};
+
+
+/**
+ * Represents the parameters for the "getTotalPagesForLogs" function.
+ */
+export type GetTotalPagesForLogsParams = {
+  startTime: AbiParameterToPrimitiveType<{"internalType":"uint256","name":"startTime","type":"uint256"}>
+endTime: AbiParameterToPrimitiveType<{"internalType":"uint256","name":"endTime","type":"uint256"}>
+pageSize: AbiParameterToPrimitiveType<{"internalType":"uint256","name":"pageSize","type":"uint256"}>
+};
+
+/**
+ * Calls the "getTotalPagesForLogs" function on the contract.
+ * @param options - The options for the getTotalPagesForLogs function.
+ * @returns The parsed result of the function call.
+ * @example
+ * ```
+ * import { getTotalPagesForLogs } from "TODO";
+ * 
+ * const result = await getTotalPagesForLogs({
+ *  startTime: ...,
+ *  endTime: ...,
+ *  pageSize: ...,
+ * });
+ * 
+ * ```
+ */
+export async function getTotalPagesForLogs(
+  options: BaseTransactionOptions<GetTotalPagesForLogsParams>
+) {
+  return readContract({
+    contract: options.contract,
+    method: [
+  "0xde2c2e8b",
+  [
+    {
+      "internalType": "uint256",
+      "name": "startTime",
+      "type": "uint256"
+    },
+    {
+      "internalType": "uint256",
+      "name": "endTime",
+      "type": "uint256"
+    },
+    {
+      "internalType": "uint256",
+      "name": "pageSize",
+      "type": "uint256"
+    }
+  ],
+  [
+    {
+      "internalType": "uint256",
+      "name": "totalPages",
+      "type": "uint256"
+    }
+  ]
+],
+    params: [options.startTime, options.endTime, options.pageSize]
   });
 };
 

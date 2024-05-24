@@ -2,7 +2,7 @@ import { type NextPage, type GetServerSideProps} from "next";
 import { useContext, useState } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
-import { Leaderboard } from "~/components/Attestation/Leaderboard";
+import { Leaderboard } from "~/components/V1/Leaderboard";
 import { ListAttestations } from "~/components/Attestation/List";
 import AddContestants from "~/components/Contest/AddContestants";
 import { RemoveContestant } from "~/components/Contest/RemoveContestant";

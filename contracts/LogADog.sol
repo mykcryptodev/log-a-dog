@@ -103,62 +103,125 @@ contract LogADog {
     }
 
     /**
-     * @notice Gets hotdog logs submitted between the specified start and end times along with attestation counts and user attestation status.
+     * @notice Gets paginated hotdog logs submitted between the specified start and end times along with attestation counts and user attestation status.
      * @param startTime The start time for the query.
      * @param endTime The end time for the query.
+     * @param user The address of the user to check for attestations.
+     * @param start The starting index for pagination.
+     * @param limit The maximum number of logs to return.
      * @return logs An array of hotdog logs submitted between the specified times.
      * @return validCounts An array of valid attestation counts corresponding to each log.
      * @return invalidCounts An array of invalid attestation counts corresponding to each log.
      * @return userHasAttested An array indicating whether the user has attested to each log.
      * @return userAttestations An array indicating the value of the user's attestation for each log.
      */
-    function getHotdogLogs(uint256 startTime, uint256 endTime) external view returns (HotdogLog[] memory logs, uint256[] memory validCounts, uint256[] memory invalidCounts, bool[] memory userHasAttested, bool[] memory userAttestations) {
-        uint256 count = 0;
-        for (uint256 i = hotdogLogs.length; i > 0; i--) {
-            if (hotdogLogs[i - 1].timestamp >= startTime && hotdogLogs[i - 1].timestamp <= endTime) {
-                count++;
+    function getHotdogLogs(uint256 startTime, uint256 endTime, address user, uint256 start, uint256 limit) external view returns (HotdogLog[] memory logs, uint256[] memory validCounts, uint256[] memory invalidCounts, bool[] memory userHasAttested, bool[] memory userAttestations) {
+        uint256 totalLogs = 0;
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
+                totalLogs++;
             }
         }
 
-        logs = new HotdogLog[](count);
-        validCounts = new uint256[](count);
-        invalidCounts = new uint256[](count);
-        userHasAttested = new bool[](count);
-        userAttestations = new bool[](count);
+        uint256 resultCount = totalLogs > start ? totalLogs - start : 0;
+        resultCount = resultCount > limit ? limit : resultCount;
+
+        logs = new HotdogLog[](resultCount);
+        validCounts = new uint256[](resultCount);
+        invalidCounts = new uint256[](resultCount);
+        userHasAttested = new bool[](resultCount);
+        userAttestations = new bool[](resultCount);
+
         uint256 index = 0;
-        for (uint256 i = hotdogLogs.length; i > 0; i--) {
-            if (hotdogLogs[i - 1].timestamp >= startTime && hotdogLogs[i - 1].timestamp <= endTime) {
-                logs[index] = hotdogLogs[i - 1];
-                (validCounts[index], invalidCounts[index]) = _countAttestations(i - 1);
-                userHasAttested[index] = hasAttested[i - 1][msg.sender];
-                if (userHasAttested[index]) {
-                    userAttestations[index] = _getUserAttestation(i - 1, msg.sender);
+        uint256 skipped = 0;
+        for (uint256 i = 0; i < hotdogLogs.length && index < resultCount; i++) {
+            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
+                if (skipped >= start) {
+                    logs[index] = hotdogLogs[i];
+                    (validCounts[index], invalidCounts[index]) = _countAttestations(i);
+                    userHasAttested[index] = hasAttested[i][user];
+                    if (userHasAttested[index]) {
+                        userAttestations[index] = _getUserAttestation(i, user);
+                    }
+                    index++;
+                } else {
+                    skipped++;
                 }
-                index++;
             }
         }
     }
 
     /**
-     * @notice Gets hotdog logs that are valid and submitted between the specified start and end times for the leaderboard.
+     * @notice Gets the total number of pages for hotdog logs within the specified time range.
      * @param startTime The start time for the query.
      * @param endTime The end time for the query.
-     * @return logs An array of valid hotdog logs submitted between the specified times.
+     * @param pageSize The number of logs per page.
+     * @return totalPages The total number of pages.
      */
-    function getLeaderboard(uint256 startTime, uint256 endTime) external view returns (HotdogLog[] memory logs) {
-        uint256 count = 0;
-        for (uint256 i = hotdogLogs.length; i > 0; i--) {
-            if (hotdogLogs[i - 1].timestamp >= startTime && hotdogLogs[i - 1].timestamp <= endTime && _isValidLog(i - 1)) {
-                count++;
+    function getTotalPagesForLogs(uint256 startTime, uint256 endTime, uint256 pageSize) external view returns (uint256 totalPages) {
+        uint256 totalLogs = 0;
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
+                totalLogs++;
+            }
+        }
+        totalPages = (totalLogs + pageSize - 1) / pageSize; // Round up division
+    }
+
+    /**
+     * @notice Gets leaderboard of users with the most valid hotdog logs submitted between the specified start and end times, sorted by valid log count.
+     * @param startTime The start time for the query.
+     * @param endTime The end time for the query.
+     * @return users An array of addresses of the users.
+     * @return validLogCounts An array of valid log counts corresponding to each user.
+     */
+    function getLeaderboard(uint256 startTime, uint256 endTime) external view returns (address[] memory users, uint256[] memory validLogCounts) {
+        address[] memory tempUsers = new address[](hotdogLogs.length);
+        uint256[] memory tempCounts = new uint256[](hotdogLogs.length);
+        uint256 userCount = 0;
+
+        // Iterate through logs to count valid logs per user
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            HotdogLog storage log = hotdogLogs[i];
+            if (log.timestamp >= startTime && log.timestamp <= endTime && _isValidLog(i)) {
+                bool userExists = false;
+                for (uint256 j = 0; j < userCount; j++) {
+                    if (tempUsers[j] == log.eater) {
+                        tempCounts[j]++;
+                        userExists = true;
+                        break;
+                    }
+                }
+                if (!userExists) {
+                    tempUsers[userCount] = log.eater;
+                    tempCounts[userCount] = 1;
+                    userCount++;
+                }
             }
         }
 
-        logs = new HotdogLog[](count);
-        uint256 index = 0;
-        for (uint256 i = hotdogLogs.length; i > 0; i--) {
-            if (hotdogLogs[i - 1].timestamp >= startTime && hotdogLogs[i - 1].timestamp <= endTime && _isValidLog(i - 1)) {
-                logs[index] = hotdogLogs[i - 1];
-                index++;
+        // Prepare result arrays
+        users = new address[](userCount);
+        validLogCounts = new uint256[](userCount);
+        for (uint256 i = 0; i < userCount; i++) {
+            users[i] = tempUsers[i];
+            validLogCounts[i] = tempCounts[i];
+        }
+
+        // Sort the users and their valid log counts using bubble sort
+        for (uint256 i = 0; i < userCount - 1; i++) {
+            for (uint256 j = 0; j < userCount - i - 1; j++) {
+                if (validLogCounts[j] < validLogCounts[j + 1]) {
+                    // Swap validLogCounts
+                    uint256 tempCount = validLogCounts[j];
+                    validLogCounts[j] = validLogCounts[j + 1];
+                    validLogCounts[j + 1] = tempCount;
+
+                    // Swap users
+                    address tempUser = users[j];
+                    users[j] = users[j + 1];
+                    users[j + 1] = tempUser;
+                }
             }
         }
     }
@@ -172,8 +235,8 @@ contract LogADog {
      */
     function getUserHotdogLogs(address user) external view returns (HotdogLog[] memory logs, uint256[] memory validCounts, uint256[] memory invalidCounts) {
         uint256 count = 0;
-        for (uint256 i = hotdogLogs.length; i > 0; i--) {
-            if (hotdogLogs[i - 1].eater == user) {
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            if (hotdogLogs[i].eater == user) {
                 count++;
             }
         }
@@ -182,10 +245,10 @@ contract LogADog {
         validCounts = new uint256[](count);
         invalidCounts = new uint256[](count);
         uint256 index = 0;
-        for (uint256 i = hotdogLogs.length; i > 0; i--) {
-            if (hotdogLogs[i - 1].eater == user) {
-                logs[index] = hotdogLogs[i - 1];
-                (validCounts[index], invalidCounts[index]) = _countAttestations(i - 1);
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            if (hotdogLogs[i].eater == user) {
+                logs[index] = hotdogLogs[i];
+                (validCounts[index], invalidCounts[index]) = _countAttestations(i);
                 index++;
             }
         }
@@ -230,24 +293,31 @@ contract LogADog {
      * @return invalidCounts An array of invalid attestation counts corresponding to each log.
      */
     function getUserHotdogLogsPaginated(address user, uint256 start, uint256 limit) external view returns (HotdogLog[] memory logs, uint256[] memory validCounts, uint256[] memory invalidCounts) {
-        uint256 count = 0;
-        uint256 totalLogs = hotdogLogs.length;
-
-        for (uint256 i = totalLogs; i > start; i--) {
-            if (hotdogLogs[i - 1].eater == user) {
-                count++;
+        uint256 totalLogs = 0;
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            if (hotdogLogs[i].eater == user) {
+                totalLogs++;
             }
         }
 
-        logs = new HotdogLog[](count);
-        validCounts = new uint256[](count);
-        invalidCounts = new uint256[](count);
+        uint256 resultCount = totalLogs > start ? totalLogs - start : 0;
+        resultCount = resultCount > limit ? limit : resultCount;
+
+        logs = new HotdogLog[](resultCount);
+        validCounts = new uint256[](resultCount);
+        invalidCounts = new uint256[](resultCount);
+
         uint256 index = 0;
-        for (uint256 i = totalLogs; i > start; i--) {
-            if (hotdogLogs[i - 1].eater == user) {
-                logs[index] = hotdogLogs[i - 1];
-                (validCounts[index], invalidCounts[index]) = _countAttestations(i - 1);
-                index++;
+        uint256 skipped = 0;
+        for (uint256 i = 0; i < hotdogLogs.length && index < resultCount; i++) {
+            if (hotdogLogs[i].eater == user) {
+                if (skipped >= start) {
+                    logs[index] = hotdogLogs[i];
+                    (validCounts[index], invalidCounts[index]) = _countAttestations(i);
+                    index++;
+                } else {
+                    skipped++;
+                }
             }
         }
     }

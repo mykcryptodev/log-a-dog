@@ -13,7 +13,7 @@ import { api } from "~/utils/api";
 import Connect from "~/components/utils/Connect";
 import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
 import { getContract } from "thirdweb";
-import { logHotdog } from "~/thirdweb/84532/0xdc0b97c9121f83cbe6852a844d91f7cae9ee422f";
+import { logHotdog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 
 type Props = {
   onAttestationCreated?: (attestation: {
@@ -118,14 +118,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     );
 
     return (
-      // <button 
-      //   className="btn btn-primary" 
-      //   disabled={isLoading}
-      //   onClick={() => void create()}
-      // >
-      //   {isLoading && <div className="loading loading-spinner" />}
-      //   Log a Dog
-      // </button>
       <TransactionButton
         disabled={!imgUri}
         transaction={() => {

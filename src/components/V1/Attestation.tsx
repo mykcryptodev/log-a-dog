@@ -4,7 +4,7 @@ import { api } from "~/utils/api";
 import RevokeAttestation from "./Revoke";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { useActiveAccount } from "thirdweb/react";
-import JudgeAttestation from "~/components/Attestation/Judge";
+import JudgeAttestation from "~/components/V1/Judge";
 import { client } from "~/providers/Thirdweb";
 import dynamic from "next/dynamic";
 import Link from "next/link";

@@ -7,7 +7,7 @@ import { LOG_A_DOG } from "~/constants/addresses";
 import { toast } from "react-toastify";
 import { client } from "~/providers/Thirdweb";
 import { getContract, sendTransaction } from "thirdweb";
-import { attestHotdogLog, revokeAttestation } from "~/thirdweb/84532/0xdc0b97c9121f83cbe6852a844d91f7cae9ee422f";
+import { attestHotdogLog, revokeAttestation } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 
 type Props = {
   logId: bigint;
