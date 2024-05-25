@@ -1,11 +1,11 @@
-import { FC } from "react";
+import { FC, useContext } from "react";
 import { MediaRenderer } from "thirdweb/react";
-import useActiveChain from "~/hooks/useActiveChain";
+import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
 import { api } from "~/utils/api";
 
 export const Avatar: FC<{ address: string }> = ({ address }) => {
-  const { activeChain } = useActiveChain();
+  const { activeChain } = useContext(ActiveChainContext);
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
     address,

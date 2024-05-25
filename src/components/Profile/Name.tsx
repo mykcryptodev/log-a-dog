@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { FC } from "react";
-import useActiveChain from "~/hooks/useActiveChain";
+import { FC, useContext } from "react";
+import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 
 export const Name: FC<{ address: string }> = ({ address }) => {
-  const { activeChain } = useActiveChain();
+  const { activeChain } = useContext(ActiveChainContext);
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
     address,

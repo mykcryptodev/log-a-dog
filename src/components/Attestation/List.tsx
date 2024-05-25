@@ -3,11 +3,12 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { MediaRenderer, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
-import { TagIcon } from "@heroicons/react/24/outline";
+import { TagIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
 import { ADDRESS_ZERO } from "thirdweb";
-import JudgeAttestation from "./Judge";
+import JudgeAttestation from "~/components/Attestation/Judge";
+import Revoke from "~/components/Attestation/Revoke";
 
 type Props = {
   attestors?: string[];
@@ -51,6 +52,16 @@ export const ListAttestations: FC<Props> = ({ refetchTimestamp, limit }) => {
             <div className="card-body p-4">
               <div className="mx-auto w-56 h-56 bg-base-300 animate-pulse rounded-lg" />
             </div>
+            <div className="flex flex-row w-full items-center justify-between">
+              <div className="text-xs flex items-center gap-1">
+                <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
+                <div className="h-4 w-8 bg-base-300 animate-pulse rounded-lg" />
+              </div>
+              <div className="flex justify-end items-center gap-2">
+                <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
+                <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
+              </div>
+            </div>
           </div>
         ))
       }
@@ -63,9 +74,15 @@ export const ListAttestations: FC<Props> = ({ refetchTimestamp, limit }) => {
         return (
           <div className="card bg-base-200 bg-opacity-50" key={`${hotdog.logId}-${index}`}>
             <div className="card-body p-4 max-w-xs">
-              <div className="flex gap-2 items-center">
-                <Avatar address={hotdog.eater} />
-                <Name address={hotdog.eater} />
+              <div className="flex items-center justify-between">
+                <div className="flex gap-2 items-center">
+                  <Avatar address={hotdog.eater} />
+                  <Name address={hotdog.eater} />
+                </div>
+                <Revoke 
+                  hotdog={hotdog} 
+                  onRevocation={refetchDogData}
+                />
               </div>
               <MediaRenderer
                 src={hotdog.imageUri}
