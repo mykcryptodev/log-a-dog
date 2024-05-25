@@ -48,9 +48,14 @@ export const PROFILES: ContractAddress = {
   [baseSepolia.id]: "0xD829ed82F6Bc06D61cC4e80165344225333149Eb",
 }
 
-export const MODERATION: ContractAddress = {
+export const MODERATION_V1: ContractAddress = {
   [base.id]: "0xe24EA1E624983C510701Bb39b23005B21AE54a4F",
   [baseSepolia.id]: "0xB03F98Fd646CF9D454dd726AB0Ef2203D0D5CFf1",
+}
+
+export const MODERATION: ContractAddress = {
+  [base.id]: "0x1DEa6DA299AEf3910BF9CBDdd00EdAEEf2631E58",
+  [baseSepolia.id]: "0x22394188550a7e5b37485769F54653e3bC9c6674",
 }
 
 export const CONTESTS: ContractAddress = {

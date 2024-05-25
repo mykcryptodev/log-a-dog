@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ApolloClient, InMemoryCache, HttpLink, gql } from '@apollo/client';
 import fetch from 'cross-fetch';
 import { EAS, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
-import { EAS as EAS_ADDRESS, EAS_AFFIMRATION_SCHEMA_ID, EAS_SCHEMA_ID, MODERATION } from "~/constants/addresses";
+import { EAS as EAS_ADDRESS, EAS_AFFIMRATION_SCHEMA_ID, EAS_SCHEMA_ID, MODERATION_V1 } from "~/constants/addresses";
 import { createThirdwebClient, getContract, readContract } from "thirdweb";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { ethers } from "ethers";
@@ -55,7 +55,7 @@ export const attestationRouter = createTRPCRouter({
       const { attestationId, chainId } = input;
       const easAddress = EAS_ADDRESS[chainId];
       const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-      const moderationAddress = MODERATION[chainId];
+      const moderationAddress = MODERATION_V1[chainId];
       if (!easAddress || !chain || !moderationAddress) {
         throw new Error("Chain not supported");
       }
