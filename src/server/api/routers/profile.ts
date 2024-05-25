@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BETA_PROFILES, MODERATION, PROFILES } from "~/constants/addresses";
+import { BETA_PROFILES, MODERATION_V1, PROFILES } from "~/constants/addresses";
 import { ADDRESS_ZERO, createThirdwebClient, getContract, isAddress } from "thirdweb";
 import { readContract } from "thirdweb";
 import { env } from "~/env";
@@ -167,7 +167,7 @@ async function getProfile (address: string, chainId: number) {
   const profileAddress = PROFILES[chainId];
   const betaProfileAddress = BETA_PROFILES[chainId]!;
   const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-  const moderationAddress = MODERATION[chainId];
+  const moderationAddress = MODERATION_V1[chainId];
   if (!profileAddress || !chain || !moderationAddress) {
     throw new Error("Chain not supported");
   }
