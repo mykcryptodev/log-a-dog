@@ -4,6 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { toast } from 'react-toastify';
 import Image from "next/image";
 import { client } from "~/providers/Thirdweb";
+import heic2any from "heic2any";
 
 interface UploadProps {
   className?: string; // completely override classes
@@ -47,29 +48,48 @@ export const Upload: FC<UploadProps> = ({
   }, [initialUrls]);
 
   const resizeImageFile = async (file: File): Promise<File> => {
+    if (typeof window === 'undefined') {
+      throw new Error("This function can only be run in the browser");
+    }
+  
     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-    if (file.size <= maxSize) return file; // Return original file if it doesn't exceed the limit
-
+    const isHeic = file.type === 'image/heic' || file.type === 'image/heif';
+    console.log({ isHeic, file });
+  
+    let imageFile = file;
+  
+    if (isHeic) {
+      const heicBlob = await heic2any({ blob: file, toType: "image/jpeg" });
+      const heicBlobArray = Array.isArray(heicBlob) ? heicBlob : [heicBlob];
+      imageFile = new File(heicBlobArray, file.name.replace(/\.(heic|heif)$/, ".jpg"), { type: "image/jpeg" });
+    }
+  
+    if (imageFile.size <= maxSize) return imageFile; // Return original file if it doesn't exceed the limit
+  
     const img = document.createElement('img');
     const canvas = document.createElement('canvas');
-    const src = URL.createObjectURL(file);
+    const src = URL.createObjectURL(imageFile);
+    console.log({ src });
     img.src = src;
+  
     await new Promise((resolve) => {
       img.onload = resolve;
     });
-
+    console.log('loaded...');
+  
     let quality = 0.9; // Start with high quality
-    let resizedFile = file;
-
+    let resizedFile = imageFile;
+  
     do {
+      console.log('resizing at quality: ', quality);
       const ctx = canvas.getContext('2d');
       const width = img.width * quality;
       const height = img.height * quality;
       canvas.width = width;
       canvas.height = height;
       ctx?.drawImage(img, 0, 0, width, height);
-      
-      const blob = await new Promise<Blob>((resolve, reject) => 
+  
+      const blob = await new Promise<Blob>((resolve, reject) =>
         canvas.toBlob((blob) => {
           if (blob) {
             resolve(blob);
@@ -78,10 +98,10 @@ export const Upload: FC<UploadProps> = ({
           }
         }, 'image/jpeg', quality)
       );
-      resizedFile = new File([blob], file.name, { type: 'image/jpeg' });
+      resizedFile = new File([blob], imageFile.name, { type: 'image/jpeg' });
       quality -= 0.1; // Reduce quality progressively
     } while (resizedFile.size > maxSize && quality > 0.1);
-
+  
     URL.revokeObjectURL(src);
     return resizedFile;
   };

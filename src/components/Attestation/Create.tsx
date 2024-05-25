@@ -5,7 +5,6 @@ import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID, LOG_A_DOG } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
-import Upload from "~/components/utils/Upload";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import { ProfileButton } from "~/components/Profile/Button";
@@ -14,6 +13,9 @@ import Connect from "~/components/utils/Connect";
 import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
 import { getContract } from "thirdweb";
 import { logHotdog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
+import dynamic from 'next/dynamic';
+
+const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
 type Props = {
   onAttestationCreated?: (attestation: {
