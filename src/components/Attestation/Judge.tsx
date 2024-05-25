@@ -10,6 +10,7 @@ import { getContract, sendTransaction } from "thirdweb";
 import { attestHotdogLog, revokeAttestation } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 
 type Props = {
+  disabled?: boolean;
   logId: bigint;
   userAttested: boolean | undefined;
   userAttestation: boolean | undefined;
@@ -19,6 +20,7 @@ type Props = {
   onAttestationAffirmationRevoked?: () => void;
 }
 export const JudgeAttestation: FC<Props> = ({ 
+  disabled,
   logId,
   userAttested,
   userAttestation,
@@ -34,6 +36,7 @@ export const JudgeAttestation: FC<Props> = ({
   const [isLoadingInvalidAttestation, setIsLoadingInvalidValidAttestation] = useState<boolean>(false);
 
   const attest = async (isValid: boolean) => {
+    if (disabled) return;
     if (!account) {
       return toast.error("You must login to attest to dogs!");
     }
@@ -65,6 +68,7 @@ export const JudgeAttestation: FC<Props> = ({
   };
 
   const revoke = async (isValid: boolean) => {
+    if (disabled) return;
     if (!account) {
       return toast.error("You must login to revoke your attestations!");
     }

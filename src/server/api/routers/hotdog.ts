@@ -8,7 +8,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
+import { getHotdogLogs, getLeaderboard, getTotalPages, getTotalPagesForLogs, getUserHotdogLogsPaginated } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 
 export const hotdogRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -52,6 +52,43 @@ export const hotdogRouter = createTRPCRouter({
         invalidAttestations: dogResponse[2],
         userAttested: dogResponse[3],
         userAttestations: dogResponse[4],
+        totalPages,
+        hasNextPage,
+      }
+    }),
+  getAllForUser: publicProcedure
+    .input(z.object({ 
+      chainId: z.number(),
+      user: z.string(),
+      limit: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const { chainId, user, limit } = input;
+      const totalPages = await getTotalPages({
+        contract: getContract({
+          address: LOG_A_DOG[chainId]!,
+          client,
+          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+        }),
+        pageSize: BigInt(limit),
+        user,
+      });
+      const dogResponse = await getUserHotdogLogsPaginated({
+        contract: getContract({
+          address: LOG_A_DOG[chainId]!,
+          client,
+          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+        }),
+        user,
+        start: BigInt(0),
+        limit: BigInt(limit)
+      });
+      const currentPage = 1;
+      const hasNextPage = currentPage < totalPages;
+      return {
+        hotdogs: dogResponse[0],
+        validAttestations: dogResponse[1],
+        invalidAttestations: dogResponse[2],
         totalPages,
         hasNextPage,
       }

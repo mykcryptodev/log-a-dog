@@ -6,9 +6,10 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import dynamic from "next/dynamic";
 import { client } from "~/providers/Thirdweb";
-import { ListAttestations } from "~/components/V1/List";
+import { ListAttestations } from "~/components/Attestation/List";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { useActiveAccount } from "thirdweb/react";
+import { UserListAttestations } from "~/components/Attestation/UserList";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -88,7 +89,11 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
           {isOwnProfile && (
             <CreateAttestation onAttestationCreated={() => setRefetchTimestamp(new Date().getTime())} />
           )}
-          <ListAttestations attestors={[data.address]} refetchTimestamp={refetchTimestamp} />
+          <UserListAttestations
+            refetchTimestamp={refetchTimestamp}
+            limit={4}
+            user={data.address}
+          />
         </div>
       </div>
     </main>
