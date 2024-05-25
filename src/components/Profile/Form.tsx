@@ -1,12 +1,14 @@
 import { useState, type FC, useContext, useMemo } from "react";
 import { TransactionButton, useActiveAccount } from "thirdweb/react";
 import { getContract, prepareContractCall } from "thirdweb";
-import Upload from "~/components/utils/Upload";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { PROFILES } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
+import dynamic from 'next/dynamic';
+
+const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
 type Props = {
   onProfileSaved?: (profile: {
