@@ -1,315 +1,128 @@
-import { type Attestation, EAS, SchemaEncoder, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
-import { HandThumbUpIcon, HandThumbDownIcon } from "@heroicons/react/24/outline";
-import { 
-  HandThumbUpIcon as HandThumbUpIconFilled,
-  HandThumbDownIcon as HandThumbDownIconFilled,
-} from "@heroicons/react/24/solid";
-import { useState, type FC, useContext, useEffect } from "react";
-import { ethers6Adapter } from "thirdweb/adapters/ethers6";
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
+import { HandThumbDownIcon as HandThumDownIconFilled, HandThumbUpIcon as HandThumbUpIconFilled } from "@heroicons/react/24/solid";
+import { useState, type FC, useContext } from "react";
+import { useActiveAccount } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
-import { EAS as EAS_ADDRESS, EAS_AFFIMRATION_SCHEMA_ID } from "~/constants/addresses";
+import { LOG_A_DOG } from "~/constants/addresses";
 import { toast } from "react-toastify";
 import { client } from "~/providers/Thirdweb";
-import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
-
-type Judgement = {
-  id: string,
-  attester: string,
-  timeCreated: number,
-  decodedDataJson: string,
-}
+import { getContract, sendTransaction } from "thirdweb";
+import { attestHotdogLog, revokeAttestation } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 
 type Props = {
-  attestation: {
-    affirmations: Judgement[];
-    attestation: Attestation;
-    decodedAttestaton: {
-      address: string;
-      imgUri: string;
-      metadata: string;
-      uid: string;
-    };
-    refutations: Judgement[];
-  };
-  onAttestationAffirmed?: () => void;
+  disabled?: boolean;
+  logId: bigint;
+  userAttested: boolean | undefined;
+  userAttestation: boolean | undefined;
+  validAttestations: bigint | undefined;
+  invalidAttestations: bigint | undefined;
+  onAttestationMade?: () => void;
   onAttestationAffirmationRevoked?: () => void;
 }
 export const JudgeAttestation: FC<Props> = ({ 
-  attestation, 
-  onAttestationAffirmed,
+  disabled,
+  logId,
+  userAttested,
+  userAttestation,
+  validAttestations,
+  invalidAttestations,
+  onAttestationMade,
   onAttestationAffirmationRevoked,
 }) => {
   const account = useActiveAccount();
-  const wallet = useActiveWallet();
   const { activeChain } = useContext(ActiveChainContext);
-  const schemaUid = EAS_AFFIMRATION_SCHEMA_ID[activeChain.id]!;
-  const easContractAddress = EAS_ADDRESS[activeChain.id]!;
-  const eas = new EAS(easContractAddress);
 
-  const [usersAffirmation, setUsersAffirmation] = useState<Judgement>();
-  const [usersRefutation, setUsersRefutation] = useState<Judgement>();
-  const [showImmediateFeedback, setShowImmediateFeedback] = useState<boolean>(false);
-  const [showImmediateExtraAffirmation, setShowImmediateExtraAffirmation] = useState<boolean>(false);
+  const [isLoadingValidAttestation, setIsLoadingValidAttestation] = useState<boolean>(false);
+  const [isLoadingInvalidAttestation, setIsLoadingInvalidValidAttestation] = useState<boolean>(false);
 
-  const rpcRequest = getRpcClient({ client, chain: activeChain });
-
-  useEffect(() => {
-    const usersAffirmation = attestation.affirmations.find((affirmation) =>
-      affirmation.attester.toLowerCase() === account?.address.toLowerCase()
-    );
-    setUsersAffirmation(usersAffirmation);
-  }, [account?.address, attestation.affirmations]);
-
-  useEffect(() => {
-    const usersRefutation = attestation.refutations.find((refutation) =>
-      refutation.attester.toLowerCase() === account?.address.toLowerCase()
-    );
-    setUsersRefutation(usersRefutation);
-  }, [account?.address, attestation.refutations]);
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const castJudgement = async (isAffirmed: boolean) => {
-    if (!account || !wallet || !ethers6Adapter) {
-      // pop notification
-      toast.error("You must login to affirm dogs");
-      return;
+  const attest = async (isValid: boolean) => {
+    if (disabled) return;
+    if (!account) {
+      return toast.error("You must login to attest to dogs!");
     }
-    if (account.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase()) {
-      toast.warning("You cannot judge your own logs");
-      return;
+    isValid ? setIsLoadingValidAttestation(true) : setIsLoadingInvalidValidAttestation(true);
+    // undo attestations if the user has already attested
+    if (userAttested && userAttestation === isValid) {
+      return void revoke(isValid);
     }
-    const signer = await ethers6Adapter.signer.toEthers({
-      client,
-      account,
-      chain: activeChain,
-    }) as TransactionSigner;
-
-    // get the signer from ethers
-    const schemaEncoder = new SchemaEncoder("bool isAffirmed");
-    const encodedData = schemaEncoder.encodeData([
-      { name: "isAffirmed", value: isAffirmed, type: "bool" },
-    ]);
     try {
-      setIsLoading(true);
-      setShowImmediateFeedback(true);
-      if (isAffirmed) {
-        setShowImmediateExtraAffirmation(true);
-      }
-      eas.connect(signer);
-      const maxPriorityFeePerGas = await eth_maxPriorityFeePerGas(rpcRequest);
-      await eas.attest({
-        schema: schemaUid,
-        data: {
-          recipient: account.address,
-          expirationTime: BigInt(0),
-          revocable: true,
-          refUID: attestation.decodedAttestaton.uid,
-          data: encodedData,
-        },
-      }, {
-        maxPriorityFeePerGas,
+      const transaction = attestHotdogLog({
+        contract: getContract({
+          chain: activeChain,
+          address: LOG_A_DOG[activeChain.id]!,
+          client,
+        }),
+        logId,
+        isValid,
       });
-      onAttestationAffirmed?.();
-    } catch (e) {
-      // pop notification
-      console.error(e);
-      toast.error("Failed to attest to dog, try again!");
+      await sendTransaction({ transaction, account })
+      toast.success("Attestation made!");
+    } catch (error) {
+      const e = error as Error;
+      console.error(error);
+      toast.error(`Attestation failed: ${e.message}`);
     } finally {
-      // callbacks wait 5s for the blockchain to catch up
-      // so keep act like your loading so that the user isnt confused
-      setTimeout(() => {
-        setIsLoading(false);
-        setShowImmediateFeedback(false);
-        setShowImmediateExtraAffirmation(false);
-      }, 5000);
+      isValid ? setIsLoadingValidAttestation(false) : setIsLoadingInvalidValidAttestation(false);
+      void onAttestationMade?.();
     }
   };
 
-  const revoke = async (uid: string) => {
-    if (!account || !wallet || !ethers6Adapter) {
-      // pop notification
-      toast.error("You must login to revoke dogs");
-      return;
+  const revoke = async (isValid: boolean) => {
+    if (disabled) return;
+    if (!account) {
+      return toast.error("You must login to revoke your attestations!");
     }
-    if (account.address.toLowerCase() === attestation.decodedAttestaton.address.toLowerCase()) {
-      toast.warning("You cannot judge your own logs");
-      return;
-    }
-    const signer = await ethers6Adapter.signer.toEthers({
-      client,
-      account,
-      chain: activeChain,
-    }) as TransactionSigner;
-
     try {
-      setIsLoading(true);
-      eas.connect(signer);
-      await eas.revoke({
-        schema: schemaUid,
-        data: { uid },
+      const transaction = revokeAttestation({
+        contract: getContract({
+          chain: activeChain,
+          address: LOG_A_DOG[activeChain.id]!,
+          client,
+        }),
+        logId,
       });
-      setUsersAffirmation(undefined);
-      onAttestationAffirmationRevoked?.();
-    } catch (e) {
-      // pop notification
-      console.error(e);
-      toast.error("Failed to revoke dog, try again!");
-    } finally { 
-      // callbacks wait 5s for the blockchain to catch up
-      // so keep act like your loading so that the user isnt confused
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 5000);
+      await sendTransaction({ transaction, account });
+      toast.success("Attestation revoked!");
+    }  catch (error) {
+      const e = error as Error;
+      toast.error(`Revocation failed: ${e.message}`);
+    } finally {
+      isValid ? setIsLoadingValidAttestation(false) : setIsLoadingInvalidValidAttestation(false);
+      void onAttestationAffirmationRevoked?.();
     }
-  }
-
-  const ThumbsDown: FC = () => {
-    if (usersRefutation && !usersAffirmation) {
-      return (
-        <HandThumbDownIconFilled
-          className="w-4 h-4 cursor-pointer"
-          onClick={() => {
-            void revoke(usersRefutation.id);
-          }}
-        />
-      )
-    }
-    if (!usersRefutation && usersAffirmation) {
-      return (
-        <HandThumbDownIcon
-          className="w-4 h-4 cursor-pointer"
-          onClick={async () => {
-            await revoke(usersAffirmation.id);
-            void castJudgement(false);
-          }}
-        />
-      )
-    }
-    // handle issues we shouldnt have
-    if (usersRefutation && usersAffirmation) {
-      return (
-        <HandThumbUpIcon 
-          className="w-4 h-4 cursor-pointer" 
-          onClick={async () => {
-            const allUserAffirmations = attestation.affirmations.filter(r => 
-              r.attester.toLowerCase() === account?.address.toLowerCase()
-            );
-            await Promise.all(allUserAffirmations.map(r => revoke(r.id)));
-          }}
-        />
-      )
-    }
-    return (
-      <HandThumbDownIcon
-        className="w-4 h-4 cursor-pointer"
-        onClick={() => {
-          void castJudgement(false);
-        }}
-      />
-    )
-  }
-
-  const ThumbsUp: FC = () => {
-    if (!usersRefutation && usersAffirmation) {
-      return (
-        <HandThumbUpIconFilled 
-          className="w-4 h-4 cursor-pointer" 
-          onClick={() => {
-            void revoke(usersAffirmation.id);
-          }}
-        />
-      )
-    }
-    if (usersRefutation && !usersAffirmation) {
-      return (
-        <HandThumbUpIcon 
-          className="w-4 h-4 cursor-pointer" 
-          onClick={async () => {
-            await revoke(usersRefutation.id);
-            void castJudgement(true);
-          }}
-        />
-      )
-    }
-    // handle issues we shouldnt have
-    if (usersRefutation && usersAffirmation) {
-      return (
-        <HandThumbUpIcon 
-          className="w-4 h-4 cursor-pointer" 
-          onClick={async () => {
-            const allUserRefutations = attestation.refutations.filter(r => 
-              r.attester.toLowerCase() === account?.address.toLowerCase()
-            );
-            await Promise.all(allUserRefutations.map(r => revoke(r.id)));
-          }}
-        />
-      )
-    }
-    return (
-      <HandThumbUpIcon 
-        className="w-4 h-4 cursor-pointer" 
-        onClick={() => {
-          void castJudgement(true);
-        }}
-      />
-    )
-  }
-
-  if (showImmediateFeedback) {
-    if (showImmediateExtraAffirmation) {
-      return (
-        <div className="flex items-center">
-          <button className="btn btn-ghost btn-xs">
-            <div className="badge badge-ghost badge-xs">{attestation.affirmations.length + 1}</div>
-            <HandThumbUpIconFilled className="w-4 h-4 cursor-not-allowed" />
-          </button>
-          <button className="btn btn-ghost btn-xs">
-            <HandThumbDownIcon className="w-4 h-4 cursor-not-allowed" />
-            <div className="badge badge-ghost badge-xs">{attestation.refutations.length}</div>
-          </button>
-        </div>
-      )
-    }
-    return (
-      <div className="flex items-center">
-        <button className="btn btn-ghost btn-xs">
-          <div className="badge badge-ghost badge-xs">{attestation.affirmations.length}</div>
-          <HandThumbUpIcon className="w-4 h-4 cursor-not-allowed" />
-        </button>
-        <button className="btn btn-ghost btn-xs">
-          <HandThumbDownIconFilled className="w-4 h-4 cursor-not-allowed" />
-          <div className="badge badge-ghost badge-xs">{attestation.refutations.length + 1}</div>
-        </button>
-      </div>
-    )
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center animate-pulse">
-        <button className="btn btn-ghost btn-xs">
-          <div className="badge badge-ghost badge-xs">{attestation.affirmations.length}</div>
-          <HandThumbUpIcon className="w-4 h-4 cursor-not-allowed" />
-        </button>
-        <button className="btn btn-ghost btn-xs">
-          <HandThumbDownIcon className="w-4 h-4 cursor-not-allowed" />
-          <div className="badge badge-ghost badge-xs">{attestation.refutations.length}</div>
-        </button>
-      </div>
-    )
   }
 
   return (
     <div className="flex items-center">
-      <button className="btn btn-ghost btn-xs">
-        <div className="badge badge-ghost badge-xs">{attestation.affirmations.length}</div>
-        <ThumbsUp />
+      <button 
+        className="btn btn-xs btn-circle btn-ghost w-fit px-2"
+        onClick={() => attest(true)}
+      >
+        {isLoadingValidAttestation ? (
+          <div className="loading loading-spinner w-4 h-4" />
+        ) : (
+          (validAttestations ?? 0).toString()
+        )}
+        {userAttested && userAttestation === true ? (
+          <HandThumbUpIconFilled className="w-4 h-4" />
+        ) : (
+          <HandThumbUpIcon className="w-4 h-4" />
+        )}
       </button>
-      <button className="btn btn-ghost btn-xs">
-        <ThumbsDown />
-        <div className="badge badge-ghost badge-xs">{attestation.refutations.length}</div>
+      <button 
+        className="btn btn-xs btn-circle btn-ghost w-fit px-2"
+        onClick={() => attest(false)}
+      >
+        {userAttested && userAttestation === false ? (
+          <HandThumDownIconFilled className="w-4 h-4" />
+        ) : (
+          <HandThumbDownIcon className="w-4 h-4" />
+        )}
+        {isLoadingInvalidAttestation ? (
+          <div className="loading loading-spinner w-4 h-4" />
+        ) : (
+          (invalidAttestations ?? 0).toString()
+        )}
       </button>
     </div>
   )

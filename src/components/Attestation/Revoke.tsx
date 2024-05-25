@@ -1,88 +1,91 @@
-import { useContext, type FC, useState } from "react";
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
-import { ethers6Adapter } from "thirdweb/adapters/ethers6";
-import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID } from "~/constants/addresses";
-import { EAS, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
-import { client } from "~/providers/Thirdweb";
+import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useState, type FC, useContext } from "react";
 import { toast } from "react-toastify";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { getContract, sendTransaction } from "thirdweb";
+import { useActiveAccount } from "thirdweb/react";
+import { LOG_A_DOG } from "~/constants/addresses";
+import ActiveChainContext from "~/contexts/ActiveChain";
+import { client } from "~/providers/Thirdweb";
+import { revokeHotdogLog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 
 type Props = {
-  uid: string;
-  onAttestationRevoked?: () => void;
+  hotdog: {
+    logId: bigint;
+    logger: string;
+  }
+  onRevocation?: () => void;
 }
 
-export const RevokeAttestation: FC<Props> = ({ uid, onAttestationRevoked }) => {
+export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
   const account = useActiveAccount();
-  const wallet = useActiveWallet();
   const { activeChain } = useContext(ActiveChainContext);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
+  
   const revoke = async () => {
-    if (!account || !wallet || !ethers6Adapter) {
-      // pop notification
-      toast.error("Failed to remove dog!");
-      (document.getElementById(`revoke_attestation_modal_${uid}`) as HTMLDialogElement).close();
-      return;
+    if (!account) {
+      return toast.error("You must login to revoke attestations!");
     }
-    const schemaUid = EAS_SCHEMA_ID[activeChain.id]!;
-    const easContractAddress = EAS_ADDRESS[activeChain.id]!;
-    const eas = new EAS(easContractAddress);
-    const signer = await ethers6Adapter.signer.toEthers({ client, account, chain: activeChain }) as TransactionSigner;
+    const transaction = revokeHotdogLog({
+      contract: getContract({
+        chain: activeChain,
+        address: LOG_A_DOG[activeChain.id]!,
+        client,
+      }),
+      logId: hotdog.logId,
+    });
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      eas.connect(signer);
-      const transaction = await eas.revoke({
-        schema: schemaUid,
-        data: { uid },
-      });
-      await transaction.wait();
-      onAttestationRevoked?.();
-      toast.success("Dog has been removed!");
+      await sendTransaction({ transaction, account });
+      toast.success("Attestation revoked!");
+      onRevocation?.();
     } catch (e) {
-      // pop notification
       console.error(e);
-      toast.error("Failed to remove dog!");
-    } finally { 
+      const error = e as Error;
+      toast.error(`Failed to revoke attestation: ${error.message}`);
+    } finally {
       setIsLoading(false);
-      // close modal
-      (document.getElementById(`revoke_attestation_modal_${uid}`) as HTMLDialogElement).close();
+      // close the modal
+      const modal = document.getElementById(`${hotdog.logId}-revoke-modal`) as HTMLInputElement;
+      if (modal) {
+        modal.checked = false;
+      }
     }
   };
+
   return (
     <>
-      <button 
-        className="btn btn-xs btn-ghost w-fit" 
-        onClick={()=>(document.getElementById(`revoke_attestation_modal_${uid}`) as HTMLDialogElement).showModal()}
-      >
-        <TrashIcon className="w-4 h-4 opacity-50" />
-      </button>
-      <dialog id={`revoke_attestation_modal_${uid}`} className="modal">
-        <div className="modal-box overflow-hidden">
-          <h3 className="font-bold text-2xl mb-4">Remove Dog {uid.slice(-5)} </h3>
-          <div className="flex flex-col gap-2">
-            <p>Are you sure you want to remove this dog?</p>
-          </div>
+      {hotdog.logger.toLowerCase() === account?.address.toLowerCase() && (
+        <label htmlFor={`${hotdog.logId}-revoke-modal`} className="btn btn-xs btn-circle btn-ghost w-fit px-2">
+          <TrashIcon className="w-4 h-4" />
+        </label>
+      )}
+      {/* Put this part before </body> tag */}
+      <input type="checkbox" id={`${hotdog.logId}-revoke-modal`} className="modal-toggle" />
+      <div className="modal" role="dialog">
+        <div className="modal-box">
+          <label htmlFor={`${hotdog.logId}-revoke-modal`} className="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 m-4">
+            <XMarkIcon className="w-4 h-4" />
+          </label>
+          <h3 className="font-bold text-lg">Hold up!</h3>
+          <p className="py-4">Are you sure you want to remove this logged dog? Nobody can undo this action.</p>
           <div className="modal-action">
-            <form method="dialog">
-              {/* if there is a button in form, it will close the modal */}
-              <button className="btn">Close</button>
-            </form>
+            <label htmlFor={`${hotdog.logId}-revoke-modal`} className="btn">Whoops, nevermind!</label>
             <button 
-              className="btn btn-primary" 
+              className="btn btn-error"
               disabled={isLoading}
-              onClick={() => void revoke()}
+              onClick={() => revoke()}
             >
-              {isLoading && <div className="loading loading-spinner" />}
-              Remove
+              {isLoading && (
+                <div className="loading loading-spinner" />
+              )}
+              Get rid of it!
             </button>
           </div>
         </div>
-      </dialog>
+      </div>
     </>
   )
 };
 
-export default RevokeAttestation;
+export default Revoke;

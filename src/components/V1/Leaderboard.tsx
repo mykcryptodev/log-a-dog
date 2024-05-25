@@ -31,6 +31,14 @@ export const Leaderboard: FC<Props> = ({ attestors, startDate, endDate, refetchT
     refetchOnMount: false,
   });
 
+  const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery({
+    chainId: activeChain.id,
+  }, {
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+  console.log({ leaderboard });
+
   useEffect(() => {
     if (refetchTimestamp) {
       void refetch();

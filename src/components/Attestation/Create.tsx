@@ -1,8 +1,8 @@
 import { EAS, SchemaEncoder, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
 import { type FC,useContext, useState } from 'react';
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
-import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID } from "~/constants/addresses";
+import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID, LOG_A_DOG } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
 import Upload from "~/components/utils/Upload";
@@ -12,6 +12,8 @@ import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
 import Connect from "~/components/utils/Connect";
 import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
+import { getContract } from "thirdweb";
+import { logHotdog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 
 type Props = {
   onAttestationCreated?: (attestation: {
@@ -116,14 +118,44 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     );
 
     return (
-      <button 
-        className="btn btn-primary" 
-        disabled={isLoading}
-        onClick={() => void create()}
+      <TransactionButton
+        disabled={!imgUri}
+        transaction={() => {
+          return logHotdog({
+            contract: getContract({
+              address: LOG_A_DOG[activeChain.id]!,
+              client,
+              chain: activeChain,
+            }),
+            imageUri: imgUri!,
+            metadataUri: "",
+            eater: account.address
+          });
+        }}
+        onTransactionConfirmed={async (tx) => {
+          onAttestationCreated?.({
+            hotdogEater: account.address,
+            imageUri: imgUri!,
+          });
+          toast.success("Dog has been logged!");
+          console.log(tx);
+          (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+          const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+          canvas.style.display = 'block';
+          const jsConfetti = new JSConfetti({ canvas });
+          await jsConfetti.addConfetti({
+            emojis: ['🌭', '🎉', '🌈', '✨']
+          });
+          canvas.style.display = 'none';
+          (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+        }}
+        onError={(error) => {
+          console.error(error);
+          toast.error("Failed to log dog, try logging out and logging back in!");
+        }}
       >
-        {isLoading && <div className="loading loading-spinner" />}
         Log a Dog
-      </button>
+      </TransactionButton>
     )
   };
 

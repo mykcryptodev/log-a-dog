@@ -1,6 +1,7 @@
 import { createTRPCRouter } from "~/server/api/trpc";
 import { attestationRouter } from "~/server/api/routers/attestation";
 import { contestRouter } from "~/server/api/routers/contest";
+import { hotdogRouter } from "~/server/api/routers/hotdog";
 import { profileRouter } from "~/server/api/routers/profile";
 
 /**
@@ -11,6 +12,7 @@ import { profileRouter } from "~/server/api/routers/profile";
 export const appRouter = createTRPCRouter({
   attestation: attestationRouter,
   contest: contestRouter,
+  hotdog: hotdogRouter,
   profile: profileRouter,
 });
 

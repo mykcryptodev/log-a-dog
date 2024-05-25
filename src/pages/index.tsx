@@ -2,7 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
-import { Leaderboard } from "~/components/Attestation/Leaderboard";
+import { Leaderboard } from "~/components/Leaderboard";
 import { ListAttestations } from "~/components/Attestation/List";
 import Instructions from "~/components/Help/Instructions";
 import Rules from "~/components/Help/Rules";
@@ -21,7 +21,6 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <div>🌭 Log <span className="text-secondary">a Dog</span> </div>
-            <div className="badge badge-sm badge-accent tracking-normal -mt-8 sm:ml-0 sm:-mt-16 sm:badge-md">Beta</div>
           </h1>
           <CreateAttestation
             onAttestationCreated={() => {
@@ -33,7 +32,7 @@ export default function Home() {
           />
           <Rules />
           <Instructions />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
+          {/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
             <Link
               href="/contest/create"
               className="flex max-w-xs flex-col gap-4 rounded-xl opacity-90 p-4 cursor-pointer hover:opacity-80"
@@ -52,10 +51,10 @@ export default function Home() {
                 Contests that you are a part of. Everyone is in this global contest.
               </div>
             </Link>
-          </div>
+          </div> */}
           <h3 className="text-2xl font-bold">🌎 Global Leaderboard</h3>
           <Leaderboard refetchTimestamp={refetchTimestamp} />
-          <ListAttestations refetchTimestamp={refetchTimestamp} key={refetchTimestamp} />
+          <ListAttestations refetchTimestamp={refetchTimestamp} key={refetchTimestamp} limit={4} />
         </div>
       </main>
     </>

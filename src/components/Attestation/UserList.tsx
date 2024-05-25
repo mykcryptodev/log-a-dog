@@ -6,7 +6,6 @@ import { client } from "~/providers/Thirdweb";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
-import { ADDRESS_ZERO } from "thirdweb";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 
@@ -16,22 +15,23 @@ type Props = {
   endDate?: Date;
   refetchTimestamp?: number;
   limit: number;
-  address?: string;
+  user: string;
 };
 
-export const ListAttestations: FC<Props> = ({ address, limit }) => {
+export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   const limitOrDefault = limit ?? 4;
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
 
-  const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery({
+  const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAllForUser.useQuery({
     chainId: activeChain.id,
-    user: account?.address ?? ADDRESS_ZERO,
-    start,
+    user,
     limit: limitOrDefault,
   }, {
     enabled: !!activeChain.id,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   console.log({ dogData })
@@ -69,8 +69,6 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
       {dogData?.hotdogs.map((hotdog, index) => {
         const validAttestations = dogData?.validAttestations[index];
         const invalidAttestations = dogData?.invalidAttestations[index];
-        const userAttested = dogData?.userAttested[index];
-        const userAttestation = dogData?.userAttestations[index];
 
         return (
           <div className="card bg-base-200 bg-opacity-50" key={`${hotdog.logId}-${index}`}>
@@ -99,8 +97,9 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
                 </div>
                 <div className="flex justify-end items-center gap-2">
                   <JudgeAttestation
-                    userAttested={userAttested}
-                    userAttestation={userAttestation}
+                    disabled
+                    userAttested={undefined}
+                    userAttestation={undefined}
                     validAttestations={validAttestations}
                     invalidAttestations={invalidAttestations}
                     logId={hotdog.logId}
