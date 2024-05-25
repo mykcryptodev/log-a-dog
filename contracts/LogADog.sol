@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 /**
  * @title LogADog
- * @dev Contract to log eating hotdogs and attest to logs.
+ * @dev The worlds first onchain hotdog eating competition
  */
 contract LogADog {
     struct HotdogLog {
@@ -134,14 +134,14 @@ contract LogADog {
 
         uint256 index = 0;
         uint256 skipped = 0;
-        for (uint256 i = 0; i < hotdogLogs.length && index < resultCount; i++) {
-            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
+        for (uint256 i = hotdogLogs.length; i > 0 && index < resultCount; i--) {
+            if (hotdogLogs[i - 1].timestamp >= startTime && hotdogLogs[i - 1].timestamp <= endTime) {
                 if (skipped >= start) {
-                    logs[index] = hotdogLogs[i];
-                    (validCounts[index], invalidCounts[index]) = _countAttestations(i);
-                    userHasAttested[index] = hasAttested[i][user];
+                    logs[index] = hotdogLogs[i - 1];
+                    (validCounts[index], invalidCounts[index]) = _countAttestations(i - 1);
+                    userHasAttested[index] = hasAttested[i - 1][user];
                     if (userHasAttested[index]) {
-                        userAttestations[index] = _getUserAttestation(i, user);
+                        userAttestations[index] = _getUserAttestation(i - 1, user);
                     }
                     index++;
                 } else {

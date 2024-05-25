@@ -19,7 +19,7 @@ export const SMART_WALLET_BUNDLER_URL: ContractAddress = {
 }
 
 export const LOG_A_DOG: ContractAddress = {
-  [base.id]: "0xd408a3f4730ba0ff985e23ea246d25c4e8ea7ef0",
+  [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
   [baseSepolia.id]: "0x1bf5c7e676c8b8940711613086052451dcf1681d",
 }
 
