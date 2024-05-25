@@ -55,7 +55,6 @@ export const hotdogRouter = createTRPCRouter({
           limit: BigInt(limit)
         }),
       ]);
-      console.log({ dogResponse, totalPages });
       const currentPage = Math.floor(Number(start) / Number(limit)) + 1;
       const hasNextPage = currentPage < totalPages;
 
@@ -87,29 +86,52 @@ export const hotdogRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { chainId, user, limit } = input;
-      const totalPages = await getTotalPages({
-        contract: getContract({
-          address: LOG_A_DOG[chainId]!,
-          client,
-          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+      const [redactedLogIds, totalPages, dogResponse] = await Promise.all([
+        getRedactedLogIds({
+          contract: getContract({
+            address: MODERATION[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
         }),
-        pageSize: BigInt(limit),
-        user,
-      });
-      const dogResponse = await getUserHotdogLogsPaginated({
-        contract: getContract({
-          address: LOG_A_DOG[chainId]!,
-          client,
-          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+        getTotalPagesForLogs({
+          contract: getContract({
+            address: LOG_A_DOG[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+          startTime: BigInt(new Date('2024-05-23T12:00:00-04:00').getTime() / 1000),
+          endTime: BigInt(new Date('2024-09-05T12:00:00-04:00').getTime() / 1000),
+          pageSize: BigInt(limit),
         }),
-        user,
-        start: BigInt(0),
-        limit: BigInt(limit)
-      });
+        getHotdogLogs({
+          contract: getContract({
+            address: LOG_A_DOG[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+          startTime: BigInt(new Date('2024-05-23T12:00:00-04:00').getTime() / 1000),
+          endTime: BigInt(new Date('2024-09-05T12:00:00-04:00').getTime() / 1000),
+          user,
+          start: BigInt(0),
+          limit: BigInt(limit)
+        }),
+      ]);
       const currentPage = 1;
       const hasNextPage = currentPage < totalPages;
+
+      const moderatedHotdogs = dogResponse[0].map(hotdog => {
+        if (redactedLogIds.includes(hotdog.logId)) {
+          return {
+            ...hotdog,
+            imageUri: redactedImage,
+          }
+        }
+        return hotdog;
+      });
+
       return {
-        hotdogs: dogResponse[0],
+        hotdogs: moderatedHotdogs,
         validAttestations: dogResponse[1],
         invalidAttestations: dogResponse[2],
         totalPages,
