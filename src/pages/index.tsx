@@ -21,7 +21,6 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <div>🌭 Log <span className="text-secondary">a Dog</span> </div>
-            <div className="badge badge-sm badge-accent tracking-normal -mt-8 sm:ml-0 sm:-mt-16 sm:badge-md">Beta</div>
           </h1>
           <CreateAttestation
             onAttestationCreated={() => {
