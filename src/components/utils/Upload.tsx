@@ -55,7 +55,7 @@ export const Upload: FC<UploadProps> = ({
     reader.readAsDataURL(file);
     const base64Image = await new Promise<string>((resolve) => {
       reader.onload = () => {
-        console.log(reader.result);
+        console.log({ image: reader.result });
         resolve(reader.result as string);
       };
     });
@@ -70,19 +70,11 @@ export const Upload: FC<UploadProps> = ({
       throw new Error("This function can only be run in the browser");
     }
   
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const maxSize = 0.5 * 1024 * 1024; // .5MB in bytes
     const isHeic = file.type === 'image/heic' || file.type === 'image/heif';
     console.log({ isHeic, file });
   
     let imageFile = file;
-    
-    setDropzoneLabel("🕵🏻‍♂️ Checking for safety...");
-    const passesSafetyCheck = await conductImageSafetyCheck(file);
-    if (!passesSafetyCheck) {
-      setDropzoneLabel("❌ Image failed safety check!");
-      throw new Error("Image failed safety check");
-    }
-    setDropzoneLabel("✅ Image passed safety check!");
   
     if (isHeic) {
       const heicBlob = await heic2any({ blob: file, toType: "image/jpeg" });
@@ -101,7 +93,6 @@ export const Upload: FC<UploadProps> = ({
     await new Promise((resolve) => {
       img.onload = resolve;
     });
-    console.log('loaded...');
   
     let quality = 0.9; // Start with high quality
     let resizedFile = imageFile;
@@ -129,8 +120,9 @@ export const Upload: FC<UploadProps> = ({
     } while (resizedFile.size > maxSize && quality > 0.1);
   
     URL.revokeObjectURL(src);
+
     return resizedFile;
-  }, [conductImageSafetyCheck]);
+  }, []);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setUrls([]);
@@ -141,6 +133,31 @@ export const Upload: FC<UploadProps> = ({
     });
 
     const resizedFiles = await Promise.all(resizedFilesPromises);
+
+    if (resizedFiles.length === 0) {
+      toast.error("No files to upload");
+      onUploadError?.(new Error("No files to upload"));
+      setDropzoneLabel("📷 Take a picture of you eating it!");
+      return;
+    }
+
+    // Check if the image is safe
+    setDropzoneLabel("🕵🏻‍♂️ Checking for safety...");
+    try {
+      const isSafe = await conductImageSafetyCheck(resizedFiles[0]!);
+      if (!isSafe) {
+        toast.error("Image is not safe to upload");
+        onUploadError?.(new Error("Image is not safe to upload"));
+        setDropzoneLabel("📷 Take a picture of you eating it!");
+        return;
+      }
+      setDropzoneLabel("✅ Image passed safety check!");
+    } catch (e) {
+      toast.error("Error checking image safety");
+      onUploadError?.(e as Error);
+      setDropzoneLabel("📷 Take a picture of you eating it!");
+      return;
+    }
 
     try {
       setDropzoneLabel("☁️ Uploading...");
@@ -165,7 +182,7 @@ export const Upload: FC<UploadProps> = ({
     } finally {
       setDropzoneLabel("📷 Take a picture of you eating it!");
     }
-  }, [onUpload, onUploadError, resizeImageFile]);
+  }, [conductImageSafetyCheck, onUpload, onUploadError, resizeImageFile]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
