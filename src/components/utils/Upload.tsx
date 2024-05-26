@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import Image from "next/image";
 import { client } from "~/providers/Thirdweb";
 import heic2any from "heic2any";
+import { api } from "~/utils/api";
 
 interface UploadProps {
   className?: string; // completely override classes
@@ -38,6 +39,8 @@ export const Upload: FC<UploadProps> = ({
 }) => {
   const [urls, setUrls] = useState<string[]>([]);
   const [preparingUpload, setPreparingUpload] = useState<boolean>(false);
+  const [dropzoneLabel, setDropzoneLabel] = useState<string>("📷 Take a picture of you eating it!");
+  const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
   useEffect(() => {
     if (initialUrls && initialUrls.length > 0) {
@@ -46,6 +49,22 @@ export const Upload: FC<UploadProps> = ({
       setUrls([]);
     }
   }, [initialUrls]);
+
+  const conductImageSafetyCheck = async (file: File): Promise<boolean> => {
+    // convert the file to base64 image
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    const base64Image = await new Promise<string>((resolve) => {
+      reader.onload = () => {
+        console.log(reader.result);
+        resolve(reader.result as string);
+      };
+    });
+    const isSafe = await safetyCheck.mutateAsync({
+      base64ImageString: base64Image,
+    });
+    return isSafe;
+  };
 
   const resizeImageFile = async (file: File): Promise<File> => {
     if (typeof window === 'undefined') {
@@ -57,6 +76,14 @@ export const Upload: FC<UploadProps> = ({
     console.log({ isHeic, file });
   
     let imageFile = file;
+    
+    setDropzoneLabel("🕵🏻‍♂️ Checking for safety...");
+    const passesSafetyCheck = await conductImageSafetyCheck(file);
+    if (!passesSafetyCheck) {
+      setDropzoneLabel("❌ Image failed safety check!");
+      throw new Error("Image failed safety check");
+    }
+    setDropzoneLabel("✅ Image passed safety check!");
   
     if (isHeic) {
       const heicBlob = await heic2any({ blob: file, toType: "image/jpeg" });
@@ -109,6 +136,7 @@ export const Upload: FC<UploadProps> = ({
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setUrls([]);
     setPreparingUpload(true);
+    setDropzoneLabel("🖼️ Preparing upload...");
 
     const resizedFilesPromises = acceptedFiles.map(async (file) => {
       return await resizeImageFile(file);
@@ -117,6 +145,7 @@ export const Upload: FC<UploadProps> = ({
     const resizedFiles = await Promise.all(resizedFilesPromises);
 
     try {
+      setDropzoneLabel("☁️ Uploading...");
       const uris = await upload({
         files: resizedFiles,
         client,
@@ -136,11 +165,21 @@ export const Upload: FC<UploadProps> = ({
     } catch (e) {
       toast("Error uploading file", { type: "error" });
       onUploadError?.(e as Error);
+    } finally {
+      setDropzoneLabel("📷 Take a picture of you eating it!");
     }
   }, [onUpload, onUploadError]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
+
+  useEffect(() => {
+    if (isDragActive) {
+      setDropzoneLabel("👋 Drop here!");
+    } else {
+      setDropzoneLabel("📷 Take a picture of you eating it!");
+    }
+  }, [isDragActive]);
 
   const currentLabel = useMemo(() => {
     if (preparingUpload) {
@@ -175,7 +214,7 @@ export const Upload: FC<UploadProps> = ({
             />
           </div>
         ) : (
-          <p>{currentLabel}</p>
+          <p>{dropzoneLabel}</p>
         )
       }
     </div>

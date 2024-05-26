@@ -54,7 +54,7 @@ export default function Home() {
           </div> */}
           <h3 className="text-2xl font-bold">🌎 Global Leaderboard</h3>
           <Leaderboard refetchTimestamp={refetchTimestamp} />
-          <ListAttestations refetchTimestamp={refetchTimestamp} key={refetchTimestamp} limit={4} />
+          <ListAttestations refetchTimestamp={refetchTimestamp} key={refetchTimestamp} limit={10} />
         </div>
       </main>
     </>
