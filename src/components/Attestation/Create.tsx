@@ -150,6 +150,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           });
           canvas.style.display = 'none';
           (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+          setImgUri(undefined);
         }}
         onError={(error) => {
           console.error(error);
