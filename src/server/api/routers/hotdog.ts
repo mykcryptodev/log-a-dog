@@ -193,11 +193,31 @@ export const hotdogRouter = createTRPCRouter({
           throw new Error(`Error: ${response.statusText}`);
         }
 
-        const safetyCheckResult = await response.json();
-        const isSafeForWork = safetyCheckResult.responses[0].safeSearchAnnotation?.adult.includes("UNLIKELY");
-        const isSafeForViolence = safetyCheckResult.responses[0].safeSearchAnnotation?.violence.includes("UNLIKELY");
-        const isSafeForMedical = safetyCheckResult.responses[0].safeSearchAnnotation?.medical.includes("UNLIKELY");
-        const isSafeForRacy = safetyCheckResult.responses[0].safeSearchAnnotation?.racy.includes("UNLIKELY");
+        interface SafeSearchAnnotation {
+          adult: string;
+          violence: string;
+          medical: string;
+          racy: string;
+        }
+
+        interface SafetyCheckResponse {
+          responses: {
+            safeSearchAnnotation?: SafeSearchAnnotation;
+          }[];
+        }
+
+        const safetyCheckResult: SafetyCheckResponse = await response.json() as SafetyCheckResponse;
+        const safeSearchAnnotation = safetyCheckResult.responses[0]?.safeSearchAnnotation;
+
+        if (!safeSearchAnnotation) {
+          throw new Error("SafeSearchAnnotation is missing in the response");
+        }
+
+        const isSafeForWork = safeSearchAnnotation.adult.includes("UNLIKELY");
+        const isSafeForViolence = safeSearchAnnotation.violence.includes("UNLIKELY");
+        const isSafeForMedical = safeSearchAnnotation.medical.includes("UNLIKELY");
+        const isSafeForRacy = safeSearchAnnotation.racy.includes("UNLIKELY");
+
         return isSafeForWork && isSafeForViolence && isSafeForMedical && isSafeForRacy;
       } catch (error) {
         console.error("Error posting image for safety check:", error);

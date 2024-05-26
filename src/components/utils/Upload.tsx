@@ -38,7 +38,6 @@ export const Upload: FC<UploadProps> = ({
   imageClassName,
 }) => {
   const [urls, setUrls] = useState<string[]>([]);
-  const [preparingUpload, setPreparingUpload] = useState<boolean>(false);
   const [dropzoneLabel, setDropzoneLabel] = useState<string>("📷 Take a picture of you eating it!");
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
@@ -50,7 +49,7 @@ export const Upload: FC<UploadProps> = ({
     }
   }, [initialUrls]);
 
-  const conductImageSafetyCheck = async (file: File): Promise<boolean> => {
+  const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
     // convert the file to base64 image
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -64,9 +63,9 @@ export const Upload: FC<UploadProps> = ({
       base64ImageString: base64Image,
     });
     return isSafe;
-  };
+  }, [safetyCheck]);
 
-  const resizeImageFile = async (file: File): Promise<File> => {
+  const resizeImageFile = useCallback(async (file: File): Promise<File> => {
     if (typeof window === 'undefined') {
       throw new Error("This function can only be run in the browser");
     }
@@ -131,11 +130,10 @@ export const Upload: FC<UploadProps> = ({
   
     URL.revokeObjectURL(src);
     return resizedFile;
-  };
+  }, [conductImageSafetyCheck]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setUrls([]);
-    setPreparingUpload(true);
     setDropzoneLabel("🖼️ Preparing upload...");
 
     const resizedFilesPromises = acceptedFiles.map(async (file) => {
@@ -159,7 +157,6 @@ export const Upload: FC<UploadProps> = ({
           client,
         })
       )));
-      setPreparingUpload(false);
       setUrls(resolvedUrls);
       onUpload?.({ resolvedUrls, uris: typeof uris === 'string' ? [uris] : uris });
     } catch (e) {
@@ -168,7 +165,7 @@ export const Upload: FC<UploadProps> = ({
     } finally {
       setDropzoneLabel("📷 Take a picture of you eating it!");
     }
-  }, [onUpload, onUploadError]);
+  }, [onUpload, onUploadError, resizeImageFile]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
@@ -180,16 +177,6 @@ export const Upload: FC<UploadProps> = ({
       setDropzoneLabel("📷 Take a picture of you eating it!");
     }
   }, [isDragActive]);
-
-  const currentLabel = useMemo(() => {
-    if (preparingUpload) {
-      return "Preparing upload...";
-    }
-    if (isDragActive) {
-      return hoverLabel ?? 'Drop here!';
-    }
-    return label ?? 'Drag and drop here, or click to select';
-  }, [hoverLabel, isDragActive, label, preparingUpload]);
 
 
   const previewImageSrc = (src: string) => {
