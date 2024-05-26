@@ -36,6 +36,7 @@ export const env = createEnv({
     ADMIN_PRIVATE_KEY: z.string(),
     MORALIS_SECRET_KEY: z.string(),
     MAKER_AFFIRM_SECRET: z.string(),
+    GOOGLE_VISION_API_KEY: z.string(),
   },
 
   /**
@@ -65,6 +66,7 @@ export const env = createEnv({
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
     MORALIS_SECRET_KEY: process.env.MORALIS_SECRET_KEY,
     MAKER_AFFIRM_SECRET: process.env.MAKER_AFFIRM_SECRET,
+    GOOGLE_VISION_API_KEY: process.env.GOOGLE_VISION_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

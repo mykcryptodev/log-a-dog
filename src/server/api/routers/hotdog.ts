@@ -10,6 +10,7 @@ import {
 import { client } from "~/server/utils";
 import { getHotdogLogs, getLeaderboard, getTotalPages, getTotalPagesForLogs, getUserHotdogLogsPaginated } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
+import { env } from "~/env";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -156,5 +157,71 @@ export const hotdogRouter = createTRPCRouter({
         users: leaderboardResponse[0],
         hotdogs: leaderboardResponse[1],
       };
+    }),
+  checkForSafety: publicProcedure
+    .input(z.object({ base64ImageString: z.string() }))
+    .mutation(async ({ input }) => {
+      const { base64ImageString } = input;
+      const base64Data = base64ImageString.replace(/^data:image\/\w+;base64,/, "");
+      const url = `https://vision.googleapis.com/v1/images:annotate?key=${env.GOOGLE_VISION_API_KEY}`;
+      const requestBody = {
+        requests: [
+          {
+            image: {
+              content: base64Data
+            },
+            features: [
+              {
+                type: "SAFE_SEARCH_DETECTION"
+              },
+            ],
+          },
+        ],
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          console.log({ responseBody: response.body, text: response.text(), status: response.statusText });
+          throw new Error(`Error: ${response.statusText}`);
+        }
+
+        interface SafeSearchAnnotation {
+          adult: string;
+          violence: string;
+          medical: string;
+          racy: string;
+        }
+
+        interface SafetyCheckResponse {
+          responses: {
+            safeSearchAnnotation?: SafeSearchAnnotation;
+          }[];
+        }
+
+        const safetyCheckResult: SafetyCheckResponse = await response.json() as SafetyCheckResponse;
+        const safeSearchAnnotation = safetyCheckResult.responses[0]?.safeSearchAnnotation;
+
+        if (!safeSearchAnnotation) {
+          throw new Error("SafeSearchAnnotation is missing in the response");
+        }
+
+        const isSafeForWork = safeSearchAnnotation.adult.includes("UNLIKELY");
+        const isSafeForViolence = safeSearchAnnotation.violence.includes("UNLIKELY");
+        const isSafeForMedical = safeSearchAnnotation.medical.includes("UNLIKELY");
+        const isSafeForRacy = safeSearchAnnotation.racy.includes("UNLIKELY");
+
+        return isSafeForWork && isSafeForViolence && isSafeForMedical && isSafeForRacy;
+      } catch (error) {
+        console.error("Error posting image for safety check:", error);
+        throw error;
+      }
     }),
 });
