@@ -8,7 +8,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPages, getTotalPagesForLogs, getUserHotdogLogsPaginated } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
+import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
 
@@ -213,6 +213,7 @@ export const hotdogRouter = createTRPCRouter({
           throw new Error("SafeSearchAnnotation is missing in the response");
         }
 
+        console.log({ safeSearchAnnotation });
         const isSafeForWork = safeSearchAnnotation.adult.includes("UNLIKELY");
         const isSafeForViolence = safeSearchAnnotation.violence.includes("UNLIKELY");
         const isSafeForMedical = safeSearchAnnotation.medical.includes("UNLIKELY");

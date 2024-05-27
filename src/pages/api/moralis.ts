@@ -1,12 +1,9 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
-import { EAS as EAS_ADDRESS } from "~/constants/addresses";
 import { z } from 'zod';
 import { env } from '~/env';
 import web3 from 'web3';
 import { SUPPORTED_CHAINS } from '~/constants/chains';
 import { createThirdwebClient } from 'thirdweb';
-import { ethers6Adapter } from 'thirdweb/adapters/ethers6';
-import { EAS, type TransactionSigner } from '@ethereum-attestation-service/eas-sdk';
 import { ethers } from "ethers";
 import { resolveScheme } from "thirdweb/storage";
 
@@ -72,40 +69,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     try {
       const webhook = requestBodySchema.parse(req.body);
-      if (!webhook.confirmed) return res.status(200).json({ message: "Not confirmed" });
+      // TOODO: do this check
+      // if (!webhook.confirmed) return res.status(200).json({ message: "Not confirmed" });
 
       const log = webhook.logs[0];
       if (!log) return res.status(200).json({ message: "No log found" });
 
+      // Decode the log data
+      const eventSignature = [
+        "string",  // imageUri
+        "string",  // metadataUri
+        "uint256"  // timestamp
+      ];
+      const decodedData = ethers.AbiCoder.defaultAbiCoder().decode(eventSignature, log.data);
+      const [imgUri] = decodedData as unknown as [string];
+
+      const logId = parseInt(log.topic1, 16).toString();
+
       const chainHex = webhook.chainId;
       const chainId = parseInt(chainHex, 16);
       
-      const attestationId = log.data;
-      const easAddress = EAS_ADDRESS[chainId];
-      
       const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-      if (!easAddress || !chain) {
+      if (!chain) {
         throw new Error("Chain not supported");
       }
+      if (!imgUri) return res.status(200).json({ message: "No image found in attestation" });
+
       const client = createThirdwebClient({
         secretKey: env.THIRDWEB_SECRET_KEY,
       });
-      const provider = ethers6Adapter.provider.toEthers({
-        client,
-        chain,
-      }) as unknown as TransactionSigner;
-
-      const eas = new EAS(easAddress);
-      eas.connect(provider);
-      const attestation = await eas.getAttestation(attestationId);
-      const [imgUri] = ethers.AbiCoder.defaultAbiCoder().decode(
-        ["string", "string"],
-        attestation.data
-      ) as string[];
-
-      if (!imgUri) return res.status(200).json({ message: "No image found in attestation" });
-
-      console.log({ imgUri })
 
       let resolvedImgUrl;
       try {
@@ -121,8 +113,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      console.log({ resolvedImgUrl });
-      
       await fetch(makerUrl, {
         method: 'POST',
         headers: {
@@ -130,16 +120,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         body: JSON.stringify({ 
           image: resolvedImgUrl,
-          attestationId: attestationId,
-          recipientAddress: attestation.recipient,
+          logId,
           chainId,
         }),
-      });
-      console.log(' fetched to maker ', { 
-        image: resolvedImgUrl,
-        attestationId: attestationId,
-        recipientAddress: attestation.recipient,
-        chainId,
       });
 
       res.status(200).json({ message: 'Success' });
