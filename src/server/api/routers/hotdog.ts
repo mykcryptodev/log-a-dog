@@ -171,7 +171,7 @@ export const hotdogRouter = createTRPCRouter({
 
       const aiAttestation = hotdogLogResponse[4][logIndex];
 
-      if (!aiAttestation) {
+      if (aiAttestation === undefined) {
         throw new Error("AI attestation not found");
       }
 

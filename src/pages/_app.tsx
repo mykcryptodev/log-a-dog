@@ -31,6 +31,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
         <ThirdwebProviderWithActiveChain>
           <Layout>
             <Component {...pageProps} />
+            <div id="portal" />
           </Layout>
         </ThirdwebProviderWithActiveChain>
       </ActiveChainContext.Provider>
