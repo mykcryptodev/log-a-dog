@@ -23,6 +23,11 @@ export const LOG_A_DOG: ContractAddress = {
   [baseSepolia.id]: "0x1bf5c7e676c8b8940711613086052451dcf1681d",
 }
 
+export const AI_AFFIRMATION: ContractAddress = {
+  [base.id]: "0xA473533c54D105C6334fE06c8624f7dfbb09ba25",
+  [baseSepolia.id]: "0xA473533c54D105C6334fE06c8624f7dfbb09ba25",
+}
+
 export const EAS: ContractAddress = {
   [base.id]: "0x4200000000000000000000000000000000000021",
   [baseSepolia.id]: "0x4200000000000000000000000000000000000021",

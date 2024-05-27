@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LOG_A_DOG, MODERATION } from "~/constants/addresses";
+import { AI_AFFIRMATION, LOG_A_DOG, MODERATION } from "~/constants/addresses";
 import { getContract } from "thirdweb";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
@@ -138,6 +138,45 @@ export const hotdogRouter = createTRPCRouter({
         totalPages,
         hasNextPage,
       }
+    }),
+  getAiVerificationStatus: publicProcedure
+    .input(z.object({ chainId: z.number(), logId: z.string(), timestamp: z.string() }))
+    .query(async ({ input }) => {
+      const { chainId, timestamp, logId } = input;
+      const hotdogLogResponse = await getHotdogLogs({
+        contract: getContract({
+          address: LOG_A_DOG[chainId]!,
+          client,
+          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+        }),
+        startTime: BigInt(timestamp),
+        endTime: BigInt(timestamp),
+        user: AI_AFFIRMATION[chainId]!,
+        start: BigInt(0),
+        limit: BigInt(10),
+      });
+      const hotdogLogs = hotdogLogResponse[0];
+
+      const logIndex = hotdogLogs.findIndex(log => log.logId.toString() === logId);
+      const hotdogLog = hotdogLogs.find(log => log.logId.toString() === logId);
+
+      if (!hotdogLog) {
+        throw new Error("Hotdog log not found");
+      }
+      const aiHasAttested = hotdogLogResponse[3][logIndex];
+
+      if (!aiHasAttested) {
+        return "NOT_ATTESTED";
+      }
+
+      const aiAttestation = hotdogLogResponse[4][logIndex];
+
+      if (!aiAttestation) {
+        throw new Error("AI attestation not found");
+      }
+
+      return aiAttestation ? "VERIFIED" : "REJECTED";
+
     }),
   getLeaderboard: publicProcedure
     .input(z.object({ chainId: z.number() }))
