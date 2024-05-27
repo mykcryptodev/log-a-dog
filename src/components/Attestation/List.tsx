@@ -9,6 +9,7 @@ import Name from "~/components/Profile/Name";
 import { ADDRESS_ZERO } from "thirdweb";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
+import AiJudgement from "./AiJudgement";
 
 type Props = {
   attestors?: string[];
@@ -39,7 +40,7 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
   useEffect(() => {
     if (!account) return;
     void refetchDogData();
-  }, [account]);
+  }, [account, refetchDogData]);
 
   return (
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
@@ -57,6 +58,10 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
               <div className="text-xs flex items-center gap-1">
                 <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
                 <div className="h-4 w-8 bg-base-300 animate-pulse rounded-lg" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 bg-base-300 animate-pulse rounded-full" />
+                <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
               </div>
               <div className="flex justify-end items-center gap-2">
                 <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
@@ -96,6 +101,12 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
                 <div className="text-xs flex items-center gap-1">
                   <TagIcon className="w-4 h-4" />
                   {hotdog.logId.toString()}
+                </div>
+                <div className="flex justify-end items-center gap-2 text-xs">
+                  <AiJudgement 
+                    logId={hotdog.logId.toString()}
+                    timestamp={hotdog.timestamp.toString()}
+                  />
                 </div>
                 <div className="flex justify-end items-center gap-2">
                   <JudgeAttestation

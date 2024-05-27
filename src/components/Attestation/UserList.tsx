@@ -8,6 +8,7 @@ import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
+import AiJudgement from "~/components/Attestation/AiJudgement";
 
 type Props = {
   attestors?: string[];
@@ -39,7 +40,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   useEffect(() => {
     if (!account) return;
     void refetchDogData();
-  }, [account]);
+  }, [account, refetchDogData]);
 
   return (
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
@@ -94,6 +95,12 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
                 <div className="text-xs flex items-center gap-1">
                   <TagIcon className="w-4 h-4" />
                   {hotdog.logId.toString()}
+                </div>
+                <div className="flex justify-end items-center gap-2 text-xs">
+                  <AiJudgement 
+                    logId={hotdog.logId.toString()}
+                    timestamp={hotdog.timestamp.toString()}
+                  />
                 </div>
                 <div className="flex justify-end items-center gap-2">
                   <JudgeAttestation
