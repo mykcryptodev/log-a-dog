@@ -1,5 +1,5 @@
 import { upload, resolveScheme } from "thirdweb/storage";
-import { type FC, useCallback ,useEffect,useMemo, useState } from "react";
+import { type FC, useCallback ,useEffect, useState } from "react";
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'react-toastify';
 import Image from "next/image";
@@ -26,9 +26,7 @@ interface UploadProps {
 }
 
 export const Upload: FC<UploadProps> = ({ 
-  className, 
-  label, 
-  hoverLabel, 
+  className,
   onUpload,
   onUploadError,
   additionalClasses,

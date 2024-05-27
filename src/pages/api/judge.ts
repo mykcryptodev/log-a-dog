@@ -1,17 +1,15 @@
-import { EAS, SchemaEncoder, type TransactionSigner } from '@ethereum-attestation-service/eas-sdk';
 import { type NextApiRequest, type NextApiResponse } from 'next';
-import { createThirdwebClient } from 'thirdweb';
-import { ethers6Adapter } from 'thirdweb/adapters/ethers6';
+import { createThirdwebClient, getContract, sendTransaction } from 'thirdweb';
 import { type Account, privateKeyToAccount } from 'thirdweb/wallets';
 import { z } from 'zod';
-import { EAS as EAS_ADDRESS, EAS_AFFIMRATION_SCHEMA_ID } from '~/constants/addresses';
+import { LOG_A_DOG } from '~/constants/addresses';
 import { SUPPORTED_CHAINS } from '~/constants/chains';
 import { env } from '~/env';
+import { attestHotdogLog } from '~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d';
 
 // Define the schema for the request body
 const requestBodySchema = z.object({
-  attestationId: z.string(),
-  recipientAddress: z.string(),
+  logId: z.string(),
   judgement: z.boolean(),
   chainId: z.number(),
 });
@@ -46,36 +44,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw new Error("Chain not supported");
       }
 
-      const signer = await ethers6Adapter.signer.toEthers({
-        client,
-        account,
-        chain,
-      }) as TransactionSigner;
-      
-      const affirmSchemaUid = EAS_AFFIMRATION_SCHEMA_ID[data.chainId];
-      const easContractAddress = EAS_ADDRESS[data.chainId];
-      if (!affirmSchemaUid || !easContractAddress) {
-        throw new Error("Chain not supported");
-      }
-      const eas = new EAS(easContractAddress);
-      eas.connect(signer);
-
-      // create the judgement
-      const judgementSchemaEncoder = new SchemaEncoder("bool isAffirmed");
-      const encodedJudgementData = judgementSchemaEncoder.encodeData([
-        { name: "isAffirmed", value: data.judgement, type: "bool" },
-      ]);
-      await eas.attest({
-        schema: affirmSchemaUid,
-        data: {
-          recipient: data.recipientAddress,
-          expirationTime: BigInt(0),
-          revocable: true,
-          refUID: data.attestationId,
-          data: encodedJudgementData,
-        },
+      const attestation = attestHotdogLog({
+        contract: getContract({
+          address: LOG_A_DOG[data.chainId]!,
+          client,
+          chain,
+        }),
+        logId: BigInt(data.logId),
+        isValid: data.judgement,
       });
-      console.log('attested!');
+
+      await sendTransaction({
+        account,
+        transaction: attestation,
+      });
       res.status(200).json({ message: 'Success' });
     } catch (error) {
       console.log('error!', error);
