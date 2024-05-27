@@ -69,8 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     try {
       const webhook = requestBodySchema.parse(req.body);
-      // TOODO: do this check
-      // if (!webhook.confirmed) return res.status(200).json({ message: "Not confirmed" });
+      if (!webhook.confirmed) return res.status(200).json({ message: "Not confirmed" });
 
       const log = webhook.logs[0];
       if (!log) return res.status(200).json({ message: "No log found" });
