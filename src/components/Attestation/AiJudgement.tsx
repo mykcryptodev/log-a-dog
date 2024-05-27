@@ -51,8 +51,8 @@ export const AiJudgement: FC<Props> = ({ logId, timestamp }) => {
                 <ShieldExclamationIcon className="h-6 w-6 stroke-2" />
                 Refuted!
               </h3>
-              <p className="py-4">Our AI bot did not find anyone eating a hotdog in this photo.</p>
-              <p>AI bots can be wrong so only use it as one data point when reviewing the submissions of others.</p>
+              <p className="py-4">Our AI bot did not find anyone eating a hotdog in this photo and so it gave the submission one downvote.</p>
+              <p>AI bots can be wrong so feel free to offset the downvote with your own upvote you believe the AI made a mistake!</p>
               <div className="modal-action">
                 <label htmlFor={`${logId}-ai-refuted-modal`} className="btn">Close</label>
               </div>
@@ -84,8 +84,8 @@ export const AiJudgement: FC<Props> = ({ logId, timestamp }) => {
                 <ShieldCheckIcon className="h-6 w-6 stroke-2" />
                 Verified!
               </h3>
-              <p className="py-4">Our AI bot found someone eating a hotdog in this photo.</p>
-              <p>That does not mean that this submission is objectively valid. Feel free to use this as one data point when reviewing submissions of others.</p>
+              <p className="py-4">Our AI bot found someone eating a hotdog in this photo and so it gave the submission one upvote.</p>
+              <p>AI bots can be wrong so feel free to use your own judgement when upvoting or downvoting.</p>
               <div className="modal-action">
                 <label htmlFor={`${logId}-ai-verified-modal`} className="btn">Close</label>
               </div>
