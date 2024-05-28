@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { type FC } from "react";
 
 export const Rules: FC = () => {
@@ -23,12 +24,13 @@ export const Rules: FC = () => {
             </ul>
             <br />
             <p className="font-bold">
-              Log a Dog is powered by Blockchain technology
+              Log a Dog is powered by A.I. and Blockchain technology
             </p>
             <ul style={{listStyleType: 'circle'}} className="ml-5">
               <li>Logging a dog records a transaction on the blockchain.</li>
               <li>Users make onchain attestations about your logs to prove truthfulness.</li>
-              <li>The blockchain is an open protocol that people can build on top of. Someone can build a system that can scan images with AI to detect a person eating a hotdog and then automatically rating the submission based on the outcome.</li>
+              <li>There is an AI bot that will attest automatically based on what it sees in the image.</li>
+              <li>The blockchain is an open protocol that people can build on top of. Find the contract code <Link href="https://basescan.org/address/0x82f276c283948b81f17ea5a98906bd3159ccf4f5#code" className="text-primary" target="_blank" rel="noreferrer">here</Link>.</li>
             </ul>
           </div>
         </div>
