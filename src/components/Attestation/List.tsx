@@ -81,9 +81,20 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
           <div className="card bg-base-200 bg-opacity-50" key={`${hotdog.logId}-${index}`}>
             <div className="card-body p-4 max-w-xs">
               <div className="flex items-center justify-between">
-                <div className="flex gap-2 items-center">
-                  <Avatar address={hotdog.eater} />
-                  <Name address={hotdog.eater} />
+                <div className="flex items-center gap-2">
+                  <div className="w-fit">
+                    <Avatar address={hotdog.eater} fallbackSize={24} />
+                  </div>
+                  <div className="flex flex-col">
+                    <Name address={hotdog.eater} />
+                    {hotdog.eater.toLowerCase() !== hotdog.logger.toLowerCase() && (
+                      <div className="flex items-center gap-1 text-xs opacity-75">
+                        <span>via</span>
+                        <Avatar address={hotdog.logger} size="16px" />
+                        <Name address={hotdog.logger} />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <Revoke 
                   hotdog={hotdog} 

@@ -11,7 +11,7 @@ import { revokeHotdogLog } from "~/thirdweb/84532/0x1bf5c7e676c8b894071161308605
 type Props = {
   hotdog: {
     logId: bigint;
-    logger: string;
+    eater: string;
   }
   onRevocation?: () => void;
 }
@@ -55,7 +55,7 @@ export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
 
   return (
     <>
-      {hotdog.logger.toLowerCase() === account?.address.toLowerCase() && (
+      {hotdog.eater.toLowerCase() === account?.address.toLowerCase() && (
         <label htmlFor={`${hotdog.logId}-revoke-modal`} className="btn btn-xs btn-circle btn-ghost w-fit px-2">
           <TrashIcon className="w-4 h-4" />
         </label>
