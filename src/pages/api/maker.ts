@@ -1,13 +1,12 @@
-import { EAS, SchemaEncoder, type TransactionSigner } from '@ethereum-attestation-service/eas-sdk';
 import { type NextApiRequest, type NextApiResponse } from 'next';
-import { createThirdwebClient, getContract, simulateTransaction } from 'thirdweb';
-import { ethers6Adapter } from 'thirdweb/adapters/ethers6';
+import { createThirdwebClient, getContract, sendTransaction, simulateTransaction } from 'thirdweb';
 import { type Account, privateKeyToAccount } from 'thirdweb/wallets';
 import { z } from 'zod';
-import { PROFILES, EAS as EAS_ADDRESS, EAS_SCHEMA_ID } from '~/constants/addresses';
+import { PROFILES, LOG_A_DOG } from '~/constants/addresses';
 import { DEFAULT_CHAIN } from '~/constants/chains';
 import { env } from '~/env';
 import { profiles, setProfileOnBehalf } from '~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849';
+import { logHotdog } from '~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d';
 
 const ENGINE_URL = `https://engine-production-3357.up.railway.app`;
 
@@ -41,7 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         chain: DEFAULT_CHAIN,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const account = privateKeyToAccount({
         client,
         privateKey: env.ADMIN_PRIVATE_KEY,
@@ -90,32 +88,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      const signer = await ethers6Adapter.signer.toEthers({
-        client,
+      const logDogTransaction = logHotdog({
+        contract: getContract({
+          client,
+          address: LOG_A_DOG[DEFAULT_CHAIN.id]!,
+          chain: DEFAULT_CHAIN,
+        }),
+        imageUri: data.image,
+        metadataUri: '',
+        eater: data.recipientAddress,
+      });
+
+      await sendTransaction({
+        transaction: logDogTransaction,
         account,
-        chain: DEFAULT_CHAIN,
-      }) as TransactionSigner;
-      
-      const schemaUid = EAS_SCHEMA_ID[DEFAULT_CHAIN.id]!;
-
-      const easContractAddress = EAS_ADDRESS[DEFAULT_CHAIN.id]!;
-      const eas = new EAS(easContractAddress);
-      eas.connect(signer);
-
-      // create the attestation
-      const schemaEncoder = new SchemaEncoder("string image_uri,string metadata");
-      const encodedData = schemaEncoder.encodeData([
-        { name: "image_uri", value: data.image, type: "string"},
-        { name: "metadata", value: "", type: "string" }
-      ]);
-      await eas.attest({
-        schema: schemaUid,
-        data: {
-          recipient: data.recipientAddress,
-          expirationTime: BigInt(0),
-          revocable: true,
-          data: encodedData,
-        },
       });
       res.status(200).json({ message: 'Success' });
     } catch (error) {
