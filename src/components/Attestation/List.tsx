@@ -43,6 +43,8 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
   }, [account, refetchDogData]);
 
   return (
+    <>
+    <div id="top-of-list" className="invisible" />
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
       {isLoadingHotdogs && 
         Array.from({ length: limitOrDefault }).map((_, index) => (
@@ -138,7 +140,14 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
       <div className="join md:col-span-2 place-content-center">
         <button
           className="join-item btn"
-          onClick={() => setStart((prev) => prev - limitOrDefault)}
+          onClick={() => {
+            setStart((prev) => prev - limitOrDefault);
+            // scroll to top of list
+            setTimeout(
+              () => document.getElementById('top-of-list')?.scrollIntoView({ behavior: "instant" }),
+              100
+            );
+          }}
           disabled={start === 0}
         >
           «
@@ -148,12 +157,20 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
         </button>
         <button
           className="join-item btn"
-          onClick={() => setStart((prev) => prev + limitOrDefault)}
+          onClick={() => {
+            setStart((prev) => prev + limitOrDefault);
+            // scroll to top of list
+            setTimeout(
+              () => document.getElementById('top-of-list')?.scrollIntoView({ behavior: "instant" }),
+              100
+            );
+          }}
           disabled={!dogData?.hasNextPage}
         >
           »
         </button>
       </div>
     </div>
+    </>
   );
 }
