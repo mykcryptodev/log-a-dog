@@ -67,17 +67,32 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           <div className="sm:max-h-[26rem] max-h-96 p-4 overflow-y-scroll rounded-lg shadow-inner relative">
             <div className={`h-full w-full top-0 left-0 absolute bg-gradient-to-br from-pink-100 to-yellow-100 -z-10 sm:block hidden ${userPrefersDarkMode ? 'invisible' : ''}`} />
             <div className="rounded-lg flex flex-col gap-2 pt-0 items-center justify-center">
-              <div className="flex justify-end">
-                <ConnectButton
-                  client={client}
-                  chain={activeChain}
-                  theme={userPrefersDarkMode ? "dark" : "light"}
-                  connectButton={{
-                    label: "Sign with passkey",
-                    className: "thirdweb-btn",
-                  }}
-                  wallets={[createWallet("com.coinbase.wallet")]}
-                />
+              <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content bg-base-100">
+                <span className="text-sm flex items-start gap-2">
+                  <Image 
+                    src="/images/coinbase-wallet.png"
+                    className="h-6 w-6 mt-2 rounded"
+                    width={40}
+                    height={40} 
+                    alt={"Coinbase Wallet"}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg">Login with Smart Wallet</span>
+                    <span className="flex items-center text-xs opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/coinbase.png"} alt={"Coinbase"} /> Coinbase</span>
+                  </div>
+                </span>
+                <div className="flex justify-end">
+                  <ConnectButton
+                    client={client}
+                    chain={activeChain}
+                    theme={userPrefersDarkMode ? "dark" : "light"}
+                    connectButton={{
+                      label: "Sign with passkey",
+                      className: "thirdweb-btn",
+                    }}
+                    wallets={[createWallet("com.coinbase.wallet")]}
+                  />
+                </div>
               </div>
               <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content bg-base-100">
                 <span className="text-sm flex items-start gap-2">
@@ -198,21 +213,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                   )}
                   {isOnMobileSafari ? "Not available on mobile safari" : "Connect with Google"}
                 </button>
-              </div>
-              <div className="flex md:flex-row flex-col items-center gap-2 justify-between w-full p-4 rounded-lg border border-neutral-content bg-base-100">
-                <span className="text-sm flex items-start gap-2">
-                  <Image 
-                    src="/images/coinbase-wallet.png"
-                    className="h-6 w-6 mt-2 rounded"
-                    width={40}
-                    height={40} 
-                    alt={"Coinbase Wallet"}
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-bold text-lg">Login with Smart Wallet</span>
-                    <span className="flex items-center text-xs opacity-80">Powered by <Image className="ml-1 mr-0.5 w-4 h-auto" width={48} height={48} src={"/images/coinbase.png"} alt={"Coinbase"} /> Coinbase</span>
-                  </div>
-                </span>
               </div>
             </div>
             <div className="flex items-center justify-center w-full">
