@@ -85,10 +85,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
                   <ConnectButton
                     client={client}
                     chain={activeChain}
-                    accountAbstraction={{
-                      chain: activeChain,
-                      sponsorGas: true,
-                    }}
                     theme={userPrefersDarkMode ? "dark" : "light"}
                     connectButton={{
                       label: "Sign with passkey",
