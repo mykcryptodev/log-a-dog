@@ -78,6 +78,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
             chain: activeChain,
             wallet,
             calls: [transaction],
+            capabilities: {
+              paymasterService: {
+                url: `https://${activeChain.id}.bundler.thirdweb.com/${client.clientId}`
+              }
+            },
           });
         } else {
           await sendTransaction({
