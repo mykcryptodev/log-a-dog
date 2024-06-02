@@ -1,8 +1,6 @@
-import { EAS, SchemaEncoder, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
-import { type FC,useContext, useState } from 'react';
-import { TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
-import { ethers6Adapter } from "thirdweb/adapters/ethers6";
-import { EAS as EAS_ADDRESS, EAS_SCHEMA_ID, LOG_A_DOG } from "~/constants/addresses";
+import { type FC,useContext, useState, useMemo } from 'react';
+import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { LOG_A_DOG } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
@@ -10,10 +8,10 @@ import JSConfetti from 'js-confetti';
 import { ProfileButton } from "~/components/Profile/Button";
 import { api } from "~/utils/api";
 import Connect from "~/components/utils/Connect";
-import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
-import { getContract } from "thirdweb";
+import { getContract, sendTransaction } from "thirdweb";
 import { logHotdog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 import dynamic from 'next/dynamic';
+import { sendCalls, useCapabilities } from "thirdweb/wallets/eip5792";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -26,9 +24,15 @@ type Props = {
 }
 export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const [imgUri, setImgUri] = useState<string | undefined>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const wallet = useActiveWallet();
+  const { data: walletCapabilities } = useCapabilities();
+
+  const isDisabled = useMemo(() => {
+    return !imgUri || !wallet || isLoading;
+  }, [imgUri, isLoading, wallet]);
 
   const account = useActiveAccount();
-  const wallet = useActiveWallet();
   const { activeChain } = useContext(ActiveChainContext);
   const { data: profile, refetch: refetchProfile } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
@@ -38,74 +42,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-  
-  const schemaUid = EAS_SCHEMA_ID[activeChain.id]!;
-  const easContractAddress = EAS_ADDRESS[activeChain.id]!;
-  const eas = new EAS(easContractAddress);
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const rpcRequest = getRpcClient({ client, chain: activeChain });
-
-  const create = async () => {
-    if (!account || !wallet || !ethers6Adapter) {
-      // pop notification
-      toast.error("You must login to log dogs");
-      return;
-    }
-    if (!imgUri) {
-      // pop notification
-      toast.error("You must upload an image to log a dog");
-      return;
-    }
-    const signer = await ethers6Adapter.signer.toEthers({ client, account, chain: activeChain }) as TransactionSigner;
-
-    // get the signer from ethers
-    const schemaEncoder = new SchemaEncoder("string image_uri,string metadata");
-    const encodedData = schemaEncoder.encodeData([
-      { name: "image_uri", value: imgUri, type: "string"},
-      { name: "metadata", value: "", type: "string" }
-    ]);
-    console.log({ imgUri });
-    try {
-      setIsLoading(true);
-      eas.connect(signer);
-      const maxPriorityFeePerGas = await eth_maxPriorityFeePerGas(rpcRequest);
-      await eas.attest({
-        schema: schemaUid,
-        data: {
-          recipient: account.address,
-          expirationTime: BigInt(0),
-          revocable: true,
-          data: encodedData,
-        },
-      }, {
-        maxPriorityFeePerGas,
-      });
-      onAttestationCreated?.({
-        hotdogEater: account.address,
-        imageUri: imgUri,
-      });
-      toast.success("Dog has been logged!");
-      (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-      const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-      canvas.style.display = 'block';
-      const jsConfetti = new JSConfetti({ canvas });
-      await jsConfetti.addConfetti({
-        emojis: ['🌭', '🎉', '🌈', '✨']
-      });
-      canvas.style.display = 'none';
-    } catch (e) {
-      // pop notification
-      console.error(e);
-      toast.error("Failed to log dog, try logging out and logging back in!");
-    } finally { 
-      setIsLoading(false);
-      setImgUri(undefined);
-      // close modal
-      (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-    }
-  };
 
   const ActionButton: FC = () => {
     if (!account) return (
@@ -119,46 +55,72 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       />
     );
 
+    const logDog = async () => {
+      if (!wallet) {
+        return toast.error("You must login to attest to dogs!");
+      }
+      if (isDisabled) return;
+      setIsLoading(true);
+      try {
+        const transaction = logHotdog({
+          contract: getContract({
+            address: LOG_A_DOG[activeChain.id]!,
+            client,
+            chain: activeChain,
+          }),
+          imageUri: imgUri!,
+          metadataUri: "",
+          eater: account.address
+        });
+        const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+        if (walletCapabilities?.[chainIdAsHex]) {
+          await sendCalls({
+            chain: activeChain,
+            wallet,
+            calls: [transaction],
+          });
+        } else {
+          await sendTransaction({
+            account: wallet.getAccount()!,
+            transaction,
+          });
+        }
+        toast.success("Dog has been logged!");
+        // pop confetti
+        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+        const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+        canvas.style.display = 'block';
+        const jsConfetti = new JSConfetti({ canvas });
+        await jsConfetti.addConfetti({
+          emojis: ['🌭', '🎉', '🌈', '✨']
+        });
+        canvas.style.display = 'none';
+        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+        setImgUri(undefined);
+      } catch (error) {
+        const e = error as Error;
+        console.error(error);
+        toast.error(`Attestation failed: ${e.message}`);
+      } finally {
+        setIsLoading(false);
+        void onAttestationCreated?.({
+          hotdogEater: account.address,
+          imageUri: imgUri!,
+        });
+      }
+    };
+
     return (
-      <TransactionButton
-        disabled={!imgUri}
-        transaction={() => {
-          return logHotdog({
-            contract: getContract({
-              address: LOG_A_DOG[activeChain.id]!,
-              client,
-              chain: activeChain,
-            }),
-            imageUri: imgUri!,
-            metadataUri: "",
-            eater: account.address
-          });
-        }}
-        onTransactionConfirmed={async (tx) => {
-          onAttestationCreated?.({
-            hotdogEater: account.address,
-            imageUri: imgUri!,
-          });
-          toast.success("Dog has been logged!");
-          console.log(tx);
-          (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-          const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-          canvas.style.display = 'block';
-          const jsConfetti = new JSConfetti({ canvas });
-          await jsConfetti.addConfetti({
-            emojis: ['🌭', '🎉', '🌈', '✨']
-          });
-          canvas.style.display = 'none';
-          (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-          setImgUri(undefined);
-        }}
-        onError={(error) => {
-          console.error(error);
-          toast.error("Failed to log dog, try logging out and logging back in!");
-        }}
+      <button
+        className="btn btn-primary"
+        onClick={logDog}
+        disabled={isDisabled}
       >
+        {isLoading && (
+          <div className="loading loading-spinner" />
+        )}
         Log a Dog
-      </TransactionButton>
+      </button>
     )
   };
 

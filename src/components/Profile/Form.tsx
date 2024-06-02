@@ -1,12 +1,13 @@
 import { useState, type FC, useContext, useMemo } from "react";
-import { TransactionButton, useActiveAccount } from "thirdweb/react";
-import { getContract, prepareContractCall } from "thirdweb";
+import { useActiveWallet } from "thirdweb/react";
+import { getContract, sendTransaction } from "thirdweb";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { PROFILES } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
-import { getRpcClient, eth_maxPriorityFeePerGas, } from "thirdweb/rpc";
 import dynamic from 'next/dynamic';
+import { setProfile } from "~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849";
+import { sendCalls, useCapabilities } from "thirdweb/wallets/eip5792";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -22,25 +23,19 @@ type Props = {
 
 export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, existingImgUrl }) => {
   const { activeChain } = useContext(ActiveChainContext);
-  const account = useActiveAccount();
+  const wallet = useActiveWallet();
+  const { data: walletCapabilities } = useCapabilities();
   const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? "");
   const [username, setUsername] = useState<string>(existingUsername ?? "");
   const metadata = "";
   const [error, setError] = useState<string | null>(null);
   const [saveProfileBtnLabel, setSaveProfileBtnLabel] = useState<string>("Save Profile");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const contract = getContract({
     client,
     address: PROFILES[activeChain.id]!,
     chain: activeChain,
-  });
-
-  const rpcRequest = getRpcClient({ client, chain: activeChain });
-
-  const tx = prepareContractCall({
-    contract,
-    method: "function setProfile(string username, string imgUrl, string metadata)",
-    params: [username, imgUrl, ""],
   });
 
   const isValidUsername = useMemo(() => {
@@ -51,7 +46,50 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
     return url.startsWith("ipfs://") ? `https://ipfs.io/ipfs/${url.slice(7)}` : url;
   }
 
-  if (!account) return null;
+  const saveProfile = async () => {
+    if (!wallet) {
+      return toast.error("You must login to save your profile!");
+    }
+    const transaction = setProfile({
+      contract,
+      username,
+      image: imgUrl,
+      metadata: ""
+    });
+    setSaveProfileBtnLabel("Saving...");
+    setIsLoading(true);
+    try {
+      const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+      if (walletCapabilities?.[chainIdAsHex]) {
+        await sendCalls({
+          chain: activeChain,
+          wallet,
+          calls: [transaction],
+        });
+      } else {
+        await sendTransaction({
+          account: wallet.getAccount()!,
+          transaction,
+        });
+      }
+      toast.success("Profile saved");
+      // give the blockchain some time to index the transaction
+      setTimeout(() => {
+        onProfileSaved?.({username, imgUrl, metadata});
+      }, 3000);
+    } catch (error) {
+      const e = error as Error;
+      const errorMessage = e.message?.match(/'([^']+)'/)?.[1] ?? e.message?.split('contract:')[0]?.trim() ?? e.message;
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+      setSaveProfileBtnLabel("Save Profile");
+      // close modal
+      (document.getElementById('create_profile_modal') as HTMLDialogElement)?.close();
+    }
+  }
+
+  if (!wallet) return null;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -81,38 +119,16 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
           Username must be 3-20 characters and only contain lowercase letters, numbers, and hyphens
         </span>
       )}
-      <TransactionButton
-        style={!isValidUsername ? {
-          pointerEvents: 'none',
-          color: 'rgb(0, 0, 0, 0.5)',
-        } : {}}
-        transaction={async () => {
-          const maxPriorityFeePerGas = await eth_maxPriorityFeePerGas(rpcRequest);
-          return {
-            ...tx,
-            maxPriorityFeePerGas,
-          }
-        }}
-        onTransactionSent={() => {
-          setSaveProfileBtnLabel("Saving...");
-        }}
-        onTransactionConfirmed={() => {
-          toast.dismiss();
-          toast.success("Profile saved");
-          onProfileSaved?.({username, imgUrl, metadata});
-          setSaveProfileBtnLabel("Save Profile");
-          // close modal
-          (document.getElementById('create_profile_modal') as HTMLDialogElement).close();
-        }}
-        onError={(e) => {
-          console.log({ e });
-          const errorMessage = e.message?.match(/'([^']+)'/)?.[1] ?? e.message?.split('contract:')[0]?.trim() ?? e.message;
-          setError(errorMessage);
-          setSaveProfileBtnLabel("Save Profile");
-        }}
+      <button
+        className="btn btn-primary"
+        onClick={saveProfile}
+        disabled={!isValidUsername || isLoading}
       >
+        {isLoading && (
+          <div className="loading loading-spinner" />
+        )}
         {saveProfileBtnLabel}
-      </TransactionButton>
+      </button>
       {error && (
         <div className="flex flex-col gap-1">
           <span className="text-error text-center text-xs px-8 sm:px-16">{error}</span>

@@ -1,13 +1,14 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { HandThumbDownIcon as HandThumDownIconFilled, HandThumbUpIcon as HandThumbUpIconFilled } from "@heroicons/react/24/solid";
 import { useState, type FC, useContext } from "react";
-import { useActiveAccount } from "thirdweb/react";
+import { useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { LOG_A_DOG } from "~/constants/addresses";
 import { toast } from "react-toastify";
 import { client } from "~/providers/Thirdweb";
 import { getContract, sendTransaction } from "thirdweb";
 import { attestHotdogLog, revokeAttestation } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
+import { sendCalls, useCapabilities } from "thirdweb/wallets/eip5792";
 
 type Props = {
   disabled?: boolean;
@@ -29,7 +30,8 @@ export const JudgeAttestation: FC<Props> = ({
   onAttestationMade,
   onAttestationAffirmationRevoked,
 }) => {
-  const account = useActiveAccount();
+  const wallet = useActiveWallet();
+  const { data: walletCapabilities } = useCapabilities();
   const { activeChain } = useContext(ActiveChainContext);
 
   const [isLoadingValidAttestation, setIsLoadingValidAttestation] = useState<boolean>(false);
@@ -37,7 +39,7 @@ export const JudgeAttestation: FC<Props> = ({
 
   const attest = async (isValid: boolean) => {
     if (disabled) return;
-    if (!account) {
+    if (!wallet) {
       return toast.error("You must login to attest to dogs!");
     }
     isValid ? setIsLoadingValidAttestation(true) : setIsLoadingInvalidValidAttestation(true);
@@ -55,7 +57,19 @@ export const JudgeAttestation: FC<Props> = ({
         logId,
         isValid,
       });
-      await sendTransaction({ transaction, account })
+      const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+      if (walletCapabilities?.[chainIdAsHex]) {
+        await sendCalls({
+          chain: activeChain,
+          wallet,
+          calls: [transaction],
+        });
+      } else {
+        await sendTransaction({
+          account: wallet.getAccount()!,
+          transaction,
+        });
+      }
       toast.success("Attestation made!");
     } catch (error) {
       const e = error as Error;
@@ -69,7 +83,7 @@ export const JudgeAttestation: FC<Props> = ({
 
   const revoke = async (isValid: boolean) => {
     if (disabled) return;
-    if (!account) {
+    if (!wallet) {
       return toast.error("You must login to revoke your attestations!");
     }
     try {
@@ -81,7 +95,19 @@ export const JudgeAttestation: FC<Props> = ({
         }),
         logId,
       });
-      await sendTransaction({ transaction, account });
+      const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+      if (walletCapabilities?.[chainIdAsHex]) {
+        await sendCalls({
+          chain: activeChain,
+          wallet,
+          calls: [transaction],
+        });
+      } else {
+        await sendTransaction({
+          account: wallet.getAccount()!,
+          transaction,
+        });
+      }
       toast.success("Attestation revoked!");
     }  catch (error) {
       const e = error as Error;
