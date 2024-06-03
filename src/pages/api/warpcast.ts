@@ -6,6 +6,7 @@ import { env } from '~/env';
 // Define the schema for the request body
 const requestBodySchema = z.object({
   data: z.object({
+    text: z.string().optional(),
     author: z.object({
       custody_address: z.string(),
       pfp_url: z.string().url(),
@@ -49,6 +50,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Validate and parse the request body
       const post = requestBodySchema.parse(req.body);
       console.log({ post: JSON.stringify(post) });
+
+      // check to make sure that the text in the post contains $LOG or $log
+      const text = post.data.text;
+      if (!text) return res.status(200).json({ message: "No text found in post" });
+      // check the text for the $LOG or $log
+      if (!text.includes('$LOG') && !text.includes('$log')) return res.status(200).json({ message: "No $LOG or $log found in post" });
+
       // grab the first image posted
       const image = post.data.embeds[0]?.url;
       if (!image) return res.status(200).json({ message: "No image found in post" });
