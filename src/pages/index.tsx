@@ -1,5 +1,5 @@
 import Head from "next/head";
-import Link from "next/link";
+// import Link from "next/link";
 import { useState } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { Leaderboard } from "~/components/Leaderboard";
@@ -52,8 +52,12 @@ export default function Home() {
               </div>
             </Link>
           </div> */}
-          <h3 className="text-2xl font-bold">🌎 Global Leaderboard</h3>
-          <Leaderboard refetchTimestamp={refetchTimestamp} />
+          <div className="w-full flex flex-col gap-2 text-center">
+            <h3 className="text-2xl font-bold">🌎 Global Leaderboard</h3>
+            <div className="mx-auto">
+              <Leaderboard refetchTimestamp={refetchTimestamp} />
+            </div>
+          </div>
           <ListAttestations refetchTimestamp={refetchTimestamp} key={refetchTimestamp} limit={10} />
         </div>
       </main>
