@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           contract,
           address: data.recipientAddress,
           image: data.recipientImage,
-          username: data.recipientUsername,
+          username: data.recipientUsername.replace('.eth', ''),
           metadata: '',
         });
         try {
@@ -75,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 functionName: "setProfileOnBehalf",
                 args: [
                   data.recipientAddress,
-                  data.recipientUsername,
+                  data.recipientUsername.replace(".eth", ""),
                   data.recipientImage,
                   "",
                 ],
