@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { client } from "~/providers/Thirdweb";
 import { getContract, sendTransaction } from "thirdweb";
 import { attestHotdogLog, revokeAttestation } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
-import { sendCalls, useCapabilities } from "thirdweb/wallets/eip5792";
+import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 
 type Props = {
   disabled?: boolean;
@@ -31,7 +31,6 @@ export const JudgeAttestation: FC<Props> = ({
   onAttestationAffirmationRevoked,
 }) => {
   const wallet = useActiveWallet();
-  const { data: walletCapabilities } = useCapabilities();
   const { activeChain } = useContext(ActiveChainContext);
 
   const [isLoadingValidAttestation, setIsLoadingValidAttestation] = useState<boolean>(false);
@@ -58,6 +57,8 @@ export const JudgeAttestation: FC<Props> = ({
         isValid,
       });
       const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+      if (!wallet) return;
+      const walletCapabilities = await getCapabilities({ wallet });
       if (walletCapabilities?.[chainIdAsHex]) {
         await sendCalls({
           chain: activeChain,
@@ -101,6 +102,8 @@ export const JudgeAttestation: FC<Props> = ({
         logId,
       });
       const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+      if (!wallet) return;
+      const walletCapabilities = await getCapabilities({ wallet });
       if (walletCapabilities?.[chainIdAsHex]) {
         await sendCalls({
           chain: activeChain,

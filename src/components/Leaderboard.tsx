@@ -3,7 +3,7 @@ import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import dynamic from "next/dynamic";
 import { type ApexOptions } from "apexcharts";
-import { resolveScheme, download } from "thirdweb/storage";
+import { resolveScheme } from "thirdweb/storage";
 import { client } from "~/providers/Thirdweb";
 
 const ReactApexChart = dynamic(

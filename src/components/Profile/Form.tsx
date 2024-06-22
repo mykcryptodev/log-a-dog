@@ -7,7 +7,7 @@ import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
 import { setProfile } from "~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849";
-import { sendCalls, useCapabilities } from "thirdweb/wallets/eip5792";
+import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -24,7 +24,6 @@ type Props = {
 export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, existingImgUrl }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const wallet = useActiveWallet();
-  const { data: walletCapabilities } = useCapabilities();
   const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? "");
   const [username, setUsername] = useState<string>(existingUsername ?? "");
   const metadata = "";
@@ -60,6 +59,8 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
     setIsLoading(true);
     try {
       const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+      if (!wallet) return;
+      const walletCapabilities = await getCapabilities({ wallet });
       if (walletCapabilities?.[chainIdAsHex]) {
         await sendCalls({
           chain: activeChain,

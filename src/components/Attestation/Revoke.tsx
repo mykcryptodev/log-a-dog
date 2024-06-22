@@ -3,7 +3,7 @@ import { useState, type FC, useContext } from "react";
 import { toast } from "react-toastify";
 import { getContract, sendTransaction } from "thirdweb";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
-import { sendCalls, useCapabilities } from "thirdweb/wallets/eip5792";
+import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { LOG_A_DOG } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
@@ -19,7 +19,6 @@ type Props = {
 
 export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
   const wallet = useActiveWallet();
-  const { data: walletCapabilities } = useCapabilities();
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -40,6 +39,8 @@ export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
     setIsLoading(true);
     try {
       const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+      if (!wallet) return;
+      const walletCapabilities = await getCapabilities({ wallet });
       if (walletCapabilities?.[chainIdAsHex]) {
         await sendCalls({
           chain: activeChain,

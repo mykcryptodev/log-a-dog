@@ -11,7 +11,7 @@ import Connect from "~/components/utils/Connect";
 import { getContract, sendTransaction } from "thirdweb";
 import { logHotdog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 import dynamic from 'next/dynamic';
-import { sendCalls, useCapabilities } from "thirdweb/wallets/eip5792";
+import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -26,7 +26,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const [imgUri, setImgUri] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const wallet = useActiveWallet();
-  const { data: walletCapabilities } = useCapabilities();
 
   const isDisabled = useMemo(() => {
     return !imgUri || !wallet || isLoading;
@@ -73,6 +72,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           eater: account.address
         });
         const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
+        if (!wallet) return;
+        const walletCapabilities = await getCapabilities({ wallet });
         if (walletCapabilities?.[chainIdAsHex]) {
           await sendCalls({
             chain: activeChain,
