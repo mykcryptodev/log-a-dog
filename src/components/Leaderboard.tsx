@@ -3,12 +3,21 @@ import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import dynamic from "next/dynamic";
 import { type ApexOptions } from "apexcharts";
+import { resolveScheme, download } from "thirdweb/storage";
+import { client } from "~/providers/Thirdweb";
 
 const ReactApexChart = dynamic(
   () => import(
     "react-apexcharts"),
   { ssr: false } // This line disables server-side rendering
 );
+
+type Profile = {
+  username: string;
+  imgUrl: string;
+  metadata: string;
+  address: string;
+}
 
 type Props = {
   attestors?: string[];
@@ -71,6 +80,33 @@ export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, r
     <div className="bg-base-200 rounded-lg animate-pulse w-[640px] h-72" />
   );
 
+  const generateAnnotations = (profiles: Profile[], limit: number, series: number[]) => {
+    return profiles.slice(0, limit).map((profile, index) => {
+      const imgUrl = profile.imgUrl;
+      if (!imgUrl) return;
+      const resolvedImgUrl = resolveScheme({
+        client,
+        uri: imgUrl,
+      });
+
+      return {
+        x: profile.username ?? `${profile.address.slice(0, 6)}...${profile.address.slice(-4)}`,
+        y: series[index]! + 5,
+        label: {
+          text: '',
+          style: {
+            background: 'transparent',
+          },
+        },
+        image: {
+          path: resolvedImgUrl,
+          width: 20,
+          height: 20,
+        }
+      };
+    });
+  };
+
   const chartOptions = {
     options: {
       chart: {
@@ -78,6 +114,38 @@ export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, r
         height: 350,
         toolbar: {
           show: false,
+        },
+      },
+      tooltip: {
+        custom: ({ series, seriesIndex, dataPointIndex }: { series: number[][], seriesIndex: number, dataPointIndex: number }) => {
+          const profile = profiles[dataPointIndex];
+          if (!profile) {
+            return '';
+          }
+          const imgUrl = profile.imgUrl;
+
+          const resolvedImgUrl = !imgUrl ? '' : resolveScheme({
+            client,
+            uri: imgUrl,
+          });
+
+          if (!resolvedImgUrl) {
+            return `<div>
+                <p>${profile.username ? profile.username : profile.address.slice(0, 6) + '...' + profile.address.slice(-4)}</p>
+                <p>${series[seriesIndex]?.[dataPointIndex]} Hotdogs Eaten</p>
+              </div>
+            `;
+          }
+  
+          return `
+            <div>
+              <div>
+                <img src="${resolvedImgUrl}" width="20" height="20" />
+                <span>${profile.username ? profile.username : profile.address.slice(0, 6) + '...' + profile.address.slice(-4)}</span>
+              </div>
+              <p>${series[seriesIndex]?.[dataPointIndex]} Hotdogs Eaten</p>
+            </div>
+          `;
         },
       },
       plotOptions: {
@@ -113,6 +181,13 @@ export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, r
       },
       fill: {
         opacity: 0.75
+      },
+      annotations: {
+        points: generateAnnotations(
+          profiles, 
+          limitOrDefault,
+          leaderboard.hotdogs.slice(0, limitOrDefault).map((hotdog) => Number(hotdog))
+        ),
       },
     },
     series: [{
