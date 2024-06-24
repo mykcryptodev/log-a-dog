@@ -43,6 +43,7 @@
     "react-dropzone": "^14.2.3",
     "react-jazzicon": "^1.0.4",
     "react-toastify": "^10.0.4",
+    "react-tweet": "^3.2.1",
     "sharp": "^0.33.3",
     "superjson": "^2.2.1",
     "thirdweb": "^5.29.6",

@@ -1,4 +1,5 @@
 import { type FC } from "react";
+import { Tweet } from "react-tweet";
 
 export const Instructions: FC = () => {
   return (
@@ -31,6 +32,17 @@ export const Instructions: FC = () => {
             </div>
           </li>
         </ul>
+        <div className="w-full justify-center flex items-center">
+          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+            <input type="checkbox" className="peer" />
+            <div className="collapse-title font-bold">
+              Instructional Video
+            </div>
+            <div className="collapse-content w-full flex justify-center">
+              <Tweet id="1805324646855983453" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
