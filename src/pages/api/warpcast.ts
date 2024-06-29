@@ -7,6 +7,7 @@ import { env } from '~/env';
 const requestBodySchema = z.object({
   data: z.object({
     text: z.string().optional(),
+    hash: z.string(),
     author: z.object({
       custody_address: z.string(),
       pfp_url: z.string().url(),
@@ -76,6 +77,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           recipientAddress: address,
           recipientImage: post.data.author.pfp_url,
           recipientAddressUsername: post.data.author.username,
+          hash: post.data.hash,
         }),
       });
       console.log(' fetched to maker ', { 
@@ -83,6 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         recipientAddress: address,
         recipientImage: post.data.author.pfp_url,
         recipientAddressUsername: post.data.author.username,
+        hash: post.data.hash,
       });
 
       res.status(200).json({ message: 'Success' });

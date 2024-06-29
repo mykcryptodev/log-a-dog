@@ -3,6 +3,7 @@ import { attestationRouter } from "~/server/api/routers/attestation";
 import { contestRouter } from "~/server/api/routers/contest";
 import { hotdogRouter } from "~/server/api/routers/hotdog";
 import { profileRouter } from "~/server/api/routers/profile";
+import { warpcastRouter } from "~/server/api/routers/warpcast";
 
 /**
  * This is the primary router for your server.
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   contest: contestRouter,
   hotdog: hotdogRouter,
   profile: profileRouter,
+  warpcast: warpcastRouter,
 });
 
 // export type definition of API

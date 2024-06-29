@@ -191,7 +191,6 @@ export const hotdogRouter = createTRPCRouter({
         startTime: BigInt(new Date('2024-05-23T12:00:00-04:00').getTime() / 1000),
         endTime: BigInt(new Date('2024-09-05T12:00:00-04:00').getTime() / 1000),
       });
-      console.log({ leaderboardResponse });
       return {
         users: leaderboardResponse[0],
         hotdogs: leaderboardResponse[1],
