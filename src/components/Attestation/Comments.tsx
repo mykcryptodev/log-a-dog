@@ -1,53 +1,72 @@
 import { ChatBubbleLeftRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useContext, useEffect, useState, type FC } from "react";
-import ActiveChainContext from "~/contexts/ActiveChain";
-import { api } from "~/utils/api";
+import { useEffect, useState, type FC } from "react";
 import { Portal } from "~/components/utils/Portal";
 import Image from "next/image";
 import Link from "next/link";
 import { download } from "thirdweb/storage";
 import { client } from "~/providers/Thirdweb";
+import { type WarpcastResponse } from "~/types/warpcast";
 
 type Props = {
   logId: string;
   metadataUri: string;
 }
 export const Comments: FC<Props> = ({ logId, metadataUri }) => {
-  const { activeChain } = useContext(ActiveChainContext);
   const [farcasterHash, setFarcasterHash] = useState<string>();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [data, setData] = useState<WarpcastResponse>();
+  const [, setError] = useState<string>();
 
   useEffect(() => {
     const downloadJson = async () => {
       if (!metadataUri) return;
-      const metadataResponse = await download({
-        client,
-        uri: metadataUri,
-      });
-      const metadata = await metadataResponse.json() as {
-        farcasterHash?: string;
-      };
-      setFarcasterHash(metadata.farcasterHash);
+      setIsLoading(true);
+      try {
+        const metadataResponse = await download({
+          client,
+          uri: metadataUri,
+        });
+        const metadata = await metadataResponse.json() as {
+          farcasterHash?: string;
+        };
+        setFarcasterHash(metadata.farcasterHash);
+
+        // originally on backend but it was timing out
+        const neynarBaseUrl = 'https://api.neynar.com/v2/farcaster/cast/conversation';
+        const params = new URLSearchParams({
+          identifier: `https://warpcast.com/${metadata.farcasterHash}`,
+          type: 'url',
+          reply_depth: '1',
+          include_chronological_parent_casts: 'false',
+          viewer_fid: '3',
+          limit: '10',
+        });
+        const url = `${neynarBaseUrl}?${params.toString()}`;
+  
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+            'api_key': 'NEYNAR_API_DOCS',
+          }
+        });
+        const data = await response.json() as WarpcastResponse;
+        setData(data);
+      } catch (e) {
+        console.error(e);
+        const message = e instanceof Error ? e.message : JSON.stringify(e);
+        setError(message);
+      } finally {
+        setIsLoading(false);
+      }
+      
     }
     void downloadJson();
   }, [metadataUri]);
-  console.log({ farcasterHash });
-
-  const { data, isLoading, isError } = api.warpcast.getCommentsByHotdog.useQuery({
-    farcasterHash,
-  }, {
-    enabled: !!farcasterHash && !!activeChain.id,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    trpc: {
-      context: {
-        skipBatch: true,
-      }
-    }
-  });
 
   if (!farcasterHash) return null;
 
-  if (isLoading && !isError) {
+  if (isLoading) {
     return (
       <div className="flex items-center gap-1">
         <span className="w-4 h-4 bg-base-300 animate-pulse rounded-full" />
@@ -55,6 +74,8 @@ export const Comments: FC<Props> = ({ logId, metadataUri }) => {
       </div>
     )
   }
+
+  if (!data) return null;
 
   return (
     <>
@@ -103,7 +124,7 @@ export const Comments: FC<Props> = ({ logId, metadataUri }) => {
                 {data?.conversation.cast.direct_replies.map((reply, index) => (
                   <div key={index} className="flex items-start gap-2">
                     <Image
-                      src={reply.author.pfp_url}
+                      src={reply.author.pfp_url ?? ""}
                       alt="Profile Picture"
                       width={60}
                       height={60}
