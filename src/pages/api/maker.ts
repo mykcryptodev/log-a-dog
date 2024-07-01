@@ -7,6 +7,7 @@ import { DEFAULT_CHAIN } from '~/constants/chains';
 import { env } from '~/env';
 import { profiles, setProfileOnBehalf } from '~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849';
 import { logHotdog } from '~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d';
+import { upload } from "thirdweb/storage";
 
 const ENGINE_URL = `https://engine-production-3357.up.railway.app`;
 
@@ -16,6 +17,7 @@ const requestBodySchema = z.object({
   recipientAddress: z.string(),
   recipientUsername: z.string(),
   recipientImage: z.string(),
+  hash: z.string().optional(),
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -88,6 +90,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
+      let metadataUri = '';
+      if (data.hash) {
+        const ipfsHash = await upload({
+          client,
+          files: [{ farcasterHash: data.hash }],
+        });
+        metadataUri = ipfsHash;
+      }
+
       const logDogTransaction = logHotdog({
         contract: getContract({
           client,
@@ -95,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           chain: DEFAULT_CHAIN,
         }),
         imageUri: data.image,
-        metadataUri: '',
+        metadataUri,
         eater: data.recipientAddress,
       });
 

@@ -10,6 +10,7 @@ import { ADDRESS_ZERO } from "thirdweb";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "./AiJudgement";
+import Comments from "~/components/Attestation/Comments";
 
 type Props = {
   attestors?: string[];
@@ -121,7 +122,11 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
                     timestamp={hotdog.timestamp.toString()}
                   />
                 </div>
-                <div className="flex justify-end items-center gap-2">
+                <div className="flex justify-end items-center gap-1">
+                  <Comments
+                    logId={hotdog.logId.toString()}
+                    metadataUri={hotdog.metadataUri}
+                  />
                   <JudgeAttestation
                     userAttested={userAttested}
                     userAttestation={userAttestation}
