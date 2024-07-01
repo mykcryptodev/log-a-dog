@@ -80,7 +80,7 @@ export const Comments: FC<Props> = ({ logId, metadataUri }) => {
   return (
     <>
       <label htmlFor={`${logId}-comments`} className="btn btn-ghost btn-xs font-normal flex items-center gap-1">
-        <span className="font-semibold">{data?.conversation.cast.direct_replies.length}</span>
+        <span className="font-semibold">{data?.conversation?.cast?.direct_replies.length}</span>
         <ChatBubbleLeftRightIcon className="h-4 w-4" />
       </label>
 
@@ -97,7 +97,7 @@ export const Comments: FC<Props> = ({ logId, metadataUri }) => {
                 Comments
               </h3>
               <Link 
-                href={`https://warpcast.com/${data?.conversation.cast.author.username}/${data?.conversation.cast.hash}`}
+                href={`https://warpcast.com/${data?.conversation?.cast?.author.username}/${data?.conversation?.cast?.hash}`}
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-xs self-end"
@@ -108,20 +108,20 @@ export const Comments: FC<Props> = ({ logId, metadataUri }) => {
             <div className="flex flex-col">
               <div className="flex items-start gap-2">
                 <Image
-                  src={data?.conversation.cast.author.pfp_url ?? ""}
+                  src={data?.conversation?.cast?.author.pfp_url ?? ""}
                   alt="Profile Picture"
                   width={60}
                   height={60}
                   className="rounded-full h-8 w-8 object-cover"
                   />
                 <div>
-                  <h4 className="font-semibold">{data?.conversation.cast.author.username}</h4>
-                  <p>{data?.conversation.cast.text}</p>
+                  <h4 className="font-semibold">{data?.conversation?.cast?.author.username}</h4>
+                  <p>{data?.conversation?.cast?.text}</p>
                 </div>
               </div>
               <div className="divider my-2" />
               <div className="flex flex-col gap-6 max-h-96 overflow-y-auto rounded-lg p-2">
-                {data?.conversation.cast.direct_replies.map((reply, index) => (
+                {data?.conversation?.cast?.direct_replies.map((reply, index) => (
                   <div key={index} className="flex items-start gap-2">
                     <Image
                       src={reply.author.pfp_url ?? ""}
