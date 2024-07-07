@@ -34,6 +34,7 @@ export const Upload: FC<UploadProps> = ({
   height,
   objectCover,
   imageClassName,
+  label,
 }) => {
   const [urls, setUrls] = useState<string[]>([]);
   const [dropzoneLabel, setDropzoneLabel] = useState<string>("📷 Take a picture of you eating it!");
@@ -135,7 +136,7 @@ export const Upload: FC<UploadProps> = ({
     if (resizedFiles.length === 0) {
       toast.error("No files to upload");
       onUploadError?.(new Error("No files to upload"));
-      setDropzoneLabel("📷 Take a picture of you eating it!");
+      setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
       return;
     }
 
@@ -146,14 +147,14 @@ export const Upload: FC<UploadProps> = ({
       if (!isSafe) {
         toast.error("Image is not safe to upload");
         onUploadError?.(new Error("Image is not safe to upload"));
-        setDropzoneLabel("📷 Take a picture of you eating it!");
+        setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
         return;
       }
       setDropzoneLabel("✅ Image passed safety check!");
     } catch (e) {
       toast.error("Error checking image safety");
       onUploadError?.(e as Error);
-      setDropzoneLabel("📷 Take a picture of you eating it!");
+      setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
       return;
     }
 
@@ -178,9 +179,9 @@ export const Upload: FC<UploadProps> = ({
       toast("Error uploading file", { type: "error" });
       onUploadError?.(e as Error);
     } finally {
-      setDropzoneLabel("📷 Take a picture of you eating it!");
+      setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
     }
-  }, [conductImageSafetyCheck, onUpload, onUploadError, resizeImageFile]);
+  }, [conductImageSafetyCheck, label, onUpload, onUploadError, resizeImageFile]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
@@ -189,9 +190,9 @@ export const Upload: FC<UploadProps> = ({
     if (isDragActive) {
       setDropzoneLabel("👋 Drop here!");
     } else {
-      setDropzoneLabel("📷 Take a picture of you eating it!");
+      setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
     }
-  }, [isDragActive]);
+  }, [isDragActive, label]);
 
 
   const previewImageSrc = (src: string) => {

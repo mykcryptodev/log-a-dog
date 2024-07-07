@@ -24,8 +24,9 @@ type Props = {
   }) => void;
   loginBtnLabel?: string;
   createProfileBtnLabel?: string;
+  hideLogout?: boolean;
 }
-export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel }) => {
+export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const wallet = useActiveWallet();
@@ -73,7 +74,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
       <button className="btn mr-2" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
         {createProfileBtnLabel ?? 'Create Profile'}
       </button>
-      <button className="btn btn-ghost mr-4" onClick={() => void logout()}>
+      <button className={`btn btn-ghost mr-4 ${hideLogout ? 'hidden' : ''}`} onClick={() => void logout()}>
         Logout <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
       </button>
       <dialog id="create_profile_modal" className="modal">
