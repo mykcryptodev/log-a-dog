@@ -5,8 +5,7 @@ export const DEFAULT_CHAIN = process.env.NODE_ENV === "production" ? {
   rpc: "https://api.developer.coinbase.com/rpc/v1/base/A10WpgQTkaHJltNKqtNhT2RQ-E-KgEjs",
   // rpc: "https://chain-proxy.wallet.coinbase.com?targetName=base",
 } : {
-  ...base,
-  // ...baseSepolia,
+  ...baseSepolia,
   // rpc: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/A10WpgQTkaHJltNKqtNhT2RQ-E-KgEjs",
 };
 

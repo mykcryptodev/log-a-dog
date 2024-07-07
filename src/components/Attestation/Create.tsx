@@ -5,8 +5,6 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
-import { ProfileButton } from "~/components/Profile/Button";
-import { api } from "~/utils/api";
 import Connect from "~/components/utils/Connect";
 import { getContract, sendTransaction } from "thirdweb";
 import { logHotdog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
@@ -33,14 +31,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
-  const { data: profile, refetch: refetchProfile } = api.profile.getByAddress.useQuery({
-    chainId: activeChain.id,
-    address: account?.address ?? "",
-  }, {
-    enabled: !!account?.address,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
 
   const ActionButton: FC = () => {
     if (!account) return (
@@ -48,11 +38,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         <Connect loginBtnLabel="Login to Log Dogs" />
       </div>
     )
-    if (!profile?.username) return (
-      <ProfileButton
-        onProfileCreated={() => void refetchProfile()}
-      />
-    );
 
     const logDog = async () => {
       if (!wallet) {

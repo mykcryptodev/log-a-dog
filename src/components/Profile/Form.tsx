@@ -102,7 +102,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
       <div className="flex items-center h-24 w-24 rounded-full">
         <Upload
           height={'h-24'}
-          label="📷"
+          label="📷 avatar"
           additionalClasses="rounded-full"
           imageClassName="rounded-full"
           initialUrls={imgUrl ? [withGateway(imgUrl)] : []}
