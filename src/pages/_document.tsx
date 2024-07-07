@@ -26,6 +26,10 @@ class MyDocument extends Document {
           <meta property="twitter:image" content="https://logadog.xyz/images/og-image.png" />
 
           {/* Additional tags here */}
+          <link rel="manifest" href="/manifest.json" />
+          <link rel="icon" href="/favicon.ico" />
+          <link rel="apple-touch-icon" href="/icon-512x512.png" />
+          <meta name="theme-color" content="#FEFACF" />
         </Head>
         <body>
           <Main />
