@@ -257,6 +257,7 @@ export const hotdogRouter = createTRPCRouter({
         const isSafeForMedical = safeSearchAnnotation.medical !== "VERY_LIKELY";
 
         return isSafeForWork && isSafeForViolence && isSafeForMedical;
+
       } catch (error) {
         console.error("Error posting image for safety check:", error);
         throw error;
