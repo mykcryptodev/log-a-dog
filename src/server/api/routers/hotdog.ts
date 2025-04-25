@@ -11,8 +11,86 @@ import { client } from "~/server/utils";
 import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
+import { createThirdwebClient } from 'thirdweb';
+import { download } from 'thirdweb/storage';
+import { getCoin } from '@zoralabs/coins-sdk';
+import { base } from 'viem/chains';
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
+
+// Types for metadata
+interface ZoraCoin {
+  address: string;
+  name: string;
+  symbol: string;
+}
+
+interface ZoraCoinDetails {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  symbol: string;
+  totalSupply: string;
+  totalVolume: string;
+  volume24h: string;
+  createdAt?: string;
+  creatorAddress?: string;
+  marketCap?: string;
+  marketCapDelta24h?: string;
+  chainId?: number;
+  uniqueHolders?: number;
+}
+
+interface HotdogMetadata {
+  imageUri: string;
+  eater: string;
+  zoraCoin?: ZoraCoin;
+}
+
+// Create thirdweb client for IPFS operations
+const thirdwebClient = createThirdwebClient({
+  secretKey: env.THIRDWEB_SECRET_KEY,
+});
+
+// Helper function to fetch and parse metadata from IPFS
+async function getMetadataFromUri(uri: string): Promise<HotdogMetadata | null> {
+  try {
+    const response = await download({ client: thirdwebClient, uri });
+    const metadata = response as unknown as HotdogMetadata;
+    return metadata;
+  } catch (error) {
+    console.error('Error fetching metadata:', error);
+    return null;
+  }
+}
+
+// Helper function to fetch Zora coin details in batch
+async function getZoraCoinDetailsBatch(addresses: string[]): Promise<Map<string, ZoraCoinDetails>> {
+  const coinDetailsMap = new Map<string, ZoraCoinDetails>();
+  
+  // Process addresses in chunks to avoid overwhelming the API
+  const chunkSize = 50;
+  for (let i = 0; i < addresses.length; i += chunkSize) {
+    const chunk = addresses.slice(i, i + chunkSize);
+    const promises = chunk.map(async (address) => {
+      try {
+        const response = await getCoin({
+          address: address as `0x${string}`,
+          chain: base.id,
+        });
+        if (response.data?.zora20Token) {
+          coinDetailsMap.set(address, response.data.zora20Token);
+        }
+      } catch (error) {
+        console.error(`Error fetching Zora coin details for ${address}:`, error);
+      }
+    });
+    await Promise.all(promises);
+  }
+  
+  return coinDetailsMap;
+}
 
 export const hotdogRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -59,18 +137,50 @@ export const hotdogRouter = createTRPCRouter({
       const currentPage = Math.floor(Number(start) / Number(limit)) + 1;
       const hasNextPage = currentPage < totalPages;
 
-      const moderatedHotdogs = dogResponse[0].map(hotdog => {
+      // First, fetch metadata for all hotdogs
+      const hotdogsWithMetadata = await Promise.all(
+        dogResponse[0].map(async (hotdog) => {
+          if (redactedLogIds.includes(hotdog.logId)) {
+            return {
+              hotdog,
+              metadata: null,
+            };
+          }
+          const metadata = await getMetadataFromUri(hotdog.metadataUri);
+          return {
+            hotdog,
+            metadata,
+          };
+        })
+      );
+
+      // Collect all Zora coin addresses
+      const zoraCoinAddresses = hotdogsWithMetadata
+        .map(({ metadata }) => metadata?.zoraCoin?.address)
+        .filter((address): address is string => !!address);
+
+      // Fetch all Zora coin details in batch
+      const zoraCoinDetailsMap = await getZoraCoinDetailsBatch(zoraCoinAddresses);
+
+      // Map the results back to hotdogs
+      const processedHotdogs = hotdogsWithMetadata.map(({ hotdog, metadata }) => {
         if (redactedLogIds.includes(hotdog.logId)) {
           return {
             ...hotdog,
             imageUri: redactedImage,
-          }
+            zoraCoin: null,
+          };
         }
-        return hotdog;
+
+        const zoraCoinAddress = metadata?.zoraCoin?.address;
+        return {
+          ...hotdog,
+          zoraCoin: zoraCoinAddress ? zoraCoinDetailsMap.get(zoraCoinAddress) ?? null : null,
+        };
       });
 
       return {
-        hotdogs: moderatedHotdogs,
+        hotdogs: processedHotdogs,
         validAttestations: dogResponse[1],
         invalidAttestations: dogResponse[2],
         userAttested: dogResponse[3],

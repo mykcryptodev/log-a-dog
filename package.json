@@ -27,6 +27,7 @@
     "@trpc/next": "^10.45.1",
     "@trpc/react-query": "^10.45.1",
     "@trpc/server": "^10.45.1",
+    "@zoralabs/coins-sdk": "^0.1.0",
     "apexcharts": "^3.46.0",
     "cross-fetch": "^4.0.0",
     "graphql": "^16.8.1",
