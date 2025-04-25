@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Segment';
+  src: url('/fonts/Segment/Segment-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Segment';
+  src: url('/fonts/Segment/Segment-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@layer base {
+  html {
+    font-family: 'Segment', system-ui, sans-serif;
+  }
+}
+
 .thirdweb-btn {
   @apply btn !important;
 }
