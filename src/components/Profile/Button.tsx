@@ -5,12 +5,10 @@ import { api } from "~/utils/api";
 import { ProfileForm } from "~/components/Profile/Form";
 import Connect from "~/components/utils/Connect";
 import { useDisconnect } from "thirdweb/react";
-import { Logout } from "@coinbase/waas-sdk-web";
 import { client } from "~/providers/Thirdweb";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useWalletContext } from "@coinbase/waas-sdk-web-react";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -30,7 +28,6 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  const { waas } = useWalletContext();
   const { disconnect } = useDisconnect();
   const [createdProfileImgUrl, setCreatedProfileImgUrl] = useState<string>();
 
@@ -52,13 +49,8 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   }, [createdProfileImgUrl, imageUrl]);
 
   const logout = async () => {
-    console.log('logging out...')
-    await waas?.logout();
     if (wallet) {
-      console.log('still logging out...')
       void disconnect(wallet);
-      await waas?.logout();
-      void Logout();
     }
   }
 
