@@ -6,7 +6,7 @@ import { PROFILES, LOG_A_DOG } from '~/constants/addresses';
 import { DEFAULT_CHAIN } from '~/constants/chains';
 import { env } from '~/env';
 import { profiles, setProfileOnBehalf } from '~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849';
-import { logHotdog } from '~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d';
+import { logHotdog } from '~/thirdweb/84532/0xd672307b4fefae064e4e59bfbfc1e24776f57a33';
 import { upload } from "thirdweb/storage";
 
 const ENGINE_URL = `https://engine-production-3357.up.railway.app`;

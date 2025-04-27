@@ -1,11 +1,34 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
+interface IZoraFactory {
+    function deploy(
+        address payoutRecipient,
+        address[] memory owners,
+        string memory uri,
+        string memory name,
+        string memory symbol,
+        address platformReferrer,
+        address currency,
+        int24 tickLower,
+        uint256 orderSize
+    ) external payable returns (address, uint256);
+}
+
 /**
  * @title LogADog
  * @dev The worlds first onchain hotdog eating competition
  */
 contract LogADog {
+    // Zora Factory address on Base
+    address public constant ZORA_FACTORY = 0x777777751622c0d3258f214F9DF38E35BF45baF3;
+    // Platform referrer address (can be updated by owner)
+    address public platformReferrer;
+    // Temporary flag to disable Zora coins
+    bool public zoraEnabled = true;
+
     struct HotdogLog {
         uint256 logId;
         string imageUri;
@@ -13,6 +36,7 @@ contract LogADog {
         uint256 timestamp;
         address eater;
         address logger;
+        address zoraCoin; // Address of the Zora coin created for this log
     }
 
     struct Attestation {
@@ -24,7 +48,7 @@ contract LogADog {
     mapping(uint256 => Attestation[]) public attestations;
     mapping(uint256 => mapping(address => bool)) public hasAttested;
 
-    event HotdogLogged(uint256 indexed logId, address indexed logger, address indexed eater, string imageUri, string metadataUri, uint256 timestamp);
+    event HotdogLogged(uint256 indexed logId, address indexed logger, address indexed eater, string imageUri, string metadataUri, uint256 timestamp, address zoraCoin);
     event AttestationMade(uint256 indexed logId, address indexed attestor, bool isValid);
     event HotdogLogRevoked(uint256 indexed logId, address indexed logger);
     event AttestationRevoked(uint256 indexed logId, address indexed attestor);
@@ -34,24 +58,58 @@ contract LogADog {
         _;
     }
 
+    constructor(address _platformReferrer) {
+        platformReferrer = _platformReferrer;
+    }
+
+    function setZoraEnabled(bool _zoraEnabled) external {
+        zoraEnabled = _zoraEnabled;
+    }
+
+    function setPlatformReferrer(address _platformReferrer) external {
+        require(msg.sender == platformReferrer, "Only current platform referrer can update");
+        platformReferrer = _platformReferrer;
+    }
+
     /**
      * @notice Logs a hotdog with an image URI, metadata URI, and specified owner.
      * @param imageUri The URI pointing to the image of the hotdog being eaten.
      * @param metadataUri The URI pointing to the metadata JSON object.
      * @param eater The address of the hotdog eater.
      * @return logId The ID of the newly created hotdog log.
+     * @dev Any eth sent with the transaction is used to purchase the zora coin.
      */
-    function logHotdog(string memory imageUri, string memory metadataUri, address eater) external returns (uint256 logId) {
+    function logHotdog(string memory imageUri, string memory metadataUri, address eater) external payable returns (uint256 logId) {
         logId = hotdogLogs.length;
+        
+        // Create Zora coin first
+        address[] memory owners = new address[](1);
+        owners[0] = eater;
+
+        (address coinAddress,) = IZoraFactory(ZORA_FACTORY).deploy{value: msg.value}(
+            eater, // payout recipient
+            owners, // owners
+            metadataUri, // uri
+            string.concat("Logged Dog #", Strings.toString(logId)), // name
+            "LOGADOG", // symbol
+            platformReferrer, // platform referrer
+            address(0), // currency (ETH/WETH)
+            -208200, // tickLower (required for ETH/WETH pairs)
+            msg.value // order size
+        );
+
+        // Log the dog
         hotdogLogs.push(HotdogLog({
             logId: logId,
             imageUri: imageUri,
             metadataUri: metadataUri,
             timestamp: block.timestamp,
             eater: eater,
-            logger: msg.sender
+            logger: msg.sender,
+            zoraCoin: coinAddress
         }));
-        emit HotdogLogged(logId, msg.sender, eater, imageUri, metadataUri, block.timestamp);
+
+        emit HotdogLogged(logId, msg.sender, eater, imageUri, metadataUri, block.timestamp, coinAddress);
     }
 
     /**
@@ -374,5 +432,9 @@ contract LogADog {
             }
         }
         revert("User attestation not found");
+    }
+
+    function getAttestationCount(uint256 logId) external view returns (uint256) {
+        return attestations[logId].length;
     }
 }

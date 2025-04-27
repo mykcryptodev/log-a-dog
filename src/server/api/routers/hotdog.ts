@@ -8,7 +8,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
+import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs } from "~/thirdweb/84532/0xd672307b4fefae064e4e59bfbfc1e24776f57a33";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
 import { createThirdwebClient } from 'thirdweb';
@@ -16,6 +16,7 @@ import { download } from 'thirdweb/storage';
 import { getCoin } from '@zoralabs/coins-sdk';
 import { base } from 'viem/chains';
 import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION } from "~/server/utils/redis";
+import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -182,8 +183,8 @@ export const hotdogRouter = createTRPCRouter({
             client,
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
-          startTime: BigInt(new Date('2024-05-23T12:00:00-04:00').getTime() / 1000),
-          endTime: BigInt(new Date('2024-09-05T12:00:00-04:00').getTime() / 1000),
+          startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
+          endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
           pageSize: BigInt(limit),
         }),
         getHotdogLogs({
@@ -192,8 +193,8 @@ export const hotdogRouter = createTRPCRouter({
             client,
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
-          startTime: BigInt(new Date('2024-05-23T12:00:00-04:00').getTime() / 1000),
-          endTime: BigInt(new Date('2024-09-05T12:00:00-04:00').getTime() / 1000),
+          startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
+          endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
           user,
           start: BigInt(start),
           limit: BigInt(limit)
@@ -283,8 +284,8 @@ export const hotdogRouter = createTRPCRouter({
             client,
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
-          startTime: BigInt(new Date('2024-05-23T12:00:00-04:00').getTime() / 1000),
-          endTime: BigInt(new Date('2024-09-05T12:00:00-04:00').getTime() / 1000),
+          startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
+          endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
           pageSize: BigInt(limit),
         }),
         getHotdogLogs({
@@ -293,8 +294,8 @@ export const hotdogRouter = createTRPCRouter({
             client,
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
-          startTime: BigInt(new Date('2024-05-23T12:00:00-04:00').getTime() / 1000),
-          endTime: BigInt(new Date('2024-09-05T12:00:00-04:00').getTime() / 1000),
+          startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
+          endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
           user,
           start: BigInt(0),
           limit: BigInt(limit)
@@ -370,8 +371,8 @@ export const hotdogRouter = createTRPCRouter({
           client,
           chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
         }),
-        startTime: BigInt(new Date('2024-05-23T12:00:00-04:00').getTime() / 1000),
-        endTime: BigInt(new Date('2024-09-05T12:00:00-04:00').getTime() / 1000),
+        startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
+        endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
       });
       return {
         users: leaderboardResponse[0],

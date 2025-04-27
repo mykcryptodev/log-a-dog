@@ -7,11 +7,10 @@ import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import Connect from "~/components/utils/Connect";
 import { getContract, sendTransaction } from "thirdweb";
-import { logHotdog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
+import { logHotdog } from "~/thirdweb/84532/0xd672307b4fefae064e4e59bfbfc1e24776f57a33";
 import dynamic from 'next/dynamic';
 import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { api } from "~/utils/api";
-import { upload } from "thirdweb/storage";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -49,34 +48,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       if (isDisabled) return;
       setIsLoading(true);
       try {
-        // Create Zora coin first
-        const zoraResult = await createZoraCoin.mutateAsync({
-          imageUri: imgUri!,
-          eater: account.address,
-          chain: activeChain,
-        });
-
-        if (!zoraResult.success || !zoraResult.coin.deployment) {
-          throw new Error("Failed to create Zora coin");
-        }
-
-        // Create metadata that includes Zora coin information
-        const metadata = {
-          imageUri: imgUri!,
-          eater: account.address,
-          zoraCoin: {
-            address: zoraResult.coin.address,
-            name: zoraResult.coin.deployment.name,
-            symbol: zoraResult.coin.deployment.symbol,
-          }
-        };
-
-        // Upload metadata to IPFS
-        const metadataUri = await upload({
-          client,
-          files: [metadata],
-        });
-
         // Write to blockchain contract with Zora coin info in metadata
         const transaction = logHotdog({
           contract: getContract({
@@ -85,7 +56,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
             chain: activeChain,
           }),
           imageUri: imgUri!,
-          metadataUri,
+          metadataUri: '',
           eater: account.address
         });
         const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
@@ -131,6 +102,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           hotdogEater: account.address,
           imageUri: imgUri!,
         });
+        // close the modal
+        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
       }
     };
 
