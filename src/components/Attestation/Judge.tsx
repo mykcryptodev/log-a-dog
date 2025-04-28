@@ -12,11 +12,11 @@ import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 
 type Props = {
   disabled?: boolean;
-  logId: bigint;
+  logId: string;
   userAttested: boolean | undefined;
   userAttestation: boolean | undefined;
-  validAttestations: bigint | undefined;
-  invalidAttestations: bigint | undefined;
+  validAttestations: string | undefined;
+  invalidAttestations: string | undefined;
   onAttestationMade?: () => void;
   onAttestationAffirmationRevoked?: () => void;
 }
@@ -53,7 +53,7 @@ export const JudgeAttestation: FC<Props> = ({
           address: LOG_A_DOG[activeChain.id]!,
           client,
         }),
-        logId,
+        logId: BigInt(logId),
         isValid,
       });
       const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
@@ -99,7 +99,7 @@ export const JudgeAttestation: FC<Props> = ({
           address: LOG_A_DOG[activeChain.id]!,
           client,
         }),
-        logId,
+        logId: BigInt(logId),
       });
       const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
       if (!wallet) return;

@@ -3,7 +3,7 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { MediaRenderer, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
-import { TagIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
 import { ADDRESS_ZERO } from "thirdweb";
@@ -104,6 +104,12 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
                   onRevocation={refetchDogData}
                 />
               </div>
+              {hotdog.zoraCoin && (
+                <div className="flex items-center text-xs opacity-50 w-full justify-between">
+                  <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${hotdog.zoraCoin.marketCap}</div>
+                  <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${hotdog.zoraCoin.volume24h}</div>
+                </div>
+              )}
               <MediaRenderer
                 src={hotdog.imageUri}
                 client={client}

@@ -14,7 +14,6 @@ import { env } from "~/env";
 import { createThirdwebClient } from 'thirdweb';
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
-import { base } from 'viem/chains';
 import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION } from "~/server/utils/redis";
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 

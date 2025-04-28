@@ -11,7 +11,7 @@ import { revokeHotdogLog } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe
 
 type Props = {
   hotdog: {
-    logId: bigint;
+    logId: string;
     eater: string;
   }
   onRevocation?: () => void;
@@ -33,7 +33,7 @@ export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
         address: LOG_A_DOG[activeChain.id]!,
         client,
       }),
-      logId: hotdog.logId,
+      logId: BigInt(hotdog.logId),
     });
 
     setIsLoading(true);
