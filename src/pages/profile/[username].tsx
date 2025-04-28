@@ -6,7 +6,6 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import dynamic from "next/dynamic";
 import { client } from "~/providers/Thirdweb";
-import { ListAttestations } from "~/components/Attestation/List";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { useActiveAccount } from "thirdweb/react";
 import { UserListAttestations } from "~/components/Attestation/UserList";

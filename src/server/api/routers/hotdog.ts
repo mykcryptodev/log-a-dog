@@ -362,8 +362,11 @@ export const hotdogRouter = createTRPCRouter({
         return hotdog;
       });
 
+      // filter the hotdogs that were not eaten by the user
+      const userHotdogs = moderatedHotdogs.filter(hotdog => hotdog.eater.toLowerCase() === user.toLowerCase());
+
       return {
-        hotdogs: moderatedHotdogs,
+        hotdogs: userHotdogs,
         validAttestations: dogResponse[1],
         invalidAttestations: dogResponse[2],
         totalPages,
