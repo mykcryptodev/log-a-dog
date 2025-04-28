@@ -4,6 +4,7 @@ import { ADDRESS_ZERO, createThirdwebClient, getContract, isAddress } from "thir
 import { readContract } from "thirdweb";
 import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
+import { getProfile as getZoraProfile } from '@zoralabs/coins-sdk';
 
 import {
   createTRPCRouter,
@@ -58,6 +59,12 @@ export const profileRouter = createTRPCRouter({
       if (!profileAddress || !chain) {
         throw new Error("Chain not supported");
       }
+
+      const zoraProfile = await getZoraProfileData(input.username);
+      if (zoraProfile) {
+        return zoraProfile;
+      }
+
       const client = createThirdwebClient({
         secretKey: env.THIRDWEB_SECRET_KEY,
       });
@@ -163,7 +170,43 @@ export const profileRouter = createTRPCRouter({
     }),
 });
 
+async function getZoraProfileData(addressOrUsername: string) {
+  try {
+    const response = await getZoraProfile({
+      identifier: addressOrUsername,
+    });
+    
+    if (response?.data?.profile) {
+      const profile = response.data.profile;
+      const zoraAddresses = [
+        profile.publicWallet.walletAddress,
+        ...profile.linkedWallets.edges.map(w => w.node.walletAddress),
+      ];
+      // the user's zora addresses must match the address we were given.
+      if (zoraAddresses.includes(addressOrUsername)) {
+        return {
+          username: profile.displayName ?? profile.handle ?? '',
+          imgUrl: profile.avatar?.medium ?? '',
+          metadata: profile,
+          address: profile.publicWallet.walletAddress,
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching Zora profile:', error);
+    return null;
+  }
+}
+
 async function getProfile (address: string, chainId: number) {
+  // First try to get Zora profile
+  const zoraProfile = await getZoraProfileData(address);
+  if (zoraProfile) {
+    console.log('Zora profile found', zoraProfile);
+    return zoraProfile;
+  }
+
   const profileAddress = PROFILES[chainId];
   const betaProfileAddress = BETA_PROFILES[chainId]!;
   const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
@@ -238,7 +281,7 @@ async function getProfile (address: string, chainId: number) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        api_key: 'NEYNAR_API_DOCS',
+        api_key: env.NEYNAR_API_KEY,
       },
     });
 
@@ -247,7 +290,7 @@ async function getProfile (address: string, chainId: number) {
       const user = neynarUser[address]?.[0];
       if (user) {
         return {
-          username: user.username,
+          username: user.display_name ?? user.username,
           imgUrl: user.pfp_url,
           metadata: '',
           address,

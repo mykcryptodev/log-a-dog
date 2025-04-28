@@ -145,7 +145,6 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
     }
 
     try {
-      console.log('Fetching Zora coins for addresses:', chunk);
       const response = await getCoins({
         coins: chunk.map(address => ({
           collectionAddress: address as `0x${string}`,
@@ -184,12 +183,6 @@ export const hotdogRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { chainId, user, start, limit } = input;
-      console.log({
-        chainId,
-        user,
-        start,
-        limit
-      });
 
       // Generate cache key for this query
       const cacheKey = `hotdogs:${chainId}:${user}:${start}:${limit}`;
@@ -198,8 +191,7 @@ export const hotdogRouter = createTRPCRouter({
       const cachedData = await getCachedData<GetAllResponse>(cacheKey);
       
       if (cachedData) {
-        console.log('found!')
-        // return cachedData;
+        return cachedData;
       }
 
       const [redactedLogIds, totalPages, dogResponse] = await Promise.all([
@@ -274,8 +266,6 @@ export const hotdogRouter = createTRPCRouter({
         Promise.all(metadataUrisArray.map(uri => getMetadataFromUri(uri)))
       ]); 
 
-      console.log({ zoraCoinDetails, metadataResults });
-
       // Create maps for the fetched data
       const metadataMap = new Map(
         metadataUrisArray.map((uri, index) => [uri, metadataResults[index]])
@@ -292,8 +282,6 @@ export const hotdogRouter = createTRPCRouter({
           metadata,
         } as ProcessedHotdog;
       });
-
-      console.log('Processed hotdogs:', processedHotdogs);
 
       const response: GetAllResponse = {
         hotdogs: processedHotdogs,
@@ -461,7 +449,6 @@ export const hotdogRouter = createTRPCRouter({
         });
 
         if (!response.ok) {
-          console.log({ responseBody: response.body, text: response.text(), status: response.statusText });
           throw new Error(`Error: ${response.statusText}`);
         }
 
@@ -485,7 +472,6 @@ export const hotdogRouter = createTRPCRouter({
           throw new Error("SafeSearchAnnotation is missing in the response");
         }
 
-        console.log({ safeSearchAnnotation });
         const isSafeForWork = safeSearchAnnotation.adult !== "VERY_LIKELY";
         const isSafeForViolence = safeSearchAnnotation.violence !== "VERY_LIKELY";
         const isSafeForMedical = safeSearchAnnotation.medical !== "VERY_LIKELY";

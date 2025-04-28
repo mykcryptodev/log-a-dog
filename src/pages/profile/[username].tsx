@@ -34,6 +34,7 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+  console.log({ data });
   const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
   const [showProfileForm, setShowProfileForm] = useState<boolean>(false);
 
