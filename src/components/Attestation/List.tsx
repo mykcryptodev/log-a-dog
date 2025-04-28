@@ -46,7 +46,7 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
   return (
     <>
     <div id="top-of-list" className="invisible" />
-    <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+    <div className="flex flex-col gap-4">
       {isLoadingHotdogs && 
         Array.from({ length: limitOrDefault }).map((_, index) => (
           <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
@@ -81,8 +81,8 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
         const userAttestation = dogData?.userAttestations[index];
 
         return (
-          <div className="card bg-base-200 bg-opacity-50" key={`${hotdog.logId}-${index}`}>
-            <div className="card-body p-4 max-w-xs">
+          <div className="card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow" key={`${hotdog.logId}-${index}`}>
+            <div className="card-body p-4 max-w-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-fit">
