@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import Connect from "~/components/utils/Connect";
 import { getContract, sendTransaction } from "thirdweb";
-import { logHotdog } from "~/thirdweb/84532/0xd672307b4fefae064e4e59bfbfc1e24776f57a33";
+import { logHotdog } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c";
 import dynamic from 'next/dynamic';
 import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { api } from "~/utils/api";

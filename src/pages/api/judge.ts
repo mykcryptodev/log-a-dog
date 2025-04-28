@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { LOG_A_DOG } from '~/constants/addresses';
 import { SUPPORTED_CHAINS } from '~/constants/chains';
 import { env } from '~/env';
-import { attestHotdogLog } from '~/thirdweb/84532/0xd672307b4fefae064e4e59bfbfc1e24776f57a33';
+import { attestHotdogLog } from '~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c';
 
 // Define the schema for the request body
 const requestBodySchema = z.object({
