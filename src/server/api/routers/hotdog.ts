@@ -490,7 +490,7 @@ export const hotdogRouter = createTRPCRouter({
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${env.THIRDWEB_ENGINE_ACCESS_TOKEN}`,
-            "x-backend-wallet-address": `${env.BACKEND_SMART_WALLET_ADDRESS}`,
+            "x-backend-wallet-address": `${env.NEXT_PUBLIC_BACKEND_SMART_WALLET_ADDRESS}`,
           },
           body: JSON.stringify({
             functionName: "logHotdog",

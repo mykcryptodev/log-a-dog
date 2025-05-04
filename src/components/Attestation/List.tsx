@@ -11,6 +11,8 @@ import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "./AiJudgement";
 import Comments from "~/components/Attestation/Comments";
+import { env } from "~/env";
+import { isAddressEqual } from "viem";
 
 type Props = {
   attestors?: string[];
@@ -42,6 +44,12 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     if (!account) return;
     void refetchDogData();
   }, [account, refetchDogData]);
+
+  const showLoggedVia = (hotdog: { eater: `0x${string}`, logger: `0x${string}` }) => {
+    const loggerIsNotEater = !isAddressEqual(hotdog.eater, hotdog.logger);
+    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger, env.NEXT_PUBLIC_BACKEND_SMART_WALLET_ADDRESS as `0x${string}`);
+    return loggerIsNotEater && loggerIsNotBackendWallet;
+  }
 
   return (
     <>
@@ -90,7 +98,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   </div>
                   <div className="flex flex-col">
                     <Name address={hotdog.eater} />
-                    {hotdog.eater.toLowerCase() !== hotdog.logger.toLowerCase() && (
+                    {showLoggedVia({ eater: hotdog.eater as `0x${string}`, logger: hotdog.logger as `0x${string}` }) && (
                       <div className="flex items-center gap-1 text-xs opacity-75">
                         <span>via</span>
                         <Avatar address={hotdog.logger} size="16px" />
