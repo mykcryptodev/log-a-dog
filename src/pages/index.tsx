@@ -53,7 +53,6 @@ export default function Home() {
             </Link>
           </div> */}
           <div className="w-full flex flex-col gap-2 text-center">
-            <h3 className="text-2xl font-bold">🌎 Global Leaderboard</h3>
             <div className="mx-auto">
               <Leaderboard refetchTimestamp={refetchTimestamp} />
             </div>
