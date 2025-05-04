@@ -35,6 +35,19 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const handleOnResolved = (success: boolean) => {
     setIsQueueIdResolved(true);
     if (success && account) {
+      // pop confetti
+      const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+      canvas.style.display = 'block';
+      const jsConfetti = new JSConfetti({ canvas });
+      void jsConfetti.addConfetti({
+        emojis: ['🌭', '🎉', '🌈', '✨']
+      }).then(() => {
+        // Hide the canvas after confetti animation completes
+        setTimeout(() => {
+          canvas.style.display = 'none';
+        }, 3000);
+      });
+
       void onAttestationCreated?.({
         hotdogEater: account.address,
         imageUri: imgUri!,
@@ -65,15 +78,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         });
         setQueueId(queueId);
 
-        // pop confetti
-        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-        const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-        canvas.style.display = 'block';
-        const jsConfetti = new JSConfetti({ canvas });
-        await jsConfetti.addConfetti({
-          emojis: ['🌭', '🎉', '🌈', '✨']
-        });
-        canvas.style.display = 'none';
+        // close the modal
         (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
         setImgUri(undefined);
       } catch (error) {
@@ -108,11 +113,13 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   return (
     <>
       <canvas 
-        className="absolute top-0 left-0 hidden" 
+        className="fixed top-0 left-0 hidden" 
         id="confetti-canvas"
         style={{
           height: '100vh',
           width: '100vw',
+          zIndex: 9999,
+          pointerEvents: 'none'
         }}
       />
       {/* Open the modal using document.getElementById('ID').showModal() method */}
