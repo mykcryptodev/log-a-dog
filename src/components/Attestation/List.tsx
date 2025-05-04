@@ -6,7 +6,7 @@ import { client } from "~/providers/Thirdweb";
 import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
-import { ADDRESS_ZERO } from "thirdweb";
+import { ZERO_ADDRESS } from "thirdweb";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "./AiJudgement";
@@ -21,7 +21,7 @@ type Props = {
   address?: string;
 };
 
-export const ListAttestations: FC<Props> = ({ address, limit }) => {
+export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
@@ -29,7 +29,7 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery({
     chainId: activeChain.id,
-    user: account?.address ?? ADDRESS_ZERO,
+    user: account?.address ?? ZERO_ADDRESS,
     start,
     limit: limitOrDefault,
   }, {

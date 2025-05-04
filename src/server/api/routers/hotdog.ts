@@ -49,16 +49,6 @@ interface HotdogMetadata {
   zoraCoin?: ZoraCoin;
 }
 
-interface HotdogLog {
-  logId: string;
-  imageUri: string;
-  metadataUri: string;
-  timestamp: string;
-  eater: string;
-  logger: string;
-  zoraCoin: string;
-}
-
 interface HotdogResponse {
   logs: Array<{
     logId: string;
