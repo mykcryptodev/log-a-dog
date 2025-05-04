@@ -5,7 +5,7 @@ import { readContract } from "thirdweb";
 import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { getProfile as getZoraProfile } from '@zoralabs/coins-sdk';
-import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
+import { getOrSetCache, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
 
 import {
   createTRPCRouter,
@@ -202,6 +202,50 @@ export const profileRouter = createTRPCRouter({
         },
         CACHE_DURATION.MEDIUM
       );
+    }),
+  create: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      address: z.string(),
+      username: z.string(),
+      imgUrl: z.string(),
+      metadata: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const { chainId, address, username, imgUrl, metadata } = input;
+      
+      const response = await fetch(
+        `${env.THIRDWEB_ENGINE_URL}/contract/${chainId}/${PROFILES[chainId]}/write`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.THIRDWEB_ENGINE_ACCESS_TOKEN}`,
+            "x-backend-wallet-address": `${env.BACKEND_PROFILE_WALLET_ADDRESS}`,
+          },
+          body: JSON.stringify({
+            functionName: "setProfileOnBehalf",
+            args: [
+              address,
+              username,
+              imgUrl,
+              metadata,
+            ],
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to create profile: ${response.statusText}`);
+      }
+
+      const data = await response.json() as { result: { queueId: string } };
+
+      // Invalidate Redis cache for all profile queries for this chain
+      const pattern = `profile:${chainId}:*`;
+      await deleteCachedData(pattern);
+
+      return data.result.queueId;
     }),
 });
 
