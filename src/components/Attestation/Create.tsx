@@ -1,14 +1,10 @@
 import { type FC,useContext, useState, useMemo } from 'react';
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
-import { LOG_A_DOG } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
-import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import Connect from "~/components/utils/Connect";
-import { getContract, sendTransaction } from "thirdweb";
 import dynamic from 'next/dynamic';
-import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { api } from "~/utils/api";
 import { TransactionStatus } from '../utils/TransactionStatus';
 
@@ -68,7 +64,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           eater: account.address
         });
         setQueueId(queueId);
-        console.log({ queueId });
 
         // pop confetti
         (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
@@ -156,7 +151,15 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           </div>
         </div>
       </dialog>
-      {queueId && !isQueueIdResolved && <TransactionStatus onResolved={handleOnResolved} queueId={queueId} />}
+      {queueId && !isQueueIdResolved && (
+        <TransactionStatus 
+          onResolved={handleOnResolved} 
+          queueId={queueId} 
+          loadingMessage="Logging dog..."
+          successMessage="You logged a dog!"
+          errorMessage="Failed to log your dog"
+        />
+      )}
     </>
   )
 };
