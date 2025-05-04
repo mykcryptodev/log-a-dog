@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.ENGINE_ACCESS_TOKEN}`,
+                Authorization: `Bearer ${env.THIRDWEB_ENGINE_ACCESS_TOKEN}`,
                 "x-backend-wallet-address": `${env.BACKEND_PROFILE_WALLET_ADDRESS}`,
               },
               body: JSON.stringify({

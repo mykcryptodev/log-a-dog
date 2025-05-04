@@ -318,6 +318,27 @@ contract LogADog {
      * @return count The total number of hotdog logs for the user.
      */
     function getUserHotdogLogCount(address user) external view returns (uint256 count) {
+        return _countUserHotdogLogs(user);
+    }
+
+    /**
+     * @notice Gets the total number of hotdog logs for multiple users.
+     * @param users An array of addresses to get counts for.
+     * @return counts An array of hotdog log counts corresponding to each user.
+     */
+    function getBulkUserHotdogLogCount(address[] calldata users) external view returns (uint256[] memory counts) {
+        counts = new uint256[](users.length);
+        for (uint256 i = 0; i < users.length; i++) {
+            counts[i] = _countUserHotdogLogs(users[i]);
+        }
+    }
+
+    /**
+     * @notice Internal function to count the number of hotdog logs for a user.
+     * @param user The address of the user.
+     * @return count The total number of hotdog logs for the user.
+     */
+    function _countUserHotdogLogs(address user) internal view returns (uint256 count) {
         for (uint256 i = 0; i < hotdogLogs.length; i++) {
             if (hotdogLogs[i].eater == user) {
                 count++;
@@ -332,12 +353,7 @@ contract LogADog {
      * @return totalPages The total number of pages.
      */
     function getTotalPages(address user, uint256 pageSize) external view returns (uint256 totalPages) {
-        uint256 userLogCount = 0;
-        for (uint256 i = 0; i < hotdogLogs.length; i++) {
-            if (hotdogLogs[i].eater == user) {
-                userLogCount++;
-            }
-        }
+        uint256 userLogCount = _countUserHotdogLogs(user);
         totalPages = (userLogCount + pageSize - 1) / pageSize; // Round up division
     }
 

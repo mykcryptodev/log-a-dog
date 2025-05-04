@@ -36,7 +36,7 @@ contract LogADogTest is Test {
                 "LOGADOG", // symbol
                 platformReferrer, // platform referrer
                 address(0), // currency
-                -199200, // tickLower (fixed to match contract)
+                -208200, // tickLower (fixed to match contract)
                 1 ether // order size
             ),
             abi.encode(MOCK_COIN_ADDRESS, 1)

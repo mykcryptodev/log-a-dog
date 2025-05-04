@@ -483,4 +483,42 @@ export const hotdogRouter = createTRPCRouter({
         throw error;
       }
     }),
+  log: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      imageUri: z.string(),
+      eater: z.string(),
+      metadataUri: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const { chainId, imageUri, eater, metadataUri } = input;
+      
+      const response = await fetch(
+        `${env.THIRDWEB_ENGINE_URL}/contract/${chainId}/${LOG_A_DOG[chainId]}/write`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.THIRDWEB_ENGINE_ACCESS_TOKEN}`,
+            "x-backend-wallet-address": `${env.BACKEND_SMART_WALLET_ADDRESS}`,
+          },
+          body: JSON.stringify({
+            functionName: "logHotdog",
+            args: [
+              imageUri,
+              metadataUri,
+              eater,
+            ],
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to log hotdog: ${response.statusText}`);
+      }
+
+      const data = await response.json() as { result: { queueId: string } };
+      console.log({ data });
+      return data.result.queueId;
+    }),
 });

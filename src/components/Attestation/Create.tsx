@@ -7,10 +7,10 @@ import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import Connect from "~/components/utils/Connect";
 import { getContract, sendTransaction } from "thirdweb";
-import { logHotdog } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c";
 import dynamic from 'next/dynamic';
 import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { api } from "~/utils/api";
+import { TransactionStatus } from '../utils/TransactionStatus';
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -22,6 +22,7 @@ type Props = {
   }) => void;
 }
 export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
+  const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
   const [imgUri, setImgUri] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const wallet = useActiveWallet();
@@ -32,7 +33,18 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
-  const createZoraCoin = api.zora.createCoin.useMutation();
+  const [queueId, setQueueId] = useState<string | undefined>();
+  const [isQueueIdResolved, setIsQueueIdResolved] = useState<boolean>(false);
+
+  const handleOnResolved = (success: boolean) => {
+    setIsQueueIdResolved(true);
+    if (success && account) {
+      void onAttestationCreated?.({
+        hotdogEater: account.address,
+        imageUri: imgUri!,
+      });
+    }
+  }
 
   const ActionButton: FC = () => {
     if (!account) return (
@@ -48,39 +60,16 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       if (isDisabled) return;
       setIsLoading(true);
       try {
-        // Write to blockchain contract with Zora coin info in metadata
-        const transaction = logHotdog({
-          contract: getContract({
-            address: LOG_A_DOG[activeChain.id]!,
-            client,
-            chain: activeChain,
-          }),
+        // Call the backend tRPC procedure
+        const queueId = await logHotdog({
+          chainId: activeChain.id,
           imageUri: imgUri!,
           metadataUri: '',
           eater: account.address
         });
-        const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
-        if (!wallet) return;
-        const walletCapabilities = await getCapabilities({ wallet });
-        if (walletCapabilities?.[chainIdAsHex]) {
-          await sendCalls({
-            chain: activeChain,
-            wallet,
-            calls: [transaction],
-            capabilities: {
-              paymasterService: {
-                url: `https://${activeChain.id}.bundler.thirdweb.com/${client.clientId}`
-              }
-            },
-          });
-        } else {
-          await sendTransaction({
-            account: wallet.getAccount()!,
-            transaction,
-          });
-        }
+        setQueueId(queueId);
+        console.log({ queueId });
 
-        toast.success("Dog has been logged and minted as a Zora Coin!");
         // pop confetti
         (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
         const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
@@ -167,6 +156,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           </div>
         </div>
       </dialog>
+      {queueId && !isQueueIdResolved && <TransactionStatus onResolved={handleOnResolved} queueId={queueId} />}
     </>
   )
 };
