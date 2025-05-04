@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { BETA_PROFILES, MODERATION_V1, PROFILES } from "~/constants/addresses";
-import { ADDRESS_ZERO, createThirdwebClient, getContract, isAddress } from "thirdweb";
+import { ZERO_ADDRESS, createThirdwebClient, getContract, isAddress } from "thirdweb";
 import { readContract } from "thirdweb";
 import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { getProfile as getZoraProfile } from '@zoralabs/coins-sdk';
+import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 
 import {
   createTRPCRouter,
@@ -45,8 +46,15 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { address, chainId } = input;
-      const profile = await getProfile(address, chainId);
-      return profile;
+      const cacheKey = `profile:${chainId}:${address}`;
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const profile = await getProfile(address, chainId);
+          return profile;
+        },
+        CACHE_DURATION.MEDIUM
+      );
     }),
   getByUsername: publicProcedure
     .input(z.object({
@@ -54,46 +62,54 @@ export const profileRouter = createTRPCRouter({
       username: z.string(),
     }))
     .query(async ({ input }) => {
-      const chain = SUPPORTED_CHAINS.find((c) => c.id === input.chainId);
-      const profileAddress = PROFILES[input.chainId];
-      if (!profileAddress || !chain) {
-        throw new Error("Chain not supported");
-      }
+      const { chainId, username } = input;
+      const cacheKey = `profile:${chainId}:username:${username}`;
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
+          const profileAddress = PROFILES[chainId];
+          if (!profileAddress || !chain) {
+            throw new Error("Chain not supported");
+          }
 
-      const zoraProfile = await getZoraProfileData(input.username);
-      if (zoraProfile) {
-        return zoraProfile;
-      }
+          const zoraProfile = await getZoraProfileData(username);
+          if (zoraProfile) {
+            return zoraProfile;
+          }
 
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
-      const profileContract = getContract({
-        client,
-        address: profileAddress,
-        chain,
-      });
-      const legacyProfileContract = getContract({
-        client,
-        address: BETA_PROFILES[input.chainId]!,
-        chain,
-      });
-      const [address, legacyAddress] = await Promise.all([
-        usedUsernames({
-          contract: profileContract,
-          arg_0: input.username,
-        }),
-        usedUsernames({
-          contract: legacyProfileContract,
-          arg_0: input.username,
-        }),
-      ]);
-      const usedAddress = address !== ADDRESS_ZERO ? address : legacyAddress;
-      if (usedAddress) {
-        const profile = await getProfile(usedAddress, input.chainId);
-        return profile;
-      }
-      return null;
+          const client = createThirdwebClient({
+            secretKey: env.THIRDWEB_SECRET_KEY,
+          });
+          const profileContract = getContract({
+            client,
+            address: profileAddress,
+            chain,
+          });
+          const legacyProfileContract = getContract({
+            client,
+            address: BETA_PROFILES[chainId]!,
+            chain,
+          });
+          const [address, legacyAddress] = await Promise.all([
+            usedUsernames({
+              contract: profileContract,
+              arg_0: username,
+            }),
+            usedUsernames({
+              contract: legacyProfileContract,
+              arg_0: username,
+            }),
+          ]);
+          const usedAddress = address !== ZERO_ADDRESS ? address : legacyAddress;
+          if (usedAddress) {
+            const profile = await getProfile(usedAddress, chainId);
+            return profile;
+          }
+          return null;
+        },
+        CACHE_DURATION.MEDIUM
+      );
     }),
   getManyByAddress: publicProcedure
     .input(z.object({ 
@@ -102,7 +118,19 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { addresses, chainId } = input;
-      const profiles = await Promise.all(addresses.map((address) => getProfile(address, chainId)));
+      const profiles = await Promise.all(
+        addresses.map(async (address) => {
+          const cacheKey = `profile:${chainId}:${address}`;
+          return getOrSetCache(
+            cacheKey,
+            async () => {
+              const profile = await getProfile(address, chainId);
+              return profile;
+            },
+            CACHE_DURATION.MEDIUM
+          );
+        })
+      );
       return profiles;
     }),
   search: publicProcedure
@@ -112,61 +140,68 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { query, chainId } = input;
-      const profileAddress = PROFILES[chainId];
-      const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-      if (!profileAddress || !chain) {
-        throw new Error("Chain not supported");
-      }
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
-      const profileContract = getContract({
-        client,
-        address: profileAddress,
-        chain,
-      });
-      if (isAddress(query)) {
-        const result = await readContract({
-          contract: profileContract,
-          method: {
-            name: "profiles",
-            type: "function",
-            stateMutability: "view",
-            inputs: [{ name: "address", type: "address" }],
-            outputs: [
-              { name: "username", type: "string" },
-              { name: "imgUrl", type: "string" },
-              { name: "metadata", type: "string" },
-            ],
-          },
-          params: [query],
-        });
-        if (result) {
-          return {
-            address: query,
-            username: result[0],
-            imgUrl: result[1],
-            metadata: result[2],
+      const cacheKey = `profile:${chainId}:search:${query}`;
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const profileAddress = PROFILES[chainId];
+          const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
+          if (!profileAddress || !chain) {
+            throw new Error("Chain not supported");
           }
-        }
-      } else {
-        const result = await readContract({
-          contract: profileContract,
-          method: {
-            name: "usedUsernames",
-            type: "function",
-            stateMutability: "view",
-            inputs: [{ name: "username", type: "string" }],
-            outputs: [{ name: "address", type: "address" }],
-          },
-          params: [query],
-        });
-        if (result) {
-          const profile = await getProfile(result, chainId);
-          return profile
-        }
-      }
-      return null;
+          const client = createThirdwebClient({
+            secretKey: env.THIRDWEB_SECRET_KEY,
+          });
+          const profileContract = getContract({
+            client,
+            address: profileAddress,
+            chain,
+          });
+          if (isAddress(query)) {
+            const result = await readContract({
+              contract: profileContract,
+              method: {
+                name: "profiles",
+                type: "function",
+                stateMutability: "view",
+                inputs: [{ name: "address", type: "address" }],
+                outputs: [
+                  { name: "username", type: "string" },
+                  { name: "imgUrl", type: "string" },
+                  { name: "metadata", type: "string" },
+                ],
+              },
+              params: [query],
+            });
+            if (result) {
+              return {
+                address: query,
+                username: result[0],
+                imgUrl: result[1],
+                metadata: result[2],
+              }
+            }
+          } else {
+            const result = await readContract({
+              contract: profileContract,
+              method: {
+                name: "usedUsernames",
+                type: "function",
+                stateMutability: "view",
+                inputs: [{ name: "username", type: "string" }],
+                outputs: [{ name: "address", type: "address" }],
+              },
+              params: [query],
+            });
+            if (result) {
+              const profile = await getProfile(result, chainId);
+              return profile
+            }
+          }
+          return null;
+        },
+        CACHE_DURATION.MEDIUM
+      );
     }),
 });
 
