@@ -13,7 +13,7 @@ export const CACHE_DURATION = {
   MEDIUM: 300, // 5 minutes
   LONG: 3600, // 1 hour
   VERY_LONG: 86400, // 24 hours
-};
+} as const;
 
 // Helper function to get cached data
 export async function getCachedData<T>(key: string): Promise<T | null> {
@@ -64,4 +64,16 @@ export async function getOrSetCache<T>(
   const data = await fetchFn();
   await setCachedData(key, data, ttl);
   return data;
+}
+
+// Helper function to delete cached data by pattern
+export async function deleteCachedData(pattern: string): Promise<void> {
+  try {
+    const keys = await redis.keys(pattern);
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  } catch (error) {
+    console.error('Error deleting cached data:', error);
+  }
 }

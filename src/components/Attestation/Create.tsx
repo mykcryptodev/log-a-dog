@@ -19,6 +19,7 @@ type Props = {
 }
 export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
+  const utils = api.useUtils();
   const [imgUri, setImgUri] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const wallet = useActiveWallet();
@@ -33,7 +34,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const [isQueueIdResolved, setIsQueueIdResolved] = useState<boolean>(false);
 
   const handleOnResolved = (success: boolean) => {
-    setIsQueueIdResolved(true);
     if (success && account) {
       // pop confetti
       const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
@@ -52,7 +52,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         hotdogEater: account.address,
         imageUri: imgUri!,
       });
+
+      // Invalidate the hotdog query cache
+      void utils.hotdog.getAll.invalidate();
     }
+    setIsQueueIdResolved(true);
   }
 
   const ActionButton: FC = () => {
@@ -87,10 +91,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         toast.error(`Attestation failed: ${e.message}`);
       } finally {
         setIsLoading(false);
-        void onAttestationCreated?.({
-          hotdogEater: account.address,
-          imageUri: imgUri!,
-        });
         // close the modal
         (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
       }

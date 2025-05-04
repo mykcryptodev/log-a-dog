@@ -24,10 +24,10 @@ export default function Home() {
           </h1>
           <CreateAttestation
             onAttestationCreated={() => {
-              // give the blockchain 5 seconds
+              // give the blockchain 10 seconds to confirm
               setTimeout(() => {
                 setRefetchTimestamp(new Date().getTime())
-              }, 5000);
+              }, 10000);
             }}
           />
           <Rules />

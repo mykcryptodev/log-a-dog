@@ -14,7 +14,7 @@ import { env } from "~/env";
 import { createThirdwebClient } from 'thirdweb';
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
-import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION } from "~/server/utils/redis";
+import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
@@ -518,7 +518,11 @@ export const hotdogRouter = createTRPCRouter({
       }
 
       const data = await response.json() as { result: { queueId: string } };
-      console.log({ data });
+
+      // Invalidate Redis cache for all hotdog queries for this chain
+      const pattern = `hotdogs:${chainId}:*`;
+      await deleteCachedData(pattern);
+
       return data.result.queueId;
     }),
 });
