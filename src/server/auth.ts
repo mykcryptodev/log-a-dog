@@ -6,6 +6,7 @@ import {
   type NextAuthOptions,
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
+import { EthereumProvider } from "~/server/auth/ethereumProvider";
 
 import { db } from "~/server/db";
 
@@ -19,15 +20,14 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: DefaultSession["user"] & {
       id: string;
-      // ...other properties
-      // role: UserRole;
+      address?: string;
     };
   }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User {
+    id: string;
+    address?: string;
+  }
 }
 
 /**
@@ -36,17 +36,46 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.address = user.address;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.address = token.address as string;
+      }
+      return session;
+    },
   },
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
+    EthereumProvider({
+      async createUser(credentials) {
+        const user = await db.user.create({
+          data: {
+            address: credentials.address,
+          },
+        });
+        // Create a new account for the user
+        await db.account.create({
+          data: {
+            userId: user.id,
+            type: "ethereum",
+            provider: "ethereum",
+            providerAccountId: credentials.address,
+          },
+        });
+        return user;
+      },
+    }),
     /**
      * ...add more providers here.
      *

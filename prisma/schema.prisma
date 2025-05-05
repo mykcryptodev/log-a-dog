@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-    provider = "mysql"
+    provider = "postgresql"
     url      = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
 
     // Do not use foreign keys (PlanetScale does not support them)
     relationMode = "prisma"
@@ -66,6 +67,7 @@ model User {
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+    address       String?
 }
 
 model VerificationToken {

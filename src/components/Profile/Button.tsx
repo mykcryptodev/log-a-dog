@@ -9,7 +9,7 @@ import { client } from "~/providers/Thirdweb";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-
+import { signOut } from "next-auth/react";
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
   { ssr: false }
@@ -52,6 +52,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     if (wallet) {
       void disconnect(wallet);
     }
+    await signOut({ redirect: false });
   }
 
   if (!account) return (
