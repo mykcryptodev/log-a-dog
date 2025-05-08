@@ -42,8 +42,6 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
           </div>
           <div className="flex items-center gap-2">
             <ProfileButton />
-            <SignInWithFarcaster />
-            <SignInWithEthereum />
             <Changelog />
           </div>
         </div>

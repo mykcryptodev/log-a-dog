@@ -9,7 +9,10 @@ import { client } from "~/providers/Thirdweb";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import { Portal } from "../utils/Portal";
+import SignInWithEthereum from "../utils/SignIn";
+import { SignInWithFarcaster } from "../utils/SignInWithFarcaster";
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
   { ssr: false }
@@ -26,6 +29,7 @@ type Props = {
 }
 export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout }) => {
   const { activeChain } = useContext(ActiveChainContext);
+  const { data: sessionData } = useSession();
   const account = useActiveAccount();
   const wallet = useActiveWallet();
   const { disconnect } = useDisconnect();
@@ -55,11 +59,21 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     await signOut({ redirect: false });
   }
 
-  if (!account) return (
-    <div className="mr-4">
+  if (!account && !sessionData?.user?.id) return (
+    <div className="mr-4 flex items-center gap-2">
       <Connect loginBtnLabel={loginBtnLabel} />
+      <SignInWithFarcaster />
     </div>
   )
+
+  if (account && !sessionData?.user?.id) {
+    return (
+      <SignInWithEthereum 
+        btnLabel="I will play with honor"
+        defaultOpen={true}
+      />
+    )
+  }
 
   if (!data?.username) return (
     <>

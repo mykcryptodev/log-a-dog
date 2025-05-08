@@ -83,7 +83,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       }}
       connectButton={{
         label: loginBtnLabel ?? "Login",
-        className: "btn",
+        className: "!btn",
       }}
       connectModal={{
         title: "Login to Log a Dog",

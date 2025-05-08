@@ -70,8 +70,8 @@ export const SignInWithFarcaster = () => {
   if (sessionData?.user) return null;
 
   return (
-    <button className="btn btn-primary" onClick={handleSignIn}>
-      Sign in with Farcaster
+    <button className="btn btn-neutral" onClick={handleSignIn}>
+      Login with Farcaster
     </button>
   );
 };

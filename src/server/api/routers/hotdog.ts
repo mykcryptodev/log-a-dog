@@ -5,6 +5,7 @@ import { SUPPORTED_CHAINS } from "~/constants/chains";
 
 import {
   createTRPCRouter,
+  protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
 import { client } from "~/server/utils";
@@ -473,14 +474,15 @@ export const hotdogRouter = createTRPCRouter({
         throw error;
       }
     }),
-  log: publicProcedure
+  log: protectedProcedure
     .input(z.object({
       chainId: z.number(),
       imageUri: z.string(),
       eater: z.string(),
       metadataUri: z.string(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      console.log({ user: ctx.session?.user });
       const { chainId, imageUri, eater, metadataUri } = input;
       
       const response = await fetch(
