@@ -22,7 +22,6 @@ export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string 
       <div className="w-4 h-4 bg-base-200 rounded-full animate-pulse" />
     );
   }
-  console.log({ profile });
   if (profile?.imgUrl === "") {
     return (
       <div className={'mt-1.5'}>
