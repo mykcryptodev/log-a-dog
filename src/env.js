@@ -51,6 +51,8 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_THIRDWEB_CLIENT_ID: z.string(),
     NEXT_PUBLIC_BACKEND_SMART_WALLET_ADDRESS: z.string(),
+    NEXT_PUBLIC_APP_URL: z.string(),
+    NEXT_PUBLIC_APP_DOMAIN: z.string(),
   },
 
   /**
@@ -77,6 +79,8 @@ export const env = createEnv({
     GOOGLE_VISION_API_KEY: process.env.GOOGLE_VISION_API_KEY,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_APP_DOMAIN: process.env.NEXT_PUBLIC_APP_DOMAIN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -6,6 +6,7 @@ import Changelog from "~/components/utils/Changelog";
 import Link from "next/link";
 import SignInWithEthereum from "./SignIn";
 import { SignInButton } from "@farcaster/auth-kit";
+import { SignInWithFarcaster } from "./SignInWithFarcaster";
 interface LayoutProps {
   children: ReactNode
 }
@@ -43,6 +44,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center gap-2">
             <ProfileButton />
             <SignInButton />
+            <SignInWithFarcaster />
             <SignInWithEthereum />
             <Changelog />
           </div>
