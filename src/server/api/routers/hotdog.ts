@@ -478,12 +478,15 @@ export const hotdogRouter = createTRPCRouter({
     .input(z.object({
       chainId: z.number(),
       imageUri: z.string(),
-      eater: z.string(),
       metadataUri: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
       console.log({ user: ctx.session?.user });
-      const { chainId, imageUri, eater, metadataUri } = input;
+      const { chainId, imageUri, metadataUri } = input;
+
+      if (!ctx.session?.user.address) {
+        throw new Error("User address not found");
+      }
       
       const response = await fetch(
         `${env.THIRDWEB_ENGINE_URL}/contract/${chainId}/${LOG_A_DOG[chainId]}/write`,
@@ -499,7 +502,7 @@ export const hotdogRouter = createTRPCRouter({
             args: [
               imageUri,
               metadataUri,
-              eater,
+              ctx.session.user.address,
             ],
           }),
         },

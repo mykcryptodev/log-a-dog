@@ -78,7 +78,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           chainId: activeChain.id,
           imageUri: imgUri!,
           metadataUri: '',
-          eater: account.address
         });
         setQueueId(queueId);
 
@@ -162,7 +161,12 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         <TransactionStatus 
           onResolved={handleOnResolved} 
           queueId={queueId} 
-          loadingMessage="Logging dog..."
+          loadingMessages={[
+            { message: "Beaming dog into space..." },
+            { message: "Sucking dog into the blockchain..."},
+            { message: "Analyzing dog with science..." },
+            { message: "Logging dog..." },
+          ]}
           successMessage="You logged a dog!"
           errorMessage="Failed to log your dog"
         />

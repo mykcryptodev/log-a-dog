@@ -1,16 +1,28 @@
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useState } from "react";
 import { api } from "~/utils/api";
-import { toast } from "react-toastify";3
+import { toast } from "react-toastify";
+
+type LoadingMessage = {
+  message: string;
+  duration?: number;
+}
 
 type Props = {
   queueId: string;
-  loadingMessage?: string;
+  loadingMessages?: LoadingMessage[];
   successMessage?: string;
   errorMessage?: string;
   onResolved?: (success: boolean) => void;
 }
 
-export const TransactionStatus: FC<Props> = ({ queueId, loadingMessage, successMessage, errorMessage, onResolved }) => {
+export const TransactionStatus: FC<Props> = ({ 
+  queueId, 
+  loadingMessages = [{ message: "Transaction is pending...", duration: 1500 }], 
+  successMessage, 
+  errorMessage, 
+  onResolved 
+}) => {
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const { data, dataUpdatedAt } = api.engine.getTransactionStatus.useQuery(
     { queueId },
     {
@@ -27,19 +39,50 @@ export const TransactionStatus: FC<Props> = ({ queueId, loadingMessage, successM
     }
   );
 
+  // Handle message cycling
+  useEffect(() => {
+    if (!data) return;
+    const status = data.result.status;
+    
+    if (status === "queued" || status === "sent") {
+      const currentMessage = loadingMessages[currentMessageIndex];
+      if (!currentMessage) return;
+
+      // If this is the first message, create the toast
+      if (currentMessageIndex === 0) {
+        toast.loading(currentMessage.message, {
+          toastId: `${queueId}-pending`,
+          autoClose: false,
+        });
+      } else {
+        // Otherwise update the existing toast
+        toast.update(`${queueId}-pending`, {
+          render: currentMessage.message,
+          isLoading: true,
+        });
+      }
+
+      // Set up message cycling
+      const timer = setTimeout(() => {
+        setCurrentMessageIndex((prev) => {
+          // If we're at the last message, stay there
+          if (prev === loadingMessages.length - 1) return prev;
+          // Otherwise move to the next message
+          return prev + 1;
+        });
+      }, currentMessage.duration ?? 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentMessageIndex, data, loadingMessages, queueId]);
+
+  // Handle status changes
   useEffect(() => {
     if (!data) return;
     const status = data.result.status;
     const errorMessage = data.result.errorMessage;
 
     switch (status) {
-      case "queued":
-      case "sent":
-        toast.loading(loadingMessage ?? "Transaction is pending...", {
-          toastId: `${queueId}-pending`,
-          autoClose: false,
-        });
-        break;
       case "mined":
         toast.dismiss(`${queueId}-pending`);
         toast.success(successMessage ?? "Transaction completed successfully!", {
@@ -62,7 +105,7 @@ export const TransactionStatus: FC<Props> = ({ queueId, loadingMessage, successM
         onResolved?.(false);
         break;
     }
-  }, [dataUpdatedAt, data, queueId, loadingMessage, successMessage, errorMessage, onResolved]);
+  }, [dataUpdatedAt, data, queueId, successMessage, errorMessage, onResolved]);
 
   return null; // We don't need to render anything since we're using toasts
 };

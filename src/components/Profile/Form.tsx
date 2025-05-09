@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { TransactionStatus } from "~/components/utils/TransactionStatus";
+import { router } from "node_modules/@trpc/server/dist/deprecated/router";
+import { useRouter } from "next/router";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -28,12 +30,15 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
   const [saveProfileBtnLabel, setSaveProfileBtnLabel] = useState<string>("Save Profile");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [queueId, setQueueId] = useState<string | null>(null);
-
+  const router = useRouter();
+  
   const createProfile = api.profile.create.useMutation({
     onSuccess: (data) => {
       setQueueId(data);
       // close the modal
       (document.getElementById('create_profile_modal') as HTMLDialogElement)?.close();
+      // navigate to the profile page of the new username
+      void router.push(`/profile/${username}`);
     },
     onError: (error) => {
       setError(error.message);
@@ -121,7 +126,12 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
       {queueId && (
         <TransactionStatus
           queueId={queueId}
-          loadingMessage="Saving your profile..."
+          loadingMessages={[
+            { message: "Brightening your teeth..."},
+            { message: "Wiping away mustard stains..."},
+            { message: "Ok, you look better now..."},
+            { message: "Saving your profile..." },
+          ]}
           successMessage="Profile saved successfully!"
           errorMessage="Failed to save profile"
           onResolved={(success) => {
