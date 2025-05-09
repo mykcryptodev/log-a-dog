@@ -33,6 +33,7 @@ declare module "next-auth" {
       fid?: number;
       username?: string;
       image?: string;
+      name?: string;
     };
   }
 
@@ -42,6 +43,7 @@ declare module "next-auth" {
     fid?: number;
     username?: string;
     image?: string;
+    name?: string;
   }
 }
 
@@ -78,6 +80,7 @@ export const authOptions: NextAuthOptions = {
       async createUser(credentials) {
         let fid;
         let username;
+        let name;
         let image;
         try {
           // Fetch user's FID from Neynar using their Ethereum address
@@ -89,6 +92,7 @@ export const authOptions: NextAuthOptions = {
           const addressKey = credentials.address.toLowerCase();
           fid = response[addressKey]?.[0]?.fid;
           username = response[addressKey]?.[0]?.username;
+          name = response[addressKey]?.[0]?.display_name;
           image = response[addressKey]?.[0]?.pfp_url;
         } catch (error) {
           console.error("Error fetching FID from Neynar:", error);
@@ -100,6 +104,7 @@ export const authOptions: NextAuthOptions = {
             fid,
             username,
             image,
+            name,
           },
         });
         console.log({ user });
