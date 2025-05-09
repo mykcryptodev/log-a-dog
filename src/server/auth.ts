@@ -7,8 +7,17 @@ import {
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
 import { EthereumProvider } from "~/server/auth/ethereumProvider";
+import { env } from "~/env";
 
 import { db } from "~/server/db";
+
+import { NeynarAPIClient, Configuration } from "@neynar/nodejs-sdk";
+
+const config = new Configuration({
+  apiKey: env.NEYNAR_API_KEY,
+});
+
+const neynarClient = new NeynarAPIClient(config);
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -21,12 +30,14 @@ declare module "next-auth" {
     user: DefaultSession["user"] & {
       id: string;
       address?: string;
+      fid?: number;
     };
   }
 
   interface User {
     id: string;
     address?: string;
+    fid?: number;
   }
 }
 
@@ -44,6 +55,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.address = user.address;
+        token.fid = user.fid;
       }
       return token;
     },
@@ -51,6 +63,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.address = token.address as string;
+        session.user.fid = token.fid as number;
       }
       return session;
     },
@@ -59,13 +72,29 @@ export const authOptions: NextAuthOptions = {
   providers: [
     EthereumProvider({
       async createUser(credentials) {
+        let fid;
+        try {
+          // Fetch user's FID from Neynar using their Ethereum address
+          const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
+            addresses: [credentials.address],
+          });
+
+          // Extract FID from response - fixing the access pattern
+          const addressKey = credentials.address.toLowerCase();
+          fid = response[addressKey]?.[0]?.fid;
+        } catch (error) {
+          console.error("Error fetching FID from Neynar:", error);
+        }
+
         const user = await db.user.create({
           data: {
             address: credentials.address,
+            fid,
           },
         });
+        console.log({ user });
         // Create a new account for the user
-        await db.account.create({
+        await db.account.create({ 
           data: {
             userId: user.id,
             type: "ethereum",
@@ -73,6 +102,7 @@ export const authOptions: NextAuthOptions = {
             providerAccountId: credentials.address,
           },
         });
+        console.log(' returning user ');
         return user;
       },
     }),

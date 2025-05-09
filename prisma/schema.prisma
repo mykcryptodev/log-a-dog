@@ -68,6 +68,7 @@ model User {
     sessions      Session[]
     posts         Post[]
     address       String?
+    fid           Int?
 }
 
 model VerificationToken {

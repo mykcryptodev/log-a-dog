@@ -10,7 +10,6 @@ import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { Portal } from "../utils/Portal";
 import SignInWithEthereum from "../utils/SignIn";
 import { SignInWithFarcaster } from "../utils/SignInWithFarcaster";
 const CustomMediaRenderer = dynamic(
