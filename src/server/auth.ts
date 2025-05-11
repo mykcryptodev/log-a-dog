@@ -7,17 +7,10 @@ import {
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
 import { EthereumProvider } from "~/server/auth/ethereumProvider";
-import { env } from "~/env";
 
 import { db } from "~/server/db";
 
-import { NeynarAPIClient, Configuration } from "@neynar/nodejs-sdk";
-
-const config = new Configuration({
-  apiKey: env.NEYNAR_API_KEY,
-});
-
-const neynarClient = new NeynarAPIClient(config);
+import { neynarClient } from "~/lib/neynar";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
