@@ -112,7 +112,7 @@ export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, r
               ref={isLastElement ? lastElementRef : null}
               className="flex items-center justify-between p-3 bg-base-200 bg-opacity-50 rounded-lg hover:bg-base-300 transition-colors gap-2"
             >
-              <Link href={`/profile/${address}`} className="flex items-center gap-3">
+              <Link href={`/profile/address/${address}`} className="flex items-center gap-3">
                 <div className="text-lg font-bold text-secondary">{originalIndex + 1}</div>
                 {profile?.imgUrl ? (
                   <div className="relative w-8 h-8 rounded-full overflow-hidden">

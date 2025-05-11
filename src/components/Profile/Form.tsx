@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { TransactionStatus } from "~/components/utils/TransactionStatus";
-import { router } from "node_modules/@trpc/server/dist/deprecated/router";
 import { useRouter } from "next/router";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });

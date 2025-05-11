@@ -111,6 +111,32 @@ export const profileRouter = createTRPCRouter({
         CACHE_DURATION.MEDIUM
       );
     }),
+  getById: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      id: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { id, chainId } = input;
+      const user = await ctx.db.user.findUniqueOrThrow({
+        where: {
+          id,
+        },
+      });
+      const { address } = user;
+      if (!address) {
+        throw new Error("User address not found");
+      }
+      const cacheKey = `profile:${chainId}:${address}`;
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const profile = await getProfile(address, chainId);
+          return profile;
+        },
+        CACHE_DURATION.MEDIUM
+      );
+    }),
   getManyByAddress: publicProcedure
     .input(z.object({ 
       chainId: z.number(),

@@ -143,7 +143,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
         </div>
         <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li>
-            <Link href={`/profile/${data.username}`}>
+            <Link href={`/profile/address/${data.address}`}>
               Profile {hasNoAvatar && <div className="badge badge-accent">add avatar</div>}
             </Link>
           </li>
