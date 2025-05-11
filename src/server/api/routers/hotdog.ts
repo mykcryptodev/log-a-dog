@@ -9,7 +9,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c";
+import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs } from "~/thirdweb/84532/0x68f01feed5ffef1381405c6f6d064cd1e4b62d5d";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
 import { createThirdwebClient } from 'thirdweb';

@@ -64,7 +64,7 @@ export const Attestation: FC<Props> = ({ attestationId, refreshAttestations, onA
             />
           )}
           {profile ? (
-            <Link href={`/profile/${profile.username}`} className="font-bold text-sm">
+            <Link href={`/profile/address/${profile.address}`} className="font-bold text-sm">
               {profile.username}
             </Link>
           ) : (

@@ -43,7 +43,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     refetchOnMount: false,
   });
 
-  const imageUrl = data?.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+  const imageUrl = data?.imgUrl?.replace("ipfs://", "https://ipfs.io/ipfs/");
 
   const hasNoAvatar = useMemo(() => {
     if (createdProfileImgUrl && createdProfileImgUrl !== '') return false;

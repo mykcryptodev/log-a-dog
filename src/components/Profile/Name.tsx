@@ -42,7 +42,7 @@ export const Name: FC<{ address: string }> = ({ address }) => {
   }
   
   return (
-    <Link href={`/profile/${profile.username}`}>{profile.username}</Link>
+    <Link href={`/profile/address/${profile.address}`}>{profile.username}</Link>
   );
 };
 

@@ -163,8 +163,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           queueId={queueId} 
           loadingMessages={[
             { message: "Beaming dog into space..." },
-            { message: "Sucking dog into the blockchain..."},
-            { message: "Analyzing dog with science..." },
+            { message: "Guzzlin glizzy into the blockchain..."},
+            { message: "Suckin down analytics..." },
             { message: "Logging dog..." },
           ]}
           successMessage="You logged a dog!"
