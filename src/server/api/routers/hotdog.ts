@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { AI_AFFIRMATION, LOG_A_DOG, MODERATION } from "~/constants/addresses";
-import {
-  createThirdwebClient,
-  getContract,
-  Engine,
-} from "thirdweb";
+import { getContract } from "thirdweb";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
 import {
@@ -12,7 +8,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { client } from "~/server/utils";
+import { client, serverWallet } from "~/server/utils";
 import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdog } from "~/thirdweb/84532/0x68f01feed5ffef1381405c6f6d064cd1e4b62d5d";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
@@ -90,17 +86,6 @@ interface GetAllResponse {
   hasNextPage: boolean;
 }
 
-// Create thirdweb client for IPFS operations
-const thirdwebClient = createThirdwebClient({
-  secretKey: env.THIRDWEB_SECRET_KEY,
-});
-
-const serverWallet = Engine.serverWallet({
-  client,
-  address: env.THIRDWEB_SERVER_WALLET_ADDRESS,
-  vaultAccessToken: env.THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN,
-});
-
 // Helper function to fetch and parse metadata from IPFS
 async function getMetadataFromUri(uri: string): Promise<HotdogMetadata | null> {
   if (uri === '') {
@@ -112,7 +97,7 @@ async function getMetadataFromUri(uri: string): Promise<HotdogMetadata | null> {
     cacheKey,
     async () => {
       try {
-        const response = await download({ client: thirdwebClient, uri });
+        const response = await download({ client, uri });
         const metadata = response as unknown as HotdogMetadata;
         return metadata;
       } catch (error) {
