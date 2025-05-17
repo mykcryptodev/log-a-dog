@@ -8,7 +8,7 @@ type LoadingMessage = {
 }
 
 type Props = {
-  queueId: string;
+  transactionId: string;
   loadingMessages?: LoadingMessage[];
   successMessage?: string;
   errorMessage?: string;
@@ -16,7 +16,7 @@ type Props = {
 }
 
 export const TransactionStatus: FC<Props> = ({ 
-  queueId, 
+  transactionId, 
   loadingMessages = [{ message: "Transaction is pending...", duration: 1500 }], 
   successMessage, 
   errorMessage, 
@@ -24,13 +24,12 @@ export const TransactionStatus: FC<Props> = ({
 }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const { data, dataUpdatedAt } = api.engine.getTransactionStatus.useQuery(
-    { queueId },
+    { transactionId },
     {
       refetchInterval: (data) => {
         // If we have data and it's a final state, stop polling
-        if (data?.result.status === "mined" || 
-            data?.result.status === "errored" || 
-            data?.result.status === "cancelled") {
+        if (data?.status === "CONFIRMED" || 
+            data?.status === "FAILED") {
           return false;
         }
         // Otherwise poll every 2 seconds
@@ -42,21 +41,21 @@ export const TransactionStatus: FC<Props> = ({
   // Handle message cycling
   useEffect(() => {
     if (!data) return;
-    const status = data.result.status;
+    const status = data.status;
     
-    if (status === "queued" || status === "sent") {
+    if (status === "QUEUED" || status === "SUBMITTED") {
       const currentMessage = loadingMessages[currentMessageIndex];
       if (!currentMessage) return;
 
       // If this is the first message, create the toast
       if (currentMessageIndex === 0) {
         toast.loading(currentMessage.message, {
-          toastId: `${queueId}-pending`,
+          toastId: `${transactionId}-pending`,
           autoClose: false,
         });
       } else {
         // Otherwise update the existing toast
-        toast.update(`${queueId}-pending`, {
+        toast.update(`${transactionId}-pending`, {
           render: currentMessage.message,
           isLoading: true,
         });
@@ -74,38 +73,30 @@ export const TransactionStatus: FC<Props> = ({
 
       return () => clearTimeout(timer);
     }
-  }, [currentMessageIndex, data, loadingMessages, queueId]);
+  }, [currentMessageIndex, data, loadingMessages, transactionId]);
 
   // Handle status changes
   useEffect(() => {
     if (!data) return;
-    const status = data.result.status;
-    const errorMessage = data.result.errorMessage;
+    const status = data.status;
 
     switch (status) {
-      case "mined":
-        toast.dismiss(`${queueId}-pending`);
+      case "CONFIRMED":
+        toast.dismiss(`${transactionId}-pending`);
         toast.success(successMessage ?? "Transaction completed successfully!", {
-          toastId: `${queueId}-mined`,
+          toastId: `${transactionId}-mined`,
         });
         onResolved?.(true);
         break;
-      case "errored":
-        toast.dismiss(`${queueId}-pending`);
+      case "FAILED":
+        toast.dismiss(`${transactionId}-pending`);
         toast.error(errorMessage ?? "Transaction failed: Unknown error", {
-          toastId: `${queueId}-errored`,
-        });
-        onResolved?.(false);
-        break;
-      case "cancelled":
-        toast.dismiss(`${queueId}-pending`);
-        toast.warning(errorMessage ?? "Transaction was cancelled", {
-          toastId: `${queueId}-cancelled`,
+          toastId: `${transactionId}-errored`,
         });
         onResolved?.(false);
         break;
     }
-  }, [dataUpdatedAt, data, queueId, successMessage, errorMessage, onResolved]);
+  }, [dataUpdatedAt, data, transactionId, successMessage, errorMessage, onResolved]);
 
   return null; // We don't need to render anything since we're using toasts
 };

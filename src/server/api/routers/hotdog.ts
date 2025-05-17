@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { AI_AFFIRMATION, LOG_A_DOG, MODERATION } from "~/constants/addresses";
-import { getContract } from "thirdweb";
+import {
+  createThirdwebClient,
+  getContract,
+  Engine,
+} from "thirdweb";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
 import {
@@ -9,10 +13,9 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs } from "~/thirdweb/84532/0x68f01feed5ffef1381405c6f6d064cd1e4b62d5d";
+import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdog } from "~/thirdweb/84532/0x68f01feed5ffef1381405c6f6d064cd1e4b62d5d";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
-import { createThirdwebClient } from 'thirdweb';
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
 import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
@@ -90,6 +93,12 @@ interface GetAllResponse {
 // Create thirdweb client for IPFS operations
 const thirdwebClient = createThirdwebClient({
   secretKey: env.THIRDWEB_SECRET_KEY,
+});
+
+const serverWallet = Engine.serverWallet({
+  client,
+  address: env.THIRDWEB_SERVER_WALLET_ADDRESS,
+  vaultAccessToken: env.THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN,
 });
 
 // Helper function to fetch and parse metadata from IPFS
@@ -487,37 +496,29 @@ export const hotdogRouter = createTRPCRouter({
       if (!ctx.session?.user.address) {
         throw new Error("User address not found");
       }
+
+      const transaction = logHotdog({
+        contract: getContract({
+          address: LOG_A_DOG[chainId]!,
+          client,
+          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+        }),
+        imageUri,
+        metadataUri,
+        eater: ctx.session.user.address,
+      });
       
-      const response = await fetch(
-        `${env.THIRDWEB_ENGINE_URL}/contract/${chainId}/${LOG_A_DOG[chainId]}/write`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${env.THIRDWEB_ENGINE_ACCESS_TOKEN}`,
-            "x-backend-wallet-address": `${env.NEXT_PUBLIC_BACKEND_SMART_WALLET_ADDRESS}`,
-          },
-          body: JSON.stringify({
-            functionName: "logHotdog",
-            args: [
-              imageUri,
-              metadataUri,
-              ctx.session.user.address,
-            ],
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to log hotdog: ${response.statusText}`);
+      try {
+        const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
+  
+        // Invalidate Redis cache for all hotdog queries for this chain
+        const pattern = `hotdogs:${chainId}:*`;
+        await deleteCachedData(pattern);
+  
+        return transactionId;
+      } catch (error) {
+        console.error("Error logging hotdog:", error);
+        throw error;
       }
-
-      const data = await response.json() as { result: { queueId: string } };
-
-      // Invalidate Redis cache for all hotdog queries for this chain
-      const pattern = `hotdogs:${chainId}:*`;
-      await deleteCachedData(pattern);
-
-      return data.result.queueId;
     }),
 });

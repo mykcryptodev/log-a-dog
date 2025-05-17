@@ -30,8 +30,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
-  const [queueId, setQueueId] = useState<string | undefined>();
-  const [isQueueIdResolved, setIsQueueIdResolved] = useState<boolean>(false);
+  const [transactionId, setTransactionId] = useState<string | undefined>();
+  const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
 
   const handleOnResolved = (success: boolean) => {
     if (success && account) {
@@ -56,7 +56,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       // Invalidate the hotdog query cache
       void utils.hotdog.getAll.invalidate();
     }
-    setIsQueueIdResolved(true);
+    setIsTransactionIdResolved(true);
   }
 
   const ActionButton: FC = () => {
@@ -73,13 +73,15 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       if (isDisabled) return;
       setIsLoading(true);
       try {
+        // Reset the transaction resolution state for new logs
+        setIsTransactionIdResolved(false);
         // Call the backend tRPC procedure
-        const queueId = await logHotdog({
+        const transactionId = await logHotdog({
           chainId: activeChain.id,
           imageUri: imgUri!,
           metadataUri: '',
         });
-        setQueueId(queueId);
+        setTransactionId(transactionId);
 
         // close the modal
         (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
@@ -157,10 +159,10 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           </div>
         </div>
       </dialog>
-      {queueId && !isQueueIdResolved && (
+      {transactionId && !isTransactionIdResolved && (
         <TransactionStatus 
           onResolved={handleOnResolved} 
-          queueId={queueId} 
+          transactionId={transactionId} 
           loadingMessages={[
             { message: "Beaming dog into space..." },
             { message: "Guzzlin glizzy into the blockchain..."},
