@@ -11,17 +11,24 @@ type Props = {
   defaultOpen?: boolean;
 }
 const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
-  const { data: sessionData } = useSession();
+  const { data: sessionData, status } = useSession();
   const account = useActiveAccount();
   const { activeChain } = useActiveChain();
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
   console.log({ sessionData });
 
   useEffect(() => {
-    if (defaultOpen && !sessionData?.user) {
+    if (defaultOpen && !sessionData?.user && status !== 'loading') {
       (document.getElementById(`sign_in_modal`) as HTMLDialogElement)?.showModal();
     }
-  }, [defaultOpen, sessionData?.user]);
+  }, [defaultOpen, sessionData?.user, status]);
+
+  // close the modal if the user is signed in
+  useEffect(() => {
+    if (sessionData?.user) {
+      (document.getElementById(`sign_in_modal`) as HTMLDialogElement)?.close();
+    }
+  }, [sessionData?.user]);
  
   const promptToSign = async () => {
     console.log('promptToSign', account);
@@ -68,7 +75,7 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
     <>
     {/* Open the modal using document.getElementById('ID').showModal() method */}
     <button className="btn" onClick={()=>(document.getElementById(`sign_in_modal`) as HTMLDialogElement).showModal()}>
-      Vow to play with honor
+      {`${btnLabel ?? 'Vow to play with honor'}`}
     </button>
     <dialog id={`sign_in_modal`} className="modal">
       <div className="modal-box relative">

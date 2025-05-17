@@ -4,8 +4,6 @@ import { ProfileButton } from "../Profile/Button";
 import { useRouter } from "next/router";
 import Changelog from "~/components/utils/Changelog";
 import Link from "next/link";
-import SignInWithEthereum from "./SignIn";
-import { SignInWithFarcaster } from "./SignInWithFarcaster";
 interface LayoutProps {
   children: ReactNode
 }

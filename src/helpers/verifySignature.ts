@@ -1,16 +1,15 @@
 import { createConfig, getPublicClient, http } from "@wagmi/core";
 import { type Address, isAddress, isAddressEqual, verifyMessage, zeroAddress } from 'viem';
-import { base } from "wagmi/chains";
 import type { Chain } from "wagmi/chains";
 
-import { SUPPORTED_CHAINS } from "~/constants";
+import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from "~/constants";
 import { env } from "~/env";
 
 const verifySignature = async(
   message: string,
   signature: string,
   address: Address,
-  chainId: number = base.id,
+  chainId: number = DEFAULT_CHAIN.id,
 ): Promise<boolean> => {
   // First, try standard EOA signature verification
   try {

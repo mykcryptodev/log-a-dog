@@ -65,7 +65,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     </div>
   )
 
-  if (account && !sessionData?.user?.id) {
+  if (account && wallet?.id !== 'inApp' && !sessionData?.user?.id) {
     return (
       <SignInWithEthereum 
         btnLabel="I will play with honor"

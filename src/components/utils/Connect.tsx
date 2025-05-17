@@ -1,21 +1,22 @@
-import { type FC, useContext, useState, useEffect } from "react";
+import { type FC, useContext, useState, useEffect, useCallback } from "react";
 import { ConnectButton } from "thirdweb/react";
 import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
-import { createWallet, inAppWallet, walletConnect } from "thirdweb/wallets";
+import { createWallet, inAppWallet, type Wallet, walletConnect } from "thirdweb/wallets";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { useSession, signIn, getCsrfToken, signOut } from "next-auth/react";
 import { env } from "~/env";
+import { signMessage } from "thirdweb/utils";
 
 type Props = {
   loginBtnLabel?: string;
 }
 
 export const Connect: FC<Props> = ({ loginBtnLabel }) => {
-  const { data: sessionData } = useSession();
+  const { data: sessionData, status } = useSession();
   const { activeChain } = useContext(ActiveChainContext);
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
-  
+
   useEffect(() => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
@@ -36,7 +37,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   ];
 
   const message = `Sign into Log a Dog`;
-  const createPayload = async ({ address }: { address: string }) => {
+  const createPayload = useCallback(async ({ address }: { address: string }) => {
     const nonce = await getCsrfToken();
     if (!nonce) throw new Error("Failed to get CSRF token");
     const now = new Date();
@@ -53,13 +54,42 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       expiration_time: oneHourFromNow.toISOString(),
       invalid_before: now.toISOString()
     }
-  }
+  }, [message]);
+
+  const silentlySignIn = useCallback(async (wallet: Wallet) => {
+    console.log('silentlySignIn', wallet, sessionData?.user?.id);
+    if (sessionData?.user?.id ?? status === 'loading') {
+      console.log('signed in or is signing in...')
+      return;
+    }
+    if (wallet.id !== 'inApp') {
+      console.log('not an inApp wallet')
+      return;
+    }
+    try {
+      const walletAddress = wallet.getAccount()!.address;
+      const payload = await createPayload({ address: walletAddress });
+      const signature = await signMessage({
+        message,
+        account: wallet.getAccount()!,
+      });
+      await signIn('ethereum', {
+        message,
+        signature,
+        address: payload.address,
+        redirect: false,
+      });
+    } catch (error) {
+      console.error("Error signing in with wallet:", error);
+    }
+  }, [createPayload, message, sessionData?.user?.id, status]);
 
   return (
     <ConnectButton
       client={client}
       chain={activeChain}
       theme={userPrefersDarkMode ? "dark" : "light"}
+      onConnect={(wallet) => silentlySignIn(wallet)}
       auth={{
         isLoggedIn: async () => {
           if (sessionData?.user?.id) {
