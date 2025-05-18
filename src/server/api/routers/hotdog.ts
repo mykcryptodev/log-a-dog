@@ -9,7 +9,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdog } from "~/thirdweb/84532/0x68f01feed5ffef1381405c6f6d064cd1e4b62d5d";
+import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdog } from "~/thirdweb/84532/0xc9eef632bac0a834499dfe5b28c93337190d9815";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
@@ -482,6 +482,14 @@ export const hotdogRouter = createTRPCRouter({
         throw new Error("User address not found");
       }
 
+      console.log({
+        imageUri,
+        metadataUri,
+        eater: ctx.session.user.address,
+      })
+
+      const POOL_CONFIG = '0x00000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcd2b80000000000000000000000000000000000000000000000000000000000036330000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000b1a2bc2ec50000'
+
       const transaction = logHotdog({
         contract: getContract({
           address: LOG_A_DOG[chainId]!,
@@ -491,6 +499,7 @@ export const hotdogRouter = createTRPCRouter({
         imageUri,
         metadataUri,
         eater: ctx.session.user.address,
+        poolConfig: POOL_CONFIG,
       });
       
       try {

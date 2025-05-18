@@ -10,9 +10,8 @@ interface IZoraFactory {
         string memory uri,
         string memory name,
         string memory symbol,
+        bytes calldata poolConfig,
         address platformReferrer,
-        address currency,
-        int24 tickLower,
         uint256 orderSize
     ) external payable returns (address, uint256);
 }
@@ -28,6 +27,9 @@ contract LogADog {
     address public platformReferrer;
     // Temporary flag to disable Zora coins
     bool public zoraEnabled = true;
+
+    // Pool config for Zora coins
+    bytes public constant POOL_CONFIG = hex"00000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcd2b80000000000000000000000000000000000000000000000000000000000036330000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000b1a2bc2ec50000";
 
     struct HotdogLog {
         uint256 logId;
@@ -79,7 +81,7 @@ contract LogADog {
      * @return logId The ID of the newly created hotdog log.
      * @dev Any eth sent with the transaction is used to purchase the zora coin.
      */
-    function logHotdog(string memory imageUri, string memory metadataUri, address eater) external payable returns (uint256 logId) {
+    function logHotdog(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) external payable returns (uint256 logId) {
         logId = hotdogLogs.length;
         
         // Create Zora coin first
@@ -92,9 +94,8 @@ contract LogADog {
             metadataUri, // uri
             string.concat("Logged Dog #", Strings.toString(logId)), // name
             "LOGADOG", // symbol
+            poolConfig, // configuration for the pool
             platformReferrer, // platform referrer
-            address(0), // currency (ETH/WETH)
-            -208200, // tickLower (required for ETH/WETH pairs)
             msg.value // order size
         );
 

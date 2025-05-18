@@ -34,9 +34,9 @@ contract LogADogTest is Test {
                 "metadataUri", // uri
                 "Logged Dog #0", // name
                 "LOGADOG", // symbol
+                logADog.POOL_CONFIG(), // poolConfig
                 platformReferrer, // platform referrer
                 address(0), // currency
-                -208200, // tickLower (fixed to match contract)
                 1 ether // order size
             ),
             abi.encode(MOCK_COIN_ADDRESS, 1)
@@ -75,9 +75,9 @@ contract LogADogTest is Test {
                 "metadataUri", // uri
                 "Logged Dog #0", // name
                 "LOGADOG", // symbol
+                logADog.POOL_CONFIG(), // poolConfig
                 platformReferrer, // platform referrer
                 address(0), // currency
-                -208200, // tickLower
                 1 ether // order size
             )
         );
@@ -85,7 +85,8 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
-            user2
+            user2,
+            logADog.POOL_CONFIG()
         );
         
         // Verify log was created
@@ -104,7 +105,8 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
-            user2
+            user2,
+            logADog.POOL_CONFIG()
         );
         
         // Then attest to it
@@ -123,7 +125,8 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
-            user1
+            user1,
+            logADog.POOL_CONFIG()
         );
         
         vm.expectRevert("Caller cannot attest to their own log");
@@ -136,7 +139,8 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
-            user1
+            user1,
+            logADog.POOL_CONFIG()
         );
         
         logADog.revokeHotdogLog(logId);
@@ -155,14 +159,16 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri1",
             "metadataUri1",
-            user2
+            user2,
+            logADog.POOL_CONFIG()
         );
         
         // Second hotdog
         logADog.logHotdog{value: 1 ether}(
             "imageUri2",
             "metadataUri2",
-            user2
+            user2,
+            logADog.POOL_CONFIG()
         );
         
         // Attest to both hotdogs
@@ -184,7 +190,8 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
-            user2
+            user2,
+            logADog.POOL_CONFIG()
         );
         
         // Attest to the log
@@ -214,7 +221,8 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
-            user2
+            user2,
+            logADog.POOL_CONFIG()
         );
         
         uint256 totalPages = logADog.getTotalPagesForLogs(0, block.timestamp, 10);
