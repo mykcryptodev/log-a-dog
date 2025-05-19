@@ -4,8 +4,9 @@ import { contestRouter } from "~/server/api/routers/contest";
 import { engineRouter } from "~/server/api/routers/engine";
 import { hotdogRouter } from "~/server/api/routers/hotdog";
 import { profileRouter } from "~/server/api/routers/profile";
+import { userRouter } from "~/server/api/routers/user";
 import { warpcastRouter } from "~/server/api/routers/warpcast";
-import { zoraRouter } from "./routers/zora";
+import { zoraRouter } from "~/server/api/routers/zora";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   engine: engineRouter,
   hotdog: hotdogRouter,
   profile: profileRouter,
+  user: userRouter,
   warpcast: warpcastRouter,
   zora: zoraRouter,
 });

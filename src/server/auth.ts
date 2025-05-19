@@ -55,6 +55,17 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.address = user.address;
         token.fid = user.fid;
+      } else if (token.address) {
+        // For existing sessions, fetch the user's fid from the database
+        const dbUser = await db.user.findFirst({
+          where: { 
+            address: (token.address as string).toLowerCase()
+          },
+          select: { fid: true }
+        });
+        if (dbUser?.fid) {
+          token.fid = dbUser.fid;
+        }
       }
       return token;
     },
@@ -93,7 +104,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await db.user.create({
           data: {
-            address: credentials.address,
+            address: credentials.address.toLowerCase(),
             fid,
             username,
             image,

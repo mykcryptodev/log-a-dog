@@ -5,6 +5,8 @@ import { resolveScheme } from "thirdweb/storage";
 import { client } from "~/providers/Thirdweb";
 import Image from "next/image";
 import Link from "next/link";
+import { Name } from "./Profile/Name";
+import { Avatar } from "./Profile/Avatar";
 
 type Props = {
   attestors?: string[];
@@ -64,7 +66,7 @@ export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, r
     <div className="bg-base-200 rounded-lg animate-pulse w-[640px] h-72" />
   );
 
-  const filteredUsers = displayedUsers.filter((address, index) => {
+  const filteredUsers = displayedUsers.filter((address) => {
     const profile = profiles.find(p => p.address === address);
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -101,7 +103,6 @@ export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, r
       )}
       <div className="space-y-2 max-h-[500px] w-lg overflow-y-auto pr-2">
         {filteredUsers.map((address, index) => {
-          const profile = profiles.find(p => p.address === address);
           const originalIndex = displayedUsers.indexOf(address);
           const hotdogCount = Number(displayedHotdogs[originalIndex]);
           const isLastElement = index === filteredUsers.length - 1;
@@ -114,20 +115,9 @@ export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, r
             >
               <Link href={`/profile/address/${address}`} className="flex items-center gap-3">
                 <div className="text-lg font-bold text-secondary">{originalIndex + 1}</div>
-                {profile?.imgUrl ? (
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden">
-                    <Image
-                      src={resolveScheme({ client, uri: profile.imgUrl })}
-                      alt={profile.username ?? "Profile"}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-base-300" />
-                )}
+                <Avatar size="32px" address={address} />
                 <div className="font-medium">
-                  {profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`}
+                  <Name address={address} />
                 </div>
               </Link>
               <div className="flex items-center gap-2">

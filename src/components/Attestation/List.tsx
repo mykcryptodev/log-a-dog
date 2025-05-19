@@ -47,7 +47,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
   const showLoggedVia = (hotdog: { eater: `0x${string}`, logger: `0x${string}` }) => {
     const loggerIsNotEater = !isAddressEqual(hotdog.eater, hotdog.logger);
-    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger, env.NEXT_PUBLIC_BACKEND_SMART_WALLET_ADDRESS as `0x${string}`);
+    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger, env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`);
     return loggerIsNotEater && loggerIsNotBackendWallet;
   }
 
@@ -92,12 +92,12 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
           <div className="card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow" key={`${hotdog.logId}-${index}`}>
             <div className="card-body p-4 max-w-lg">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-fit">
+                <div className="flex flex-col items-start">
+                  <div className="flex items-center gap-2 w-fit">
                     <Avatar address={hotdog.eater} fallbackSize={24} />
+                    <Name address={hotdog.eater} />
                   </div>
                   <div className="flex flex-col">
-                    <Name address={hotdog.eater} />
                     {showLoggedVia({ eater: hotdog.eater as `0x${string}`, logger: hotdog.logger as `0x${string}` }) && (
                       <div className="flex items-center gap-1 text-xs opacity-75">
                         <span>via</span>

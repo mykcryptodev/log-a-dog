@@ -7,6 +7,7 @@ import Connect from "~/components/utils/Connect";
 import { useDisconnect } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
@@ -135,6 +136,9 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
                     client={client}
                   />
                   <span className={`${hasNoAvatar ? 'pr-4' :''}`}>{data?.username}</span>
+                  {sessionData?.user?.fid && (
+                    <CheckBadgeIcon className="w-4 h-4 text-primary" />
+                  )}
                 </div>
               </div>
               </>
@@ -147,7 +151,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
               Profile {hasNoAvatar && <div className="badge badge-accent">add avatar</div>}
             </Link>
           </li>
-          <li><a onClick={() => void logout()}>Logout</a></li>
+          <li><button onClick={() => void logout()}>Logout</button></li>
         </ul>
       </div>
     </div>
