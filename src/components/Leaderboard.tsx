@@ -1,9 +1,6 @@
 import { useContext, type FC, useState, useEffect, useRef, useCallback } from "react";
 import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
-import { resolveScheme } from "thirdweb/storage";
-import { client } from "~/providers/Thirdweb";
-import Image from "next/image";
 import Link from "next/link";
 import { Name } from "./Profile/Name";
 import { Avatar } from "./Profile/Avatar";

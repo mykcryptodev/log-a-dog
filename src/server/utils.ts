@@ -7,6 +7,6 @@ export const client = createThirdwebClient({
 
 export const serverWallet = Engine.serverWallet({
   client,
-  address: env.THIRDWEB_SERVER_WALLET_ADDRESS,
+  address: env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS,
   vaultAccessToken: env.THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN,
 });
