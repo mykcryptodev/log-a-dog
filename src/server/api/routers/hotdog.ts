@@ -16,6 +16,7 @@ import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
 import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
+import { encodePoolConfig } from "~/server/utils/poolConfig";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -488,7 +489,7 @@ export const hotdogRouter = createTRPCRouter({
         eater: ctx.session.user.address,
       })
 
-      const POOL_CONFIG = '0x00000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcd2b80000000000000000000000000000000000000000000000000000000000036330000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000b1a2bc2ec50000'
+      const POOL_CONFIG = encodePoolConfig();
 
       const transaction = logHotdog({
         contract: getContract({

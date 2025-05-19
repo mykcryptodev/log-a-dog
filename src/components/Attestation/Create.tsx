@@ -166,7 +166,10 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           loadingMessages={[
             { message: "Beaming dog into space..." },
             { message: "Guzzlin glizzy into the blockchain..."},
+            { message: "Mining meat into a block..." },
+            { message: "Slathering on the 'sturd..."},
             { message: "Suckin down analytics..." },
+            { message: "Downloading the dinger..."},
             { message: "Logging dog..." },
           ]}
           successMessage="You logged a dog!"
