@@ -9,7 +9,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdog } from "~/thirdweb/84532/0xc9eef632bac0a834499dfe5b28c93337190d9815";
+import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdog, revokeAttestation, attestHotdogLog } from "~/thirdweb/84532/0xc9eef632bac0a834499dfe5b28c93337190d9815";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
@@ -228,8 +228,16 @@ export const hotdogRouter = createTRPCRouter({
         userAttestations: [...dogResponse[4]],
       };
 
-      // Process logs and get Zora coin details
-      const filteredLogs = processedResponse.logs.filter(log => !redactedLogIdsStr.includes(log.logId));
+      // Filter logs and attestation arrays in sync
+      const filteredIndices = processedResponse.logs
+        .map((log, i) => (!redactedLogIdsStr.includes(log.logId) ? i : -1))
+        .filter(i => i !== -1 && i < processedResponse.validCounts.length);
+
+      const filteredLogs = filteredIndices.map(i => processedResponse.logs[i]!);
+      const filteredValidCounts = filteredIndices.map(i => processedResponse.validCounts[i]!);
+      const filteredInvalidCounts = filteredIndices.map(i => processedResponse.invalidCounts[i]!);
+      const filteredUserHasAttested = filteredIndices.map(i => processedResponse.userHasAttested[i]!);
+      const filteredUserAttestations = filteredIndices.map(i => processedResponse.userAttestations[i]!);
 
       const zoraCoinAddresses = new Set<string>();
       const metadataUris = new Set<string>();
@@ -271,10 +279,10 @@ export const hotdogRouter = createTRPCRouter({
 
       const response: GetAllResponse = {
         hotdogs: processedHotdogs,
-        validAttestations: processedResponse.validCounts,
-        invalidAttestations: processedResponse.invalidCounts,
-        userAttested: processedResponse.userHasAttested,
-        userAttestations: processedResponse.userAttestations,
+        validAttestations: filteredValidCounts,
+        invalidAttestations: filteredInvalidCounts,
+        userAttested: filteredUserHasAttested,
+        userAttestations: filteredUserAttestations,
         totalPages: Number(totalPages),
         hasNextPage: start + limit < Number(totalPages),
       };
@@ -513,6 +521,52 @@ export const hotdogRouter = createTRPCRouter({
         return transactionId;
       } catch (error) {
         console.error("Error logging hotdog:", error);
+        throw error;
+      }
+    }),
+  judge: protectedProcedure
+    .input(z.object({
+      chainId: z.number(),
+      logId: z.string(),
+      isValid: z.boolean(),
+      shouldRevoke: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { chainId, logId, isValid, shouldRevoke } = input;
+
+      if (!ctx.session?.user.address) {
+        throw new Error("User address not found");
+      }
+
+      try {
+        const transaction = shouldRevoke 
+          ? revokeAttestation({
+              contract: getContract({
+                address: LOG_A_DOG[chainId]!,
+                client,
+                chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+              }),
+              logId: BigInt(logId),
+            })
+          : attestHotdogLog({
+              contract: getContract({
+                address: LOG_A_DOG[chainId]!,
+                client,
+                chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+              }),
+              logId: BigInt(logId),
+              isValid,
+            });
+
+        const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
+
+        // Invalidate Redis cache for all hotdog queries for this chain
+        const pattern = `hotdogs:${chainId}:*`;
+        await deleteCachedData(pattern);
+
+        return transactionId;
+      } catch (error) {
+        console.error("Error processing attestation:", error);
         throw error;
       }
     }),
