@@ -102,8 +102,17 @@ export const authOptions: NextAuthOptions = {
           console.error("Error fetching FID from Neynar:", error);
         }
 
-        const user = await db.user.create({
-          data: {
+        const user = await db.user.upsert({
+          where: {
+            address: credentials.address.toLowerCase(),
+          },
+          update: {
+            fid,
+            username,
+            image,
+            name,
+          },
+          create: {
             address: credentials.address.toLowerCase(),
             fid,
             username,
@@ -113,8 +122,17 @@ export const authOptions: NextAuthOptions = {
         });
         console.log({ user });
         // Create a new account for the user
-        await db.account.create({ 
-          data: {
+        await db.account.upsert({ 
+          where: {
+            provider_providerAccountId: {
+              provider: "ethereum",
+              providerAccountId: credentials.address,
+            },
+          },
+          update: {
+            type: "ethereum",
+          },
+          create: {
             userId: user.id,
             type: "ethereum",
             provider: "ethereum",

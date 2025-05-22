@@ -43,6 +43,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+  console.log({ profileData: data });
 
   const imageUrl = data?.imgUrl?.replace("ipfs://", "https://ipfs.io/ipfs/");
 

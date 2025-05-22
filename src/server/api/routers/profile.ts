@@ -21,8 +21,10 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { address, chainId } = input;
+      console.log({ address, chainId });
       const cacheKey = `profile:${chainId}:${address}`;
-      return getOrSetCache(
+      console.log({ cacheKey });
+      const profile = await getOrSetCache(
         cacheKey,
         async () => {
           const profile = await getProfile(address, chainId);
@@ -30,6 +32,8 @@ export const profileRouter = createTRPCRouter({
         },
         CACHE_DURATION.MEDIUM
       );
+      console.log({ profile });
+      return profile;
     }),
   getByUsername: publicProcedure
     .input(z.object({
