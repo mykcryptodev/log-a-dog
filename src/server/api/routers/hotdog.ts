@@ -9,7 +9,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdog, revokeAttestation, attestHotdogLog } from "~/thirdweb/84532/0xc9eef632bac0a834499dfe5b28c93337190d9815";
+import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdogOnBehalf, attestHotdogLogOnBehalf, revokeAttestationOnBehalf } from "~/thirdweb/84532/0x6ffc6289a03a07095568664f48af23740131a4d1";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
@@ -499,7 +499,7 @@ export const hotdogRouter = createTRPCRouter({
 
       const POOL_CONFIG = encodePoolConfig();
 
-      const transaction = logHotdog({
+      const transaction = logHotdogOnBehalf({
         contract: getContract({
           address: LOG_A_DOG[chainId]!,
           client,
@@ -540,21 +540,23 @@ export const hotdogRouter = createTRPCRouter({
 
       try {
         const transaction = shouldRevoke 
-          ? revokeAttestation({
+          ? revokeAttestationOnBehalf({
               contract: getContract({
                 address: LOG_A_DOG[chainId]!,
                 client,
                 chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
               }),
               logId: BigInt(logId),
+              attestor: ctx.session.user.address,
             })
-          : attestHotdogLog({
+          : attestHotdogLogOnBehalf({
               contract: getContract({
                 address: LOG_A_DOG[chainId]!,
                 client,
                 chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
               }),
               logId: BigInt(logId),
+              attestor: ctx.session.user.address,
               isValid,
             });
 

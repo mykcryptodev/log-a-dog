@@ -11,18 +11,25 @@ contract LogADogTest is Test {
     
     address public user1;
     address public user2;
+    address public operator;
     address public platformReferrer;
+    address public admin;
 
     function setUp() public {
         user1 = address(0x1);
         user2 = address(0x2);
-        platformReferrer = address(0x3);
+        operator = address(0x3);
+        platformReferrer = address(0x4);
+        admin = address(this);
         
         // Deploy LogADog contract
         logADog = new LogADog(platformReferrer);
         
         // Enable Zora coins
         logADog.setZoraEnabled(true);
+        
+        // Add operator
+        logADog.addOperator(operator);
         
         // Mock Zora factory calls
         vm.mockCall(
@@ -34,7 +41,7 @@ contract LogADogTest is Test {
                 "metadataUri", // uri
                 "Logged Dog #0", // name
                 "LOGADOG", // symbol
-                logADog.POOL_CONFIG(), // poolConfig
+                bytes("0x0"), // poolConfig
                 platformReferrer, // platform referrer
                 address(0), // currency
                 1 ether // order size
@@ -45,19 +52,47 @@ contract LogADogTest is Test {
 
     function testConstructor() public view {
         assertEq(logADog.platformReferrer(), platformReferrer);
+        assertTrue(logADog.hasRole(logADog.DEFAULT_ADMIN_ROLE(), admin));
     }
 
     function testSetPlatformReferrer() public {
-        vm.startPrank(platformReferrer);
         logADog.setPlatformReferrer(user1);
         assertEq(logADog.platformReferrer(), user1);
+    }
+
+    function test_RevertWhen_NotAdminSetsPlatformReferrer() public {
+        vm.startPrank(user1);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                bytes4(keccak256("AccessControlUnauthorizedAccount(address,bytes32)")),
+                user1,
+                logADog.DEFAULT_ADMIN_ROLE()
+            )
+        );
+        logADog.setPlatformReferrer(user1);
         vm.stopPrank();
     }
 
-    function test_RevertWhen_NotOwnerSetsPlatformReferrer() public {
+    function testAddAndRemoveOperator() public {
+        // Test adding operator
+        logADog.addOperator(user1);
+        assertTrue(logADog.hasRole(logADog.OPERATOR_ROLE(), user1));
+
+        // Test removing operator
+        logADog.removeOperator(user1);
+        assertFalse(logADog.hasRole(logADog.OPERATOR_ROLE(), user1));
+    }
+
+    function test_RevertWhen_NotAdminAddsOperator() public {
         vm.startPrank(user1);
-        vm.expectRevert("Only current platform referrer can update");
-        logADog.setPlatformReferrer(user1);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                bytes4(keccak256("AccessControlUnauthorizedAccount(address,bytes32)")),
+                user1,
+                logADog.DEFAULT_ADMIN_ROLE()
+            )
+        );
+        logADog.addOperator(user2);
         vm.stopPrank();
     }
 
@@ -65,37 +100,66 @@ contract LogADogTest is Test {
         vm.deal(user1, 1 ether);
         vm.startPrank(user1);
         
-        // Expect the Zora factory call
-        vm.expectCall(
-            ZORA_FACTORY,
-            abi.encodeWithSelector(
-                IZoraFactory.deploy.selector,
-                user2, // payout recipient
-                new address[](1), // owners
-                "metadataUri", // uri
-                "Logged Dog #0", // name
-                "LOGADOG", // symbol
-                logADog.POOL_CONFIG(), // poolConfig
-                platformReferrer, // platform referrer
-                address(0), // currency
-                1 ether // order size
-            )
-        );
-        
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            user1, // Can only log for self
+            bytes("0x0")
+        );
+        
+        // Verify log was created
+        (uint256 id, string memory imageUri, string memory metadataUri, uint256 timestamp, address eater, address logger, address zoraCoin) = logADog.hotdogLogs(logId);
+        assertEq(eater, user1);
+        assertEq(logger, user1);
+        assertEq(imageUri, "imageUri");
+        assertEq(metadataUri, "metadataUri");
+        assertEq(zoraCoin, MOCK_COIN_ADDRESS);
+    }
+
+    function test_RevertWhen_LoggingForOthers() public {
+        vm.deal(user1, 1 ether);
+        vm.startPrank(user1);
+        
+        vm.expectRevert("Can only log hotdogs for yourself");
+        logADog.logHotdog{value: 1 ether}(
+            "imageUri",
+            "metadataUri",
+            user2, // Trying to log for someone else
+            bytes("0x0")
+        );
+    }
+
+    function testLogHotdogOnBehalf() public {
+        vm.deal(operator, 1 ether);
+        vm.startPrank(operator);
+        
+        uint256 logId = logADog.logHotdogOnBehalf{value: 1 ether}(
+            "imageUri",
+            "metadataUri",
             user2,
-            logADog.POOL_CONFIG()
+            bytes("0x0")
         );
         
         // Verify log was created
         (uint256 id, string memory imageUri, string memory metadataUri, uint256 timestamp, address eater, address logger, address zoraCoin) = logADog.hotdogLogs(logId);
         assertEq(eater, user2);
-        assertEq(logger, user1);
+        assertEq(logger, operator);
         assertEq(imageUri, "imageUri");
         assertEq(metadataUri, "metadataUri");
         assertEq(zoraCoin, MOCK_COIN_ADDRESS);
+    }
+
+    function test_RevertWhen_NonOperatorLogsOnBehalf() public {
+        vm.deal(user1, 1 ether);
+        vm.startPrank(user1);
+        
+        vm.expectRevert("Caller is not an operator");
+        logADog.logHotdogOnBehalf{value: 1 ether}(
+            "imageUri",
+            "metadataUri",
+            user2,
+            bytes("0x0")
+        );
     }
 
     function testAttestHotdogLog() public {
@@ -105,12 +169,12 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
-            user2,
-            logADog.POOL_CONFIG()
+            user1,
+            bytes("0x0")
         );
         
-        // Then attest to it
-        vm.startPrank(user1);
+        // Then attest to it as user2
+        vm.startPrank(user2);
         logADog.attestHotdogLog(logId, true);
         
         // Verify attestation
@@ -119,18 +183,40 @@ contract LogADogTest is Test {
         assertEq(invalidCount, 0);
     }
 
-    function test_RevertWhen_OwnerAttestsOwnLog() public {
+    function testAttestHotdogLogOnBehalf() public {
+        // First log a hotdog
         vm.deal(user1, 1 ether);
         vm.startPrank(user1);
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
             user1,
-            logADog.POOL_CONFIG()
+            bytes("0x0")
         );
         
-        vm.expectRevert("Caller cannot attest to their own log");
-        logADog.attestHotdogLog(logId, true);
+        // Then attest to it as operator on behalf of user2
+        vm.startPrank(operator);
+        logADog.attestHotdogLogOnBehalf(logId, user2, true);
+        
+        // Verify attestation
+        (uint256 validCount, uint256 invalidCount) = _countAttestations(logId);
+        assertEq(validCount, 1);
+        assertEq(invalidCount, 0);
+    }
+
+    function test_RevertWhen_NonOperatorAttestsOnBehalf() public {
+        vm.deal(user1, 1 ether);
+        vm.startPrank(user1);
+        uint256 logId = logADog.logHotdog{value: 1 ether}(
+            "imageUri",
+            "metadataUri",
+            user1,
+            bytes("0x0")
+        );
+        
+        vm.startPrank(user2);
+        vm.expectRevert("Caller is not an operator");
+        logADog.attestHotdogLogOnBehalf(logId, user2, true);
     }
 
     function testRevokeHotdogLog() public {
@@ -140,7 +226,7 @@ contract LogADogTest is Test {
             "imageUri",
             "metadataUri",
             user1,
-            logADog.POOL_CONFIG()
+            bytes("0x0")
         );
         
         logADog.revokeHotdogLog(logId);
@@ -148,6 +234,39 @@ contract LogADogTest is Test {
         // Verify log was deleted
         (uint256 id, string memory imageUri, string memory metadataUri, uint256 timestamp, address eater, address logger, address zoraCoin) = logADog.hotdogLogs(logId);
         assertEq(eater, address(0));
+    }
+
+    function testRevokeHotdogLogOnBehalf() public {
+        vm.deal(user1, 1 ether);
+        vm.startPrank(user1);
+        uint256 logId = logADog.logHotdog{value: 1 ether}(
+            "imageUri",
+            "metadataUri",
+            user1,
+            bytes("0x0")
+        );
+        
+        vm.startPrank(operator);
+        logADog.revokeHotdogLogOnBehalf(logId, user1);
+        
+        // Verify log was deleted
+        (uint256 id, string memory imageUri, string memory metadataUri, uint256 timestamp, address eater, address logger, address zoraCoin) = logADog.hotdogLogs(logId);
+        assertEq(eater, address(0));
+    }
+
+    function test_RevertWhen_NonOperatorRevokesOnBehalf() public {
+        vm.deal(user1, 1 ether);
+        vm.startPrank(user1);
+        uint256 logId = logADog.logHotdog{value: 1 ether}(
+            "imageUri",
+            "metadataUri",
+            user1,
+            bytes("0x0")
+        );
+        
+        vm.startPrank(user2);
+        vm.expectRevert("Caller is not an operator");
+        logADog.revokeHotdogLogOnBehalf(logId, user1);
     }
 
     function testGetLeaderboard() public {
@@ -160,7 +279,7 @@ contract LogADogTest is Test {
             "imageUri1",
             "metadataUri1",
             user2,
-            logADog.POOL_CONFIG()
+            bytes("0x0")
         );
         
         // Second hotdog
@@ -168,7 +287,7 @@ contract LogADogTest is Test {
             "imageUri2",
             "metadataUri2",
             user2,
-            logADog.POOL_CONFIG()
+            bytes("0x0")
         );
         
         // Attest to both hotdogs
@@ -191,7 +310,7 @@ contract LogADogTest is Test {
             "imageUri",
             "metadataUri",
             user2,
-            logADog.POOL_CONFIG()
+            bytes("0x0")
         );
         
         // Attest to the log
@@ -222,7 +341,7 @@ contract LogADogTest is Test {
             "imageUri",
             "metadataUri",
             user2,
-            logADog.POOL_CONFIG()
+            bytes("0x0")
         );
         
         uint256 totalPages = logADog.getTotalPagesForLogs(0, block.timestamp, 10);

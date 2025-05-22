@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 interface IZoraFactory {
     function deploy(
@@ -20,7 +21,10 @@ interface IZoraFactory {
  * @title LogADog
  * @dev The worlds first onchain hotdog eating competition
  */
-contract LogADog {
+contract LogADog is AccessControl {
+    // Role for operators who can act on behalf of users
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+    
     // Zora Factory address on Base
     address public constant ZORA_FACTORY = 0x777777751622c0d3258f214F9DF38E35BF45baF3;
     // Platform referrer address (can be updated by owner)
@@ -51,23 +55,41 @@ contract LogADog {
     event AttestationMade(uint256 indexed logId, address indexed attestor, bool isValid);
     event HotdogLogRevoked(uint256 indexed logId, address indexed logger);
     event AttestationRevoked(uint256 indexed logId, address indexed attestor);
+    event OperatorAdded(address indexed operator);
+    event OperatorRemoved(address indexed operator);
 
     modifier onlyLogOwner(uint256 logId) {
         require(hotdogLogs[logId].eater == msg.sender, "Caller is not the owner of this log");
         _;
     }
 
-    constructor(address _platformReferrer) {
-        platformReferrer = _platformReferrer;
+    modifier operatorOnly() {
+        require(hasRole(OPERATOR_ROLE, msg.sender), "Caller is not an operator");
+        _;
     }
 
-    function setZoraEnabled(bool _zoraEnabled) external {
+    constructor(address _platformReferrer) {
+        platformReferrer = _platformReferrer;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(OPERATOR_ROLE, 0x360E36BEFcC2DB9C45e411E5E4840FE33a8f21B0);
+    }
+
+    function setZoraEnabled(bool _zoraEnabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
         zoraEnabled = _zoraEnabled;
     }
 
-    function setPlatformReferrer(address _platformReferrer) external {
-        require(msg.sender == platformReferrer, "Only current platform referrer can update");
+    function setPlatformReferrer(address _platformReferrer) external onlyRole(DEFAULT_ADMIN_ROLE) {
         platformReferrer = _platformReferrer;
+    }
+
+    function addOperator(address operator) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        grantRole(OPERATOR_ROLE, operator);
+        emit OperatorAdded(operator);
+    }
+
+    function removeOperator(address operator) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        revokeRole(OPERATOR_ROLE, operator);
+        emit OperatorRemoved(operator);
     }
 
     /**
@@ -79,6 +101,18 @@ contract LogADog {
      * @dev Any eth sent with the transaction is used to purchase the zora coin.
      */
     function logHotdog(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) external payable returns (uint256 logId) {
+        require(eater == msg.sender, "Can only log hotdogs for yourself");
+        return _logHotdog(imageUri, metadataUri, eater, poolConfig);
+    }
+
+    /**
+     * @notice Logs a hotdog on behalf of another user (operator only)
+     */
+    function logHotdogOnBehalf(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) external payable operatorOnly returns (uint256 logId) {
+        return _logHotdog(imageUri, metadataUri, eater, poolConfig);
+    }
+
+    function _logHotdog(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) internal returns (uint256 logId) {
         logId = hotdogLogs.length;
         
         // Create Zora coin first
@@ -117,13 +151,24 @@ contract LogADog {
      */
     function attestHotdogLog(uint256 logId, bool isValid) external {
         require(hotdogLogs[logId].eater != msg.sender, "Caller cannot attest to their own log");
+        _attestHotdogLog(logId, msg.sender, isValid);
+    }
 
+    /**
+     * @notice Attests to the validity of a hotdog log on behalf of another user (operator only)
+     */
+    function attestHotdogLogOnBehalf(uint256 logId, address attestor, bool isValid) external operatorOnly {
+        require(hotdogLogs[logId].eater != attestor, "Cannot attest to own log");
+        _attestHotdogLog(logId, attestor, isValid);
+    }
+
+    function _attestHotdogLog(uint256 logId, address attestor, bool isValid) internal {
         bool attestationFound = false;
         for (uint256 i = 0; i < attestations[logId].length; i++) {
-            if (attestations[logId][i].attestor == msg.sender) {
+            if (attestations[logId][i].attestor == attestor) {
                 if (attestations[logId][i].isValid != isValid) {
                     attestations[logId][i].isValid = isValid;
-                    emit AttestationMade(logId, msg.sender, isValid);
+                    emit AttestationMade(logId, attestor, isValid);
                 }
                 attestationFound = true;
                 break;
@@ -131,9 +176,9 @@ contract LogADog {
         }
 
         if (!attestationFound) {
-            attestations[logId].push(Attestation({attestor: msg.sender, isValid: isValid}));
-            hasAttested[logId][msg.sender] = true;
-            emit AttestationMade(logId, msg.sender, isValid);
+            attestations[logId].push(Attestation({attestor: attestor, isValid: isValid}));
+            hasAttested[logId][attestor] = true;
+            emit AttestationMade(logId, attestor, isValid);
         }
     }
 
@@ -142,8 +187,20 @@ contract LogADog {
      * @param logId The ID of the hotdog log to revoke.
      */
     function revokeHotdogLog(uint256 logId) external onlyLogOwner(logId) {
+        _revokeHotdogLog(logId, msg.sender);
+    }
+
+    /**
+     * @notice Revokes a hotdog log on behalf of another user (operator only)
+     */
+    function revokeHotdogLogOnBehalf(uint256 logId, address owner) external operatorOnly {
+        require(hotdogLogs[logId].eater == owner, "Target is not the owner of this log");
+        _revokeHotdogLog(logId, owner);
+    }
+
+    function _revokeHotdogLog(uint256 logId, address owner) internal {
         delete hotdogLogs[logId];
-        emit HotdogLogRevoked(logId, msg.sender);
+        emit HotdogLogRevoked(logId, owner);
     }
 
     /**
@@ -152,10 +209,22 @@ contract LogADog {
      */
     function revokeAttestation(uint256 logId) external {
         require(hasAttested[logId][msg.sender], "Caller has not attested to this log");
-        uint256 index = _findAttestationIndex(logId, msg.sender);
+        _revokeAttestation(logId, msg.sender);
+    }
+
+    /**
+     * @notice Revokes an attestation on behalf of another user (operator only)
+     */
+    function revokeAttestationOnBehalf(uint256 logId, address attestor) external operatorOnly {
+        require(hasAttested[logId][attestor], "Target has not attested to this log");
+        _revokeAttestation(logId, attestor);
+    }
+
+    function _revokeAttestation(uint256 logId, address attestor) internal {
+        uint256 index = _findAttestationIndex(logId, attestor);
         _removeAttestation(logId, index);
-        hasAttested[logId][msg.sender] = false;
-        emit AttestationRevoked(logId, msg.sender);
+        hasAttested[logId][attestor] = false;
+        emit AttestationRevoked(logId, attestor);
     }
 
     /**
