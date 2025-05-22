@@ -114,7 +114,7 @@ export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, r
                 <div className="text-lg font-bold text-secondary">{originalIndex + 1}</div>
                 <Avatar size="32px" address={address} />
                 <div className="font-medium">
-                  <Name address={address} />
+                  <Name address={address} noLink />
                 </div>
               </Link>
               <div className="flex items-center gap-2">

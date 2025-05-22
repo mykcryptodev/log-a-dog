@@ -6,7 +6,7 @@ import { api } from "~/utils/api";
 import { ProfileButton } from "./Button";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
-export const Name: FC<{ address: string }> = ({ address }) => {
+export const Name: FC<{ address: string; noLink?: boolean }> = ({ address, noLink }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
@@ -52,13 +52,23 @@ export const Name: FC<{ address: string }> = ({ address }) => {
     );
   }
   
-  return (
+  const content = (
     <div className="flex items-center gap-1">
-      <Link href={`/profile/address/${profile.address}`}>{profile.username}</Link>
+      <span>{profile.username}</span>
       {userData?.fid && (
         <CheckBadgeIcon className="w-4 h-4 text-primary" />
       )}
     </div>
+  );
+
+  if (noLink) {
+    return content;
+  }
+
+  return (
+    <Link href={`/profile/address/${profile.address}`}>
+      {content}
+    </Link>
   );
 };
 

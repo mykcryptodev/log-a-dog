@@ -37,13 +37,12 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
 
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
-    address: account?.address ?? "",
+    address: account?.address ?? sessionData?.user?.address ?? "",
   }, {
-    enabled: !!account?.address,
+    enabled: !!account?.address || !!sessionData?.user?.address,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-  console.log({ profileData: data });
 
   const imageUrl = data?.imgUrl?.replace("ipfs://", "https://ipfs.io/ipfs/");
 
