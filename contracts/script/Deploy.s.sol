@@ -6,6 +6,7 @@ import "forge-std/console2.sol";
 import "../src/HotdogToken.sol";
 import "../src/HotdogStaking.sol";
 import "../src/AttestationManager.sol";
+import "../src/CoinDeploymentManager.sol";
 import "../src/LogADog.sol";
 
 contract DeployScript is Script {
@@ -21,6 +22,7 @@ contract DeployScript is Script {
     HotdogToken public hotdogToken;
     HotdogStaking public hotdogStaking;
     AttestationManager public attestationManager;
+    CoinDeploymentManager public coinDeploymentManager;
     LogADog public logADog;
     
     // Deployment configuration
@@ -44,6 +46,7 @@ contract DeployScript is Script {
         _deployHotdogToken();
         _deployHotdogStaking();
         _deployAttestationManager();
+        _deployCoinDeploymentManager();
         _deployLogADog();
         
         // Configure contracts
@@ -108,11 +111,21 @@ contract DeployScript is Script {
         console2.log("AttestationManager deployed at:", address(attestationManager));
     }
     
+    function _deployCoinDeploymentManager() internal {
+        console2.log("Deploying CoinDeploymentManager...");
+        coinDeploymentManager = new CoinDeploymentManager(
+            0x777777751622c0d3258f214F9DF38E35BF45baF3, // Zora Factory on Base
+            "LOGADOG" // Coin symbol
+        );
+        console2.log("CoinDeploymentManager deployed at:", address(coinDeploymentManager));
+    }
+
     function _deployLogADog() internal {
         console2.log("Deploying LogADog...");
         logADog = new LogADog(
             config.platformReferrer,
-            address(attestationManager)
+            address(attestationManager),
+            address(coinDeploymentManager)
         );
         console2.log("LogADog deployed at:", address(logADog));
     }
@@ -135,6 +148,10 @@ contract DeployScript is Script {
         // Set LogADog contract in AttestationManager
         attestationManager.setLogADogContract(address(logADog));
         console2.log("Set LogADog contract in AttestationManager");
+        
+        // Grant deployer role to LogADog contract in CoinDeploymentManager
+        coinDeploymentManager.addDeployer(address(logADog));
+        console2.log("Granted DEPLOYER_ROLE to LogADog in CoinDeploymentManager");
     }
     
     function _fundRewardsPool() internal {
@@ -160,6 +177,7 @@ contract DeployScript is Script {
         console2.log("HotdogToken:", address(hotdogToken));
         console2.log("HotdogStaking:", address(hotdogStaking));
         console2.log("AttestationManager:", address(attestationManager));
+        console2.log("CoinDeploymentManager:", address(coinDeploymentManager));
         console2.log("LogADog:", address(logADog));
         console2.log("\n=== TOKEN INFO ===");
         console2.log("Total Supply:", hotdogToken.totalSupply() / 10**18, "HOTDOG");
@@ -178,6 +196,7 @@ contract DeployScript is Script {
             '    "HotdogToken": "', vm.toString(address(hotdogToken)), '",\n',
             '    "HotdogStaking": "', vm.toString(address(hotdogStaking)), '",\n',
             '    "AttestationManager": "', vm.toString(address(attestationManager)), '",\n',
+            '    "CoinDeploymentManager": "', vm.toString(address(coinDeploymentManager)), '",\n',
             '    "LogADog": "', vm.toString(address(logADog)), '"\n',
             '  },\n',
             '  "timestamp": ', vm.toString(block.timestamp), '\n',

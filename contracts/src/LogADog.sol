@@ -1,22 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./AttestationManager.sol";
-
-interface IZoraFactory {
-    function deploy(
-        address payoutRecipient,
-        address[] memory owners,
-        string memory uri,
-        string memory name,
-        string memory symbol,
-        bytes calldata poolConfig,
-        address platformReferrer,
-        uint256 orderSize
-    ) external payable returns (address, uint256);
-}
+import "./CoinDeploymentManager.sol";
 
 /**
  * @title LogADog
@@ -26,12 +13,12 @@ contract LogADog is AccessControl {
     // Role for operators who can act on behalf of users
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     
-    // Zora Factory address on Base
-    address public constant ZORA_FACTORY = 0x777777751622c0d3258f214F9DF38E35BF45baF3;
     // Platform referrer address (can be updated by owner)
     address public platformReferrer;
     // Attestation manager contract
     AttestationManager public attestationManager;
+    // Coin deployment manager contract
+    CoinDeploymentManager public coinDeploymentManager;
     
     struct HotdogLog {
         uint256 logId;
@@ -59,6 +46,8 @@ contract LogADog is AccessControl {
     event OperatorAdded(address indexed operator);
     event OperatorRemoved(address indexed operator);
 
+    event DebugInfo(uint256 msgValue, uint256 contractBalance);
+
     modifier onlyLogOwner(uint256 logId) {
         require(hotdogLogs[logId].eater == msg.sender, "Caller is not the owner of this log");
         _;
@@ -69,9 +58,10 @@ contract LogADog is AccessControl {
         _;
     }
 
-    constructor(address _platformReferrer, address _attestationManager) {
+    constructor(address _platformReferrer, address _attestationManager, address _coinDeploymentManager) {
         platformReferrer = _platformReferrer;
         attestationManager = AttestationManager(_attestationManager);
+        coinDeploymentManager = CoinDeploymentManager(_coinDeploymentManager);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(OPERATOR_ROLE, 0x360E36BEFcC2DB9C45e411E5E4840FE33a8f21B0);
     }
@@ -82,6 +72,10 @@ contract LogADog is AccessControl {
 
     function setAttestationManager(address _attestationManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         attestationManager = AttestationManager(_attestationManager);
+    }
+
+    function setCoinDeploymentManager(address _coinDeploymentManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        coinDeploymentManager = CoinDeploymentManager(_coinDeploymentManager);
     }
 
     function addOperator(address operator) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -112,20 +106,19 @@ contract LogADog is AccessControl {
     function _logHotdog(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) internal returns (uint256 logId) {
         logId = hotdogLogs.length;
         
-        // Create Zora coin first
-        address[] memory owners = new address[](1);
-        owners[0] = eater;
+        emit DebugInfo(msg.value, address(this).balance);
 
-        (address coinAddress,) = IZoraFactory(ZORA_FACTORY).deploy{value: msg.value}(
-            eater, // payout recipient
-            owners, // owners
-            metadataUri, // uri
-            string.concat("Logged Dog #", Strings.toString(logId)), // name
-            "LOGADOG", // symbol
-            poolConfig, // configuration for the pool
-            platformReferrer, // platform referrer
-            msg.value // order size
-        );
+        // Deploy coin using CoinDeploymentManager
+        address coinAddress;
+        if (address(coinDeploymentManager) != address(0)) {
+            coinAddress = coinDeploymentManager.deployCoin{value: msg.value}(
+                logId,
+                eater,
+                metadataUri,
+                poolConfig,
+                platformReferrer
+            );
+        }
 
         // Log the dog
         hotdogLogs.push(HotdogLog({

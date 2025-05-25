@@ -3,9 +3,11 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/LogADog.sol";
+import "../src/CoinDeploymentManager.sol";
 
 contract LogADogTest is Test {
     LogADog public logADog;
+    CoinDeploymentManager public coinDeploymentManager;
     address public constant ZORA_FACTORY = 0x777777751622c0d3258f214F9DF38E35BF45baF3;
     address public constant MOCK_COIN_ADDRESS = address(0x1234);
     
@@ -22,8 +24,14 @@ contract LogADogTest is Test {
         platformReferrer = address(0x4);
         admin = address(this);
         
+        // Deploy CoinDeploymentManager first
+        coinDeploymentManager = new CoinDeploymentManager(ZORA_FACTORY, "LOGADOG");
+        
         // Deploy LogADog contract (without attestation manager for backward compatibility)
-        logADog = new LogADog(platformReferrer, address(0));
+        logADog = new LogADog(platformReferrer, address(0), address(coinDeploymentManager));
+        
+        // Grant deployer role to LogADog contract
+        coinDeploymentManager.addDeployer(address(logADog));
         
         // Add operator
         logADog.addOperator(operator);

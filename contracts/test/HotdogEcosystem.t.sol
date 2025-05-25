@@ -6,12 +6,14 @@ import "../src/LogADog.sol";
 import "../src/HotdogToken.sol";
 import "../src/HotdogStaking.sol";
 import "../src/AttestationManager.sol";
+import "../src/CoinDeploymentManager.sol";
 
 contract HotdogEcosystemTest is Test {
     LogADog public logADog;
     HotdogToken public hotdogToken;
     HotdogStaking public stakingContract;
     AttestationManager public attestationManager;
+    CoinDeploymentManager public coinDeploymentManager;
     
     address public constant ZORA_FACTORY = 0x777777751622c0d3258f214F9DF38E35BF45baF3;
     address public constant MOCK_COIN_ADDRESS = address(0x1234);
@@ -35,7 +37,8 @@ contract HotdogEcosystemTest is Test {
         hotdogToken = new HotdogToken();
         stakingContract = new HotdogStaking(address(hotdogToken));
         attestationManager = new AttestationManager(address(stakingContract));
-        logADog = new LogADog(platformReferrer, address(attestationManager));
+        coinDeploymentManager = new CoinDeploymentManager(ZORA_FACTORY, "LOGADOG");
+        logADog = new LogADog(platformReferrer, address(attestationManager), address(coinDeploymentManager));
         
         // Setup roles
         logADog.addOperator(operator);
@@ -43,6 +46,8 @@ contract HotdogEcosystemTest is Test {
         attestationManager.addLogManager(address(logADog));
         attestationManager.setLogADogContract(address(logADog));
         hotdogToken.addMinter(address(stakingContract));
+        hotdogToken.addMinter(address(attestationManager)); // AttestationManager needs minter role for rewards
+        coinDeploymentManager.addDeployer(address(logADog)); // LogADog needs deployer role for coin deployment
         
         // Distribute tokens to users
         hotdogToken.transfer(user1, 1000 * 10**18);
