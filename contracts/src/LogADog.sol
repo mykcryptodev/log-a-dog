@@ -29,9 +29,6 @@ contract LogADog is AccessControl {
     address public constant ZORA_FACTORY = 0x777777751622c0d3258f214F9DF38E35BF45baF3;
     // Platform referrer address (can be updated by owner)
     address public platformReferrer;
-    // Temporary flag to disable Zora coins
-    bool public zoraEnabled = true;
-
     struct HotdogLog {
         uint256 logId;
         string imageUri;
@@ -72,10 +69,6 @@ contract LogADog is AccessControl {
         platformReferrer = _platformReferrer;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(OPERATOR_ROLE, 0x360E36BEFcC2DB9C45e411E5E4840FE33a8f21B0);
-    }
-
-    function setZoraEnabled(bool _zoraEnabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        zoraEnabled = _zoraEnabled;
     }
 
     function setPlatformReferrer(address _platformReferrer) external onlyRole(DEFAULT_ADMIN_ROLE) {
