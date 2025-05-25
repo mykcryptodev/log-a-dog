@@ -22,8 +22,8 @@ contract LogADogTest is Test {
         platformReferrer = address(0x4);
         admin = address(this);
         
-        // Deploy LogADog contract
-        logADog = new LogADog(platformReferrer);
+        // Deploy LogADog contract (without attestation manager for backward compatibility)
+        logADog = new LogADog(platformReferrer, address(0));
         
         // Add operator
         logADog.addOperator(operator);
@@ -160,10 +160,10 @@ contract LogADogTest is Test {
         );
         vm.stopPrank(); // Stop pranking as user1
         
-        // Then attest to it as user2
-        vm.startPrank(user2);
-        logADog.attestHotdogLog(logId, true);
-        vm.stopPrank(); // Stop pranking as user2
+        // Then attest to it as operator on behalf of user2 (using old attestation system)
+        vm.startPrank(operator);
+        logADog.attestHotdogLogOnBehalf(logId, user2, true);
+        vm.stopPrank(); // Stop pranking as operator
         
         // Verify attestation
         (uint256 validCount, uint256 invalidCount) = _countAttestations(logId);
@@ -288,11 +288,11 @@ contract LogADogTest is Test {
         );
         vm.stopPrank(); // Stop pranking as user1
         
-        // Attest to both hotdogs as user2 (not user1, since users can't attest to their own logs)
-        vm.startPrank(user2);
-        logADog.attestHotdogLog(0, true);
-        logADog.attestHotdogLog(1, true);
-        vm.stopPrank(); // Stop pranking as user2
+        // Attest to both hotdogs as operator on behalf of user2 (not user1, since users can't attest to their own logs)
+        vm.startPrank(operator);
+        logADog.attestHotdogLogOnBehalf(0, user2, true);
+        logADog.attestHotdogLogOnBehalf(1, user2, true);
+        vm.stopPrank(); // Stop pranking as operator
         
         // Get leaderboard
         (address[] memory users, uint256[] memory validLogCounts) = logADog.getLeaderboard(0, block.timestamp);
@@ -314,10 +314,10 @@ contract LogADogTest is Test {
         );
         vm.stopPrank(); // Stop pranking as user1
         
-        // Attest to the log as user2 (not user1, since users can't attest to their own logs)
-        vm.startPrank(user2);
-        logADog.attestHotdogLog(logId, true);
-        vm.stopPrank(); // Stop pranking as user2
+        // Attest to the log as operator on behalf of user2 (not user1, since users can't attest to their own logs)
+        vm.startPrank(operator);
+        logADog.attestHotdogLogOnBehalf(logId, user2, true);
+        vm.stopPrank(); // Stop pranking as operator
         
         // Get user logs (checking from user2's perspective)
         (

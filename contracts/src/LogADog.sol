@@ -3,6 +3,7 @@ pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./AttestationManager.sol";
 
 interface IZoraFactory {
     function deploy(
@@ -29,6 +30,8 @@ contract LogADog is AccessControl {
     address public constant ZORA_FACTORY = 0x777777751622c0d3258f214F9DF38E35BF45baF3;
     // Platform referrer address (can be updated by owner)
     address public platformReferrer;
+    // Attestation manager contract
+    AttestationManager public attestationManager;
     struct HotdogLog {
         uint256 logId;
         string imageUri;
@@ -65,14 +68,19 @@ contract LogADog is AccessControl {
         _;
     }
 
-    constructor(address _platformReferrer) {
+    constructor(address _platformReferrer, address _attestationManager) {
         platformReferrer = _platformReferrer;
+        attestationManager = AttestationManager(_attestationManager);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(OPERATOR_ROLE, 0x360E36BEFcC2DB9C45e411E5E4840FE33a8f21B0);
     }
 
     function setPlatformReferrer(address _platformReferrer) external onlyRole(DEFAULT_ADMIN_ROLE) {
         platformReferrer = _platformReferrer;
+    }
+
+    function setAttestationManager(address _attestationManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        attestationManager = AttestationManager(_attestationManager);
     }
 
     function addOperator(address operator) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -134,25 +142,42 @@ contract LogADog is AccessControl {
             zoraCoin: coinAddress
         }));
 
+        // Start attestation period if attestation manager is set
+        if (address(attestationManager) != address(0)) {
+            attestationManager.startAttestationPeriod(logId);
+        }
+
         emit HotdogLogged(logId, msg.sender, eater, imageUri, metadataUri, block.timestamp, coinAddress);
     }
 
     /**
-     * @notice Attests to the validity of a hotdog log or updates the attestation if it already exists.
+     * @notice Attests to the validity of a hotdog log using the new staking system
      * @param logId The ID of the hotdog log to attest to.
      * @param isValid True if the log is valid, false if invalid.
+     * @param stakeAmount Amount of HOTDOG tokens to stake on this attestation
      */
-    function attestHotdogLog(uint256 logId, bool isValid) external {
-        require(hotdogLogs[logId].eater != msg.sender, "Caller cannot attest to their own log");
-        _attestHotdogLog(logId, msg.sender, isValid);
+    function attestHotdogLog(uint256 logId, bool isValid, uint256 stakeAmount) external pure {
+        // The user calls this function directly on the AttestationManager
+        // This function is kept for backward compatibility but redirects to the manager
+        revert("Please call attestToLog directly on the AttestationManager contract");
     }
 
     /**
      * @notice Attests to the validity of a hotdog log on behalf of another user (operator only)
+     * @dev This function is deprecated in favor of the new staking system
      */
     function attestHotdogLogOnBehalf(uint256 logId, address attestor, bool isValid) external operatorOnly {
         require(hotdogLogs[logId].eater != attestor, "Cannot attest to own log");
         _attestHotdogLog(logId, attestor, isValid);
+    }
+
+    /**
+     * @notice Resolve an attestation period after it has ended
+     * @param logId The ID of the hotdog log
+     */
+    function resolveAttestationPeriod(uint256 logId) external {
+        require(address(attestationManager) != address(0), "Attestation manager not set");
+        attestationManager.resolveAttestationPeriod(logId);
     }
 
     function _attestHotdogLog(uint256 logId, address attestor, bool isValid) internal {
@@ -474,6 +499,15 @@ contract LogADog is AccessControl {
     }
 
     function _isValidLog(uint256 logId) internal view returns (bool) {
+        // Check if attestation manager is set and has resolved this log
+        if (address(attestationManager) != address(0)) {
+            (,, AttestationManager.AttestationStatus status,,, bool isValid) = attestationManager.getAttestationPeriod(logId);
+            if (status == AttestationManager.AttestationStatus.Resolved) {
+                return isValid;
+            }
+        }
+        
+        // Fallback to old attestation system
         uint256 validCount = 0;
         uint256 invalidCount = 0;
 
