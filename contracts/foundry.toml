@@ -6,6 +6,9 @@ remappings = [
     '@thirdweb-dev/=node_modules/@thirdweb-dev/',
     '@openzeppelin/=lib/openzeppelin-contracts/',
 ]
+fs_permissions = [
+    { access = "read-write", path = "./deployments" }
+]
 
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

@@ -32,6 +32,7 @@ contract LogADog is AccessControl {
     address public platformReferrer;
     // Attestation manager contract
     AttestationManager public attestationManager;
+    
     struct HotdogLog {
         uint256 logId;
         string imageUri;
@@ -95,11 +96,6 @@ contract LogADog is AccessControl {
 
     /**
      * @notice Logs a hotdog with an image URI, metadata URI, and specified owner.
-     * @param imageUri The URI pointing to the image of the hotdog being eaten.
-     * @param metadataUri The URI pointing to the metadata JSON object.
-     * @param eater The address of the hotdog eater.
-     * @return logId The ID of the newly created hotdog log.
-     * @dev Any eth sent with the transaction is used to purchase the zora coin.
      */
     function logHotdog(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) external payable returns (uint256 logId) {
         require(eater == msg.sender, "Can only log hotdogs for yourself");
@@ -152,19 +148,13 @@ contract LogADog is AccessControl {
 
     /**
      * @notice Attests to the validity of a hotdog log using the new staking system
-     * @param logId The ID of the hotdog log to attest to.
-     * @param isValid True if the log is valid, false if invalid.
-     * @param stakeAmount Amount of HOTDOG tokens to stake on this attestation
      */
-    function attestHotdogLog(uint256 logId, bool isValid, uint256 stakeAmount) external pure {
-        // The user calls this function directly on the AttestationManager
-        // This function is kept for backward compatibility but redirects to the manager
+    function attestHotdogLog(uint256 /* logId */, bool /* isValid */, uint256 /* stakeAmount */) external pure {
         revert("Please call attestToLog directly on the AttestationManager contract");
     }
 
     /**
      * @notice Attests to the validity of a hotdog log on behalf of another user (operator only)
-     * @dev This function is deprecated in favor of the new staking system
      */
     function attestHotdogLogOnBehalf(uint256 logId, address attestor, bool isValid) external operatorOnly {
         require(hotdogLogs[logId].eater != attestor, "Cannot attest to own log");
@@ -173,7 +163,6 @@ contract LogADog is AccessControl {
 
     /**
      * @notice Resolve an attestation period after it has ended
-     * @param logId The ID of the hotdog log
      */
     function resolveAttestationPeriod(uint256 logId) external {
         require(address(attestationManager) != address(0), "Attestation manager not set");
@@ -202,10 +191,10 @@ contract LogADog is AccessControl {
 
     /**
      * @notice Revokes a hotdog log.
-     * @param logId The ID of the hotdog log to revoke.
      */
     function revokeHotdogLog(uint256 logId) external onlyLogOwner(logId) {
-        _revokeHotdogLog(logId, msg.sender);
+        delete hotdogLogs[logId];
+        emit HotdogLogRevoked(logId, msg.sender);
     }
 
     /**
@@ -213,17 +202,12 @@ contract LogADog is AccessControl {
      */
     function revokeHotdogLogOnBehalf(uint256 logId, address owner) external operatorOnly {
         require(hotdogLogs[logId].eater == owner, "Target is not the owner of this log");
-        _revokeHotdogLog(logId, owner);
-    }
-
-    function _revokeHotdogLog(uint256 logId, address owner) internal {
         delete hotdogLogs[logId];
         emit HotdogLogRevoked(logId, owner);
     }
 
     /**
      * @notice Revokes an attestation to a hotdog log.
-     * @param logId The ID of the hotdog log for which to revoke the attestation.
      */
     function revokeAttestation(uint256 logId) external {
         require(hasAttested[logId][msg.sender], "Caller has not attested to this log");
@@ -246,184 +230,25 @@ contract LogADog is AccessControl {
     }
 
     /**
-     * @notice Gets paginated hotdog logs submitted between the specified start and end times along with attestation counts and user attestation status.
-     * @param startTime The start time for the query.
-     * @param endTime The end time for the query.
-     * @param user The address of the user to check for attestations.
-     * @param start The starting index for pagination.
-     * @param limit The maximum number of logs to return.
-     * @return logs An array of hotdog logs submitted between the specified times.
-     * @return validCounts An array of valid attestation counts corresponding to each log.
-     * @return invalidCounts An array of invalid attestation counts corresponding to each log.
-     * @return userHasAttested An array indicating whether the user has attested to each log.
-     * @return userAttestations An array indicating the value of the user's attestation for each log.
+     * @notice Gets basic info about hotdog logs (simplified version)
      */
-    function getHotdogLogs(uint256 startTime, uint256 endTime, address user, uint256 start, uint256 limit) external view returns (HotdogLog[] memory logs, uint256[] memory validCounts, uint256[] memory invalidCounts, bool[] memory userHasAttested, bool[] memory userAttestations) {
-        uint256 totalLogs = 0;
-        for (uint256 i = 0; i < hotdogLogs.length; i++) {
-            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
-                totalLogs++;
-            }
-        }
-
-        uint256 resultCount = totalLogs > start ? totalLogs - start : 0;
-        resultCount = resultCount > limit ? limit : resultCount;
-
-        logs = new HotdogLog[](resultCount);
-        validCounts = new uint256[](resultCount);
-        invalidCounts = new uint256[](resultCount);
-        userHasAttested = new bool[](resultCount);
-        userAttestations = new bool[](resultCount);
-
-        uint256 index = 0;
-        uint256 skipped = 0;
-        for (uint256 i = hotdogLogs.length; i > 0 && index < resultCount; i--) {
-            if (hotdogLogs[i - 1].timestamp >= startTime && hotdogLogs[i - 1].timestamp <= endTime) {
-                if (skipped >= start) {
-                    logs[index] = hotdogLogs[i - 1];
-                    (validCounts[index], invalidCounts[index]) = _countAttestations(i - 1);
-                    userHasAttested[index] = hasAttested[i - 1][user];
-                    if (userHasAttested[index]) {
-                        userAttestations[index] = _getUserAttestation(i - 1, user);
-                    }
-                    index++;
-                } else {
-                    skipped++;
-                }
-            }
-        }
+    function getHotdogLogsCount() external view returns (uint256) {
+        return hotdogLogs.length;
     }
 
     /**
-     * @notice Gets the total number of pages for hotdog logs within the specified time range.
-     * @param startTime The start time for the query.
-     * @param endTime The end time for the query.
-     * @param pageSize The number of logs per page.
-     * @return totalPages The total number of pages.
+     * @notice Gets a single hotdog log by ID
      */
-    function getTotalPagesForLogs(uint256 startTime, uint256 endTime, uint256 pageSize) external view returns (uint256 totalPages) {
-        uint256 totalLogs = 0;
-        for (uint256 i = 0; i < hotdogLogs.length; i++) {
-            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
-                totalLogs++;
-            }
-        }
-        totalPages = (totalLogs + pageSize - 1) / pageSize; // Round up division
+    function getHotdogLog(uint256 logId) external view returns (HotdogLog memory log, uint256 validCount, uint256 invalidCount) {
+        require(logId < hotdogLogs.length, "Log does not exist");
+        log = hotdogLogs[logId];
+        (validCount, invalidCount) = _countAttestations(logId);
     }
 
     /**
-     * @notice Gets leaderboard of users with the most valid hotdog logs submitted between the specified start and end times, sorted by valid log count.
-     * @param startTime The start time for the query.
-     * @param endTime The end time for the query.
-     * @return users An array of addresses of the users.
-     * @return validLogCounts An array of valid log counts corresponding to each user.
-     */
-    function getLeaderboard(uint256 startTime, uint256 endTime) external view returns (address[] memory users, uint256[] memory validLogCounts) {
-        address[] memory tempUsers = new address[](hotdogLogs.length);
-        uint256[] memory tempCounts = new uint256[](hotdogLogs.length);
-        uint256 userCount = 0;
-
-        // Iterate through logs to count valid logs per user
-        for (uint256 i = 0; i < hotdogLogs.length; i++) {
-            HotdogLog storage log = hotdogLogs[i];
-            if (log.timestamp >= startTime && log.timestamp <= endTime && _isValidLog(i)) {
-                bool userExists = false;
-                for (uint256 j = 0; j < userCount; j++) {
-                    if (tempUsers[j] == log.eater) {
-                        tempCounts[j]++;
-                        userExists = true;
-                        break;
-                    }
-                }
-                if (!userExists) {
-                    tempUsers[userCount] = log.eater;
-                    tempCounts[userCount] = 1;
-                    userCount++;
-                }
-            }
-        }
-
-        // Prepare result arrays
-        users = new address[](userCount);
-        validLogCounts = new uint256[](userCount);
-        for (uint256 i = 0; i < userCount; i++) {
-            users[i] = tempUsers[i];
-            validLogCounts[i] = tempCounts[i];
-        }
-
-        // Sort the users and their valid log counts using bubble sort
-        for (uint256 i = 0; i < userCount - 1; i++) {
-            for (uint256 j = 0; j < userCount - i - 1; j++) {
-                if (validLogCounts[j] < validLogCounts[j + 1]) {
-                    // Swap validLogCounts
-                    uint256 tempCount = validLogCounts[j];
-                    validLogCounts[j] = validLogCounts[j + 1];
-                    validLogCounts[j + 1] = tempCount;
-
-                    // Swap users
-                    address tempUser = users[j];
-                    users[j] = users[j + 1];
-                    users[j + 1] = tempUser;
-                }
-            }
-        }
-    }
-
-    /**
-     * @notice Gets all hotdog logs logged by a specific user along with attestation counts.
-     * @param user The address of the user.
-     * @return logs An array of hotdog logs with attestation counts.
-     * @return validCounts An array of valid attestation counts corresponding to each log.
-     * @return invalidCounts An array of invalid attestation counts corresponding to each log.
-     */
-    function getUserHotdogLogs(address user) external view returns (HotdogLog[] memory logs, uint256[] memory validCounts, uint256[] memory invalidCounts) {
-        uint256 count = 0;
-        for (uint256 i = 0; i < hotdogLogs.length; i++) {
-            if (hotdogLogs[i].eater == user) {
-                count++;
-            }
-        }
-
-        logs = new HotdogLog[](count);
-        validCounts = new uint256[](count);
-        invalidCounts = new uint256[](count);
-        uint256 index = 0;
-        for (uint256 i = 0; i < hotdogLogs.length; i++) {
-            if (hotdogLogs[i].eater == user) {
-                logs[index] = hotdogLogs[i];
-                (validCounts[index], invalidCounts[index]) = _countAttestations(i);
-                index++;
-            }
-        }
-    }
-
-    /**
-     * @notice Gets the total number of hotdog logs for a specific user.
-     * @param user The address of the user.
-     * @return count The total number of hotdog logs for the user.
+     * @notice Gets all hotdog logs logged by a specific user (simplified)
      */
     function getUserHotdogLogCount(address user) external view returns (uint256 count) {
-        return _countUserHotdogLogs(user);
-    }
-
-    /**
-     * @notice Gets the total number of hotdog logs for multiple users.
-     * @param users An array of addresses to get counts for.
-     * @return counts An array of hotdog log counts corresponding to each user.
-     */
-    function getBulkUserHotdogLogCount(address[] calldata users) external view returns (uint256[] memory counts) {
-        counts = new uint256[](users.length);
-        for (uint256 i = 0; i < users.length; i++) {
-            counts[i] = _countUserHotdogLogs(users[i]);
-        }
-    }
-
-    /**
-     * @notice Internal function to count the number of hotdog logs for a user.
-     * @param user The address of the user.
-     * @return count The total number of hotdog logs for the user.
-     */
-    function _countUserHotdogLogs(address user) internal view returns (uint256 count) {
         for (uint256 i = 0; i < hotdogLogs.length; i++) {
             if (hotdogLogs[i].eater == user) {
                 count++;
@@ -432,52 +257,19 @@ contract LogADog is AccessControl {
     }
 
     /**
-     * @notice Gets the total number of pages for a user's hotdog logs.
-     * @param user The address of the user.
-     * @param pageSize The number of logs per page.
-     * @return totalPages The total number of pages.
+     * @notice Gets a range of hotdog logs (basic pagination)
      */
-    function getTotalPages(address user, uint256 pageSize) external view returns (uint256 totalPages) {
-        uint256 userLogCount = _countUserHotdogLogs(user);
-        totalPages = (userLogCount + pageSize - 1) / pageSize; // Round up division
-    }
-
-    /**
-     * @notice Gets paginated hotdog logs for a specific user.
-     * @param user The address of the user.
-     * @param start The starting index for pagination.
-     * @param limit The maximum number of logs to return.
-     * @return logs An array of hotdog logs with attestation counts.
-     * @return validCounts An array of valid attestation counts corresponding to each log.
-     * @return invalidCounts An array of invalid attestation counts corresponding to each log.
-     */
-    function getUserHotdogLogsPaginated(address user, uint256 start, uint256 limit) external view returns (HotdogLog[] memory logs, uint256[] memory validCounts, uint256[] memory invalidCounts) {
-        uint256 totalLogs = 0;
-        for (uint256 i = 0; i < hotdogLogs.length; i++) {
-            if (hotdogLogs[i].eater == user) {
-                totalLogs++;
-            }
+    function getHotdogLogsRange(uint256 start, uint256 limit) external view returns (HotdogLog[] memory logs) {
+        require(start < hotdogLogs.length, "Start index out of bounds");
+        
+        uint256 end = start + limit;
+        if (end > hotdogLogs.length) {
+            end = hotdogLogs.length;
         }
-
-        uint256 resultCount = totalLogs > start ? totalLogs - start : 0;
-        resultCount = resultCount > limit ? limit : resultCount;
-
-        logs = new HotdogLog[](resultCount);
-        validCounts = new uint256[](resultCount);
-        invalidCounts = new uint256[](resultCount);
-
-        uint256 index = 0;
-        uint256 skipped = 0;
-        for (uint256 i = 0; i < hotdogLogs.length && index < resultCount; i++) {
-            if (hotdogLogs[i].eater == user) {
-                if (skipped >= start) {
-                    logs[index] = hotdogLogs[i];
-                    (validCounts[index], invalidCounts[index]) = _countAttestations(i);
-                    index++;
-                } else {
-                    skipped++;
-                }
-            }
+        
+        logs = new HotdogLog[](end - start);
+        for (uint256 i = start; i < end; i++) {
+            logs[i - start] = hotdogLogs[i];
         }
     }
 
@@ -508,24 +300,11 @@ contract LogADog is AccessControl {
         }
         
         // Fallback to old attestation system
-        uint256 validCount = 0;
-        uint256 invalidCount = 0;
-
-        for (uint256 i = 0; i < attestations[logId].length; i++) {
-            if (attestations[logId][i].isValid) {
-                validCount++;
-            } else {
-                invalidCount++;
-            }
-        }
-
+        (uint256 validCount, uint256 invalidCount) = _countAttestations(logId);
         return validCount >= invalidCount;
     }
 
     function _countAttestations(uint256 logId) internal view returns (uint256 validCount, uint256 invalidCount) {
-        validCount = 0;
-        invalidCount = 0;
-
         for (uint256 i = 0; i < attestations[logId].length; i++) {
             if (attestations[logId][i].isValid) {
                 validCount++;
@@ -533,15 +312,6 @@ contract LogADog is AccessControl {
                 invalidCount++;
             }
         }
-    }
-
-    function _getUserAttestation(uint256 logId, address user) internal view returns (bool) {
-        for (uint256 i = 0; i < attestations[logId].length; i++) {
-            if (attestations[logId][i].attestor == user) {
-                return attestations[logId][i].isValid;
-            }
-        }
-        revert("User attestation not found");
     }
 
     function getAttestationCount(uint256 logId) external view returns (uint256) {

@@ -266,7 +266,10 @@ contract LogADogTest is Test {
         vm.stopPrank(); // Stop pranking as user2
     }
 
-    function testGetLeaderboard() public {
+    function testGetHotdogLogsCount() public {
+        // Initially should be 0
+        assertEq(logADog.getHotdogLogsCount(), 0);
+        
         // Log multiple hotdogs
         vm.deal(user1, 2 ether);
         vm.startPrank(user1);
@@ -275,7 +278,7 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri1",
             "metadataUri1",
-            user1, // Changed from user2 to user1
+            user1,
             bytes("0x0")
         );
         
@@ -283,26 +286,16 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri2",
             "metadataUri2",
-            user1, // Changed from user2 to user1
+            user1,
             bytes("0x0")
         );
-        vm.stopPrank(); // Stop pranking as user1
+        vm.stopPrank();
         
-        // Attest to both hotdogs as operator on behalf of user2 (not user1, since users can't attest to their own logs)
-        vm.startPrank(operator);
-        logADog.attestHotdogLogOnBehalf(0, user2, true);
-        logADog.attestHotdogLogOnBehalf(1, user2, true);
-        vm.stopPrank(); // Stop pranking as operator
-        
-        // Get leaderboard
-        (address[] memory users, uint256[] memory validLogCounts) = logADog.getLeaderboard(0, block.timestamp);
-        
-        assertEq(users.length, 1);
-        assertEq(users[0], user1); // Changed from user2 to user1
-        assertEq(validLogCounts[0], 2);
+        // Should now be 2
+        assertEq(logADog.getHotdogLogsCount(), 2);
     }
 
-    function testGetUserHotdogLogs() public {
+    function testGetHotdogLog() public {
         vm.deal(user1, 1 ether);
         vm.startPrank(user1);
         
@@ -312,43 +305,84 @@ contract LogADogTest is Test {
             user1,
             bytes("0x0")
         );
-        vm.stopPrank(); // Stop pranking as user1
+        vm.stopPrank();
         
-        // Attest to the log as operator on behalf of user2 (not user1, since users can't attest to their own logs)
+        // Attest to the log as operator on behalf of user2
         vm.startPrank(operator);
         logADog.attestHotdogLogOnBehalf(logId, user2, true);
-        vm.stopPrank(); // Stop pranking as operator
+        vm.stopPrank();
         
-        // Get user logs (checking from user2's perspective)
+        // Get individual log
         (
-            LogADog.HotdogLog[] memory logs,
-            uint256[] memory validCounts,
-            uint256[] memory invalidCounts,
-            bool[] memory userHasAttested,
-            bool[] memory userAttestations
-        ) = logADog.getHotdogLogs(0, block.timestamp, user2, 0, 10);
+            LogADog.HotdogLog memory log,
+            uint256 validCount,
+            uint256 invalidCount
+        ) = logADog.getHotdogLog(logId);
         
-        assertEq(logs.length, 1);
-        assertEq(logs[0].eater, user1);
-        assertEq(validCounts[0], 1);
-        assertEq(invalidCounts[0], 0);
-        assertEq(userHasAttested[0], true);
-        assertEq(userAttestations[0], true);
+        assertEq(log.eater, user1);
+        assertEq(log.imageUri, "imageUri");
+        assertEq(log.metadataUri, "metadataUri");
+        assertEq(validCount, 1);
+        assertEq(invalidCount, 0);
     }
 
-    function testGetTotalPages() public {
-        vm.deal(user1, 1 ether);
+    function testGetHotdogLogsRange() public {
+        vm.deal(user1, 2 ether);
         vm.startPrank(user1);
         
+        // Log two hotdogs
         logADog.logHotdog{value: 1 ether}(
-            "imageUri",
-            "metadataUri",
+            "imageUri1",
+            "metadataUri1",
             user1,
             bytes("0x0")
         );
         
-        uint256 totalPages = logADog.getTotalPagesForLogs(0, block.timestamp, 10);
-        assertEq(totalPages, 1);
+        logADog.logHotdog{value: 1 ether}(
+            "imageUri2",
+            "metadataUri2",
+            user1,
+            bytes("0x0")
+        );
+        vm.stopPrank();
+        
+        // Get range of logs
+        LogADog.HotdogLog[] memory logs = logADog.getHotdogLogsRange(0, 2);
+        
+        assertEq(logs.length, 2);
+        assertEq(logs[0].imageUri, "imageUri1");
+        assertEq(logs[1].imageUri, "imageUri2");
+        assertEq(logs[0].eater, user1);
+        assertEq(logs[1].eater, user1);
+    }
+
+    function testGetUserHotdogLogCount() public {
+        // Initially should be 0 for both users
+        assertEq(logADog.getUserHotdogLogCount(user1), 0);
+        assertEq(logADog.getUserHotdogLogCount(user2), 0);
+        
+        vm.deal(user1, 2 ether);
+        vm.startPrank(user1);
+        
+        // Log two hotdogs for user1
+        logADog.logHotdog{value: 1 ether}(
+            "imageUri1",
+            "metadataUri1",
+            user1,
+            bytes("0x0")
+        );
+        
+        logADog.logHotdog{value: 1 ether}(
+            "imageUri2",
+            "metadataUri2",
+            user1,
+            bytes("0x0")
+        );
+        vm.stopPrank();
+        
+        // Check counts
+        assertEq(logADog.getUserHotdogLogCount(user1), 2);
+        assertEq(logADog.getUserHotdogLogCount(user2), 0);
     }
 
     // Helper function to count attestations
