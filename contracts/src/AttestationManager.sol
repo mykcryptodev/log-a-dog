@@ -56,6 +56,7 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
     
     mapping(uint256 => AttestationPeriod) public attestationPeriods;
     mapping(address => uint256[]) public userAttestations; // Track user's active attestations
+    mapping(address => mapping(uint256 => bool)) public userAttestationChoices; // Track user's attestation choices (valid/invalid)
     
     event AttestationPeriodStarted(uint256 indexed logId, uint256 startTime, uint256 endTime);
     event AttestationMade(uint256 indexed logId, address indexed attestor, bool isValid, uint256 stakeAmount);
@@ -132,6 +133,7 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
         
         // Track user's attestations
         userAttestations[msg.sender].push(logId);
+        userAttestationChoices[msg.sender][logId] = isValid;
         
         emit AttestationMade(logId, msg.sender, isValid, stakeAmount);
     }
@@ -179,6 +181,7 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
         
         // Track user's attestations
         userAttestations[attestor].push(logId);
+        userAttestationChoices[attestor][logId] = isValid;
         
         emit AttestationMade(logId, attestor, isValid, stakeAmount);
     }
@@ -324,6 +327,61 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
         return userAttestations[user];
     }
     
+    /**
+     * @notice Get user's attestations with their choices
+     * @param user User address
+     * @return logIds Array of log IDs user has attested to
+     * @return choices Array of attestation choices (true = valid, false = invalid)
+     */
+    function getUserAttestationsWithChoices(address user) external view returns (uint256[] memory logIds, bool[] memory choices) {
+        uint256[] memory userLogIds = userAttestations[user];
+        bool[] memory userChoices = new bool[](userLogIds.length);
+        
+        for (uint256 i = 0; i < userLogIds.length; i++) {
+            userChoices[i] = userAttestationChoices[user][userLogIds[i]];
+        }
+        
+        return (userLogIds, userChoices);
+    }
+    
+    /**
+     * @notice Get attestation counts for multiple logs
+     * @param logIds Array of log IDs to query
+     * @return validCounts Array of valid attestation counts for each log
+     * @return invalidCounts Array of invalid attestation counts for each log
+     */
+    function getAttestationCounts(uint256[] calldata logIds) external view returns (uint256[] memory validCounts, uint256[] memory invalidCounts) {
+        validCounts = new uint256[](logIds.length);
+        invalidCounts = new uint256[](logIds.length);
+        
+        for (uint256 i = 0; i < logIds.length; i++) {
+            AttestationPeriod storage period = attestationPeriods[logIds[i]];
+            validCounts[i] = period.validAttestors.length;
+            invalidCounts[i] = period.invalidAttestors.length;
+        }
+        
+        return (validCounts, invalidCounts);
+    }
+    
+    /**
+     * @notice Get attestation stakes for multiple logs
+     * @param logIds Array of log IDs to query
+     * @return validStakes Array of total valid stakes for each log
+     * @return invalidStakes Array of total invalid stakes for each log
+     */
+    function getAttestationStakes(uint256[] calldata logIds) external view returns (uint256[] memory validStakes, uint256[] memory invalidStakes) {
+        validStakes = new uint256[](logIds.length);
+        invalidStakes = new uint256[](logIds.length);
+        
+        for (uint256 i = 0; i < logIds.length; i++) {
+            AttestationPeriod storage period = attestationPeriods[logIds[i]];
+            validStakes[i] = period.totalValidStake;
+            invalidStakes[i] = period.totalInvalidStake;
+        }
+        
+        return (validStakes, invalidStakes);
+    }
+
     /**
      * @notice Check if attestation period is active
      * @param logId The ID of the hotdog log

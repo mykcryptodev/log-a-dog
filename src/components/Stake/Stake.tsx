@@ -1,5 +1,5 @@
 import { type FC, useState, useEffect, useMemo } from "react";
-import { TransactionButton, useActiveWallet, useSendTransaction, useWalletBalance } from "thirdweb/react";
+import { TransactionButton, useActiveWallet, useWalletBalance } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
 import { HOTDOG_TOKEN, STAKING } from "~/constants/addresses";
@@ -10,7 +10,6 @@ import { toast } from "react-toastify";
 import { MINIMUM_STAKE } from "~/constants";
 import { parseEther } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
-import { env } from "~/env";
  
 type Props = {
   onStake?: (amount: string) => void;
@@ -24,21 +23,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
   const { activeChain } = useActiveChain();
   const wallet = useActiveWallet();
   const { data: sessionData } = useSession();
-  const { mutate: sendTransaction } = useSendTransaction({
-    payModal: {
-      supportedTokens: {
-        [activeChain.id]: [
-          {
-            address: HOTDOG_TOKEN[activeChain.id]!,
-            name: "Hotdog",
-            symbol: "HOTDOG",
-            icon: "images/hotdog.png",
-          },
-        ],
-      },
-    },
-  });
-  
+
   const { data: balance, isLoading: isLoadingBalance } = useWalletBalance({
     client,
     address: sessionData?.user.address,
@@ -164,10 +149,12 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             })}
             onTransactionSent={() => toast.loading("Staking...")}
             onTransactionConfirmed={() => {
+              toast.dismiss();
               toast.success("Staked!");
               onStake?.(amount);
             }}
             onError={(err) => {
+              toast.dismiss();
               console.log({ err });
               toast.error(`Staking failed: ${err.message}`);
             }}

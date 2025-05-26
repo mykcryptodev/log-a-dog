@@ -20,22 +20,22 @@ export const SMART_WALLET_BUNDLER_URL: ContractAddress = {
 
 export const LOG_A_DOG: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
-  [baseSepolia.id]: "0x0884d4AA36D1bf4f3cC21288D1fCA6Dad8fed46b",
+  [baseSepolia.id]: "0x8393Ff79f8b89b22e2A58E979320264CC93e440c",
 }
 
 export const STAKING: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
-  [baseSepolia.id]: "0xE6B5534390596422D0E882453deeD2AfC74daE25",
+  [baseSepolia.id]: "0x7C406D00350BCF8A2A16A8092BCFe3836B7214d8",
 }
 
 export const ATTESTATION_MANAGER: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
-  [baseSepolia.id]: "0x36a6f54F49F7016610B7697EEc1eaF5a0A9166d6",
+  [baseSepolia.id]: "0xC470F55C2877848F1AcFcf3B656E01DCE03E9ec3",
 }
 
 export const HOTDOG_TOKEN: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
-  [baseSepolia.id]: "0x561145A2531Ce03D5F86721b50736dA0d77BbA92",
+  [baseSepolia.id]: "0x2d63e82601d72Cefa5B41a928A25CDD1001628E7",
 }
 
 export const AI_AFFIRMATION: ContractAddress = {

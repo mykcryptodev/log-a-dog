@@ -1,0 +1,14 @@
+{
+  "network": "Base Sepolia",
+  "chainId": 84532,
+  "deployer": "0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38",
+  "platformReferrer": "0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38",
+  "contracts": {
+    "HotdogToken": "0x3F68B5EAA0467c2B7868D394Dae404FE9640cF3F",
+    "HotdogStaking": "0xceE45397C238500FEED912a29f11c75709446E5F",
+    "AttestationManager": "0xFBC7552A4bc2eAa35Ba5e7644b67F3f05b161a56",
+    "CoinDeploymentManager": "0x6badC21758Ef30B430bD50412a429C837192C5af",
+    "LogADog": "0x2Dcaa93b4e01C3aF35E73de05B445EdF43944eAd"
+  },
+  "timestamp": 1748285950
+}

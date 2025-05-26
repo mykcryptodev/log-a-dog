@@ -20,6 +20,8 @@ import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 import { encodePoolConfig } from "~/server/utils/poolConfig";
 import { upload } from "thirdweb/storage";
 import { canParticipateInAttestation } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
+import { getUserAttestationsWithChoices } from "~/thirdweb/84532/0xfbc7552a4bc2eaa35ba5e7644b67f3f05b161a56";
+import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -185,7 +187,7 @@ export const hotdogRouter = createTRPCRouter({
         return cachedData;
       }
 
-      const [redactedLogIds, totalPages, dogResponse] = await Promise.all([
+      const [redactedLogIds, totalPages, dogResponse, userAttestations] = await Promise.all([
         getRedactedLogIds({
           contract: getContract({
             address: MODERATION[chainId]!,
@@ -215,7 +217,25 @@ export const hotdogRouter = createTRPCRouter({
           start: BigInt(start),
           limit: BigInt(limit)
         }),
+        getUserAttestationsWithChoices({
+          contract: getContract({
+            address: ATTESTATION_MANAGER[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+          user,
+        })
       ]);
+
+      // Get attestation counts for each log ID
+      const attestationCounts = await getAttestationCounts({
+        contract: getContract({
+          address: ATTESTATION_MANAGER[chainId]!,
+          client,
+          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+        }),
+        logIds: dogResponse[0].map(log => log.logId),
+      });
 
       console.log({ dogResponse })
       // Convert redactedLogIds from readonly bigint[] to string[]
@@ -232,10 +252,11 @@ export const hotdogRouter = createTRPCRouter({
           // Replace image with redacted version if log is redacted
           imageUri: redactedLogIdsStr.includes(log.logId.toString()) ? redactedImage : log.imageUri
         })),
-        validCounts: dogResponse[1].map(count => count.toString()),
-        invalidCounts: dogResponse[2].map(count => count.toString()),
-        userHasAttested: [...dogResponse[3]],
-        userAttestations: [...dogResponse[4]],
+        // Get valid/invalid counts from attestationCounts response
+        validCounts: attestationCounts[0].map(count => count.toString()),
+        invalidCounts: attestationCounts[1].map(count => count.toString()),
+        userHasAttested: dogResponse[0].map(log => userAttestations[0].includes(BigInt(log.logId))),
+        userAttestations: dogResponse[0].map(log => userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(log.logId))] ?? false),
       };
 
       console.log({ processedResponse })
