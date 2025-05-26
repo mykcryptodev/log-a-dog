@@ -1,14 +1,14 @@
 import { type FC, useState, useEffect, useMemo } from "react";
-import { TransactionButton, useActiveWallet, useWalletBalance } from "thirdweb/react";
+import { TransactionButton, useActiveWallet, useWalletBalance, useReadContract } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
 import { HOTDOG_TOKEN, STAKING } from "~/constants/addresses";
 import { useSession } from "next-auth/react";
-import { stake } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
+import { stake, unstake } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
 import { getContract } from "thirdweb";
 import { toast } from "react-toastify";
 import { MINIMUM_STAKE } from "~/constants";
-import { parseEther } from "viem";
+import { parseEther, formatEther } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
  
 type Props = {
@@ -30,6 +30,21 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     chain: activeChain,
     tokenAddress: HOTDOG_TOKEN[activeChain.id],
   });
+
+  const { data: stakedAmount, isLoading: isLoadingStaked } = useReadContract({
+    contract: getContract({
+      address: STAKING[activeChain.id]!,
+      client,
+      chain: activeChain,
+    }),
+    method: "function stakes(address user) view returns (uint256)",
+    params: [sessionData?.user.address ?? "0x0"],
+    queryOptions: {
+      enabled: !!sessionData?.user.address,
+    },
+  });
+
+  console.log({ stakedAmount });
 
   useEffect(() => {
     const checkAllowance = async () => {
@@ -77,8 +92,9 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
           <div className="stat text-center">
             <div className="stat-title">Amount to Stake</div>
             <div className="stat-value text-primary">{Number(amount).toLocaleString()}</div>
-            <div className="stat-desc">
-              {isLoadingBalance ? "Loading balance..." : `Balance: ${Number(balance?.displayValue ?? 0).toLocaleString()}`}
+            <div className="stat-desc flex items-center justify-between">
+              <div>{isLoadingStaked ? "Loading staked..." : `Staked: ${Number(formatEther(stakedAmount ?? 0n)).toLocaleString()}`}</div>
+              <div>{isLoadingBalance ? "Loading balance..." : `Balance: ${Number(balance?.displayValue ?? 0).toLocaleString()}`}</div>
             </div>
           </div>
         </div>
@@ -188,6 +204,32 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             disabled={balanceIsInsufficient}
           >
             {balanceIsInsufficient ? "Insufficient balance" : "Approve"}
+          </TransactionButton>
+        )}
+        {stakedAmount !== undefined && Number(formatEther(stakedAmount)) > 0 && (
+          <TransactionButton
+            className="!btn !btn-block !mt-2"
+            transaction={() => unstake({
+              contract: getContract({
+                address: STAKING[activeChain.id]!,
+                client,
+                chain: activeChain,
+              }),
+              amount: stakedAmount,
+            })}
+            onTransactionSent={() => toast.loading("Unstaking...")}
+            onTransactionConfirmed={() => {
+              toast.dismiss();
+              toast.success("Unstaked!");
+              onStake?.(amount);
+            }}
+            onError={(err) => {
+              toast.dismiss();
+              console.log({ err });
+              toast.error(`Unstaking failed: ${err.message}`);
+            }}
+          >
+            Unstake all
           </TransactionButton>
         )}
       </div>

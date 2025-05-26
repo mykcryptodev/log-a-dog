@@ -39,6 +39,11 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
             )}
           </div>
           <div className="flex items-center gap-2">
+            {router.pathname !== '/earn' && (
+              <Link href="/earn" className={`btn text-neutral btn-ghost`}> 
+                Earn $HOTDOG
+              </Link>
+            )}
             <ProfileButton />
             <Changelog />
           </div>
