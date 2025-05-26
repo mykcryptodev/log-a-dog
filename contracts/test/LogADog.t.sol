@@ -13,6 +13,7 @@ contract LogADogTest is Test {
     
     address public user1;
     address public user2;
+    address public user3;
     address public operator;
     address public platformReferrer;
     address public admin;
@@ -20,8 +21,9 @@ contract LogADogTest is Test {
     function setUp() public {
         user1 = address(0x1);
         user2 = address(0x2);
-        operator = address(0x3);
-        platformReferrer = address(0x4);
+        user3 = address(0x3);
+        operator = address(0x4);
+        platformReferrer = address(0x5);
         admin = address(this);
         
         // Deploy CoinDeploymentManager first

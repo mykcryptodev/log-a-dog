@@ -9,7 +9,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
-import { getHotdogLogs, getLeaderboard, getTotalPagesForLogs, logHotdogOnBehalf, attestHotdogLogOnBehalf, revokeAttestationOnBehalf } from "~/thirdweb/84532/0x6ffc6289a03a07095568664f48af23740131a4d1";
+import { getHotdogLogs, getTotalPagesForLogs, attestHotdogLogOnBehalf, revokeAttestationOnBehalf, logHotdogOnBehalf, getHotdogLogsCount, getHotdogLogsRange } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
@@ -17,6 +17,7 @@ import { getCoins } from '@zoralabs/coins-sdk';
 import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 import { encodePoolConfig } from "~/server/utils/poolConfig";
+import { upload } from "thirdweb/storage";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -169,13 +170,15 @@ export const hotdogRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { chainId, user, start, limit } = input;
-
+      console.log('GET ALL')
       // Generate cache key for this query
       const cacheKey = `hotdogs:${chainId}:${user}:${start}:${limit}`;
       
       // Try to get cached data first
       const cachedData = await getCachedData<GetAllResponse>(cacheKey);
       
+      console.log({ cachedData })
+
       if (cachedData) {
         return cachedData;
       }
@@ -211,9 +214,13 @@ export const hotdogRouter = createTRPCRouter({
           limit: BigInt(limit)
         }),
       ]);
+
+      console.log({ dogResponse })
       
       // Convert redactedLogIds from readonly bigint[] to string[]
       const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
+
+      console.log({ redactedLogIds })
 
       // Convert the raw response to our string-based types
       const processedResponse: HotdogResponse = {
@@ -227,6 +234,8 @@ export const hotdogRouter = createTRPCRouter({
         userHasAttested: [...dogResponse[3]],
         userAttestations: [...dogResponse[4]],
       };
+
+      console.log({ processedResponse })
 
       // Filter logs and attestation arrays in sync
       const filteredIndices = processedResponse.logs
@@ -395,22 +404,96 @@ export const hotdogRouter = createTRPCRouter({
 
     }),
   getLeaderboard: publicProcedure
-    .input(z.object({ chainId: z.number() }))
+    .input(z.object({ 
+      chainId: z.number(),
+      startDate: z.number().optional(),
+      endDate: z.number().optional(),
+    }))
     .query(async ({ input }) => {
-      const { chainId } = input;
-      const leaderboardResponse = await getLeaderboard({
-        contract: getContract({
-          address: LOG_A_DOG[input.chainId]!,
-          client,
-          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-        }),
-        startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
-        endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
+      const { chainId, startDate, endDate } = input;
+      
+      // Generate cache key for this query
+      const cacheKey = `leaderboard:${chainId}:${startDate ?? 'all'}:${endDate ?? 'all'}`;
+      
+      // Try to get cached data first
+      const cachedData = await getCachedData<{ users: string[], hotdogs: string[] }>(cacheKey);
+      
+      if (cachedData) {
+        return {
+          users: cachedData.users,
+          hotdogs: cachedData.hotdogs,
+        };
+      }
+
+      const contract = getContract({
+        address: LOG_A_DOG[chainId]!,
+        client,
+        chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
       });
-      return {
-        users: leaderboardResponse[0],
-        hotdogs: leaderboardResponse[1],
-      };
+
+      try {
+        // Get total count of hotdog logs
+        const totalLogs = await getHotdogLogsCount({ contract });
+        
+        if (totalLogs === 0n) {
+          return { users: [], hotdogs: [] };
+        }
+
+        // Get all hotdog logs in batches to avoid gas limits
+        const batchSize = 100;
+        const allLogs: Array<{
+          logId: bigint;
+          imageUri: string;
+          metadataUri: string;
+          timestamp: bigint;
+          eater: string;
+          logger: string;
+          zoraCoin: string;
+        }> = [];
+
+        for (let start = 0; start < Number(totalLogs); start += batchSize) {
+          const limit = Math.min(batchSize, Number(totalLogs) - start);
+          const logs = await getHotdogLogsRange({
+            contract,
+            start: BigInt(start),
+            limit: BigInt(limit)
+          });
+          allLogs.push(...logs);
+        }
+
+        // Filter logs by date range if provided
+        const filteredLogs = allLogs.filter(log => {
+          const logTimestamp = Number(log.timestamp) * 1000; // Convert to milliseconds
+          if (startDate && logTimestamp < startDate) return false;
+          if (endDate && logTimestamp > endDate) return false;
+          return true;
+        });
+
+        // Count hotdogs per user
+        const userCounts = new Map<string, number>();
+        
+        for (const log of filteredLogs) {
+          const eater = log.eater.toLowerCase();
+          userCounts.set(eater, (userCounts.get(eater) ?? 0) + 1);
+        }
+
+        // Sort users by hotdog count (descending)
+        const sortedUsers = Array.from(userCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+
+        const result = {
+          users: sortedUsers.map(([user]) => user),
+          hotdogs: sortedUsers.map(([, count]) => count.toString()),
+        };
+
+        // Cache the result
+        await setCachedData(cacheKey, result, CACHE_DURATION.MEDIUM);
+
+        return result;
+      } catch (error) {
+        console.error("Error fetching leaderboard from contract:", error);
+        throw error;
+      }
     }),
   checkForSafety: publicProcedure
     .input(z.object({ base64ImageString: z.string() }))
@@ -496,6 +579,18 @@ export const hotdogRouter = createTRPCRouter({
         metadataUri,
         eater: ctx.session.user.address,
       })
+      const coinMetadata = {
+        name: "Logged Dog",
+        description: "Logging dogs onchain",
+        image: imageUri,
+        properties: {
+          category: "social",
+        },
+      }
+      const coinMetadataUri = await upload({
+        client,
+        files: [coinMetadata],
+      });
 
       const POOL_CONFIG = encodePoolConfig();
 
@@ -507,16 +602,27 @@ export const hotdogRouter = createTRPCRouter({
         }),
         imageUri,
         metadataUri,
+        coinUri: coinMetadataUri,
         eater: ctx.session.user.address,
         poolConfig: POOL_CONFIG,
       });
+
+      console.log({
+        imageUri,
+        metadataUri,
+        coinMetadataUri,
+        eater: ctx.session.user.address,
+        poolConfig: POOL_CONFIG,
+      })
       
       try {
         const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
   
-        // Invalidate Redis cache for all hotdog queries for this chain
-        const pattern = `hotdogs:${chainId}:*`;
-        await deleteCachedData(pattern);
+        // Invalidate Redis cache for all hotdog queries and leaderboard for this chain
+        const hotdogPattern = `hotdogs:${chainId}:*`;
+        const leaderboardPattern = `leaderboard:${chainId}:*`;
+        await deleteCachedData(hotdogPattern);
+        await deleteCachedData(leaderboardPattern);
   
         return transactionId;
       } catch (error) {
@@ -562,9 +668,11 @@ export const hotdogRouter = createTRPCRouter({
 
         const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
 
-        // Invalidate Redis cache for all hotdog queries for this chain
-        const pattern = `hotdogs:${chainId}:*`;
-        await deleteCachedData(pattern);
+        // Invalidate Redis cache for all hotdog queries and leaderboard for this chain
+        const hotdogPattern = `hotdogs:${chainId}:*`;
+        const leaderboardPattern = `leaderboard:${chainId}:*`;
+        await deleteCachedData(hotdogPattern);
+        await deleteCachedData(leaderboardPattern);
 
         return transactionId;
       } catch (error) {

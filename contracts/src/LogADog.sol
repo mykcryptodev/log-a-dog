@@ -266,6 +266,81 @@ contract LogADog is AccessControl {
         }
     }
 
+    /**
+     * @notice Gets paginated hotdog logs submitted between the specified start and end times along with attestation counts and user attestation status.
+     * @param startTime The start time for the query.
+     * @param endTime The end time for the query.
+     * @param user The address of the user to check for attestations.
+     * @param start The starting index for pagination.
+     * @param limit The maximum number of logs to return.
+     * @return logs An array of hotdog logs submitted between the specified times.
+     * @return validCounts An array of valid attestation counts corresponding to each log.
+     * @return invalidCounts An array of invalid attestation counts corresponding to each log.
+     * @return userHasAttested An array indicating whether the user has attested to each log.
+     * @return userAttestations An array indicating the value of the user's attestation for each log.
+     */
+    function getHotdogLogs(uint256 startTime, uint256 endTime, address user, uint256 start, uint256 limit) external view returns (HotdogLog[] memory logs, uint256[] memory validCounts, uint256[] memory invalidCounts, bool[] memory userHasAttested, bool[] memory userAttestations) {
+        uint256 totalLogs = 0;
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
+                totalLogs++;
+            }
+        }
+
+        uint256 resultCount = totalLogs > start ? totalLogs - start : 0;
+        resultCount = resultCount > limit ? limit : resultCount;
+
+        logs = new HotdogLog[](resultCount);
+        validCounts = new uint256[](resultCount);
+        invalidCounts = new uint256[](resultCount);
+        userHasAttested = new bool[](resultCount);
+        userAttestations = new bool[](resultCount);
+
+        uint256 index = 0;
+        uint256 skipped = 0;
+        for (uint256 i = hotdogLogs.length; i > 0 && index < resultCount; i--) {
+            if (hotdogLogs[i - 1].timestamp >= startTime && hotdogLogs[i - 1].timestamp <= endTime) {
+                if (skipped >= start) {
+                    logs[index] = hotdogLogs[i - 1];
+                    (validCounts[index], invalidCounts[index]) = _countAttestations(i - 1);
+                    userHasAttested[index] = hasAttested[i - 1][user];
+                    if (userHasAttested[index]) {
+                        userAttestations[index] = _getUserAttestation(i - 1, user);
+                    }
+                    index++;
+                } else {
+                    skipped++;
+                }
+            }
+        }
+    }
+
+    /**
+     * @notice Gets the total number of pages for hotdog logs within the specified time range.
+     * @param startTime The start time for the query.
+     * @param endTime The end time for the query.
+     * @param pageSize The number of logs per page.
+     * @return totalPages The total number of pages.
+     */
+    function getTotalPagesForLogs(uint256 startTime, uint256 endTime, uint256 pageSize) external view returns (uint256 totalPages) {
+        uint256 totalLogs = 0;
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
+                totalLogs++;
+            }
+        }
+        totalPages = (totalLogs + pageSize - 1) / pageSize; // Round up division
+    }
+
+    function _getUserAttestation(uint256 logId, address user) internal view returns (bool) {
+        for (uint256 i = 0; i < attestations[logId].length; i++) {
+            if (attestations[logId][i].attestor == user) {
+                return attestations[logId][i].isValid;
+            }
+        }
+        revert("User attestation not found");
+    }
+
     function _findAttestationIndex(uint256 logId, address attestor) internal view returns (uint256 index) {
         for (uint256 i = 0; i < attestations[logId].length; i++) {
             if (attestations[logId][i].attestor == attestor) {

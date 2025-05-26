@@ -104,6 +104,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await db.user.upsert({
           where: {
+            id: credentials.address.toLowerCase(),
             address: credentials.address.toLowerCase(),
           },
           update: {

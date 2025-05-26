@@ -27,7 +27,7 @@ export const profileRouter = createTRPCRouter({
       const profile = await getOrSetCache(
         cacheKey,
         async () => {
-          const profile = await getProfile(address, chainId);
+          const profile = await getProfile(address.toLowerCase(), chainId);
           return profile;
         },
         CACHE_DURATION.MEDIUM
@@ -106,7 +106,7 @@ export const profileRouter = createTRPCRouter({
       if (!address) {
         throw new Error("User address not found");
       }
-      const cacheKey = `profile:${chainId}:${address}`;
+      const cacheKey = `profile:${chainId}:${address.toLowerCase()}`;
       return getOrSetCache(
         cacheKey,
         async () => {
@@ -125,7 +125,7 @@ export const profileRouter = createTRPCRouter({
       const { addresses, chainId } = input;
       const profiles = await Promise.all(
         addresses.map(async (address) => {
-          const cacheKey = `profile:${chainId}:${address}`;
+          const cacheKey = `profile:${chainId}:${address.toLowerCase()}`;
           return getOrSetCache(
             cacheKey,
             async () => {
@@ -145,7 +145,7 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { query, chainId } = input;
-      const cacheKey = `profile:${chainId}:search:${query}`;
+      const cacheKey = `profile:${chainId}:search:${query.toLowerCase()}`;
       return getOrSetCache(
         cacheKey,
         async () => {
