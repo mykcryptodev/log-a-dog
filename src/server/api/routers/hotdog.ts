@@ -216,7 +216,6 @@ export const hotdogRouter = createTRPCRouter({
       ]);
 
       console.log({ dogResponse })
-      
       // Convert redactedLogIds from readonly bigint[] to string[]
       const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
 
@@ -228,6 +227,8 @@ export const hotdogRouter = createTRPCRouter({
           ...log,
           logId: log.logId.toString(),
           timestamp: log.timestamp.toString(),
+          // Replace image with redacted version if log is redacted
+          imageUri: redactedLogIdsStr.includes(log.logId.toString()) ? redactedImage : log.imageUri
         })),
         validCounts: dogResponse[1].map(count => count.toString()),
         invalidCounts: dogResponse[2].map(count => count.toString()),
@@ -237,21 +238,10 @@ export const hotdogRouter = createTRPCRouter({
 
       console.log({ processedResponse })
 
-      // Filter logs and attestation arrays in sync
-      const filteredIndices = processedResponse.logs
-        .map((log, i) => (!redactedLogIdsStr.includes(log.logId) ? i : -1))
-        .filter(i => i !== -1 && i < processedResponse.validCounts.length);
-
-      const filteredLogs = filteredIndices.map(i => processedResponse.logs[i]!);
-      const filteredValidCounts = filteredIndices.map(i => processedResponse.validCounts[i]!);
-      const filteredInvalidCounts = filteredIndices.map(i => processedResponse.invalidCounts[i]!);
-      const filteredUserHasAttested = filteredIndices.map(i => processedResponse.userHasAttested[i]!);
-      const filteredUserAttestations = filteredIndices.map(i => processedResponse.userAttestations[i]!);
-
       const zoraCoinAddresses = new Set<string>();
       const metadataUris = new Set<string>();
       
-      filteredLogs.forEach(log => {
+      processedResponse.logs.forEach(log => {
         // Collect unique values
         if (log.zoraCoin) zoraCoinAddresses.add(log.zoraCoin);
         if (log.metadataUri) metadataUris.add(log.metadataUri);
@@ -275,7 +265,7 @@ export const hotdogRouter = createTRPCRouter({
       );
 
       // Process logs with both Zora coin details and metadata
-      const processedHotdogs = filteredLogs.map(log => {
+      const processedHotdogs = processedResponse.logs.map(log => {
         const zoraCoin = zoraCoinDetails.get(log.zoraCoin.toLowerCase()) ?? null;
         const metadata = metadataMap.get(log.metadataUri.toLowerCase()) ?? null;
 
@@ -288,10 +278,10 @@ export const hotdogRouter = createTRPCRouter({
 
       const response: GetAllResponse = {
         hotdogs: processedHotdogs,
-        validAttestations: filteredValidCounts,
-        invalidAttestations: filteredInvalidCounts,
-        userAttested: filteredUserHasAttested,
-        userAttestations: filteredUserAttestations,
+        validAttestations: processedResponse.validCounts,
+        invalidAttestations: processedResponse.invalidCounts,
+        userAttested: processedResponse.userHasAttested,
+        userAttestations: processedResponse.userAttestations,
         totalPages: Number(totalPages),
         hasNextPage: start + limit < Number(totalPages),
       };
