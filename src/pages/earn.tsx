@@ -9,6 +9,7 @@ import {
   HandThumbDownIcon,
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
+import { Buy } from "~/components/utils/Buy";
 
 const EarnPage: NextPage = () => {
   return (
@@ -23,6 +24,10 @@ const EarnPage: NextPage = () => {
           <p className="mt-4 text-xl text-base-content/70">
             Stake your tokens and moderate submissions to earn rewards
           </p>
+          <p className="mt-4 mb-2 text-base-content/70">
+            Need some $HOTDOG?
+          </p>
+          <Buy />
         </div>
 
         <div className="grid w-full max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">
