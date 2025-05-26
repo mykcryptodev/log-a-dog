@@ -1,6 +1,5 @@
 import { type FC, useContext, useState, useEffect, useCallback } from "react";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
-import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { createWallet, inAppWallet, type Wallet, walletConnect } from "thirdweb/wallets";
 import ActiveChainContext from "~/contexts/ActiveChain";
