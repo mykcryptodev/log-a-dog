@@ -145,6 +145,10 @@ contract DeployScript is Script {
         hotdogStaking.addAttestationManager(address(attestationManager));
         console2.log("Granted ATTESTATION_MANAGER_ROLE to AttestationManager");
         
+        // Grant log manager role to LogADog contract in AttestationManager
+        attestationManager.addLogManager(address(logADog));
+        console2.log("Granted LOG_MANAGER_ROLE to LogADog in AttestationManager");
+        
         // Set LogADog contract in AttestationManager
         attestationManager.setLogADogContract(address(logADog));
         console2.log("Set LogADog contract in AttestationManager");

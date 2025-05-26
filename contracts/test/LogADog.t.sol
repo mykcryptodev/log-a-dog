@@ -97,6 +97,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1, // Can only log for self
             bytes("0x0")
         );
@@ -118,6 +119,7 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user2, // Trying to log for someone else
             bytes("0x0")
         );
@@ -130,6 +132,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdogOnBehalf{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user2,
             bytes("0x0")
         );
@@ -151,6 +154,7 @@ contract LogADogTest is Test {
         logADog.logHotdogOnBehalf{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user2,
             bytes("0x0")
         );
@@ -163,6 +167,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -186,6 +191,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -208,6 +214,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -225,6 +232,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -243,6 +251,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -263,6 +272,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -286,6 +296,7 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri1",
             "metadataUri1",
+            "coinUri1",
             user1,
             bytes("0x0")
         );
@@ -294,6 +305,7 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri2",
             "metadataUri2",
+            "coinUri2",
             user1,
             bytes("0x0")
         );
@@ -310,6 +322,7 @@ contract LogADogTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -342,6 +355,7 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri1",
             "metadataUri1",
+            "coinUri1",
             user1,
             bytes("0x0")
         );
@@ -349,6 +363,7 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri2",
             "metadataUri2",
+            "coinUri2",
             user1,
             bytes("0x0")
         );
@@ -376,6 +391,7 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri1",
             "metadataUri1",
+            "coinUri1",
             user1,
             bytes("0x0")
         );
@@ -383,6 +399,7 @@ contract LogADogTest is Test {
         logADog.logHotdog{value: 1 ether}(
             "imageUri2",
             "metadataUri2",
+            "coinUri2",
             user1,
             bytes("0x0")
         );

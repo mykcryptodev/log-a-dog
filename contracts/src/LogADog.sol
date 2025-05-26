@@ -91,19 +91,19 @@ contract LogADog is AccessControl {
     /**
      * @notice Logs a hotdog with an image URI, metadata URI, and specified owner.
      */
-    function logHotdog(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) external payable returns (uint256 logId) {
+    function logHotdog(string memory imageUri, string memory metadataUri, string memory coinUri, address eater, bytes calldata poolConfig) external payable returns (uint256 logId) {
         require(eater == msg.sender, "Can only log hotdogs for yourself");
-        return _logHotdog(imageUri, metadataUri, eater, poolConfig);
+        return _logHotdog(imageUri, metadataUri, coinUri, eater, poolConfig);
     }
 
     /**
      * @notice Logs a hotdog on behalf of another user (operator only)
      */
-    function logHotdogOnBehalf(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) external payable operatorOnly returns (uint256 logId) {
-        return _logHotdog(imageUri, metadataUri, eater, poolConfig);
+    function logHotdogOnBehalf(string memory imageUri, string memory metadataUri, string memory coinUri, address eater, bytes calldata poolConfig) external payable operatorOnly returns (uint256 logId) {
+        return _logHotdog(imageUri, metadataUri, coinUri, eater, poolConfig);
     }
 
-    function _logHotdog(string memory imageUri, string memory metadataUri, address eater, bytes calldata poolConfig) internal returns (uint256 logId) {
+    function _logHotdog(string memory imageUri, string memory metadataUri, string memory coinUri, address eater, bytes calldata poolConfig) internal returns (uint256 logId) {
         logId = hotdogLogs.length;
         
         emit DebugInfo(msg.value, address(this).balance);
@@ -114,7 +114,7 @@ contract LogADog is AccessControl {
             coinAddress = coinDeploymentManager.deployCoin{value: msg.value}(
                 logId,
                 eater,
-                metadataUri,
+                coinUri,
                 poolConfig,
                 platformReferrer
             );

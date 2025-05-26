@@ -113,6 +113,7 @@ contract HotdogEcosystemTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -136,6 +137,7 @@ contract HotdogEcosystemTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -172,6 +174,7 @@ contract HotdogEcosystemTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -223,6 +226,7 @@ contract HotdogEcosystemTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -246,6 +250,7 @@ contract HotdogEcosystemTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -265,6 +270,7 @@ contract HotdogEcosystemTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
@@ -308,6 +314,7 @@ contract HotdogEcosystemTest is Test {
         uint256 logId = logADog.logHotdog{value: 1 ether}(
             "imageUri",
             "metadataUri",
+            "coinUri",
             user1,
             bytes("0x0")
         );
