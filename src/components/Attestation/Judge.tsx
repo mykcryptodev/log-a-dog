@@ -4,6 +4,9 @@ import { useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
+import { InsufficientStake } from "../Stake/InsufficientStake";
+import { Portal } from "../utils/Portal";
+import { TransactionStatus } from "../utils/TransactionStatus";
 
 type Props = {
   disabled?: boolean;
@@ -35,6 +38,8 @@ export const JudgeAttestation: FC<Props> = ({
   const [optimisticInvalidCount, setOptimisticInvalidCount] = useState<string | undefined>(invalidAttestations);
   const [optimisticUserAttested, setOptimisticUserAttested] = useState<boolean | undefined>(userAttested);
   const [optimisticUserAttestation, setOptimisticUserAttestation] = useState<boolean | undefined>(userAttestation);
+  const [isInsufficientStake, setIsInsufficientStake] = useState<boolean>(false);
+  const [pendingTransactionId, setPendingTransactionId] = useState<string | null>(null);
 
   const judgeMutation = api.hotdog.judge.useMutation({
     onMutate: async ({ isValid }) => {
@@ -49,9 +54,13 @@ export const JudgeAttestation: FC<Props> = ({
         setOptimisticUserAttestation(false);
       }
     },
-    onSuccess: () => {
-      toast.success("Attestation processed successfully!");
-      void onAttestationMade?.();
+    onSuccess: (data) => {
+      if (data) {
+        setPendingTransactionId(data);
+      } else {
+        toast.success("Attestation processed successfully!");
+        void onAttestationMade?.();
+      }
     },
     onError: (error) => {
       // Revert optimistic updates on error
@@ -59,7 +68,11 @@ export const JudgeAttestation: FC<Props> = ({
       setOptimisticInvalidCount(invalidAttestations);
       setOptimisticUserAttested(userAttested);
       setOptimisticUserAttestation(userAttestation);
-      toast.error(`Operation failed: ${error.message}`);
+      if (error.message.includes("Insufficient stake")) {
+        setIsInsufficientStake(true);
+      } else {
+        toast.error(`Operation failed: ${error.message}`);
+      }
     },
   });
 
@@ -76,12 +89,15 @@ export const JudgeAttestation: FC<Props> = ({
     }
 
     try {
+      console.log({ logId })
       await judgeMutation.mutateAsync({
         chainId,
         logId,
         isValid,
         shouldRevoke: false,
       });
+    } catch (error) {
+      // Error is handled by mutation's onError callback
     } finally {
       isValid ? setIsLoadingValidAttestation(false) : setIsLoadingInvalidValidAttestation(false);
     }
@@ -115,44 +131,67 @@ export const JudgeAttestation: FC<Props> = ({
       setOptimisticInvalidCount(invalidAttestations);
       setOptimisticUserAttested(userAttested);
       setOptimisticUserAttestation(userAttestation);
+      // Error is handled by mutation's onError callback
     } finally {
       isValid ? setIsLoadingValidAttestation(false) : setIsLoadingInvalidValidAttestation(false);
     }
   };
 
   return (
-    <div className="flex items-center">
-      <button 
-        className="btn btn-xs btn-circle btn-ghost w-fit px-2"
-        onClick={() => attest(true)}
-      >
-        {isLoadingValidAttestation ? (
-          <div className="loading loading-spinner w-4 h-4" />
-        ) : (
-          (optimisticValidCount ?? 0).toString()
-        )}
-        {optimisticUserAttested && optimisticUserAttestation === true ? (
-          <HandThumbUpIconFilled className="w-4 h-4" />
-        ) : (
-          <HandThumbUpIcon className="w-4 h-4" />
-        )}
-      </button>
-      <button 
-        className="btn btn-xs btn-circle btn-ghost w-fit px-2"
-        onClick={() => attest(false)}
-      >
-        {optimisticUserAttested && optimisticUserAttestation === false ? (
-          <HandThumDownIconFilled className="w-4 h-4" />
-        ) : (
-          <HandThumbDownIcon className="w-4 h-4" />
-        )}
-        {isLoadingInvalidAttestation ? (
-          <div className="loading loading-spinner w-4 h-4" />
-        ) : (
-          (optimisticInvalidCount ?? 0).toString()
-        )}
-      </button>
-    </div>
+    <>
+      <Portal>
+        {isInsufficientStake && <InsufficientStake isOpen={isInsufficientStake} onClose={() => setIsInsufficientStake(false)} />}
+      </Portal>
+      {pendingTransactionId && (
+        <TransactionStatus
+          transactionId={pendingTransactionId}
+          loadingMessages={[
+            { message: "Processing attestation...", duration: 2000 },
+            { message: "Confirming on blockchain...", duration: 3000 },
+            { message: "Almost done...", duration: 2000 }
+          ]}
+          successMessage="Attestation confirmed successfully!"
+          onResolved={(success) => {
+            setPendingTransactionId(null);
+            if (success) {
+              void onAttestationMade?.();
+            }
+          }}
+        />
+      )}
+      <div className="flex items-center">
+        <button 
+          className="btn btn-xs btn-circle btn-ghost w-fit px-2"
+          onClick={() => attest(true)}
+        >
+          {isLoadingValidAttestation ? (
+            <div className="loading loading-spinner w-4 h-4" />
+          ) : (
+            (optimisticValidCount ?? 0).toString()
+          )}
+          {optimisticUserAttested && optimisticUserAttestation === true ? (
+            <HandThumbUpIconFilled className="w-4 h-4" />
+          ) : (
+            <HandThumbUpIcon className="w-4 h-4" />
+          )}
+        </button>
+        <button 
+          className="btn btn-xs btn-circle btn-ghost w-fit px-2"
+          onClick={() => attest(false)}
+        >
+          {optimisticUserAttested && optimisticUserAttestation === false ? (
+            <HandThumDownIconFilled className="w-4 h-4" />
+          ) : (
+            <HandThumbDownIcon className="w-4 h-4" />
+          )}
+          {isLoadingInvalidAttestation ? (
+            <div className="loading loading-spinner w-4 h-4" />
+          ) : (
+            (optimisticInvalidCount ?? 0).toString()
+          )}
+        </button>
+      </div>
+    </>
   )
 };
 

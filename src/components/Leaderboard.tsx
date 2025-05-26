@@ -13,7 +13,7 @@ type Props = {
   refetchTimestamp: number;
 }
 
-export const Leaderboard: FC<Props> = ({ attestors, limit, startDate, endDate, refetchTimestamp }) => {
+export const Leaderboard: FC<Props> = ({ limit, startDate, endDate, refetchTimestamp }) => {
   const limitOrDefault = limit ?? 10;
   const { activeChain } = useContext(ActiveChainContext);
   const [page, setPage] = useState(0);

@@ -124,7 +124,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
       )}
       {queueId && (
         <TransactionStatus
-          queueId={queueId}
+          transactionId={queueId}
           loadingMessages={[
             { message: "Brightening your teeth..."},
             { message: "Wiping away mustard stains..."},

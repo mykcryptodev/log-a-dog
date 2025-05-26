@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AI_AFFIRMATION, LOG_A_DOG, MODERATION } from "~/constants/addresses";
+import { AI_AFFIRMATION, ATTESTATION_MANAGER, LOG_A_DOG, MODERATION, STAKING } from "~/constants/addresses";
 import { getContract } from "thirdweb";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
@@ -9,8 +9,9 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
-import { getHotdogLogs, getTotalPagesForLogs, attestHotdogLogOnBehalf, revokeAttestationOnBehalf, logHotdogOnBehalf, getHotdogLogsCount, getHotdogLogsRange } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
+import { getHotdogLogs, getTotalPagesForLogs, logHotdogOnBehalf, getHotdogLogsCount, getHotdogLogsRange } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
+import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
@@ -18,6 +19,7 @@ import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCach
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 import { encodePoolConfig } from "~/server/utils/poolConfig";
 import { upload } from "thirdweb/storage";
+import { canParticipateInAttestation } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -628,33 +630,42 @@ export const hotdogRouter = createTRPCRouter({
       shouldRevoke: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { chainId, logId, isValid, shouldRevoke } = input;
+      const { chainId, logId, isValid } = input;
 
       if (!ctx.session?.user.address) {
         throw new Error("User address not found");
       }
 
+      const attestationContract = getContract({
+        address: ATTESTATION_MANAGER[chainId]!,
+        client,
+        chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+      });
+
+      const minimumStake = await MINIMUM_ATTESTATION_STAKE({ contract: attestationContract });
+
+      const canParticipateInAttestations = await canParticipateInAttestation({
+        contract: getContract({
+          address: STAKING[chainId]!,
+          client,
+          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+        }),
+        user: ctx.session.user.address,
+        requiredStake: minimumStake,
+      });
+
+      if (!canParticipateInAttestations) {
+        throw new Error("Insufficient stake");
+      }
+
       try {
-        const transaction = shouldRevoke 
-          ? revokeAttestationOnBehalf({
-              contract: getContract({
-                address: LOG_A_DOG[chainId]!,
-                client,
-                chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-              }),
-              logId: BigInt(logId),
-              attestor: ctx.session.user.address,
-            })
-          : attestHotdogLogOnBehalf({
-              contract: getContract({
-                address: LOG_A_DOG[chainId]!,
-                client,
-                chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-              }),
-              logId: BigInt(logId),
-              attestor: ctx.session.user.address,
-              isValid,
-            });
+        const transaction = attestToLogOnBehalf({
+          contract: attestationContract,
+          logId: BigInt(logId),
+          attestor: ctx.session.user.address,
+          isValid,
+          stakeAmount: minimumStake,
+        });
 
         const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
 

@@ -79,6 +79,7 @@ export const TransactionStatus: FC<Props> = ({
   useEffect(() => {
     if (!data) return;
     const status = data.status;
+    console.log({ data, status });
 
     switch (status) {
       case "CONFIRMED":
@@ -90,7 +91,7 @@ export const TransactionStatus: FC<Props> = ({
         break;
       case "FAILED":
         toast.dismiss(`${transactionId}-pending`);
-        toast.error(errorMessage ?? "Transaction failed: Unknown error", {
+        toast.error(errorMessage ?? data.error ?? "Transaction failed: Unknown error", {
           toastId: `${transactionId}-errored`,
         });
         onResolved?.(false);

@@ -1,5 +1,5 @@
 import { type FC, useContext, useState, useEffect, useCallback } from "react";
-import { ConnectButton } from "thirdweb/react";
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { SMART_WALLET_FACTORY } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { createWallet, inAppWallet, type Wallet, walletConnect } from "thirdweb/wallets";
@@ -16,10 +16,19 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const { data: sessionData, status } = useSession();
   const { activeChain } = useContext(ActiveChainContext);
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
+  const account = useActiveAccount();
+  console.log('account', account);
+  console.log('client', client);
+  console.log('sessionData', sessionData);
+  console.log('status', status);
 
   useEffect(() => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
+
+  useEffect(() => {
+    console.log('Account changed:', account);
+  }, [account]);
 
   const cryptoWallets = [
     createWallet("io.metamask"),
@@ -89,7 +98,11 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       client={client}
       chain={activeChain}
       theme={userPrefersDarkMode ? "dark" : "light"}
-      onConnect={(wallet) => silentlySignIn(wallet)}
+      onConnect={(wallet) => {
+        console.log('Wallet connected:', wallet);
+        console.log('Wallet account:', wallet.getAccount());
+        void silentlySignIn(wallet);
+      }}
       auth={{
         isLoggedIn: async () => {
           if (sessionData?.user?.id) {
@@ -133,7 +146,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           ...wallet,
           accountAbstraction: {
             chain: activeChain,
-            factoryAddress: SMART_WALLET_FACTORY[activeChain.id]!,
+            // factoryAddress: SMART_WALLET_FACTORY[activeChain.id]!,
             gasless: true,
           }
         }))

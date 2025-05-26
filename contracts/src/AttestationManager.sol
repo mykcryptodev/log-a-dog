@@ -15,6 +15,8 @@ interface ILogADog {
         address logger,
         address zoraCoin
     );
+    function hasRole(bytes32 role, address account) external view returns (bool);
+    function OPERATOR_ROLE() external view returns (bytes32);
 }
 
 /**
@@ -132,6 +134,53 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
         userAttestations[msg.sender].push(logId);
         
         emit AttestationMade(logId, msg.sender, isValid, stakeAmount);
+    }
+    
+    /**
+     * @notice Attest to a hotdog log's validity on behalf of another user (operator only)
+     * @param logId The ID of the hotdog log
+     * @param attestor The address of the user making the attestation
+     * @param isValid Whether the log is valid
+     * @param stakeAmount Amount of tokens to stake on this attestation
+     */
+    function attestToLogOnBehalf(uint256 logId, address attestor, bool isValid, uint256 stakeAmount) external nonReentrant {
+        // Check if caller has operator role in LogADog contract
+        require(address(logADogContract) != address(0), "LogADog contract not set");
+        require(logADogContract.hasRole(logADogContract.OPERATOR_ROLE(), msg.sender), "Caller is not an operator");
+        
+        AttestationPeriod storage period = attestationPeriods[logId];
+        require(period.startTime > 0, "Attestation period does not exist");
+        require(block.timestamp <= period.endTime, "Attestation period has ended");
+        require(period.status == AttestationStatus.Active, "Attestation period not active");
+        require(!period.hasAttested[attestor], "User has already attested to this log");
+        require(stakeAmount >= MINIMUM_ATTESTATION_STAKE, "Stake amount too low");
+        
+        // Check that user is not attesting to their own log
+        (,,,, address eater,,) = logADogContract.hotdogLogs(logId);
+        require(eater != attestor, "Cannot attest to your own log");
+        
+        // Check if user has enough available stake
+        require(stakingContract.canParticipateInAttestation(attestor, stakeAmount), "Insufficient available stake");
+        
+        // Lock tokens for this attestation (from the attestor's account)
+        stakingContract.lockTokensForAttestation(attestor, stakeAmount);
+        
+        // Record attestation
+        period.hasAttested[attestor] = true;
+        period.attestorStakes[attestor] = stakeAmount;
+        
+        if (isValid) {
+            period.validAttestors.push(attestor);
+            period.totalValidStake += stakeAmount;
+        } else {
+            period.invalidAttestors.push(attestor);
+            period.totalInvalidStake += stakeAmount;
+        }
+        
+        // Track user's attestations
+        userAttestations[attestor].push(logId);
+        
+        emit AttestationMade(logId, attestor, isValid, stakeAmount);
     }
     
     /**

@@ -351,4 +351,69 @@ contract HotdogEcosystemTest is Test {
         stakingContract.stake(300 * 10**18);
         vm.stopPrank();
     }
+
+    function testOperatorAttestOnBehalf() public {
+        // Setup: Deploy token, stake tokens, and log a hotdog
+        hotdogToken.transfer(user1, 1000 * 10**18);
+        hotdogToken.transfer(user2, 1000 * 10**18);
+
+        // User1 stakes tokens
+        vm.startPrank(user1);
+        hotdogToken.approve(address(stakingContract), 300 * 10**18);
+        stakingContract.stake(300 * 10**18);
+        vm.stopPrank();
+
+        // User2 stakes tokens
+        vm.startPrank(user2);
+        hotdogToken.approve(address(stakingContract), 300 * 10**18);
+        stakingContract.stake(300 * 10**18);
+        vm.stopPrank();
+
+        // User1 logs a hotdog
+        vm.startPrank(user1);
+        uint256 logId = logADog.logHotdog("image1", "metadata1", "coin1", user1, "");
+        vm.stopPrank();
+
+        // Operator attests on behalf of user2
+        vm.startPrank(operator);
+        attestationManager.attestToLogOnBehalf(logId, user2, true, 50 * 10**18);
+        vm.stopPrank();
+
+        // Verify attestation was recorded
+        assertTrue(attestationManager.hasUserAttested(logId, user2));
+        assertEq(attestationManager.getUserStakeInAttestation(logId, user2), 50 * 10**18);
+
+        // Verify tokens were locked
+        assertEq(stakingContract.getAvailableStake(user2), 250 * 10**18); // 300 - 50
+
+        // Verify attestation period info
+        (,, AttestationManager.AttestationStatus status, uint256 totalValidStake, uint256 totalInvalidStake,) = 
+            attestationManager.getAttestationPeriod(logId);
+        assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
+        assertEq(totalValidStake, 50 * 10**18);
+        assertEq(totalInvalidStake, 0);
+    }
+
+    function testOperatorCannotAttestOnBehalfWithoutRole() public {
+        // Setup: Deploy token, stake tokens, and log a hotdog
+        hotdogToken.transfer(user1, 1000 * 10**18);
+        hotdogToken.transfer(user2, 1000 * 10**18);
+
+        // User2 stakes tokens
+        vm.startPrank(user2);
+        hotdogToken.approve(address(stakingContract), 300 * 10**18);
+        stakingContract.stake(300 * 10**18);
+        vm.stopPrank();
+
+        // User1 logs a hotdog
+        vm.startPrank(user1);
+        uint256 logId = logADog.logHotdog("image1", "metadata1", "coin1", user1, "");
+        vm.stopPrank();
+
+        // Non-operator tries to attest on behalf of user2 - should fail
+        vm.startPrank(user3);
+        vm.expectRevert("Caller is not an operator");
+        attestationManager.attestToLogOnBehalf(logId, user2, true, 50 * 10**18);
+        vm.stopPrank();
+    } 
 } 

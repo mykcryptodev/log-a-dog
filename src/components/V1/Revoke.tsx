@@ -29,7 +29,7 @@ export const RevokeAttestation: FC<Props> = ({ uid, onAttestationRevoked }) => {
     const schemaUid = EAS_SCHEMA_ID[activeChain.id]!;
     const easContractAddress = EAS_ADDRESS[activeChain.id]!;
     const eas = new EAS(easContractAddress);
-    const signer = await ethers6Adapter.signer.toEthers({ client, account, chain: activeChain }) as TransactionSigner;
+    const signer = ethers6Adapter.signer.toEthers({ client, account, chain: activeChain }) as TransactionSigner;
 
     try {
       setIsLoading(true);

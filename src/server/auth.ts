@@ -102,25 +102,38 @@ export const authOptions: NextAuthOptions = {
           console.error("Error fetching FID from Neynar:", error);
         }
 
-        const user = await db.user.upsert({
+        // First try to find existing user by address (upserts would fail if the user already exists)
+        let user = await db.user.findFirst({
           where: {
-            id: credentials.address.toLowerCase(),
             address: credentials.address.toLowerCase(),
-          },
-          update: {
-            fid,
-            username,
-            image,
-            name,
-          },
-          create: {
-            address: credentials.address.toLowerCase(),
-            fid,
-            username,
-            image,
-            name,
           },
         });
+
+        if (user) {
+          // Update existing user
+          user = await db.user.update({
+            where: {
+              id: user.id,
+            },
+            data: {
+              fid,
+              username,
+              image,
+              name,
+            },
+          });
+        } else {
+          // Create new user
+          user = await db.user.create({
+            data: {
+              address: credentials.address.toLowerCase(),
+              fid,
+              username,
+              image,
+              name,
+            },
+          });
+        }
         console.log({ user });
         // Create a new account for the user
         await db.account.upsert({ 
@@ -167,3 +180,4 @@ export const getServerAuthSession = (ctx: {
 }) => {
   return getServerSession(ctx.req, ctx.res, authOptions);
 };
+

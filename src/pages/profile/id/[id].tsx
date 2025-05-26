@@ -63,7 +63,7 @@ export const Profile: NextPage<{ id: string }> = ({ id }) => {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <CustomMediaRenderer
-                src={data.imgUrl}
+                src={data.imgUrl ?? ""}
                 alt={data.username}
                 className="rounded-full"
                 width={"48px"}

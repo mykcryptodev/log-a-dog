@@ -91,7 +91,7 @@ export const AddContestants: FC<Props> = ({ contestId, onContestantsAdded }) => 
               <div className="flex justify-between items-center gap-1 p-4 rounded-lg bg-base-200">
                 <div className="flex items-start gap-2">
                   <Image
-                    src={profileSearchResult.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/") ?? ""}
+                    src={profileSearchResult.imgUrl?.replace("ipfs://", "https://ipfs.io/ipfs/") ?? ""}
                     alt="profile"
                     width={40}
                     height={40}
@@ -105,7 +105,14 @@ export const AddContestants: FC<Props> = ({ contestId, onContestantsAdded }) => 
                 <button
                   className="btn btn-sm btn-primary"
                   onClick={() => {
-                    setContestantsToAdd([...contestantsToAdd, profileSearchResult]);
+                    setContestantsToAdd([...contestantsToAdd, {
+                      address: profileSearchResult.address,
+                      username: profileSearchResult.username,
+                      imgUrl: profileSearchResult.imgUrl ?? "",
+                      metadata: typeof profileSearchResult.metadata === 'string' 
+                        ? profileSearchResult.metadata 
+                        : JSON.stringify(profileSearchResult.metadata)
+                    }]);
                     setQuery("");
                   }}
                 >

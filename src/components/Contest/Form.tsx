@@ -158,7 +158,7 @@ export const ContestForm: FC<Props> = ({ onContestSaved, action, contest }) => {
             onContestSaved?.({
               id: BigInt((r.logs?.[1]?.topics?.[1] ?? "0")).toString(),
               username: profile.username,
-              imgUrl: profile.imgUrl,
+              imgUrl: profile.imgUrl ?? "",
               metadata,
             });
           }}

@@ -82,7 +82,7 @@ export const Contest: NextPage<{id: string}> = ({ id }) => {
           {profiles.map((profile) => (
             <div key={profile.username} className="flex items-center gap-2">
               <CustomMediaRenderer
-                src={profile.imgUrl}
+                src={profile.imgUrl ?? ""}
                 alt={profile.username}
                 width={"24px"}
                 height={"24px"}
@@ -98,7 +98,14 @@ export const Contest: NextPage<{id: string}> = ({ id }) => {
               {contest.creator === account?.address && contest.creator !== profile.address && (
                 <RemoveContestant 
                   contestId={Number(contest.id)}
-                  contestantToRemove={profile}
+                  contestantToRemove={{
+                    address: profile.address,
+                    username: profile.username,
+                    imgUrl: profile.imgUrl ?? "",
+                    metadata: typeof profile.metadata === 'string' 
+                      ? profile.metadata 
+                      : JSON.stringify(profile.metadata)
+                  }}
                   onContestantRemoved={() => refreshData()}
                 />
               )}

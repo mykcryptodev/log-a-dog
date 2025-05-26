@@ -80,7 +80,7 @@ export const JudgeAttestation: FC<Props> = ({
       toast.warning("You cannot judge your own logs");
       return;
     }
-    const signer = await ethers6Adapter.signer.toEthers({
+    const signer = ethers6Adapter.signer.toEthers({
       client,
       account,
       chain: activeChain,
@@ -137,7 +137,7 @@ export const JudgeAttestation: FC<Props> = ({
       toast.warning("You cannot judge your own logs");
       return;
     }
-    const signer = await ethers6Adapter.signer.toEthers({
+    const signer = ethers6Adapter.signer.toEthers({
       client,
       account,
       chain: activeChain,
