@@ -140,7 +140,7 @@ export const profileRouter = createTRPCRouter({
       metadata: z.string(),
     }))
     .mutation(async ({ input }) => {
-      const { chainId, address, username, imgUrl, metadata } = input;
+      const { chainId, address, username, imgUrl } = input;
       
       // Save profile data to database
       // First try to find existing user by address
