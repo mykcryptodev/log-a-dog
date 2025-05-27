@@ -1,5 +1,6 @@
 import { createAppClient, viemConnector } from '@farcaster/auth-client';
 import { useSession, signIn } from 'next-auth/react';
+import Image from 'next/image';
 import { useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { env } from "~/env";
@@ -70,8 +71,8 @@ export const SignInWithFarcaster = () => {
   if (sessionData?.user) return null;
 
   return (
-    <button className="btn btn-neutral" onClick={handleSignIn}>
-      Login with Farcaster
+    <button className="btn min-w-fit" onClick={handleSignIn}>
+      <Image src="/images/farcaster.svg" alt="Farcaster" width={20} height={20} />
     </button>
   );
 };

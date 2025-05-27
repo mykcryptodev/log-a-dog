@@ -1,9 +1,9 @@
 import { type FC, type ReactNode,useEffect, useState } from "react"
 import { ToastContainer } from 'react-toastify';
-import { ProfileButton } from "../Profile/Button";
 import { useRouter } from "next/router";
 import Changelog from "~/components/utils/Changelog";
 import Link from "next/link";
+import { BottomNav } from "./BottomNav";
 interface LayoutProps {
   children: ReactNode
 }
@@ -39,17 +39,12 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {router.pathname !== '/earn' && (
-              <Link href="/earn" className={`btn text-neutral btn-ghost`}> 
-                Earn $HOTDOG
-              </Link>
-            )}
-            <ProfileButton />
             <Changelog />
           </div>
         </div>
         <ToastContainer />
         {children}
+        <BottomNav />
       </div>
     </div>
   )

@@ -97,6 +97,10 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       client={client}
       chain={activeChain}
       theme={userPrefersDarkMode ? "dark" : "light"}
+      connectButton={{
+        label: loginBtnLabel ?? "Login",
+        className: "!btn !min-w-fit",
+      }}
       onConnect={(wallet) => {
         console.log('Wallet connected:', wallet);
         console.log('Wallet account:', wallet.getAccount());
@@ -122,10 +126,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           console.log("logging out!");
           await signOut();
         },
-      }}
-      connectButton={{
-        label: loginBtnLabel ?? "Login",
-        className: "!btn",
       }}
       connectModal={{
         title: "Login to Log a Dog",

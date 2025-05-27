@@ -117,7 +117,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
 
   return (
     <div className="mr-4">
-      <div className="dropdown dropdown-end">
+      <div className="dropdown dropdown-end dropdown-top">
         <div tabIndex={0} role="button" className="btn btn-ghost">
           <div className="flex items-center gap-2">
             {isLoading ? (
@@ -129,7 +129,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
               <>
               <div className="indicator">
                 {hasNoAvatar && <span className="indicator-item badge badge-accent"></span>}
-                <div className="flex gap-2 items-center">
+                <div className="flex flex-col gap-1 items-center">
                   <CustomMediaRenderer
                     src={img()}
                     alt="Profile Pic"
@@ -138,7 +138,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
                     className="rounded-full"
                     client={client}
                   />
-                  <span className={`${hasNoAvatar ? 'pr-4' :''}`}>{displayUsername}</span>
+                  <span className="text-sm font-normal">{displayUsername}</span>
                   {sessionData?.user?.fid && (
                     <CheckBadgeIcon className="w-4 h-4 text-primary" />
                   )}
