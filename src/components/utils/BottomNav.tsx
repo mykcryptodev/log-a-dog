@@ -1,5 +1,5 @@
 import { type FC } from "react"
-import { CurrencyDollarIcon, NewspaperIcon } from "@heroicons/react/24/outline"
+import { CurrencyDollarIcon, NewspaperIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { useRouter } from "next/router"
 import dynamic from "next/dynamic"
 
@@ -28,6 +28,13 @@ export const BottomNav: FC = () => {
       >
         <CurrencyDollarIcon className="h-6 w-6" />
         Earn
+      </button>
+      <button 
+        onClick={() => void router.push('/faq')}
+        className={isActive('/faq') ? 'active' : ''}
+      >
+        <QuestionMarkCircleIcon className="h-6 w-6" />
+        FAQ
       </button>
       <button>
         <ProfileButton />

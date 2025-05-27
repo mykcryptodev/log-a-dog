@@ -38,7 +38,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
         <div className="w-full justify-between items-center flex mr-4">
           <div className="flex items-center gap-2">
             {router.pathname !== '/' && (
-              <Link href="/" className="btn btn-ghost text-neutral ml-4">
+              <Link href="/" className="btn btn-ghost text-neutral ml-4 pt-6">
                 🌭  Log a Dog
               </Link>
             )}
