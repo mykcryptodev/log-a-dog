@@ -89,7 +89,7 @@ const EarnPage: NextPage = () => {
                   Voting Guidelines
                 </h2>
                 <div className="space-y-3">
-                  <div className="alert alert-error bg-error/10">
+                  <div className="alert alert-error bg-error/10 text-base-content">
                     <HandThumbDownIcon className="h-5 w-5" />
                     <div>
                       <h4 className="font-semibold">Downvote if:</h4>
@@ -101,7 +101,7 @@ const EarnPage: NextPage = () => {
                       </ul>
                     </div>
                   </div>
-                  <div className="alert alert-success bg-success/10">
+                  <div className="alert alert-success bg-success/10 text-base-content">
                     <HandThumbUpIcon className="h-5 w-5" />
                     <div>
                       <h4 className="font-semibold">Upvote if:</h4>

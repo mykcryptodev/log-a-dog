@@ -34,8 +34,8 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
       <div className={`fixed bg-gradient-to-br ${fromYellow} ${viaPink} ${toPink} rounded-full blur-3xl -bottom-0 -left-[55%] w-1/2 h-full -z-10 ${darkModeOpacity}`}></div>
       <div className={`fixed bg-gradient-to-tl ${fromYellow} ${viaPink} ${toYellow} rounded-full blur-3xl -bottom-0 -left-[25%] w-1/2 h-full -z-10 ${darkModeOpacity}`}></div>
       <div className={`fixed bg-gradient-to-bl ${fromPink} ${toPink} rounded-full -top-[-85%] blur-3xl -left-[35%] w-full h-full -z-10 ${darkModeOpacity}`}></div>
-      <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen mt-10">
-        <div className="w-full justify-between items-center flex mr-4">
+      <div className="overflow-x-hidden max-w-7xl mx-auto min-h-screen">
+        <div className="w-full justify-between items-center flex mr-4 pt-4">
           <div className="flex items-center gap-2">
             {router.pathname !== '/' && (
               <Link href="/" className="btn btn-ghost text-neutral ml-4">
