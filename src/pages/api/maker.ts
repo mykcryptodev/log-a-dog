@@ -1,5 +1,5 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
-import { createThirdwebClient, getContract, sendTransaction, simulateTransaction } from 'thirdweb';
+import { createThirdwebClient, getContract, sendTransaction } from 'thirdweb';
 import { type Account, privateKeyToAccount } from 'thirdweb/wallets';
 import { z } from 'zod';
 import { LOG_A_DOG } from '~/constants/addresses';
@@ -7,8 +7,6 @@ import { DEFAULT_CHAIN } from '~/constants/chains';
 import { env } from '~/env';
 import { logHotdog } from '~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c';
 import { upload } from "thirdweb/storage";
-
-const ENGINE_URL = `https://engine-production-3357.up.railway.app`;
 
 // Define the schema for the request body
 const requestBodySchema = z.object({
@@ -33,12 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const client = createThirdwebClient({
         secretKey: env.THIRDWEB_SECRET_KEY,
-      });
-
-      const contract = getContract({
-        client,
-        address: PROFILES[DEFAULT_CHAIN.id]!,
-        chain: DEFAULT_CHAIN,
       });
 
       const account = privateKeyToAccount({
