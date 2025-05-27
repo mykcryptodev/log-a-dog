@@ -9,6 +9,7 @@ import { client } from "~/providers/Thirdweb";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { useActiveAccount } from "thirdweb/react";
 import { UserListAttestations } from "~/components/Attestation/UserList";
+import { useSession } from "next-auth/react";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -25,6 +26,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const acccount = useActiveAccount();
+  const { data: sessionData } = useSession();
   const { activeChain } = useContext(ActiveChainContext);
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
     address,
@@ -38,9 +40,15 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
   const [showProfileForm, setShowProfileForm] = useState<boolean>(false);
 
+  // Check if this is the user's own profile
   const isOwnProfile = useMemo(() => {
-    return acccount?.address.toLowerCase() === data?.address.toLowerCase();
-  }, [acccount, data]);
+    return acccount?.address.toLowerCase() === data?.address.toLowerCase() ||
+           sessionData?.user?.address?.toLowerCase() === data?.address.toLowerCase();
+  }, [acccount, sessionData, data]);
+
+  // Only use sessionData for display if this is the user's own profile AND sessionData has the info
+  const displayUsername = (isOwnProfile && sessionData?.user?.username) ? sessionData.user.username : data?.username;
+  const displayImage = (isOwnProfile && sessionData?.user?.image) ? sessionData.user.image : data?.imgUrl;
 
   if (isLoading) return (
     <main className="flex flex-col items-center justify-center">
@@ -63,14 +71,14 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <CustomMediaRenderer
-                src={data.imgUrl ?? ''}
-                alt={data.username}
+                src={displayImage ?? ''}
+                alt={displayUsername ?? ''}
                 className="rounded-full"
                 width={"48px"}
                 height={"48px"}
                 client={client}
               />
-              <h1 className="text-2xl font-bold">{data?.username}</h1>
+              <h1 className="text-2xl font-bold">{displayUsername}</h1>
             </div>
             <button className={`btn btn-ghost btn-xs ${isOwnProfile ? '' : 'hidden'}`} onClick={() => setShowProfileForm(!showProfileForm)}>
               {showProfileForm ? 'Cancel Edit' : 'Edit Profile'}
@@ -82,8 +90,8 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
                 void refetch();
                 setShowProfileForm(false);
               }}
-              existingImgUrl={data?.imgUrl}
-              existingUsername={data?.username}
+              existingImgUrl={displayImage}
+              existingUsername={displayUsername}
             />
           )}
           {isOwnProfile && (

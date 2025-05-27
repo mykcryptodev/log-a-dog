@@ -4,8 +4,8 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
-import { TransactionStatus } from "~/components/utils/TransactionStatus";
 import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -21,19 +21,26 @@ type Props = {
 
 export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, existingImgUrl }) => {
   const { activeChain } = useContext(ActiveChainContext);
+  const { data: sessionData } = useSession();
   const wallet = useActiveWallet();
-  const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? "");
-  const [username, setUsername] = useState<string>(existingUsername ?? "");
+  
+  // Prioritize existing values, then sessionData, then empty string
+  const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? sessionData?.user?.image ?? "");
+  const [username, setUsername] = useState<string>(existingUsername ?? sessionData?.user?.username ?? "");
   const metadata = "";
   const [error, setError] = useState<string | null>(null);
   const [saveProfileBtnLabel, setSaveProfileBtnLabel] = useState<string>("Save Profile");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [queueId, setQueueId] = useState<string | null>(null);
+
   const router = useRouter();
   
   const createProfile = api.profile.create.useMutation({
-    onSuccess: (data) => {
-      setQueueId(data);
+    onSuccess: () => {
+      // Since we're saving to database directly, no need for transaction tracking
+      onProfileSaved?.({username, imgUrl, metadata});
+      setIsLoading(false);
+      setSaveProfileBtnLabel("Save Profile");
+      toast.success("Profile saved successfully!");
       // close the modal
       (document.getElementById('create_profile_modal') as HTMLDialogElement)?.close();
       // navigate to the profile page of the new username
@@ -122,27 +129,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
           <span className="text-error text-center text-xs px-8 sm:px-16">{error}</span>
         </div>
       )}
-      {queueId && (
-        <TransactionStatus
-          transactionId={queueId}
-          loadingMessages={[
-            { message: "Brightening your teeth..."},
-            { message: "Wiping away mustard stains..."},
-            { message: "Ok, you look better now..."},
-            { message: "Saving your profile..." },
-          ]}
-          successMessage="Profile saved successfully!"
-          errorMessage="Failed to save profile"
-          onResolved={(success) => {
-            if (success) {
-              onProfileSaved?.({username, imgUrl, metadata});
-            }
-            setQueueId(null);
-            setIsLoading(false);
-            setSaveProfileBtnLabel("Save Profile");
-          }}
-        />
-      )}
+
     </div>
   )
 };

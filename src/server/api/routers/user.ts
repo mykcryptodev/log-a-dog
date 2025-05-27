@@ -14,6 +14,9 @@ export const userRouter = createTRPCRouter({
         },
         select: {
           fid: true,
+          username: true,
+          image: true,
+          name: true,
         },
       });
       return user;

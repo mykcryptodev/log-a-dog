@@ -19,7 +19,7 @@ const EarnPage: NextPage = () => {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
-            Earn $HOTDOG
+            Earn <span className="text-secondary">$HOTDOG</span>
           </h1>
           <p className="mt-4 text-xl text-base-content/70">
             Stake your tokens and moderate submissions to earn rewards

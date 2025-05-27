@@ -8,8 +8,9 @@ import { stake, unstake } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed
 import { getContract } from "thirdweb";
 import { toast } from "react-toastify";
 import { MINIMUM_STAKE } from "~/constants";
-import { parseEther, formatEther } from "viem";
+import { parseEther, formatEther, InsufficientFundsError } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
+import { Buy } from "~/components/utils/Buy";
  
 type Props = {
   onStake?: (amount: string) => void;
@@ -231,6 +232,12 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
           >
             Unstake all
           </TransactionButton>
+        )}
+        {InsufficientFundsError && (
+          <div className="flex flex-col gap-2">
+            <p className="text-center">Need some $HOTDOG?</p>
+            <Buy />
+          </div>
         )}
       </div>
     </div>

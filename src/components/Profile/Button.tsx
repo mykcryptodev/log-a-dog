@@ -44,7 +44,10 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     refetchOnMount: false,
   });
 
-  const imageUrl = data?.imgUrl?.replace("ipfs://", "https://ipfs.io/ipfs/");
+  // Use sessionData for username and image if available, otherwise fall back to profile data
+  const displayUsername = sessionData?.user?.username ?? data?.username;
+  const displayImage = sessionData?.user?.image ?? data?.imgUrl;
+  const imageUrl = displayImage?.replace("ipfs://", "https://ipfs.io/ipfs/");
 
   const hasNoAvatar = useMemo(() => {
     if (createdProfileImgUrl && createdProfileImgUrl !== '') return false;
@@ -75,7 +78,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     )
   }
 
-  if (!data?.username) return (
+  if (!displayUsername) return (
     <>
       {/* Open the modal using document.getElementById('ID').showModal() method */}
       <button className="btn mr-2" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
@@ -135,7 +138,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
                     className="rounded-full"
                     client={client}
                   />
-                  <span className={`${hasNoAvatar ? 'pr-4' :''}`}>{data?.username}</span>
+                  <span className={`${hasNoAvatar ? 'pr-4' :''}`}>{displayUsername}</span>
                   {sessionData?.user?.fid && (
                     <CheckBadgeIcon className="w-4 h-4 text-primary" />
                   )}
@@ -147,7 +150,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
         </div>
         <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li>
-            <Link href={`/profile/address/${data.address}`}>
+            <Link href={`/profile/address/${data?.address ?? sessionData?.user?.address ?? ''}`}>
               Profile {hasNoAvatar && <div className="badge badge-accent">add avatar</div>}
             </Link>
           </li>
