@@ -9,19 +9,19 @@ export const BottomNav: FC = () => {
   const isActive = (path: string) => router.pathname === path;
 
   return (
-    <div className="btm-nav z-50">
+    <div className="btm-nav z-50 text-sm">
       <button 
         onClick={() => void router.push('/')}
         className={isActive('/') ? 'active' : ''}
       >
-        <NewspaperIcon className="h-5 w-5" />
+        <NewspaperIcon className="h-6 w-6" />
         Feed
       </button>
       <button 
         onClick={() => void router.push('/earn')}
         className={isActive('/earn') ? 'active' : ''}
       >
-        <CurrencyDollarIcon className="h-5 w-5" />
+        <CurrencyDollarIcon className="h-6 w-6" />
         Earn
       </button>
       <button>
