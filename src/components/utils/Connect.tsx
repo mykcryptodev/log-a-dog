@@ -15,6 +15,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const { data: sessionData, status } = useSession();
   const { activeChain } = useContext(ActiveChainContext);
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
   const account = useActiveAccount();
   console.log('account', account);
   console.log('client', client);
@@ -22,6 +23,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   console.log('status', status);
 
   useEffect(() => {
+    setMounted(true);
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
 
@@ -91,6 +93,15 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       console.error("Error signing in with wallet:", error);
     }
   }, [createPayload, message, sessionData?.user?.id, status]);
+
+  // Prevent hydration mismatch by not rendering ConnectButton until mounted
+  if (!mounted) {
+    return (
+      <button className="btn min-w-fit" disabled>
+        {loginBtnLabel ?? "Login"}
+      </button>
+    );
+  }
 
   return (
     <ConnectButton

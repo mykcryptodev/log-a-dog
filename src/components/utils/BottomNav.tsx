@@ -1,8 +1,13 @@
 import { type FC } from "react"
 import { CurrencyDollarIcon, NewspaperIcon } from "@heroicons/react/24/outline"
-import { ProfileButton } from "../Profile/Button"
 import { useRouter } from "next/router"
+import dynamic from "next/dynamic"
 
+// Dynamically import ProfileButton with no SSR to prevent hydration issues
+const ProfileButton = dynamic(() => import("../Profile/Button").then(mod => ({ default: mod.ProfileButton })), {
+  ssr: false,
+  loading: () => null
+});
 
 export const BottomNav: FC = () => {
   const router = useRouter();

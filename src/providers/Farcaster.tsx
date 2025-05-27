@@ -2,9 +2,8 @@ import { AuthKitProvider } from '@farcaster/auth-kit';
 import { optimism } from 'thirdweb/chains';
 import { env } from '~/env';
 
-const url = process.env.NODE_ENV === 'production' 
-  ? 'https://logadog.xyz' 
-  : 'http://localhost:3000';
+// Use environment variable or fallback to localhost for development
+const url = env.NEXT_PUBLIC_APP_DOMAIN || 'http://localhost:3000';
 
 const config = {
   rpcUrl: `https://${optimism.id}.rpc.thirdweb.com/${env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID}`,

@@ -81,13 +81,16 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   if (!displayUsername) return (
     <>
       {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <button className="btn mr-2" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
-        {createProfileBtnLabel ?? 'Create Profile'}
-      </button>
-      <button className={`btn btn-ghost mr-4 ${hideLogout ? 'hidden' : ''}`} onClick={() => void logout()}>
-        Logout <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
-      </button>
-      <dialog id="create_profile_modal" className="modal">
+      <div className="flex items-center gap-2">
+        <button className="btn" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
+          {createProfileBtnLabel ?? 'Profile'}
+        </button>
+        <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={() => void logout()}>
+          <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+        </button>
+      </div>
+
+      <dialog id="create_profile_modal" className="modal modal-bottom sm:modal-middle">
         <div className="modal-box relative">
           <button 
             className="btn btn-circle btn-sm btn-ghost absolute top-4 right-4"
