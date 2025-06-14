@@ -11,10 +11,21 @@ interface IZoraFactory {
         string memory uri,
         string memory name,
         string memory symbol,
-        bytes calldata poolConfig,
+        bytes memory poolConfig,
         address platformReferrer,
-        uint256 orderSize
-    ) external payable returns (address, uint256);
+        address postDeployHook,
+        bytes calldata postDeployHookData,
+        bytes32 coinSalt
+    ) external payable returns (address coin, bytes memory postDeployHookDataOut);
+
+    function coinAddress(
+        address msgSender,
+        string memory name,
+        string memory symbol,
+        bytes memory poolConfig,
+        address platformReferrer,
+        bytes32 coinSalt
+    ) external view returns (address);
 }
 
 /**
@@ -63,7 +74,10 @@ contract CoinDeploymentManager is AccessControl {
         // Generate coin name
         string memory coinName = string.concat("Logged Dog #", Strings.toString(logId));
         
-        // Deploy coin using current strategy
+        // Generate deterministic salt based on logId and eater
+        bytes32 coinSalt = keccak256(abi.encodePacked("LogADog", logId, eater));
+        
+        // Deploy coin using latest v4 factory interface
         (coinAddress,) = IZoraFactory(coinFactory).deploy{value: msg.value}(
             eater, // payout recipient
             owners, // owners
@@ -72,10 +86,45 @@ contract CoinDeploymentManager is AccessControl {
             coinSymbol, // symbol
             poolConfig, // configuration for the pool
             platformReferrer, // platform referrer
-            msg.value // order size
+            address(0), // postDeployHook (none for now)
+            "", // postDeployHookData (empty)
+            coinSalt // deterministic salt
         );
         
         emit CoinDeployed(logId, coinAddress, eater);
+    }
+    
+    /**
+     * @notice Predict the address of a coin before deployment
+     * @param logId The ID of the hotdog log
+     * @param eater The address of the hotdog eater
+     * @param poolConfig The pool configuration
+     * @param platformReferrer The platform referrer address
+     * @return predictedAddress The predicted address of the coin
+     */
+    function predictCoinAddress(
+        uint256 logId,
+        address eater,
+        bytes calldata poolConfig,
+        address platformReferrer
+    ) external view returns (address predictedAddress) {
+        require(coinFactory != address(0), "Coin factory not set");
+        
+        // Generate coin name
+        string memory coinName = string.concat("Logged Dog #", Strings.toString(logId));
+        
+        // Generate deterministic salt based on logId and eater
+        bytes32 coinSalt = keccak256(abi.encodePacked("LogADog", logId, eater));
+        
+        // Predict coin address
+        predictedAddress = IZoraFactory(coinFactory).coinAddress(
+            address(this), // msgSender will be this contract
+            coinName, // name
+            coinSymbol, // symbol
+            poolConfig, // pool configuration
+            platformReferrer, // platform referrer
+            coinSalt // deterministic salt
+        );
     }
     
     /**

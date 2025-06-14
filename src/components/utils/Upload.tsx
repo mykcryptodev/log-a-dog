@@ -160,8 +160,15 @@ export const Upload: FC<UploadProps> = ({
 
     try {
       setDropzoneLabel("☁️ Uploading...");
+      // Rename files to "image" before uploading
+      const renamedFiles = resizedFiles.map((file, index) => {
+        const extension = file.name.split('.').pop() || 'jpg';
+        const newName = resizedFiles.length > 1 ? `image_${index + 1}.${extension}` : `image.${extension}`;
+        return new File([file], newName, { type: file.type });
+      });
+      
       const uris = await upload({
-        files: resizedFiles,
+        files: renamedFiles,
         client,
       });
       const resolvedUrls = typeof uris === 'string' ? [resolveScheme({
