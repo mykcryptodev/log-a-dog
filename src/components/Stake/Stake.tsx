@@ -53,8 +53,6 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     },
   });
 
-  console.log({ stakedAmount });
-
   useEffect(() => {
     const checkAllowance = async () => {
       if (!wallet || !amount) return;
@@ -92,6 +90,9 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     if (!amount) return false;
     return Number(amount) > bal;
   }, [amount, balance]);
+
+  const invalidAmount = Number(amount) <= 0;
+  const showInsufficientBalance = balanceIsInsufficient && !invalidAmount;
 
   const handlePercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPercentage = Number(e.target.value);
@@ -212,9 +213,11 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
               console.log({ err });
               toast.error(`Staking failed: ${err.message}`);
             }}
-            disabled={balanceIsInsufficient || amountExceedsBalance || !amount}
+            disabled={
+              showInsufficientBalance || amountExceedsBalance || invalidAmount
+            }
           >
-            {balanceIsInsufficient
+            {showInsufficientBalance
               ? "Insufficient balance"
               : amountExceedsBalance
                 ? "Amount too high"
@@ -245,9 +248,11 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
               console.log({ err });
               toast.error(`Approval failed: ${err.message}`);
             }}
-            disabled={balanceIsInsufficient || amountExceedsBalance || !amount}
+            disabled={
+              showInsufficientBalance || amountExceedsBalance || invalidAmount
+            }
           >
-            {balanceIsInsufficient
+            {showInsufficientBalance
               ? "Insufficient balance"
               : amountExceedsBalance
                 ? "Amount too high"
