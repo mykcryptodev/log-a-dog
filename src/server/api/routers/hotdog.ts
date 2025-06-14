@@ -377,6 +377,107 @@ export const hotdogRouter = createTRPCRouter({
         hasNextPage,
       }
     }),
+  getById: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      user: z.string(),
+      logId: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const { chainId, user, logId } = input;
+
+      const cacheKey = `hotdog:${chainId}:${logId}:${user}`;
+      const cachedData = await getCachedData<{
+        hotdog: ProcessedHotdog;
+        validAttestations: string;
+        invalidAttestations: string;
+        userAttested: boolean;
+        userAttestation: boolean;
+      }>(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+
+      const [redactedLogIds, dogResponse, attestationCounts, userAttestations] = await Promise.all([
+        getRedactedLogIds({
+          contract: getContract({
+            address: MODERATION[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+        }),
+        getHotdogLogsRange({
+          contract: getContract({
+            address: LOG_A_DOG[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+          start: BigInt(logId),
+          limit: 1n,
+        }),
+        getAttestationCounts({
+          contract: getContract({
+            address: ATTESTATION_MANAGER[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+          logIds: [BigInt(logId)],
+        }),
+        getUserAttestationsWithChoices({
+          contract: getContract({
+            address: ATTESTATION_MANAGER[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+          user,
+        }),
+      ]);
+
+      const hotdogLog = dogResponse[0][0];
+      if (!hotdogLog) {
+        return null;
+      }
+
+      const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
+      const processedResponse: HotdogResponse = {
+        logs: [
+          {
+            ...hotdogLog,
+            logId: hotdogLog.logId.toString(),
+            timestamp: hotdogLog.timestamp.toString(),
+            imageUri: redactedLogIdsStr.includes(hotdogLog.logId.toString()) ? redactedImage : hotdogLog.imageUri,
+          },
+        ],
+        validCounts: [attestationCounts[0][0].toString()],
+        invalidCounts: [attestationCounts[1][0].toString()],
+        userHasAttested: [userAttestations[0].includes(BigInt(hotdogLog.logId))],
+        userAttestations: [userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(hotdogLog.logId))] ?? false],
+      };
+
+      const zoraCoinAddressesArray = processedResponse.logs[0].zoraCoin ? [processedResponse.logs[0].zoraCoin] : [];
+      const [zoraCoinDetails, metadata] = await Promise.all([
+        zoraCoinAddressesArray.length > 0 ? getZoraCoinDetailsBatch(zoraCoinAddressesArray, chainId) : new Map<string, ZoraCoinDetails>(),
+        getMetadataFromUri(processedResponse.logs[0].metadataUri),
+      ]);
+
+      const processedHotdog: ProcessedHotdog = {
+        ...processedResponse.logs[0],
+        zoraCoin: processedResponse.logs[0].zoraCoin ? zoraCoinDetails.get(processedResponse.logs[0].zoraCoin.toLowerCase()) ?? null : null,
+        metadata,
+      };
+
+      const response = {
+        hotdog: processedHotdog,
+        validAttestations: processedResponse.validCounts[0],
+        invalidAttestations: processedResponse.invalidCounts[0],
+        userAttested: processedResponse.userHasAttested[0],
+        userAttestation: processedResponse.userAttestations[0],
+      };
+
+      await setCachedData(cacheKey, response);
+
+      return response;
+    }),
   getAiVerificationStatus: publicProcedure
     .input(z.object({ chainId: z.number(), logId: z.string(), timestamp: z.string() }))
     .query(async ({ input }) => {
