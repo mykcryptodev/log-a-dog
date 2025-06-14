@@ -5,7 +5,7 @@ import { EIP1193 } from 'thirdweb/wallets';
 import { env } from '~/env';
 import useActiveChain from '~/hooks/useActiveChain';
 import { client } from '~/providers/Thirdweb';
-import { sdk, Context } from "@farcaster/frame-sdk";
+import { sdk, type Context } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
 
 // Use environment variable or fallback to localhost for development
@@ -35,17 +35,21 @@ export const FarcasterProvider = ({ children } : {
   const { connect } = useConnect();
 
   const connectWallet = useCallback(async () => {
-    connect(async () => {
-      // create a wallet instance from the Warpcast provider
-      const wallet = EIP1193.fromProvider({ provider: sdk.wallet.ethProvider });
+    try {
+      await connect(async () => {
+        // create a wallet instance from the Warpcast provider
+        const wallet = EIP1193.fromProvider({ provider: sdk.wallet.ethProvider });
 
-      // trigger the connection
-      await wallet.connect({ client, chain: activeChain });
+        // trigger the connection
+        await wallet.connect({ client, chain: activeChain });
 
-      // return the wallet to the app context
-      return wallet;
-    });
-  }, [connect]);
+        // return the wallet to the app context
+        return wallet;
+      });
+    } catch (err) {
+      console.error("Failed to connect wallet", err);
+    }
+  }, [connect, activeChain]);
 
   const viewProfile = useCallback(async (fid: number) => {
     try {
@@ -57,22 +61,26 @@ export const FarcasterProvider = ({ children } : {
 
   useEffect(() => {
     const load = async () => {
-      const frameContext = await sdk.context;
-      setContext(frameContext);
-      const mini = await sdk.isInMiniApp();
-      setIsMiniApp(mini);
-      sdk.actions.ready({});
+      try {
+        const frameContext = await sdk.context;
+        setContext(frameContext);
+        const mini = await sdk.isInMiniApp();
+        setIsMiniApp(mini);
+        await sdk.actions.ready({});
+      } catch (err) {
+        console.error("Failed to load SDK", err);
+      }
     };
     if (sdk && !isSDKLoaded) {
       setIsSDKLoaded(true);
-      load();
+      void load();
     }
   }, [isSDKLoaded]);
 
   // Separate effect for wallet connection after context is loaded
   useEffect(() => {
     if (context && sdk.wallet && isSDKLoaded) {
-      connectWallet();
+      void connectWallet();
     }
   }, [context, isSDKLoaded, connectWallet]);
 
