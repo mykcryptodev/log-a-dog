@@ -20,7 +20,7 @@ export const InsufficientStake: FC<Props> = ({ isOpen, onClose }) => {
           ✕
         </button>
         <h2 className="text-lg font-bold">🧑‍⚖️ Get paid to be a judge!</h2>
-        <p className="text-sm opacity-70 mb-2">You can earn $HOTDOG by attesting to the validity logs. <Link href="/earn" className="link">Learn more.</Link></p>
+        <p className="text-sm opacity-70 mb-2">You can earn $HOTDOG by attesting to the validity logs within 48h of the dog being logged. <Link href="/earn" className="link">Learn more.</Link></p>
         <p className="mb-2">Stake $HOTDOG to become a judge and start earning rewards.</p>
         <Stake onStake={onClose} hideTitle />
       </div>
