@@ -156,7 +156,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           ...wallet,
           accountAbstraction: {
             chain: activeChain,
-            // factoryAddress: SMART_WALLET_FACTORY[activeChain.id]!,
             gasless: true,
           }
         }))
