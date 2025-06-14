@@ -1,5 +1,6 @@
 import { type NextPage } from "next";
 import { Stake } from "~/components/Stake/Stake";
+import { useState } from "react";
 import { 
   CurrencyDollarIcon, 
   ShieldCheckIcon, 
@@ -12,6 +13,8 @@ import {
 import { Buy } from "~/components/utils/Buy";
 
 const EarnPage: NextPage = () => {
+  const [mode, setMode] = useState<"eat" | "judge">("judge");
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
@@ -33,7 +36,7 @@ const EarnPage: NextPage = () => {
         <div className="grid w-full max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">
           
           {/* Staking Component */}
-          <div className="card bg-base-100 shadow-xl">
+          <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
             <div className="card-body">
               <Stake />
             </div>
@@ -41,48 +44,89 @@ const EarnPage: NextPage = () => {
 
           {/* Information Panel */}
           <div className="space-y-6">
-            
+
             {/* How It Works */}
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
               <div className="card-body">
                 <h2 className="card-title text-2xl mb-4 flex items-center gap-2">
                   <CurrencyDollarIcon className="h-6 w-6" />
                   How Earning Works
                 </h2>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="badge badge-primary badge-lg">1</div>
-                    <div>
-                      <h3 className="font-semibold">Stake $HOTDOG</h3>
-                      <p className="text-sm text-base-content/70">
-                        Stake your $HOTDOG tokens to earn 10% APY and participate in moderation
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="badge badge-primary badge-lg">2</div>
-                    <div>
-                      <h3 className="font-semibold">Judge Submissions</h3>
-                      <p className="text-sm text-base-content/70">
-                        Vote on hotdog submissions to help maintain quality and earn additional rewards
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="badge badge-primary badge-lg">3</div>
-                    <div>
-                      <h3 className="font-semibold">Earn Rewards</h3>
-                      <p className="text-sm text-base-content/70">
-                        Win rewards from incorrect voters and earn staking yields
-                      </p>
-                    </div>
-                  </div>
+
+                <div role="tablist" className="tabs tabs-bordered mb-4">
+                  <a
+                    role="tab"
+                    className={`tab ${mode === "eat" ? "tab-active" : ""}`}
+                    onClick={() => setMode("eat")}
+                  >
+                    Eat To Earn
+                  </a>
+                  <a
+                    role="tab"
+                    className={`tab ${mode === "judge" ? "tab-active" : ""}`}
+                    onClick={() => setMode("judge")}
+                  >
+                    Judge To Earn
+                  </a>
                 </div>
+
+                {mode === "eat" ? (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="badge badge-primary badge-lg">1</div>
+                      <div>
+                        <h3 className="font-semibold">Upload a pic</h3>
+                        <p className="text-sm text-base-content/70">
+                          Take a picture of you eating a hotdog as your proof
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="badge badge-primary badge-lg">2</div>
+                      <div>
+                        <h3 className="font-semibold">Earn rewards</h3>
+                        <p className="text-sm text-base-content/70">
+                          Your picture can be bought and sold by traders, you earn the trading fees!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="badge badge-primary badge-lg">1</div>
+                      <div>
+                        <h3 className="font-semibold">Stake $HOTDOG</h3>
+                        <p className="text-sm text-base-content/70">
+                          Stake your $HOTDOG tokens to earn 10% APY and participate in moderation
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="badge badge-primary badge-lg">2</div>
+                      <div>
+                        <h3 className="font-semibold">Judge Submissions</h3>
+                        <p className="text-sm text-base-content/70">
+                          Vote on hotdog submissions to help maintain quality and earn additional rewards
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="badge badge-primary badge-lg">3</div>
+                      <div>
+                        <h3 className="font-semibold">Earn Rewards</h3>
+                        <p className="text-sm text-base-content/70">
+                          Win rewards from incorrect voters and earn staking yields
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Voting Guidelines */}
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
               <div className="card-body">
                 <h2 className="card-title text-2xl mb-4 flex items-center gap-2">
                   <ShieldCheckIcon className="h-6 w-6" />
@@ -120,7 +164,7 @@ const EarnPage: NextPage = () => {
         </div>
 
         {/* Voting Process */}
-        <div className="card bg-base-100 shadow-xl w-full max-w-4xl">
+        <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl w-full max-w-4xl">
           <div className="card-body">
             <h2 className="card-title text-2xl mb-6 flex items-start gap-2">
               <ClockIcon className="h-6 w-6 mt-1" />
