@@ -10,6 +10,7 @@ import { ZERO_ADDRESS } from "thirdweb";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "./AiJudgement";
+import VotingCountdown from "./VotingCountdown";
 import Comments from "~/components/Attestation/Comments";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
@@ -82,6 +83,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 <span className="w-4 h-4 bg-base-300 animate-pulse rounded-full" />
                 <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
               </div>
+              <div className="flex items-center gap-2">
+                <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
+              </div>
               <div className="flex justify-end items-center gap-2">
                 <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
                 <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
@@ -150,6 +154,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   />
                 </div>
                 <div className="flex justify-end items-center gap-1">
+                  <VotingCountdown timestamp={hotdog.timestamp.toString()} />
                   <Comments
                     logId={hotdog.logId.toString()}
                     metadataUri={hotdog.metadataUri}
