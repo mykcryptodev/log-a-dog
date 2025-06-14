@@ -209,8 +209,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           errorMessage="Failed to log your dog"
         />
       )}
-      <dialog id="share_cast_modal" className="modal">
-        <div className="modal-box">
+      <dialog id="share_cast_modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box bg-opacity-50 backdrop-blur-lg">
           <h3 className="font-bold text-lg">Share on Farcaster?</h3>
           <p className="py-4">Would you like to share your logged dog on Farcaster?</p>
           <div className="modal-action">
