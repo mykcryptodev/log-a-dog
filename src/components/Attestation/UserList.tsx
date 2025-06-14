@@ -9,6 +9,7 @@ import Name from "~/components/Profile/Name";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
+import { ZoraCoinTrading } from "./ZoraCoinTrading";
 
 type Props = {
   attestors?: string[];

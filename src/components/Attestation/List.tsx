@@ -13,6 +13,7 @@ import AiJudgement from "./AiJudgement";
 import Comments from "~/components/Attestation/Comments";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
+import { ZoraCoinTrading } from "./ZoraCoinTrading";
 
 type Props = {
   attestors?: string[];
@@ -128,8 +129,17 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
               />
               <div className="opacity-50 flex flex-row w-full items-center justify-between">
                 <div className="text-xs flex items-center gap-1">
-                  <TagIcon className="w-4 h-4" />
-                  {hotdog.logId.toString()}
+                  {hotdog.zoraCoin?.address ? (
+                    <ZoraCoinTrading
+                      coinAddress={hotdog.zoraCoin.address}
+                      logId={hotdog.logId.toString()}
+                    />
+                  ) : (
+                    <>
+                      <TagIcon className="w-4 h-4" />
+                      {hotdog.logId.toString()}
+                    </>
+                  )}
                 </div>
                 <div className="flex justify-end items-center gap-2 text-xs">
                   <AiJudgement 
