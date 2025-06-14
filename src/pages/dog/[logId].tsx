@@ -32,7 +32,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
     version: "next",
     imageUrl: "https://yoink.party/framesV2/opengraph-image",
     button: {
-      title: "\uD83C\uDF2D Log a Dog",
+      title: "🌭 Log a Dog",
       action: {
         type: "launch_frame",
         name: "Log a Dog",
@@ -59,7 +59,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
     return (
       <>
         <Head>
-          <meta name="fc:miniapp" content={JSON.stringify(miniAppMetadata)} />
+          <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
         </Head>
         <main className="flex flex-col items-center justify-center">
           <div className="w-64 h-64 bg-base-300 animate-pulse rounded-lg" />
@@ -73,7 +73,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   return (
     <>
       <Head>
-        <meta name="fc:miniapp" content={JSON.stringify(miniAppMetadata)} />
+        <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
       </Head>
       <main className="flex flex-col items-center justify-center">
         <div className="container flex flex-col items-center gap-6 px-4 py-8">
