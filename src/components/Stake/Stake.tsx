@@ -111,7 +111,15 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
               type="number"
               className="stat-value text-primary bg-transparent text-center focus:outline-none w-full max-w-[12ch]"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                let value = e.target.value;
+                if (value === "") {
+                  setAmount("");
+                  return;
+                }
+                value = value.replace(/^0+(?=\d)/, "");
+                setAmount(value);
+              }}
             />
             <div className="stat-desc flex items-center justify-between">
               <div>
@@ -210,7 +218,6 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             }}
             onError={(err) => {
               toast.dismiss();
-              console.log({ err });
               toast.error(`Staking failed: ${err.message}`);
             }}
             disabled={
@@ -245,7 +252,6 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             }}
             onError={(err) => {
               toast.dismiss();
-              console.log({ err });
               toast.error(`Approval failed: ${err.message}`);
             }}
             disabled={
@@ -281,7 +287,6 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
               }}
               onError={(err) => {
                 toast.dismiss();
-                console.log({ err });
                 toast.error(`Unstaking failed: ${err.message}`);
               }}
             >
