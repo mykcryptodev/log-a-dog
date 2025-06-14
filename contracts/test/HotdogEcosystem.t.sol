@@ -26,7 +26,7 @@ contract HotdogEcosystemTest is Test {
     address public admin;
 
     // Test constants
-    uint256 constant REWARD_END_TIME = 1725148800; // September 1, 2025 00:00:00 UTC
+    uint256 constant REWARD_END_TIME = 1756684800; // September 1, 2025 00:00:00 UTC
     uint256 constant INITIAL_REWARDS_POOL = 10000 * 10**18; // 10,000 HOTDOG tokens
 
     function setUp() public {
