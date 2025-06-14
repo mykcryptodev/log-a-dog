@@ -448,21 +448,21 @@ export const hotdogRouter = createTRPCRouter({
             imageUri: redactedLogIdsStr.includes(hotdogLog.logId.toString()) ? redactedImage : hotdogLog.imageUri,
           },
         ],
-        validCounts: [attestationCounts[0][0].toString()],
-        invalidCounts: [attestationCounts[1][0].toString()],
+        validCounts: [attestationCounts[0]?.[0]?.toString() ?? '0'],
+        invalidCounts: [attestationCounts[1]?.[0]?.toString() ?? '0'],
         userHasAttested: [userAttestations[0].includes(BigInt(hotdogLog.logId))],
         userAttestations: [userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(hotdogLog.logId))] ?? false],
       };
 
-      const zoraCoinAddressesArray = processedResponse.logs[0].zoraCoin ? [processedResponse.logs[0].zoraCoin] : [];
+      const zoraCoinAddressesArray = processedResponse.logs[0]?.zoraCoin ? [processedResponse.logs[0].zoraCoin] : [];
       const [zoraCoinDetails, metadata] = await Promise.all([
         zoraCoinAddressesArray.length > 0 ? getZoraCoinDetailsBatch(zoraCoinAddressesArray, chainId) : new Map<string, ZoraCoinDetails>(),
-        getMetadataFromUri(processedResponse.logs[0].metadataUri),
+        getMetadataFromUri(processedResponse.logs[0]?.metadataUri ?? ''),
       ]);
 
       const processedHotdog: ProcessedHotdog = {
-        ...processedResponse.logs[0],
-        zoraCoin: processedResponse.logs[0].zoraCoin ? zoraCoinDetails.get(processedResponse.logs[0].zoraCoin.toLowerCase()) ?? null : null,
+        ...processedResponse.logs[0]!,
+        zoraCoin: processedResponse.logs[0]?.zoraCoin ? zoraCoinDetails.get(processedResponse.logs[0].zoraCoin.toLowerCase()) ?? null : null,
         metadata,
       };
 
