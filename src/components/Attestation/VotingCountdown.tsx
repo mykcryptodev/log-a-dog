@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 interface Props {
   timestamp: string; // unix timestamp in seconds
@@ -20,6 +20,7 @@ export const VotingCountdown: FC<Props> = ({ timestamp }) => {
       setSecondsLeft(calculateTimeLeft());
     }, 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timestamp]);
 
   const hours = Math.floor(secondsLeft / 3600)
