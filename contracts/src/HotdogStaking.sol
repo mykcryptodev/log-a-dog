@@ -9,7 +9,7 @@ import "./HotdogToken.sol";
 
 /**
  * @title HotdogStaking
- * @dev Staking contract for HOTDOG tokens with rewards and slashing for attestations
+ * @dev Staking contract for HOTDOG tokens with proportional rewards that fully deplete by September 1, 2025
  */
 contract HotdogStaking is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -20,13 +20,13 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
     
     // Staking parameters
     uint256 public constant MINIMUM_STAKE = 100 * 10**18; // 100 HOTDOG minimum
-    uint256 public constant REWARDS_RATE = 10; // 10% APY base rate
-    uint256 public constant SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+    uint256 public constant REWARD_END_TIME = 1756684800; // September 1, 2025 00:00:00 UTC
     uint256 public constant SLASH_PERCENTAGE = 15; // 15% slashing for wrong attestations
+    uint256 private constant PRECISION = 1e18; // Precision for reward calculations
     
     struct StakeInfo {
         uint256 amount;
-        uint256 lastRewardTime;
+        uint256 rewardDebt; // User's reward debt for accurate proportional calculation
         uint256 pendingRewards;
         bool isActive;
     }
@@ -36,6 +36,8 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
     
     uint256 public totalStaked;
     uint256 public rewardsPool;
+    uint256 public lastRewardUpdate; // Global timestamp for reward calculations
+    uint256 public accumulatedRewardPerToken; // Global reward accumulator
     
     event Staked(address indexed user, uint256 amount);
     event Unstaked(address indexed user, uint256 amount);
@@ -44,10 +46,62 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
     event TokensLocked(address indexed user, uint256 amount);
     event TokensUnlocked(address indexed user, uint256 amount);
     event RewardsDeposited(uint256 amount);
+    event GlobalRewardsUpdated(uint256 accumulatedRewardPerToken, uint256 remainingPool);
     
     constructor(address _hotdogToken) {
         hotdogToken = HotdogToken(_hotdogToken);
+        lastRewardUpdate = block.timestamp;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+    
+    /**
+     * @notice Update global reward state and calculate emission rate
+     */
+    function updateGlobalRewards() internal {
+        if (block.timestamp >= REWARD_END_TIME || totalStaked == 0 || rewardsPool == 0) {
+            lastRewardUpdate = block.timestamp;
+            return;
+        }
+        
+        uint256 timeElapsed = block.timestamp - lastRewardUpdate;
+        if (timeElapsed == 0) return;
+        
+        uint256 timeRemaining = REWARD_END_TIME - block.timestamp;
+        if (timeRemaining == 0) {
+            lastRewardUpdate = block.timestamp;
+            return;
+        }
+        
+        // Calculate emission rate: rewards per second = rewardsPool / timeRemaining
+        uint256 rewardsToDistribute = (rewardsPool * timeElapsed) / timeRemaining;
+        
+        // Ensure we don't distribute more than available
+        if (rewardsToDistribute > rewardsPool) {
+            rewardsToDistribute = rewardsPool;
+        }
+        
+        // Update accumulated reward per token
+        accumulatedRewardPerToken += (rewardsToDistribute * PRECISION) / totalStaked;
+        rewardsPool -= rewardsToDistribute;
+        lastRewardUpdate = block.timestamp;
+        
+        emit GlobalRewardsUpdated(accumulatedRewardPerToken, rewardsPool);
+    }
+    
+    /**
+     * @notice Update user rewards based on their stake proportion
+     */
+    function updateUserRewards(address user) internal {
+        updateGlobalRewards();
+        
+        StakeInfo storage userStake = stakes[user];
+        if (userStake.amount > 0) {
+            uint256 accumulatedRewards = (userStake.amount * accumulatedRewardPerToken) / PRECISION;
+            uint256 pending = accumulatedRewards - userStake.rewardDebt;
+            userStake.pendingRewards += pending;
+        }
+        
+        userStake.rewardDebt = (userStake.amount * accumulatedRewardPerToken) / PRECISION;
     }
     
     /**
@@ -56,11 +110,12 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
      */
     function stake(uint256 amount) external nonReentrant {
         require(amount >= MINIMUM_STAKE, "Amount below minimum stake");
+        require(block.timestamp < REWARD_END_TIME, "Reward period has ended");
         
         StakeInfo storage userStake = stakes[msg.sender];
         
         // Update rewards before changing stake
-        _updateRewards(msg.sender);
+        updateUserRewards(msg.sender);
         
         IERC20(address(hotdogToken)).safeTransferFrom(msg.sender, address(this), amount);
         
@@ -68,11 +123,13 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
             userStake.amount += amount;
         } else {
             userStake.amount = amount;
-            userStake.lastRewardTime = block.timestamp;
             userStake.isActive = true;
         }
         
         totalStaked += amount;
+        
+        // Update reward debt after stake change
+        userStake.rewardDebt = (userStake.amount * accumulatedRewardPerToken) / PRECISION;
         
         emit Staked(msg.sender, amount);
     }
@@ -88,13 +145,17 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
         require(amount <= getAvailableStake(msg.sender), "Tokens locked for attestation");
         
         // Update rewards before changing stake
-        _updateRewards(msg.sender);
+        updateUserRewards(msg.sender);
         
         userStake.amount -= amount;
         totalStaked -= amount;
         
         if (userStake.amount == 0) {
             userStake.isActive = false;
+            userStake.rewardDebt = 0;
+        } else {
+            // Update reward debt after stake change
+            userStake.rewardDebt = (userStake.amount * accumulatedRewardPerToken) / PRECISION;
         }
         
         IERC20(address(hotdogToken)).safeTransfer(msg.sender, amount);
@@ -106,15 +167,13 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
      * @notice Claim pending rewards
      */
     function claimRewards() external nonReentrant {
-        _updateRewards(msg.sender);
+        updateUserRewards(msg.sender);
         
         StakeInfo storage userStake = stakes[msg.sender];
         uint256 rewards = userStake.pendingRewards;
         require(rewards > 0, "No rewards to claim");
-        require(rewards <= rewardsPool, "Insufficient rewards pool");
         
         userStake.pendingRewards = 0;
-        rewardsPool -= rewards;
         
         IERC20(address(hotdogToken)).safeTransfer(msg.sender, rewards);
         
@@ -155,7 +214,7 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
         require(userStake.amount >= amount, "Insufficient staked tokens");
         
         // Update rewards before slashing
-        _updateRewards(user);
+        updateUserRewards(user);
         
         userStake.amount -= amount;
         lockedForAttestation[user] -= amount;
@@ -166,6 +225,10 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
         
         if (userStake.amount == 0) {
             userStake.isActive = false;
+            userStake.rewardDebt = 0;
+        } else {
+            // Update reward debt after stake change
+            userStake.rewardDebt = (userStake.amount * accumulatedRewardPerToken) / PRECISION;
         }
         
         emit TokensSlashed(user, amount);
@@ -191,6 +254,11 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
      * @param amount Amount of rewards to deposit
      */
     function depositRewards(uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(block.timestamp < REWARD_END_TIME, "Reward period has ended");
+        
+        // Update global rewards before adding to pool
+        updateGlobalRewards();
+        
         IERC20(address(hotdogToken)).safeTransferFrom(msg.sender, address(this), amount);
         rewardsPool += amount;
         emit RewardsDeposited(amount);
@@ -222,12 +290,31 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
      */
     function getPendingRewards(address user) public view returns (uint256) {
         StakeInfo memory userStake = stakes[user];
-        if (!userStake.isActive || userStake.amount == 0) return userStake.pendingRewards;
+        uint256 pending = userStake.pendingRewards;
         
-        uint256 timeElapsed = block.timestamp - userStake.lastRewardTime;
-        uint256 newRewards = (userStake.amount * REWARDS_RATE * timeElapsed) / (100 * SECONDS_PER_YEAR);
+        if (!userStake.isActive || userStake.amount == 0 || totalStaked == 0 || rewardsPool == 0) {
+            return pending;
+        }
         
-        return userStake.pendingRewards + newRewards;
+        // Calculate new rewards since last update
+        uint256 timeElapsed = block.timestamp - lastRewardUpdate;
+        if (timeElapsed > 0 && block.timestamp < REWARD_END_TIME) {
+            uint256 timeRemaining = REWARD_END_TIME - block.timestamp;
+            if (timeRemaining > 0) {
+                uint256 rewardsToDistribute = (rewardsPool * timeElapsed) / timeRemaining;
+                if (rewardsToDistribute > rewardsPool) {
+                    rewardsToDistribute = rewardsPool;
+                }
+                
+                uint256 newAccumulatedRewardPerToken = accumulatedRewardPerToken + 
+                    (rewardsToDistribute * PRECISION) / totalStaked;
+                
+                uint256 accumulatedRewards = (userStake.amount * newAccumulatedRewardPerToken) / PRECISION;
+                pending += accumulatedRewards - userStake.rewardDebt;
+            }
+        }
+        
+        return pending;
     }
     
     /**
@@ -241,18 +328,26 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
     }
     
     /**
-     * @notice Update rewards for a user
-     * @param user User address
+     * @notice Get current emission rate (rewards per second)
+     * @return Current emission rate
      */
-    function _updateRewards(address user) internal {
-        StakeInfo storage userStake = stakes[user];
-        if (!userStake.isActive || userStake.amount == 0) return;
-        
-        uint256 timeElapsed = block.timestamp - userStake.lastRewardTime;
-        if (timeElapsed > 0) {
-            uint256 newRewards = (userStake.amount * REWARDS_RATE * timeElapsed) / (100 * SECONDS_PER_YEAR);
-            userStake.pendingRewards += newRewards;
-            userStake.lastRewardTime = block.timestamp;
+    function getCurrentEmissionRate() external view returns (uint256) {
+        if (block.timestamp >= REWARD_END_TIME || rewardsPool == 0) {
+            return 0;
         }
+        
+        uint256 timeRemaining = REWARD_END_TIME - block.timestamp;
+        return rewardsPool / timeRemaining;
+    }
+    
+    /**
+     * @notice Get time remaining until reward period ends
+     * @return Time remaining in seconds
+     */
+    function getTimeRemaining() external view returns (uint256) {
+        if (block.timestamp >= REWARD_END_TIME) {
+            return 0;
+        }
+        return REWARD_END_TIME - block.timestamp;
     }
 } 

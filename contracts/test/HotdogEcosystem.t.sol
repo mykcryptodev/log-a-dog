@@ -25,6 +25,10 @@ contract HotdogEcosystemTest is Test {
     address public platformReferrer;
     address public admin;
 
+    // Test constants
+    uint256 constant REWARD_END_TIME = 1756684800; // September 1, 2025 00:00:00 UTC
+    uint256 constant INITIAL_REWARDS_POOL = 10000 * 10**18; // 10,000 HOTDOG tokens
+
     function setUp() public {
         user1 = address(0x1);
         user2 = address(0x2);
@@ -54,11 +58,15 @@ contract HotdogEcosystemTest is Test {
         hotdogToken.transfer(user2, 1000 * 10**18);
         hotdogToken.transfer(user3, 1000 * 10**18);
         
+        // Setup initial rewards pool
+        hotdogToken.approve(address(stakingContract), INITIAL_REWARDS_POOL);
+        stakingContract.depositRewards(INITIAL_REWARDS_POOL);
+        
         // Mock Zora factory calls
         vm.mockCall(
             ZORA_FACTORY,
             abi.encodeWithSelector(IZoraFactory.deploy.selector),
-            abi.encode(MOCK_COIN_ADDRESS, 1)
+            abi.encode(MOCK_COIN_ADDRESS, bytes(""))
         );
     }
 
@@ -76,30 +84,141 @@ contract HotdogEcosystemTest is Test {
         stakingContract.stake(200 * 10**18);
         
         // Check stake info
-        (uint256 amount, uint256 lastRewardTime, uint256 pendingRewards, bool isActive) = stakingContract.stakes(user1);
+        (uint256 amount, uint256 rewardDebt, uint256 pendingRewards, bool isActive) = stakingContract.stakes(user1);
         assertEq(amount, 200 * 10**18);
         assertTrue(isActive);
-        assertEq(lastRewardTime, block.timestamp);
         assertEq(pendingRewards, 0);
+        assertEq(rewardDebt, 0); // Should be 0 since accumulatedRewardPerToken is 0 at start
         
         vm.stopPrank();
     }
 
     function testStakingRewards() public {
+        // Set a specific timestamp for predictable testing
+        vm.warp(1640995200); // January 1, 2022 00:00:00 UTC (well before reward end time)
+        
         vm.startPrank(user1);
         
         // Stake tokens
         hotdogToken.approve(address(stakingContract), 200 * 10**18);
         stakingContract.stake(200 * 10**18);
         
-        // Fast forward time (1 year)
-        vm.warp(block.timestamp + 365 days);
-        
-        // Check pending rewards (should be ~10% APY)
-        uint256 pendingRewards = stakingContract.getPendingRewards(user1);
-        assertApproxEqRel(pendingRewards, 20 * 10**18, 0.01e18); // ~20 tokens (10% of 200)
-        
         vm.stopPrank();
+        
+        // Fast forward time (1 day)
+        vm.warp(block.timestamp + 1 days);
+        
+        // Check pending rewards
+        uint256 pendingRewards = stakingContract.getPendingRewards(user1);
+        assertTrue(pendingRewards > 0, "Should have earned some rewards after 1 day");
+        
+        // The rewards should be proportional: user has 200 tokens out of 200 total (100% of rewards)
+        // Emission rate = rewardsPool / timeRemaining
+        // 1 day of rewards should be (INITIAL_REWARDS_POOL * 1 day) / (REWARD_END_TIME - current_time)
+        uint256 timeRemaining = REWARD_END_TIME - block.timestamp;
+        uint256 expectedRewards = (INITIAL_REWARDS_POOL * 1 days) / timeRemaining;
+        
+        assertApproxEqRel(pendingRewards, expectedRewards, 0.01e18); // Within 1%
+    }
+
+    function testProportionalRewards() public {
+        // Set a specific timestamp for predictable testing
+        vm.warp(1640995200); // January 1, 2022 00:00:00 UTC
+        
+        // User1 stakes 300 tokens
+        vm.startPrank(user1);
+        hotdogToken.approve(address(stakingContract), 300 * 10**18);
+        stakingContract.stake(300 * 10**18);
+        vm.stopPrank();
+        
+        // User2 stakes 100 tokens (user1 has 3x more)
+        vm.startPrank(user2);
+        hotdogToken.approve(address(stakingContract), 100 * 10**18);
+        stakingContract.stake(100 * 10**18);
+        vm.stopPrank();
+        
+        // Fast forward time
+        vm.warp(block.timestamp + 1 days);
+        
+        // Check rewards are proportional
+        uint256 user1Rewards = stakingContract.getPendingRewards(user1);
+        uint256 user2Rewards = stakingContract.getPendingRewards(user2);
+        
+        // User1 should have ~3x the rewards of user2
+        assertApproxEqRel(user1Rewards, user2Rewards * 3, 0.01e18);
+    }
+
+    function testRewardEndTime() public {
+        // Test that rewards stop accruing after September 1, 2025
+        vm.warp(REWARD_END_TIME - 1 days); // 1 day before end
+        
+        vm.startPrank(user1);
+        hotdogToken.approve(address(stakingContract), 200 * 10**18);
+        stakingContract.stake(200 * 10**18);
+        vm.stopPrank();
+        
+        // Move to exactly the end time
+        vm.warp(REWARD_END_TIME);
+        uint256 rewardsAtEnd = stakingContract.getPendingRewards(user1);
+        
+        // Move past the end time
+        vm.warp(REWARD_END_TIME + 1 days);
+        uint256 rewardsAfterEnd = stakingContract.getPendingRewards(user1);
+        
+        // Rewards should not increase after end time
+        assertEq(rewardsAtEnd, rewardsAfterEnd);
+    }
+
+    function testCannotStakeAfterRewardPeriod() public {
+        vm.warp(REWARD_END_TIME + 1); // Past the reward end time
+        
+        vm.startPrank(user1);
+        hotdogToken.approve(address(stakingContract), 200 * 10**18);
+        
+        vm.expectRevert("Reward period has ended");
+        stakingContract.stake(200 * 10**18);
+        vm.stopPrank();
+    }
+
+    function testCannotDepositRewardsAfterPeriod() public {
+        vm.warp(REWARD_END_TIME + 1); // Past the reward end time
+        
+        hotdogToken.approve(address(stakingContract), 1000 * 10**18);
+        vm.expectRevert("Reward period has ended");
+        stakingContract.depositRewards(1000 * 10**18);
+    }
+
+    function testEmissionRateCalculation() public {
+        vm.warp(1640995200); // January 1, 2022
+        
+        uint256 currentEmissionRate = stakingContract.getCurrentEmissionRate();
+        uint256 timeRemaining = stakingContract.getTimeRemaining();
+        
+        // Emission rate should be rewardsPool / timeRemaining
+        uint256 expectedRate = INITIAL_REWARDS_POOL / timeRemaining;
+        assertEq(currentEmissionRate, expectedRate);
+    }
+
+    function testAdditionalRewardDeposits() public {
+        vm.warp(1640995200); // January 1, 2022
+        
+        // Get initial emission rate
+        uint256 initialRate = stakingContract.getCurrentEmissionRate();
+        
+        // Deposit additional rewards
+        uint256 additionalRewards = 5000 * 10**18;
+        hotdogToken.approve(address(stakingContract), additionalRewards);
+        stakingContract.depositRewards(additionalRewards);
+        
+        // Emission rate should increase
+        uint256 newRate = stakingContract.getCurrentEmissionRate();
+        assertTrue(newRate > initialRate);
+        
+        // New rate should be (original + additional) / timeRemaining
+        uint256 totalRewards = INITIAL_REWARDS_POOL + additionalRewards;
+        uint256 timeRemaining = stakingContract.getTimeRemaining();
+        uint256 expectedRate = totalRewards / timeRemaining;
+        assertEq(newRate, expectedRate);
     }
 
     function testLogHotdogWithAttestation() public {
@@ -162,6 +281,35 @@ contract HotdogEcosystemTest is Test {
         // Check that tokens are locked
         assertEq(stakingContract.lockedForAttestation(user2), 100 * 10**18);
         assertEq(stakingContract.lockedForAttestation(user3), 50 * 10**18);
+    }
+
+    function testLockedTokensStillEarnRewards() public {
+        vm.warp(1640995200); // January 1, 2022
+        
+        // Setup staking for users
+        _setupStaking();
+        
+        // Use the attestation manager to lock tokens (since it has the proper role)
+        vm.startPrank(address(attestationManager));
+        stakingContract.lockTokensForAttestation(user2, 100 * 10**18);
+        vm.stopPrank();
+        
+        // Verify tokens are locked
+        assertEq(stakingContract.lockedForAttestation(user2), 100 * 10**18);
+        assertEq(stakingContract.getAvailableStake(user2), 200 * 10**18); // 300 - 100 locked
+        
+        // Fast forward time
+        vm.warp(block.timestamp + 1 days);
+        
+        // User2 should still earn rewards on their full stake (including locked tokens)
+        uint256 user2Rewards = stakingContract.getPendingRewards(user2);
+        assertTrue(user2Rewards > 0, "Locked tokens should still earn rewards");
+        
+        // Rewards should be calculated on the full 300 tokens, not just the 200 available
+        // User2 has 300 out of 900 total tokens (1/3 of rewards)  
+        uint256 timeRemaining = REWARD_END_TIME - block.timestamp;
+        uint256 expectedRewards = (INITIAL_REWARDS_POOL * 1 days * 300) / (timeRemaining * 900);
+        assertApproxEqRel(user2Rewards, expectedRewards, 0.01e18);
     }
 
     function testAttestationResolution() public {
@@ -415,5 +563,5 @@ contract HotdogEcosystemTest is Test {
         vm.expectRevert("Caller is not an operator");
         attestationManager.attestToLogOnBehalf(logId, user2, true, 50 * 10**18);
         vm.stopPrank();
-    } 
+    }
 } 

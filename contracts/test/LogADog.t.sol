@@ -42,7 +42,7 @@ contract LogADogTest is Test {
         vm.mockCall(
             ZORA_FACTORY,
             abi.encodeWithSelector(IZoraFactory.deploy.selector),
-            abi.encode(MOCK_COIN_ADDRESS, 1)
+            abi.encode(MOCK_COIN_ADDRESS, bytes(""))
         );
     }
 
