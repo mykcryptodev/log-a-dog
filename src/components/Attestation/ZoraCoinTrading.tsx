@@ -1,14 +1,13 @@
 import { useState, type FC, useContext } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
-import { viemAdapter } from "thirdweb/adapters/viem";
-import { parseEther, createPublicClient, http, type Address, type WalletClient } from "viem";
+import { parseEther, createPublicClient, createWalletClient, custom, http } from "viem";
 import { tradeCoin } from "@zoralabs/coins-sdk";
 import { base, baseSepolia } from "viem/chains";
 import ActiveChainContext from "~/contexts/ActiveChain";
-import { client } from "~/providers/Thirdweb";
-import { EIP1193, Wallet } from "thirdweb/wallets";
+import { EIP1193, type Wallet } from "thirdweb/wallets";
 import { Portal } from "../utils/Portal";
+import { client } from "~/providers/Thirdweb";
 
 type Props = {
   referrer: string;
@@ -35,10 +34,15 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
       transport: http(),
     });
 
-    const walletClient = EIP1193.toProvider({
-      client: publicClient as any,
+    const provider = EIP1193.toProvider({
+      client,
       wallet,
       chain: activeChain,
+    });
+
+    const walletClient = createWalletClient({
+      chain: currentChain,
+      transport: custom(provider),
     });
 
     return { walletClient, publicClient };
@@ -57,9 +61,9 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
       // Define buy parameters
       const buyParams = {
         direction: "buy" as const,
-        target: coinAddress as Address,
+        target: coinAddress,
         args: {
-          recipient: account.address as Address,
+          recipient: account.address,
           orderSize: parseEther(buyAmount),
           minAmountOut: 0n, // No minimum - adjust for slippage if needed
           tradeReferrer: referrer,
@@ -67,7 +71,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
       };
 
       // Execute the buy
-      const result = await tradeCoin(buyParams, walletClient as any, publicClient);
+      const result = await tradeCoin(buyParams, walletClient, publicClient);
 
       toast.success(`Buy successful! TX: ${result.hash}`);
       setShowBuyModal(false);
@@ -92,17 +96,17 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
       // Define sell parameters
       const sellParams = {
         direction: "sell" as const,
-        target: coinAddress as Address,
+        target: coinAddress,
         args: {
-          recipient: account.address as Address,
+          recipient: account.address,
           orderSize: parseEther(sellAmount),
           minAmountOut: 0n, // No minimum - adjust for slippage if needed
-          tradeReferrer: "0x0000000000000000000000000000000000000000" as Address,
+          tradeReferrer: referrer,
         }
       };
 
       // Execute the sell
-      const result = await tradeCoin(sellParams, walletClient as any, publicClient);
+      const result = await tradeCoin(sellParams, walletClient, publicClient);
 
       toast.success(`Sell successful! TX: ${result.hash}`);
       setShowSellModal(false);
@@ -131,10 +135,10 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
 
       {/* Buy Modal */}
       <Portal>
-        <input type="checkbox" id={`buy-modal-${logId}`} className="modal-toggle" checked={showBuyModal} onChange={() => {}} />
+        <input type="checkbox" id={`buy-modal-${logId}`} className="modal-toggle" checked={showBuyModal} />
         <div className="modal modal-bottom sm:modal-middle" role="dialog">
           <div className="modal-box relative card bg-opacity-65 backdrop-blur-lg shadow">
-            <label onClick={() => setShowBuyModal(false)} htmlFor={`buy-modal-${logId}`} className="btn btn-sm btn-ghost absolute right-4 top-4">✕</label>
+            <label onClick={() => void setShowBuyModal(false)} htmlFor={`buy-modal-${logId}`} className="btn btn-sm btn-ghost absolute right-4 top-4">✕</label>
             <h3 className="font-bold text-lg">Buy Zora Coin</h3>
             <div className="py-4">
               <label className="label">
@@ -145,7 +149,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
                 placeholder="0.001" 
                 className="input input-bordered w-full" 
                 value={buyAmount}
-                onChange={(e) => setBuyAmount(e.target.value)}
+                onChange={(e) => void setBuyAmount(e.target.value)}
                 step="0.001"
                 min="0"
               />
@@ -153,7 +157,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
             <div className="modal-action">
               <button 
                 className="btn"
-                onClick={() => setShowBuyModal(false)}
+                onClick={() => void setShowBuyModal(false)}
               >
                 Cancel
               </button>
@@ -170,10 +174,10 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
         </div>
 
         {/* Sell Modal */}
-        <input type="checkbox" id={`sell-modal-${logId}`} className="modal-toggle" checked={showSellModal} onChange={() => {}} />
+        <input type="checkbox" id={`sell-modal-${logId}`} className="modal-toggle" checked={showSellModal} />
         <div className="modal modal-bottom sm:modal-middle" role="dialog">
           <div className="modal-box relative card bg-opacity-65 backdrop-blur-lg shadow">
-            <label onClick={() => setShowSellModal(false)} htmlFor={`sell-modal-${logId}`} className="btn btn-sm btn-ghost absolute right-4 top-4">✕</label>
+            <label onClick={() => void setShowSellModal(false)} htmlFor={`sell-modal-${logId}`} className="btn btn-sm btn-ghost absolute right-4 top-4">✕</label>
             <h3 className="font-bold text-lg">Sell Zora Coin</h3>
             <div className="py-4">
               <label className="label">
@@ -184,7 +188,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
                 placeholder="1" 
                 className="input input-bordered w-full" 
                 value={sellAmount}
-                onChange={(e) => setSellAmount(e.target.value)}
+                onChange={(e) => void setSellAmount(e.target.value)}
                 step="1"
                 min="0"
               />
@@ -192,7 +196,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
             <div className="modal-action">
               <button 
                 className="btn"
-                onClick={() => setShowSellModal(false)}
+                onClick={() => void setShowSellModal(false)}
               >
                 Cancel
               </button>
