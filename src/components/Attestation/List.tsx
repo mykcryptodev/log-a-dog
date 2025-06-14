@@ -14,6 +14,7 @@ import Comments from "~/components/Attestation/Comments";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
 import { ZoraCoinTrading } from "./ZoraCoinTrading";
+import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 
 type Props = {
   attestors?: string[];
@@ -116,8 +117,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
               </div>
               {hotdog.zoraCoin && (
                 <div className="flex items-center text-xs opacity-50 w-full justify-between">
-                  <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${hotdog.zoraCoin.marketCap}</div>
-                  <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${hotdog.zoraCoin.volume24h}</div>
+                  <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}</div>
+                  <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
                 </div>
               )}
               <MediaRenderer
@@ -131,6 +132,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 <div className="text-xs flex items-center gap-1">
                   {hotdog.zoraCoin?.address ? (
                     <ZoraCoinTrading
+                      referrer={hotdog.eater}
                       coinAddress={hotdog.zoraCoin.address}
                       logId={hotdog.logId.toString()}
                     />

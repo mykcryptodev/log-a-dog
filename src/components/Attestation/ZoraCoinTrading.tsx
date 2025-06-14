@@ -2,18 +2,21 @@ import { useState, type FC, useContext } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { viemAdapter } from "thirdweb/adapters/viem";
-import { parseEther } from "viem";
-import { buyCoin, sellCoin, getQuote } from "@zoralabs/coins-sdk";
+import { parseEther, createPublicClient, http, type Address, type WalletClient } from "viem";
+import { tradeCoin } from "@zoralabs/coins-sdk";
 import { base, baseSepolia } from "viem/chains";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
+import { EIP1193, Wallet } from "thirdweb/wallets";
+import { Portal } from "../utils/Portal";
 
 type Props = {
+  referrer: string;
   coinAddress: string;
   logId: string;
 }
 
-export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId }) => {
+export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
   const { activeChain } = useContext(ActiveChainContext);
@@ -23,6 +26,24 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId }) => {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSellModal, setShowSellModal] = useState(false);
 
+  const convertWalletToViem = (wallet: Wallet) => {
+    const currentChain = activeChain.id === base.id ? base : baseSepolia;
+
+    // Set up viem clients
+    const publicClient = createPublicClient({
+      chain: currentChain,
+      transport: http(),
+    });
+
+    const walletClient = EIP1193.toProvider({
+      client: publicClient as any,
+      wallet,
+      chain: activeChain,
+    });
+
+    return { walletClient, publicClient };
+  };
+
   const handleBuy = async () => {
     if (!account || !wallet) {
       toast.error("Please connect your wallet");
@@ -31,36 +52,28 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId }) => {
 
     setIsLoading(true);
     try {
-      // Convert thirdweb wallet to viem wallet client
-      const viemWallet = viemAdapter.walletClient.toViem({
-        client: wallet,
-        chain: activeChain.id === base.id ? base : baseSepolia,
-        account: account.address as `0x${string}`,
-      });
+      const { walletClient, publicClient } = convertWalletToViem(wallet);
 
-      // Get quote for the buy
-      const quote = await getQuote({
-        chainId: activeChain.id,
-        tokenAddress: coinAddress as `0x${string}`,
-        amount: parseEther(buyAmount),
-        type: "buy",
-      });
+      // Define buy parameters
+      const buyParams = {
+        direction: "buy" as const,
+        target: coinAddress as Address,
+        args: {
+          recipient: account.address as Address,
+          orderSize: parseEther(buyAmount),
+          minAmountOut: 0n, // No minimum - adjust for slippage if needed
+          tradeReferrer: referrer,
+        }
+      };
 
       // Execute the buy
-      const hash = await buyCoin({
-        chainId: activeChain.id,
-        tokenAddress: coinAddress as `0x${string}`,
-        amount: parseEther(buyAmount),
-        recipient: account.address as `0x${string}`,
-        walletClient: viemWallet,
-        slippagePercentage: 5, // 5% slippage
-      });
+      const result = await tradeCoin(buyParams, walletClient as any, publicClient);
 
-      toast.success(`Buy successful! TX: ${hash}`);
+      toast.success(`Buy successful! TX: ${result.hash}`);
       setShowBuyModal(false);
     } catch (error) {
       console.error("Buy error:", error);
-      toast.error("Failed to buy coin");
+      toast.error(`Failed to buy coin: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
@@ -74,36 +87,28 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId }) => {
 
     setIsLoading(true);
     try {
-      // Convert thirdweb wallet to viem wallet client
-      const viemWallet = viemAdapter.walletClient.toViem({
-        client: wallet,
-        chain: activeChain.id === base.id ? base : baseSepolia,
-        account: account.address as `0x${string}`,
-      });
+      const { walletClient, publicClient } = convertWalletToViem(wallet);
 
-      // Get quote for the sell
-      const quote = await getQuote({
-        chainId: activeChain.id,
-        tokenAddress: coinAddress as `0x${string}`,
-        amount: parseEther(sellAmount),
-        type: "sell",
-      });
+      // Define sell parameters
+      const sellParams = {
+        direction: "sell" as const,
+        target: coinAddress as Address,
+        args: {
+          recipient: account.address as Address,
+          orderSize: parseEther(sellAmount),
+          minAmountOut: 0n, // No minimum - adjust for slippage if needed
+          tradeReferrer: "0x0000000000000000000000000000000000000000" as Address,
+        }
+      };
 
       // Execute the sell
-      const hash = await sellCoin({
-        chainId: activeChain.id,
-        tokenAddress: coinAddress as `0x${string}`,
-        amount: parseEther(sellAmount),
-        recipient: account.address as `0x${string}`,
-        walletClient: viemWallet,
-        slippagePercentage: 5, // 5% slippage
-      });
+      const result = await tradeCoin(sellParams, walletClient as any, publicClient);
 
-      toast.success(`Sell successful! TX: ${hash}`);
+      toast.success(`Sell successful! TX: ${result.hash}`);
       setShowSellModal(false);
     } catch (error) {
       console.error("Sell error:", error);
-      toast.error("Failed to sell coin");
+      toast.error(`Failed to sell coin: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +116,6 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId }) => {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs">{logId}</span>
       <button 
         className="btn btn-primary btn-xs"
         onClick={() => setShowBuyModal(true)}
@@ -126,80 +130,84 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId }) => {
       </button>
 
       {/* Buy Modal */}
-      <input type="checkbox" id={`buy-modal-${logId}`} className="modal-toggle" checked={showBuyModal} onChange={() => {}} />
-      <div className="modal" role="dialog">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Buy Zora Coin</h3>
-          <div className="py-4">
-            <label className="label">
-              <span className="label-text">Amount (ETH)</span>
-            </label>
-            <input 
-              type="number" 
-              placeholder="0.001" 
-              className="input input-bordered w-full" 
-              value={buyAmount}
-              onChange={(e) => setBuyAmount(e.target.value)}
-              step="0.001"
-              min="0"
-            />
-          </div>
-          <div className="modal-action">
-            <button 
-              className="btn"
-              onClick={() => setShowBuyModal(false)}
-            >
-              Cancel
-            </button>
-            <button 
-              className="btn btn-primary"
-              disabled={isLoading || !buyAmount || parseFloat(buyAmount) <= 0}
-              onClick={handleBuy}
-            >
-              {isLoading && <span className="loading loading-spinner"></span>}
-              Buy
-            </button>
+      <Portal>
+        <input type="checkbox" id={`buy-modal-${logId}`} className="modal-toggle" checked={showBuyModal} onChange={() => {}} />
+        <div className="modal modal-bottom sm:modal-middle" role="dialog">
+          <div className="modal-box relative card bg-opacity-65 backdrop-blur-lg shadow">
+            <label onClick={() => setShowBuyModal(false)} htmlFor={`buy-modal-${logId}`} className="btn btn-sm btn-ghost absolute right-4 top-4">✕</label>
+            <h3 className="font-bold text-lg">Buy Zora Coin</h3>
+            <div className="py-4">
+              <label className="label">
+                <span className="label-text">Amount (ETH)</span>
+              </label>
+              <input 
+                type="number" 
+                placeholder="0.001" 
+                className="input input-bordered w-full" 
+                value={buyAmount}
+                onChange={(e) => setBuyAmount(e.target.value)}
+                step="0.001"
+                min="0"
+              />
+            </div>
+            <div className="modal-action">
+              <button 
+                className="btn"
+                onClick={() => setShowBuyModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-success"
+                disabled={isLoading || !buyAmount || parseFloat(buyAmount) <= 0}
+                onClick={handleBuy}
+              >
+                {isLoading && <span className="loading loading-spinner"></span>}
+                Buy
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Sell Modal */}
-      <input type="checkbox" id={`sell-modal-${logId}`} className="modal-toggle" checked={showSellModal} onChange={() => {}} />
-      <div className="modal" role="dialog">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Sell Zora Coin</h3>
-          <div className="py-4">
-            <label className="label">
-              <span className="label-text">Amount (Coins)</span>
-            </label>
-            <input 
-              type="number" 
-              placeholder="1" 
-              className="input input-bordered w-full" 
-              value={sellAmount}
-              onChange={(e) => setSellAmount(e.target.value)}
-              step="1"
-              min="0"
-            />
-          </div>
-          <div className="modal-action">
-            <button 
-              className="btn"
-              onClick={() => setShowSellModal(false)}
-            >
-              Cancel
-            </button>
-            <button 
-              className="btn btn-secondary"
-              disabled={isLoading || !sellAmount || parseFloat(sellAmount) <= 0}
-              onClick={handleSell}
-            >
-              {isLoading && <span className="loading loading-spinner"></span>}
-              Sell
-            </button>
+        {/* Sell Modal */}
+        <input type="checkbox" id={`sell-modal-${logId}`} className="modal-toggle" checked={showSellModal} onChange={() => {}} />
+        <div className="modal modal-bottom sm:modal-middle" role="dialog">
+          <div className="modal-box relative card bg-opacity-65 backdrop-blur-lg shadow">
+            <label onClick={() => setShowSellModal(false)} htmlFor={`sell-modal-${logId}`} className="btn btn-sm btn-ghost absolute right-4 top-4">✕</label>
+            <h3 className="font-bold text-lg">Sell Zora Coin</h3>
+            <div className="py-4">
+              <label className="label">
+                <span className="label-text">Amount (Coins)</span>
+              </label>
+              <input 
+                type="number" 
+                placeholder="1" 
+                className="input input-bordered w-full" 
+                value={sellAmount}
+                onChange={(e) => setSellAmount(e.target.value)}
+                step="1"
+                min="0"
+              />
+            </div>
+            <div className="modal-action">
+              <button 
+                className="btn"
+                onClick={() => setShowSellModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-error"
+                disabled={isLoading || !sellAmount || parseFloat(sellAmount) <= 0}
+                onClick={handleSell}
+              >
+                {isLoading && <span className="loading loading-spinner"></span>}
+                Sell
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </Portal>
     </div>
   );
 };
