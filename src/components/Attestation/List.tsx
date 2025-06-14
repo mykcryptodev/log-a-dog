@@ -18,6 +18,8 @@ import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import dynamic from "next/dynamic";
 const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
 
+const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60; // 48 hours
+
 type Props = {
   attestors?: string[];
   startDate?: Date;
@@ -96,6 +98,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         ))
       }
       {dogData?.hotdogs.map((hotdog) => {
+        const isExpired =
+          Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <= Date.now();
         return (
           <div className="card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow" key={hotdog.logId}>
             <div className="card-body p-4 max-w-lg">
@@ -159,16 +163,18 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                     logId={hotdog.logId.toString()}
                     metadataUri={hotdog.metadataUri}
                   />
-                  <JudgeAttestation
-                    userAttested={userAttestedMap[hotdog.logId]}
-                    userAttestation={userAttestationMap[hotdog.logId]}
-                    validAttestations={validMap[hotdog.logId]?.toString()}
-                    invalidAttestations={invalidMap[hotdog.logId]?.toString()}
-                    logId={hotdog.logId}
-                    chainId={activeChain.id}
-                    onAttestationMade={() => void refetchDogData()}
-                    onAttestationAffirmationRevoked={() => void refetchDogData()}
-                  />
+                  {!isExpired && (
+                    <JudgeAttestation
+                      userAttested={userAttestedMap[hotdog.logId]}
+                      userAttestation={userAttestationMap[hotdog.logId]}
+                      validAttestations={validMap[hotdog.logId]?.toString()}
+                      invalidAttestations={invalidMap[hotdog.logId]?.toString()}
+                      logId={hotdog.logId}
+                      chainId={activeChain.id}
+                      onAttestationMade={() => void refetchDogData()}
+                      onAttestationAffirmationRevoked={() => void refetchDogData()}
+                    />
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 w-full justify-end pr-2 opacity-50 text-xs">

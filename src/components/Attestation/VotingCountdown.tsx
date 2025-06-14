@@ -1,13 +1,11 @@
 import { FC, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { TransactionButton, useActiveWallet, useReadContract } from "thirdweb/react";
+import { useReadContract } from "thirdweb/react";
 import { getContract } from "thirdweb";
 import { formatEther } from "viem";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { STAKING, ATTESTATION_MANAGER } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
-import { claimRewards } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
-import { toast } from "react-toastify";
 
 interface Props {
   timestamp: string; // unix timestamp in seconds
@@ -54,7 +52,6 @@ export const VotingCountdown: FC<Props> = ({
     .padStart(2, "0");
 
   const { data: sessionData } = useSession();
-  const wallet = useActiveWallet();
   const { activeChain } = useContext(ActiveChainContext);
 
   const winnerIsValid =
@@ -121,32 +118,11 @@ export const VotingCountdown: FC<Props> = ({
   if (isExpired && logId) {
     if (userAttested) {
       if (userAttestation === winnerIsValid) {
-        const reward = pendingRewards ? Number(formatEther(pendingRewards)).toFixed(4) : "0";
+        const reward = pendingRewards ? Number(formatEther(pendingRewards)).toFixed(4) : null;
         return (
-          <TransactionButton
-            className="!btn !btn-xs !btn-primary"
-            transaction={() =>
-              claimRewards({
-                contract: getContract({
-                  address: STAKING[activeChain.id]!,
-                  client,
-                  chain: activeChain,
-                }),
-              })
-            }
-            onTransactionSent={() => toast.loading("Claiming rewards...")}
-            onTransactionConfirmed={() => {
-              toast.dismiss();
-              toast.success("Rewards claimed!");
-            }}
-            onError={(err) => {
-              toast.dismiss();
-              toast.error(`Claim failed: ${err.message}`);
-            }}
-            disabled={!wallet || !pendingRewards || pendingRewards === 0n}
-          >
-            Claim {reward} $HOTDOG
-          </TransactionButton>
+          <span className="font-mono text-xs text-success">
+            {reward ? `Earned ${reward} $HOTDOG` : "You voted correctly!"}
+          </span>
         );
       } else {
         const slashPct = slashPercentage ? Number(slashPercentage) : 0;

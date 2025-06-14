@@ -20,6 +20,8 @@ import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import dynamic from "next/dynamic";
 const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
 
+const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60; // 48 hours
+
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { logId } = context.params as { logId: string };
   return { props: { logId } };
@@ -70,6 +72,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   }
 
   const { hotdog, validAttestations, invalidAttestations, userAttested, userAttestation } = data;
+  const isExpired = Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <= Date.now();
 
   return (
     <>
@@ -135,16 +138,18 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
                   logId={hotdog.logId.toString()}
                   metadataUri={hotdog.metadataUri}
                 />
-                <JudgeAttestation
-                  userAttested={userAttested}
-                  userAttestation={userAttestation}
-                  validAttestations={validAttestations}
-                  invalidAttestations={invalidAttestations}
-                  logId={hotdog.logId}
-                  chainId={activeChain.id}
-                  onAttestationMade={() => void refetch()}
-                  onAttestationAffirmationRevoked={() => void refetch()}
-                />
+                {!isExpired && (
+                  <JudgeAttestation
+                    userAttested={userAttested}
+                    userAttestation={userAttestation}
+                    validAttestations={validAttestations}
+                    invalidAttestations={invalidAttestations}
+                    logId={hotdog.logId}
+                    chainId={activeChain.id}
+                    onAttestationMade={() => void refetch()}
+                    onAttestationAffirmationRevoked={() => void refetch()}
+                  />
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 w-full justify-end pr-2 opacity-50 text-xs">
