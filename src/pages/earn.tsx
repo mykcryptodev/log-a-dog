@@ -138,7 +138,7 @@ const EarnPage: NextPage = () => {
                     <div>
                       <h4 className="font-semibold">Downvote if:</h4>
                       <ul className="text-sm mt-1 space-y-1">
-                        <li>• Image doesn&apos;t show someone eating a hotdog</li>
+                        <li>• Image is not someone eating a hotdog</li>
                         <li>• Submission is a duplicate entry</li>
                         <li>• Content violates competition spirit</li>
                         <li>• Image is inappropriate or spam</li>
