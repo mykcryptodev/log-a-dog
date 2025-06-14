@@ -60,7 +60,7 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate, refetchTimes
   }, [hasNextPage]);
 
   if (!leaderboard || !profiles) return (
-    <div className="bg-base-200 rounded-lg animate-pulse w-[640px] h-72" />
+    <div className="bg-base-200 rounded-lg w-[640px] h-72" />
   );
 
   const filteredUsers = displayedUsers.filter((address) => {
