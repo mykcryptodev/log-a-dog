@@ -58,7 +58,7 @@ export const LeaderboardBanner: FC<Props> = ({
   const animationDuration = totalWidth / scrollSpeed;
 
   return (
-    <div className="w-full bg-base-200 bg-opacity-25 backdrop-blur-sm shadow overflow-hidden">
+    <div className="w-full bg-base-200 bg-opacity-25 backdrop-blur-sm overflow-hidden">
       <div className="relative overflow-hidden h-14 py-2">
         <div 
           className={`flex items-center gap-6 absolute whitespace-nowrap ${styles.scrollContainer}`}

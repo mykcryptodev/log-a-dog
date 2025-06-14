@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
+import { APP_DESCRIPTION } from "~/constants";
 
 export default function Home() {
   const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
@@ -22,6 +23,9 @@ export default function Home() {
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <div>🌭 Log <span className="text-secondary">a Dog</span> </div>
           </h1>
+          <p className="-mt-2 sm:text-lg text-sm text-center max-w-xs">{APP_DESCRIPTION}</p>
+          <Link href="/faq" className="text-xs -mt-4 underline">wtf?</Link>
+
           <CreateAttestation
             onAttestationCreated={() => {
               // give the blockchain 10 seconds to confirm
@@ -30,7 +34,6 @@ export default function Home() {
               }, 10000);
             }}
           />
-          <Link href="/faq" className="text-xs">wtf is this?</Link>
           <ListAttestations refetchTimestamp={refetchTimestamp} key={refetchTimestamp} limit={10} />
         </div>
       </main>
