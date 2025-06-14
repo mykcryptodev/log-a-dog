@@ -2,22 +2,6 @@ import { baseSepolia, base } from "thirdweb/chains";
 
 type ContractAddress = Record<number, string>;
 
-export const SMART_WALLET_FACTORY: ContractAddress = {
-  [base.id]: "0x9153DbD27d9895BD1ca2839D2Dd0A7E68eE2e24f", // thirdweb
-  // [base.id]: "0x9406Cc6185a346906296840746125a0E44976454", // coinbase
-  [baseSepolia.id]: "0xc52d241baf9f2adf8f20105b13d044e5db3f736f",
-}
-
-export const SMART_WALLET_ENTRYPOINT: ContractAddress = {
-  [base.id]: "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
-  [baseSepolia.id]: "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
-}
-
-export const SMART_WALLET_BUNDLER_URL: ContractAddress = {
-  [base.id]: "https://api.developer.coinbase.com/rpc/v1/base/A10WpgQTkaHJltNKqtNhT2RQ-E-KgEjs",
-  [baseSepolia.id]: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/Av-Z_3kkdy_jHZd62vCmczjEfXBPtJPC",
-}
-
 export const LOG_A_DOG: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
   [baseSepolia.id]: "0x325B71FBa30Dc2950B073Ac4d313E0908814C76b",
@@ -56,11 +40,6 @@ export const EAS_SCHEMA_ID: ContractAddress = {
 export const EAS_AFFIMRATION_SCHEMA_ID: ContractAddress = {
   [base.id]: "0x978ab70659ff76860c1e5cc7c21d5c6c09c49a95747b00a155302cfe6d937d6c",
   [baseSepolia.id]: "0x978ab70659ff76860c1e5cc7c21d5c6c09c49a95747b00a155302cfe6d937d6c",
-}
-
-export const BETA_PROFILES: ContractAddress = {
-  [base.id]: "0xFe1ba8d23414A80Eb1156dbEdcA7B300912F59c6",
-  [baseSepolia.id]: "0x1A4C2C84bEF821bF3b18b2e85fc80523EC27eE16",
 }
 
 export const MODERATION_V1: ContractAddress = {
