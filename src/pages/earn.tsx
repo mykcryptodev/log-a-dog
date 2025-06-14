@@ -36,7 +36,7 @@ const EarnPage: NextPage = () => {
         <div className="grid w-full max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">
           
           {/* Staking Component */}
-          <div className="card bg-base-100 shadow-xl">
+          <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
             <div className="card-body">
               <Stake />
             </div>
@@ -46,7 +46,7 @@ const EarnPage: NextPage = () => {
           <div className="space-y-6">
 
             {/* How It Works */}
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
               <div className="card-body">
                 <h2 className="card-title text-2xl mb-4 flex items-center gap-2">
                   <CurrencyDollarIcon className="h-6 w-6" />
@@ -126,7 +126,7 @@ const EarnPage: NextPage = () => {
             </div>
 
             {/* Voting Guidelines */}
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
               <div className="card-body">
                 <h2 className="card-title text-2xl mb-4 flex items-center gap-2">
                   <ShieldCheckIcon className="h-6 w-6" />
@@ -164,7 +164,7 @@ const EarnPage: NextPage = () => {
         </div>
 
         {/* Voting Process */}
-        <div className="card bg-base-100 shadow-xl w-full max-w-4xl">
+        <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl w-full max-w-4xl">
           <div className="card-body">
             <h2 className="card-title text-2xl mb-6 flex items-start gap-2">
               <ClockIcon className="h-6 w-6 mt-1" />
