@@ -74,7 +74,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       if (isDisabled) return;
       setIsLoading(true);
       try {
-        // Reset the transaction resolution state for new logs
+        // Reset state for new logs
+        setTransactionId(undefined);
         setIsTransactionIdResolved(false);
         // Call the backend tRPC procedure
         const transactionId = await logHotdog({
