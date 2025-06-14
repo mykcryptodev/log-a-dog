@@ -1,21 +1,29 @@
 import { type FC, useState, useEffect, useMemo } from "react";
-import { TransactionButton, useActiveWallet, useWalletBalance, useReadContract } from "thirdweb/react";
+import {
+  TransactionButton,
+  useActiveWallet,
+  useWalletBalance,
+  useReadContract,
+} from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
 import { HOTDOG_TOKEN, STAKING } from "~/constants/addresses";
 import { useSession } from "next-auth/react";
-import { stake, unstake } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
+import {
+  stake,
+  unstake,
+} from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
 import { getContract } from "thirdweb";
 import { toast } from "react-toastify";
 import { MINIMUM_STAKE } from "~/constants";
 import { parseEther, formatEther, InsufficientFundsError } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
 import { Buy } from "~/components/utils/Buy";
- 
+
 type Props = {
   onStake?: (amount: string) => void;
   hideTitle?: boolean;
-}
+};
 
 export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
   const [amount, setAmount] = useState<string>("");
@@ -45,12 +53,10 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     },
   });
 
-  console.log({ stakedAmount });
-
   useEffect(() => {
     const checkAllowance = async () => {
       if (!wallet || !amount) return;
-      
+
       const tokenContract = getContract({
         address: HOTDOG_TOKEN[activeChain.id]!,
         client,
@@ -71,13 +77,22 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
 
   useEffect(() => {
     if (!balance?.displayValue) return;
-    const newAmount = (Number(balance.displayValue) * (percentage / 100));
+    const newAmount = Number(balance.displayValue) * (percentage / 100);
     setAmount(newAmount.toString());
   }, [percentage, balance]);
 
   const balanceIsInsufficient = useMemo(() => {
     return Number(balance?.value ?? 0) < MINIMUM_STAKE;
   }, [balance]);
+
+  const amountExceedsBalance = useMemo(() => {
+    const bal = Number(balance?.displayValue ?? 0);
+    if (!amount) return false;
+    return Number(amount) > bal;
+  }, [amount, balance]);
+
+  const invalidAmount = Number(amount) <= 0;
+  const showInsufficientBalance = balanceIsInsufficient && !invalidAmount;
 
   const handlePercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPercentage = Number(e.target.value);
@@ -89,19 +104,48 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     <div>
       {!hideTitle && <h1 className="text-2xl font-bold mb-4">Stake $HOTDOG</h1>}
       <div className="space-y-4">
-        <div className="stats shadow w-full">
+        <div className="stats shadow w-full max-w-full stats-vertical md:stats-horizontal">
           <div className="stat text-center">
             <div className="stat-title">Amount to Stake</div>
-            <div className="stat-value text-primary">{Number(amount).toLocaleString()}</div>
+            <input
+              type="number"
+              className="stat-value text-primary bg-transparent text-center focus:outline-none w-full max-w-[12ch]"
+              value={amount}
+              onChange={(e) => {
+                let value = e.target.value;
+                if (value === "") {
+                  setAmount("");
+                  return;
+                }
+                value = value.replace(/^0+(?=\d)/, "");
+                setAmount(value);
+              }}
+            />
             <div className="stat-desc flex items-center justify-between">
-              <div>{isLoadingStaked ? "Loading staked..." : `Staked: ${Number(formatEther(stakedAmount ?? 0n)).toLocaleString()}`}</div>
-              <div>{isLoadingBalance ? "Loading balance..." : `Balance: ${Number(balance?.displayValue ?? 0).toLocaleString()}`}</div>
+              <div>
+                {isLoadingStaked
+                  ? "Loading staked..."
+                  : `Staked: ${Number(formatEther(stakedAmount ?? 0n)).toLocaleString()}`}
+              </div>
+              <div>
+                {isLoadingBalance
+                  ? "Loading balance..."
+                  : `Balance: ${Number(balance?.displayValue ?? 0).toLocaleString()}`}
+              </div>
             </div>
           </div>
         </div>
-        
+        {amountExceedsBalance && (
+          <div className="text-error text-center text-sm">
+            Amount exceeds balance
+          </div>
+        )}
+
         <div>
-          <label htmlFor="percentage" className="block text-sm font-medium mb-1">
+          <label
+            htmlFor="percentage"
+            className="block text-sm font-medium mb-1"
+          >
             Percentage of Balance: {percentage}%
           </label>
           <input
@@ -115,35 +159,35 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             step="1"
           />
           <div className="w-full flex justify-between text-xs px-2">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="hover:text-primary"
               onClick={() => setPercentage(0)}
             >
               0%
             </button>
-            <button 
+            <button
               type="button"
               className="hover:text-primary"
               onClick={() => setPercentage(25)}
             >
               25%
             </button>
-            <button 
+            <button
               type="button"
               className="hover:text-primary"
               onClick={() => setPercentage(50)}
             >
               50%
             </button>
-            <button 
+            <button
               type="button"
               className="hover:text-primary"
               onClick={() => setPercentage(75)}
             >
               75%
             </button>
-            <button 
+            <button
               type="button"
               className="hover:text-primary"
               onClick={() => setPercentage(100)}
@@ -156,14 +200,16 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         {hasApproval ? (
           <TransactionButton
             className="!btn !btn-primary !btn-block"
-            transaction={() => stake({
-              contract: getContract({
-                address: STAKING[activeChain.id]!,
-                client,
-                chain: activeChain,
-              }),
-              amount: parseEther(amount),
-            })}
+            transaction={() =>
+              stake({
+                contract: getContract({
+                  address: STAKING[activeChain.id]!,
+                  client,
+                  chain: activeChain,
+                }),
+                amount: parseEther(amount),
+              })
+            }
             onTransactionSent={() => toast.loading("Staking...")}
             onTransactionConfirmed={() => {
               toast.dismiss();
@@ -172,25 +218,32 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             }}
             onError={(err) => {
               toast.dismiss();
-              console.log({ err });
               toast.error(`Staking failed: ${err.message}`);
             }}
-            disabled={balanceIsInsufficient}
+            disabled={
+              showInsufficientBalance || amountExceedsBalance || invalidAmount
+            }
           >
-            {balanceIsInsufficient ? "Insufficient balance" : "Stake"}
+            {showInsufficientBalance
+              ? "Insufficient balance"
+              : amountExceedsBalance
+                ? "Amount too high"
+                : "Stake"}
           </TransactionButton>
         ) : (
           <TransactionButton
             className="!btn !btn-primary !btn-block"
-            transaction={() => approve({
-              contract: getContract({
-                address: HOTDOG_TOKEN[activeChain.id]!,
-                client,
-                chain: activeChain,
-              }),
-              amount: parseEther(amount).toString(),
-              spender: STAKING[activeChain.id]!,
-            })}
+            transaction={() =>
+              approve({
+                contract: getContract({
+                  address: HOTDOG_TOKEN[activeChain.id]!,
+                  client,
+                  chain: activeChain,
+                }),
+                amount: parseEther(amount).toString(),
+                spender: STAKING[activeChain.id]!,
+              })
+            }
             onTransactionSent={() => toast.loading("Approving...")}
             onTransactionConfirmed={() => {
               toast.dismiss();
@@ -199,40 +252,47 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             }}
             onError={(err) => {
               toast.dismiss();
-              console.log({ err });
               toast.error(`Approval failed: ${err.message}`);
             }}
-            disabled={balanceIsInsufficient}
+            disabled={
+              showInsufficientBalance || amountExceedsBalance || invalidAmount
+            }
           >
-            {balanceIsInsufficient ? "Insufficient balance" : "Approve"}
+            {showInsufficientBalance
+              ? "Insufficient balance"
+              : amountExceedsBalance
+                ? "Amount too high"
+                : "Approve"}
           </TransactionButton>
         )}
-        {stakedAmount !== undefined && Number(formatEther(stakedAmount)) > 0 && (
-          <TransactionButton
-            className="!btn !btn-block !mt-2"
-            transaction={() => unstake({
-              contract: getContract({
-                address: STAKING[activeChain.id]!,
-                client,
-                chain: activeChain,
-              }),
-              amount: stakedAmount,
-            })}
-            onTransactionSent={() => toast.loading("Unstaking...")}
-            onTransactionConfirmed={() => {
-              toast.dismiss();
-              toast.success("Unstaked!");
-              onStake?.(amount);
-            }}
-            onError={(err) => {
-              toast.dismiss();
-              console.log({ err });
-              toast.error(`Unstaking failed: ${err.message}`);
-            }}
-          >
-            Unstake all
-          </TransactionButton>
-        )}
+        {stakedAmount !== undefined &&
+          Number(formatEther(stakedAmount)) > 0 && (
+            <TransactionButton
+              className="!btn !btn-block !mt-2"
+              transaction={() =>
+                unstake({
+                  contract: getContract({
+                    address: STAKING[activeChain.id]!,
+                    client,
+                    chain: activeChain,
+                  }),
+                  amount: stakedAmount,
+                })
+              }
+              onTransactionSent={() => toast.loading("Unstaking...")}
+              onTransactionConfirmed={() => {
+                toast.dismiss();
+                toast.success("Unstaked!");
+                onStake?.(amount);
+              }}
+              onError={(err) => {
+                toast.dismiss();
+                toast.error(`Unstaking failed: ${err.message}`);
+              }}
+            >
+              Unstake all
+            </TransactionButton>
+          )}
         {InsufficientFundsError && (
           <div className="flex flex-col gap-2">
             <p className="text-center">Need some $HOTDOG?</p>
