@@ -20,7 +20,7 @@ export const Buy: FC = () => {
       <Portal>
         <input type="checkbox" id="buy_modal" className="modal-toggle" />
         <div className="modal modal-bottom sm:modal-middle">
-          <div className="modal-box backdrop-blur-sm bg-opacity-50 w-fit p-0 m-0 flex items-center justify-center">
+          <div className="modal-box backdrop-blur-sm bg-opacity-50 w-full p-0 m-0 flex items-center justify-center">
             <PayEmbed 
               theme={userPrefersDarkMode ? darkTheme({
                 colors: {
@@ -48,6 +48,7 @@ export const Buy: FC = () => {
                     icon: "/images/logo.png",
                   }
                 },
+                showThirdwebBranding: false,
               }}
             />
             <div className="modal-action">

@@ -12,7 +12,7 @@ export const InsufficientStake: FC<Props> = ({ isOpen, onClose }) => {
 
   return (
     <dialog className="modal modal-bottom sm:modal-middle" open={isOpen}>
-      <div className="modal-box relative">
+      <div className="modal-box relative bg-base-100 bg-opacity-70 backdrop-blur-lg">
         <button 
           className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
           onClick={onClose}
