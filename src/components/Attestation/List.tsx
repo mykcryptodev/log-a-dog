@@ -172,7 +172,14 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 </div>
               </div>
               <div className="flex items-center gap-2 w-full justify-end pr-2 opacity-50 text-xs">
-                <VotingCountdown timestamp={hotdog.timestamp.toString()} />
+                <VotingCountdown
+                  timestamp={hotdog.timestamp.toString()}
+                  logId={hotdog.logId.toString()}
+                  userAttested={userAttestedMap[hotdog.logId]}
+                  userAttestation={userAttestationMap[hotdog.logId]}
+                  validAttestations={validMap[hotdog.logId]?.toString()}
+                  invalidAttestations={invalidMap[hotdog.logId]?.toString()}
+                />
               </div>
             </div>
           </div>

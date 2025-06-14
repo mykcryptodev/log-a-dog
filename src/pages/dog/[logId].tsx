@@ -148,7 +148,14 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
               </div>
             </div>
             <div className="flex items-center gap-2 w-full justify-end pr-2 opacity-50 text-xs">
-              <VotingCountdown timestamp={hotdog.timestamp.toString()} />
+              <VotingCountdown
+                timestamp={hotdog.timestamp.toString()}
+                logId={hotdog.logId.toString()}
+                userAttested={userAttested}
+                userAttestation={userAttestation}
+                validAttestations={validAttestations}
+                invalidAttestations={invalidAttestations}
+              />
             </div>
           </div>
         </div>
