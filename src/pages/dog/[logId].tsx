@@ -12,12 +12,13 @@ import AiJudgement from "~/components/Attestation/AiJudgement";
 import Comments from "~/components/Attestation/Comments";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import VotingCountdown from "~/components/Attestation/VotingCountdown";
-import { ZoraCoinTrading } from "~/components/Attestation/ZoraCoinTrading";
 import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
 import { ZERO_ADDRESS } from "thirdweb";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
+import dynamic from "next/dynamic";
+const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { logId } = context.params as { logId: string };

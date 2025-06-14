@@ -215,3 +215,5 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
     </div>
   );
 };
+
+export default ZoraCoinTrading;

@@ -14,8 +14,9 @@ import VotingCountdown from "./VotingCountdown";
 import Comments from "~/components/Attestation/Comments";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
-import { ZoraCoinTrading } from "./ZoraCoinTrading";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
+import dynamic from "next/dynamic";
+const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
 
 type Props = {
   attestors?: string[];
