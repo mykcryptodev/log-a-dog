@@ -6,6 +6,7 @@ import Image from "next/image";
 import { client } from "~/providers/Thirdweb";
 import heic2any from "heic2any";
 import { api } from "~/utils/api";
+import { DEFAULT_UPLOAD_PHRASE } from "~/constants";
 
 interface UploadProps {
   className?: string; // completely override classes
@@ -37,7 +38,7 @@ export const Upload: FC<UploadProps> = ({
   label,
 }) => {
   const [urls, setUrls] = useState<string[]>([]);
-  const [dropzoneLabel, setDropzoneLabel] = useState<string>("📷 Take a picture of you eating it!");
+  const [dropzoneLabel, setDropzoneLabel] = useState<string>(label ?? DEFAULT_UPLOAD_PHRASE);
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
   useEffect(() => {
@@ -136,7 +137,7 @@ export const Upload: FC<UploadProps> = ({
     if (resizedFiles.length === 0) {
       toast.error("No files to upload");
       onUploadError?.(new Error("No files to upload"));
-      setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
+      setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
       return;
     }
 
@@ -147,14 +148,14 @@ export const Upload: FC<UploadProps> = ({
       if (!isSafe) {
         toast.error("Image is not safe to upload");
         onUploadError?.(new Error("Image is not safe to upload"));
-        setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
+        setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
         return;
       }
       setDropzoneLabel("✅ Image passed safety check!");
     } catch (e) {
       toast.error("Error checking image safety");
       onUploadError?.(e as Error);
-      setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
+      setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
       return;
     }
 
@@ -186,7 +187,7 @@ export const Upload: FC<UploadProps> = ({
       toast("Error uploading file", { type: "error" });
       onUploadError?.(e as Error);
     } finally {
-      setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
+      setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
     }
   }, [conductImageSafetyCheck, label, onUpload, onUploadError, resizeImageFile]);
   
@@ -197,7 +198,7 @@ export const Upload: FC<UploadProps> = ({
     if (isDragActive) {
       setDropzoneLabel("👋 Drop here!");
     } else {
-      setDropzoneLabel(label ?? "📷 Take a picture of you eating it!");
+      setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
     }
   }, [isDragActive, label]);
 

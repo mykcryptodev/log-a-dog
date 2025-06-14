@@ -10,4 +10,6 @@ export const CONTEST_END_TIME = "2025-09-05T12:00:00-04:00"
 export const MINIMUM_STAKE = parseEther("100");
 
 export const APP_NAME = "Log a Dog";
-export const APP_DESCRIPTION = `Earn money competing in the internet's hotdog eating contest`;
+export const APP_DESCRIPTION = `Earn money eating hotdogs`;
+
+export const DEFAULT_UPLOAD_PHRASE = '📷 Take a picture of you eating it!';

@@ -9,20 +9,8 @@ export const Instructions: FC = () => {
         <ul className="steps steps-vertical md:steps-horizontal">
           <li className="step">
             <div className="grid grid-rows-2">
-              <span className="font-bold text-start md:text-center">Login</span>
-              <span className="text-xs">Choose from several different login methods</span>
-            </div>
-          </li>
-          <li className="step">
-            <div className="grid grid-rows-2 place-content-start">
-              <span className="font-bold text-start md:text-center">Add profile</span>
-              <span className="text-xs">Claim your username and upload an avatar</span>
-            </div>
-          </li>
-          <li className="step">
-            <div className="grid grid-rows-2">
               <span className="font-bold text-start md:text-center">Log a dog</span>
-              <span className="text-xs">Upload a picture of you eating a hotdog</span>
+              <span className="text-xs">Upload a picture of you eating a hotdog. One pic per dog.</span>
             </div>
           </li>
           <li className="step">

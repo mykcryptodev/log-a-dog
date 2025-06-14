@@ -7,6 +7,7 @@ import Connect from "~/components/utils/Connect";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { TransactionStatus } from '../utils/TransactionStatus';
+import { DEFAULT_UPLOAD_PHRASE } from '~/constants';
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -151,7 +152,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
                 // close the modal
                 (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
               }}
-              label="📷 Take a picture of you eating it!"
+              label={DEFAULT_UPLOAD_PHRASE}
             />
             <span className="text-center text-xs opacity-50">
               Images uploaded here are public and will be displayed on the global leaderboard

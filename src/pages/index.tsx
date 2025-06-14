@@ -23,8 +23,11 @@ export default function Home() {
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <div>🌭 Log <span className="text-secondary">a Dog</span> </div>
           </h1>
-          <p className="-mt-2 sm:text-lg text-sm text-center max-w-xs">{APP_DESCRIPTION}</p>
-          <Link href="/faq" className="text-xs -mt-4 underline">wtf?</Link>
+          <div className="flex items-center gap-2 -mt-2">
+            <p className="sm:text-lg text-sm text-center max-w-xs">{APP_DESCRIPTION}</p>
+            <Link href="/faq" className="text-xs underline">wtf?</Link>
+          </div>
+
 
           <CreateAttestation
             onAttestationCreated={() => {
