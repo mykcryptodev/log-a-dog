@@ -93,7 +93,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           imageUri: imgUri!,
           metadataUri: '',
         });
-        setLastLoggedImgUri(imgUri!);
+        setLastLoggedImgUri(imgUri);
         setTransactionId(transactionId);
 
         // close the modal
