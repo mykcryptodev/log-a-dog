@@ -1,5 +1,6 @@
 import { type NextPage, type GetServerSideProps } from "next";
 import { useContext } from "react";
+import Head from "next/head";
 import { MediaRenderer, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { api } from "~/utils/api";
@@ -27,6 +28,21 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
 
+  const miniAppMetadata = {
+    version: "next",
+    imageUrl: "https://yoink.party/framesV2/opengraph-image",
+    button: {
+      title: "🌭 Log a Dog",
+      action: {
+        type: "launch_frame",
+        name: "Log a Dog",
+        url: `https://logadog.xyz/dog/${logId}`,
+        splashImageUrl: "https://logadog.xyz/images/logo.png",
+        splashBackgroundColor: "#faf8f7",
+      },
+    },
+  };
+
   const { data, isLoading, refetch } = api.hotdog.getById.useQuery({
     chainId: activeChain.id,
     user: account?.address ?? ZERO_ADDRESS,
@@ -39,23 +55,30 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
     return loggerIsNotEater && loggerIsNotBackendWallet;
   };
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
-      <main className="flex flex-col items-center justify-center">
-        <div className="w-64 h-64 bg-base-300 animate-pulse rounded-lg" />
-      </main>
+      <>
+        <Head>
+          <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
+        </Head>
+        <main className="flex flex-col items-center justify-center">
+          <div className="w-64 h-64 bg-base-300 animate-pulse rounded-lg" />
+        </main>
+      </>
     );
   }
-
-  if (!data) return null;
 
   const { hotdog, validAttestations, invalidAttestations, userAttested, userAttestation } = data;
 
   return (
-    <main className="flex flex-col items-center justify-center">
-      <div className="container flex flex-col items-center gap-6 px-4 py-8">
-        <div className="card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow w-full max-w-md">
-          <div className="card-body p-4">
+    <>
+      <Head>
+        <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
+      </Head>
+      <main className="flex flex-col items-center justify-center">
+        <div className="container flex flex-col items-center gap-6 px-4 py-8">
+          <div className="card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow w-full max-w-md">
+            <div className="card-body p-4">
             <div className="flex items-center justify-between">
               <div className="flex flex-col items-start">
                 <div className="flex items-center gap-2 w-fit">
@@ -130,6 +153,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
         </div>
       </div>
     </main>
+    </>
   );
 };
 
