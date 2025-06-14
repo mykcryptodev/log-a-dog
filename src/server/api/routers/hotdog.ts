@@ -433,7 +433,7 @@ export const hotdogRouter = createTRPCRouter({
         }),
       ]);
 
-      const hotdogLog = dogResponse?.[0]?.[0];
+      const hotdogLog = dogResponse?.[0];
       if (!hotdogLog) {
         return null;
       }
