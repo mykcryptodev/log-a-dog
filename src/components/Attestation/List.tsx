@@ -3,14 +3,16 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { MediaRenderer, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
-import { TagIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
-import { ADDRESS_ZERO } from "thirdweb";
+import { ZERO_ADDRESS } from "thirdweb";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "./AiJudgement";
 import Comments from "~/components/Attestation/Comments";
+import { env } from "~/env";
+import { isAddressEqual } from "viem";
 
 type Props = {
   attestors?: string[];
@@ -21,7 +23,7 @@ type Props = {
   address?: string;
 };
 
-export const ListAttestations: FC<Props> = ({ address, limit }) => {
+export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
@@ -29,7 +31,7 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery({
     chainId: activeChain.id,
-    user: account?.address ?? ADDRESS_ZERO,
+    user: account?.address ?? ZERO_ADDRESS,
     start,
     limit: limitOrDefault,
   }, {
@@ -43,10 +45,22 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
     void refetchDogData();
   }, [account, refetchDogData]);
 
+  const showLoggedVia = (hotdog: { eater: `0x${string}`, logger: `0x${string}` }) => {
+    const loggerIsNotEater = !isAddressEqual(hotdog.eater, hotdog.logger);
+    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger, env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`);
+    return loggerIsNotEater && loggerIsNotBackendWallet;
+  }
+
+  // Create maps to ensure correct attestation data is passed by logId
+  const validMap = dogData?.hotdogs && dogData.validAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.validAttestations[i]])) : {};
+  const invalidMap = dogData?.hotdogs && dogData.invalidAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.invalidAttestations[i]])) : {};
+  const userAttestedMap = dogData?.hotdogs && dogData.userAttested ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttested[i]])) : {};
+  const userAttestationMap = dogData?.hotdogs && dogData.userAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttestations[i]])) : {};
+
   return (
     <>
     <div id="top-of-list" className="invisible" />
-    <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+    <div className="flex flex-col gap-4">
       {isLoadingHotdogs && 
         Array.from({ length: limitOrDefault }).map((_, index) => (
           <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
@@ -74,23 +88,18 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
           </div>
         ))
       }
-      {dogData?.hotdogs.map((hotdog, index) => {
-        const validAttestations = dogData?.validAttestations[index];
-        const invalidAttestations = dogData?.invalidAttestations[index];
-        const userAttested = dogData?.userAttested[index];
-        const userAttestation = dogData?.userAttestations[index];
-
+      {dogData?.hotdogs.map((hotdog) => {
         return (
-          <div className="card bg-base-200 bg-opacity-50" key={`${hotdog.logId}-${index}`}>
-            <div className="card-body p-4 max-w-xs">
+          <div className="card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow" key={hotdog.logId}>
+            <div className="card-body p-4 max-w-lg">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-fit">
+                <div className="flex flex-col items-start">
+                  <div className="flex items-center gap-2 w-fit">
                     <Avatar address={hotdog.eater} fallbackSize={24} />
+                    <Name address={hotdog.eater} />
                   </div>
                   <div className="flex flex-col">
-                    <Name address={hotdog.eater} />
-                    {hotdog.eater.toLowerCase() !== hotdog.logger.toLowerCase() && (
+                    {showLoggedVia({ eater: hotdog.eater as `0x${string}`, logger: hotdog.logger as `0x${string}` }) && (
                       <div className="flex items-center gap-1 text-xs opacity-75">
                         <span>via</span>
                         <Avatar address={hotdog.logger} size="16px" />
@@ -104,6 +113,12 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
                   onRevocation={refetchDogData}
                 />
               </div>
+              {hotdog.zoraCoin && (
+                <div className="flex items-center text-xs opacity-50 w-full justify-between">
+                  <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${hotdog.zoraCoin.marketCap}</div>
+                  <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${hotdog.zoraCoin.volume24h}</div>
+                </div>
+              )}
               <MediaRenderer
                 src={hotdog.imageUri}
                 client={client}
@@ -128,11 +143,12 @@ export const ListAttestations: FC<Props> = ({ address, limit }) => {
                     metadataUri={hotdog.metadataUri}
                   />
                   <JudgeAttestation
-                    userAttested={userAttested}
-                    userAttestation={userAttestation}
-                    validAttestations={validAttestations}
-                    invalidAttestations={invalidAttestations}
+                    userAttested={userAttestedMap[hotdog.logId]}
+                    userAttestation={userAttestationMap[hotdog.logId]}
+                    validAttestations={validMap[hotdog.logId]?.toString()}
+                    invalidAttestations={invalidMap[hotdog.logId]?.toString()}
                     logId={hotdog.logId}
+                    chainId={activeChain.id}
                     onAttestationMade={() => void refetchDogData()}
                     onAttestationAffirmationRevoked={() => void refetchDogData()}
                   />

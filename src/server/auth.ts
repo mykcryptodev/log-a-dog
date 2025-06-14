@@ -6,8 +6,11 @@ import {
   type NextAuthOptions,
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
+import { EthereumProvider } from "~/server/auth/ethereumProvider";
 
 import { db } from "~/server/db";
+
+import { neynarClient } from "~/lib/neynar";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -19,15 +22,22 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: DefaultSession["user"] & {
       id: string;
-      // ...other properties
-      // role: UserRole;
+      address?: string;
+      fid?: number;
+      username?: string;
+      image?: string;
+      name?: string;
     };
   }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User {
+    id: string;
+    address?: string;
+    fid?: number;
+    username?: string;
+    image?: string;
+    name?: string;
+  }
 }
 
 /**
@@ -36,17 +46,117 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.address = user.address;
+        token.fid = user.fid;
+      } else if (token.address) {
+        // For existing sessions, fetch the user's fid from the database
+        const dbUser = await db.user.findFirst({
+          where: { 
+            address: (token.address as string).toLowerCase()
+          },
+          select: { fid: true }
+        });
+        if (dbUser?.fid) {
+          token.fid = dbUser.fid;
+        }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.address = token.address as string;
+        session.user.fid = token.fid as number;
+      }
+      return session;
+    },
   },
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
+    EthereumProvider({
+      async createUser(credentials) {
+        let fid;
+        let username;
+        let name;
+        let image;
+        try {
+          // Fetch user's FID from Neynar using their Ethereum address
+          const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
+            addresses: [credentials.address],
+          });
+
+          // Extract FID from response - fixing the access pattern
+          const addressKey = credentials.address.toLowerCase();
+          fid = response[addressKey]?.[0]?.fid;
+          username = response[addressKey]?.[0]?.username;
+          name = response[addressKey]?.[0]?.display_name;
+          image = response[addressKey]?.[0]?.pfp_url;
+        } catch (error) {
+          console.error("Error fetching FID from Neynar:", error);
+        }
+
+        // First try to find existing user by address (upserts would fail if the user already exists)
+        let user = await db.user.findFirst({
+          where: {
+            address: credentials.address.toLowerCase(),
+          },
+        });
+
+        if (user) {
+          // Update existing user
+          user = await db.user.update({
+            where: {
+              id: user.id,
+            },
+            data: {
+              fid,
+              username,
+              image,
+              name,
+            },
+          });
+        } else {
+          // Create new user
+          user = await db.user.create({
+            data: {
+              address: credentials.address.toLowerCase(),
+              fid,
+              username,
+              image,
+              name,
+            },
+          });
+        }
+        console.log({ user });
+        // Create a new account for the user
+        await db.account.upsert({ 
+          where: {
+            provider_providerAccountId: {
+              provider: "ethereum",
+              providerAccountId: credentials.address,
+            },
+          },
+          update: {
+            type: "ethereum",
+          },
+          create: {
+            userId: user.id,
+            type: "ethereum",
+            provider: "ethereum",
+            providerAccountId: credentials.address,
+          },
+        });
+        console.log(' returning user ');
+        return user;
+      },
+    }),
     /**
      * ...add more providers here.
      *
@@ -70,3 +180,4 @@ export const getServerAuthSession = (ctx: {
 }) => {
   return getServerSession(ctx.req, ctx.res, authOptions);
 };
+

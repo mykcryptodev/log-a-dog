@@ -5,13 +5,14 @@ import { api } from "~/utils/api";
 import { ProfileForm } from "~/components/Profile/Form";
 import Connect from "~/components/utils/Connect";
 import { useDisconnect } from "thirdweb/react";
-import { Logout } from "@coinbase/waas-sdk-web";
 import { client } from "~/providers/Thirdweb";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useWalletContext } from "@coinbase/waas-sdk-web-react";
-
+import { signOut, useSession } from "next-auth/react";
+import SignInWithEthereum from "../utils/SignIn";
+import { SignInWithFarcaster } from "../utils/SignInWithFarcaster";
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
   { ssr: false }
@@ -28,22 +29,25 @@ type Props = {
 }
 export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout }) => {
   const { activeChain } = useContext(ActiveChainContext);
+  const { data: sessionData } = useSession();
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  const { waas } = useWalletContext();
   const { disconnect } = useDisconnect();
   const [createdProfileImgUrl, setCreatedProfileImgUrl] = useState<string>();
 
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
-    address: account?.address ?? "",
+    address: account?.address ?? sessionData?.user?.address ?? "",
   }, {
-    enabled: !!account?.address,
+    enabled: !!account?.address || !!sessionData?.user?.address,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
 
-  const imageUrl = data?.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+  // Use sessionData for username and image if available, otherwise fall back to profile data
+  const displayUsername = sessionData?.user?.username ?? data?.username;
+  const displayImage = sessionData?.user?.image ?? data?.imgUrl;
+  const imageUrl = displayImage?.replace("ipfs://", "https://ipfs.io/ipfs/");
 
   const hasNoAvatar = useMemo(() => {
     if (createdProfileImgUrl && createdProfileImgUrl !== '') return false;
@@ -52,32 +56,41 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   }, [createdProfileImgUrl, imageUrl]);
 
   const logout = async () => {
-    console.log('logging out...')
-    await waas?.logout();
     if (wallet) {
-      console.log('still logging out...')
       void disconnect(wallet);
-      await waas?.logout();
-      void Logout();
     }
+    await signOut({ redirect: false });
   }
 
-  if (!account) return (
-    <div className="mr-4">
+  if (!account && !sessionData?.user?.id) return (
+    <div className="mr-4 flex items-center gap-2">
       <Connect loginBtnLabel={loginBtnLabel} />
+      <SignInWithFarcaster />
     </div>
   )
 
-  if (!data?.username) return (
+  if (account && wallet?.id !== 'inApp' && !sessionData?.user?.id) {
+    return (
+      <SignInWithEthereum 
+        btnLabel="I will play with honor"
+        defaultOpen={true}
+      />
+    )
+  }
+
+  if (!displayUsername) return (
     <>
       {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <button className="btn mr-2" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
-        {createProfileBtnLabel ?? 'Create Profile'}
-      </button>
-      <button className={`btn btn-ghost mr-4 ${hideLogout ? 'hidden' : ''}`} onClick={() => void logout()}>
-        Logout <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
-      </button>
-      <dialog id="create_profile_modal" className="modal">
+      <div className="flex items-center gap-2">
+        <button className="btn" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
+          {createProfileBtnLabel ?? 'Profile'}
+        </button>
+        <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={() => void logout()}>
+          <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+        </button>
+      </div>
+
+      <dialog id="create_profile_modal" className="modal modal-bottom sm:modal-middle">
         <div className="modal-box relative">
           <button 
             className="btn btn-circle btn-sm btn-ghost absolute top-4 right-4"
@@ -107,7 +120,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
 
   return (
     <div className="mr-4">
-      <div className="dropdown dropdown-end">
+      <div className="dropdown dropdown-end dropdown-top">
         <div tabIndex={0} role="button" className="btn btn-ghost">
           <div className="flex items-center gap-2">
             {isLoading ? (
@@ -119,7 +132,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
               <>
               <div className="indicator">
                 {hasNoAvatar && <span className="indicator-item badge badge-accent"></span>}
-                <div className="flex gap-2 items-center">
+                <div className="flex flex-col gap-1 items-center">
                   <CustomMediaRenderer
                     src={img()}
                     alt="Profile Pic"
@@ -128,7 +141,10 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
                     className="rounded-full"
                     client={client}
                   />
-                  <span className={`${hasNoAvatar ? 'pr-4' :''}`}>{data?.username}</span>
+                  <span className="text-sm font-normal">{displayUsername}</span>
+                  {sessionData?.user?.fid && (
+                    <CheckBadgeIcon className="w-4 h-4 text-primary" />
+                  )}
                 </div>
               </div>
               </>
@@ -137,11 +153,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
         </div>
         <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li>
-            <Link href={`/profile/${data.username}`}>
+            <Link href={`/profile/address/${data?.address ?? sessionData?.user?.address ?? ''}`}>
               Profile {hasNoAvatar && <div className="badge badge-accent">add avatar</div>}
             </Link>
           </li>
-          <li><a onClick={() => void logout()}>Logout</a></li>
+          <li><button onClick={() => void logout()}>Logout</button></li>
         </ul>
       </div>
     </div>

@@ -4,8 +4,9 @@ import { useActiveAccount } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { ProfileButton } from "./Button";
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
-export const Name: FC<{ address: string }> = ({ address }) => {
+export const Name: FC<{ address: string; noLink?: boolean }> = ({ address, noLink }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
@@ -16,6 +17,16 @@ export const Name: FC<{ address: string }> = ({ address }) => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+
+  const { data: userData } = api.user.getByAddress.useQuery({
+    address: address.toLowerCase(),
+  }, {
+    enabled: !!address,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  console.log({ userData });
 
   if (isLoading) {
     return (
@@ -41,8 +52,23 @@ export const Name: FC<{ address: string }> = ({ address }) => {
     );
   }
   
+  const content = (
+    <div className="flex items-center gap-1">
+      <span>{profile.username}</span>
+      {userData?.fid && (
+        <CheckBadgeIcon className="w-4 h-4 text-primary" />
+      )}
+    </div>
+  );
+
+  if (noLink) {
+    return content;
+  }
+
   return (
-    <Link href={`/profile/${profile.username}`}>{profile.username}</Link>
+    <Link href={`/profile/address/${profile.address}`}>
+      {content}
+    </Link>
   );
 };
 

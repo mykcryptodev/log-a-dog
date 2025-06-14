@@ -3,7 +3,6 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import useDebounce from "~/hooks/useDebounce";
 import { api } from "~/utils/api";
 import Image from "next/image";
-import { ZERO_ADDRESS } from "@ethereum-attestation-service/eas-sdk";
 import { TransactionButton } from "thirdweb/react";
 import { getContract, prepareContractCall } from "thirdweb";
 import { client } from "~/providers/Thirdweb";
@@ -83,34 +82,47 @@ export const AddContestants: FC<Props> = ({ contestId, onContestantsAdded }) => 
                 <div className="bg-neutral rounded-lg animate-pulse w-32 h-6" />
               </div>
             )}
-            {profileSearchResult?.address === ZERO_ADDRESS || !profileSearchResult ? (
+            {!profileSearchResult || profileSearchResult.length === 0 ? (
               <div className={`flex items-center gap-1 p-4 rounded-lg bg-base-200 ${query === "" || profileSearchIsLoading ? 'hidden' : ''}`}>
                 <span>No results</span>
               </div>
             ) : (
-              <div className="flex justify-between items-center gap-1 p-4 rounded-lg bg-base-200">
-                <div className="flex items-start gap-2">
-                  <Image
-                    src={profileSearchResult.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/") ?? ""}
-                    alt="profile"
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                  <div className="flex flex-col">
-                    <span>{profileSearchResult.username}</span>
-                    <span className="text-xs opacity-50">{profileSearchResult.address.slice(0,6) + '...' + profileSearchResult.address.slice(-4)}</span>
+              <div className="flex flex-col gap-2">
+                {profileSearchResult.map((profile) => (
+                  <div key={profile.address} className="flex justify-between items-center gap-1 p-4 rounded-lg bg-base-200">
+                    <div className="flex items-start gap-2">
+                      <Image
+                        src={profile.imgUrl?.replace("ipfs://", "https://ipfs.io/ipfs/") ?? ""}
+                        alt="profile"
+                        width={40}
+                        height={40}
+                        className="rounded-full"
+                      />
+                      <div className="flex flex-col">
+                        <span>{profile.username}</span>
+                        <span className="text-xs opacity-50">{profile.address?.slice(0,6) + '...' + profile.address?.slice(-4)}</span>
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => {
+                        if (profile.address) {
+                          setContestantsToAdd([...contestantsToAdd, {
+                            address: profile.address,
+                            username: profile.username,
+                            imgUrl: profile.imgUrl ?? "",
+                            metadata: typeof profile.metadata === 'string' 
+                              ? profile.metadata 
+                              : JSON.stringify(profile.metadata)
+                          }]);
+                          setQuery("");
+                        }
+                      }}
+                    >
+                      Add
+                    </button>
                   </div>
-                </div>
-                <button
-                  className="btn btn-sm btn-primary"
-                  onClick={() => {
-                    setContestantsToAdd([...contestantsToAdd, profileSearchResult]);
-                    setQuery("");
-                  }}
-                >
-                  Add
-                </button>
+                ))}
               </div>
             )}
             {contestantsToAdd.length > 0 && (

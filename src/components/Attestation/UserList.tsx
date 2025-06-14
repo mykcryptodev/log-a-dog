@@ -80,7 +80,10 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
                   <Name address={hotdog.eater} />
                 </div>
                 <Revoke 
-                  hotdog={hotdog} 
+                  hotdog={{ 
+                    logId: hotdog.logId.toString(),
+                    eater: hotdog.eater
+                  }} 
                   onRevocation={refetchDogData}
                 />
               </div>
@@ -107,9 +110,10 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
                     disabled
                     userAttested={undefined}
                     userAttestation={undefined}
-                    validAttestations={validAttestations}
-                    invalidAttestations={invalidAttestations}
-                    logId={hotdog.logId}
+                    validAttestations={validAttestations?.toString()}
+                    invalidAttestations={invalidAttestations?.toString()}
+                    logId={hotdog.logId.toString()}
+                    chainId={activeChain.id}
                     onAttestationMade={() => void refetchDogData()}
                     onAttestationAffirmationRevoked={() => void refetchDogData()}
                   />

@@ -1,0 +1,16 @@
+@keyframes scrollBanner {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.scrollContainer {
+  animation: scrollBanner var(--duration) linear infinite;
+}
+
+.scrollContainer:hover {
+  animation-play-state: paused;
+} 

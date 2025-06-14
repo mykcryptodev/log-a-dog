@@ -34,7 +34,7 @@ export const Instructions: FC = () => {
         </ul>
         <div className="w-full justify-center flex items-center">
           <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
-            <input type="checkbox" className="peer" />
+            <input type="checkbox" className="peer" defaultChecked />
             <div className="collapse-title font-bold">
               Instructional Video
             </div>

@@ -1,13 +1,11 @@
 import { useState, type FC, useContext, useMemo } from "react";
 import { useActiveWallet } from "thirdweb/react";
-import { getContract, sendTransaction } from "thirdweb";
 import ActiveChainContext from "~/contexts/ActiveChain";
-import { PROFILES } from "~/constants/addresses";
-import { client } from "~/providers/Thirdweb";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
-import { setProfile } from "~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849";
-import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
+import { api } from "~/utils/api";
+import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -23,18 +21,36 @@ type Props = {
 
 export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, existingImgUrl }) => {
   const { activeChain } = useContext(ActiveChainContext);
+  const { data: sessionData } = useSession();
   const wallet = useActiveWallet();
-  const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? "");
-  const [username, setUsername] = useState<string>(existingUsername ?? "");
+  
+  // Prioritize existing values, then sessionData, then empty string
+  const [imgUrl, setImgUrl] = useState<string>(existingImgUrl ?? sessionData?.user?.image ?? "");
+  const [username, setUsername] = useState<string>(existingUsername ?? sessionData?.user?.username ?? "");
   const metadata = "";
   const [error, setError] = useState<string | null>(null);
   const [saveProfileBtnLabel, setSaveProfileBtnLabel] = useState<string>("Save Profile");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const contract = getContract({
-    client,
-    address: PROFILES[activeChain.id]!,
-    chain: activeChain,
+  const router = useRouter();
+  
+  const createProfile = api.profile.create.useMutation({
+    onSuccess: () => {
+      // Since we're saving to database directly, no need for transaction tracking
+      onProfileSaved?.({username, imgUrl, metadata});
+      setIsLoading(false);
+      setSaveProfileBtnLabel("Save Profile");
+      toast.success("Profile saved successfully!");
+      // close the modal
+      (document.getElementById('create_profile_modal') as HTMLDialogElement)?.close();
+      // navigate to the profile page of the new username
+      void router.push(`/profile/${username}`);
+    },
+    onError: (error) => {
+      setError(error.message);
+      setIsLoading(false);
+      setSaveProfileBtnLabel("Save Profile");
+    },
   });
 
   const isValidUsername = useMemo(() => {
@@ -49,49 +65,22 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
     if (!wallet) {
       return toast.error("You must login to save your profile!");
     }
-    const transaction = setProfile({
-      contract,
-      username,
-      image: imgUrl,
-      metadata: ""
-    });
     setSaveProfileBtnLabel("Saving...");
     setIsLoading(true);
     try {
-      const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
-      if (!wallet) return;
-      const walletCapabilities = await getCapabilities({ wallet });
-      if (walletCapabilities?.[chainIdAsHex]) {
-        await sendCalls({
-          chain: activeChain,
-          wallet,
-          calls: [transaction],
-          capabilities: {
-            paymasterService: {
-              url: `https://${activeChain.id}.bundler.thirdweb.com/${client.clientId}`
-            }
-          },
-        });
-      } else {
-        await sendTransaction({
-          account: wallet.getAccount()!,
-          transaction,
-        });
-      }
-      toast.success("Profile saved");
-      // give the blockchain some time to index the transaction
-      setTimeout(() => {
-        onProfileSaved?.({username, imgUrl, metadata});
-      }, 3000);
+      createProfile.mutate({
+        chainId: activeChain.id,
+        address: wallet.getAccount()!.address,
+        username,
+        imgUrl,
+        metadata,
+      });
     } catch (error) {
       const e = error as Error;
       const errorMessage = e.message?.match(/'([^']+)'/)?.[1] ?? e.message?.split('contract:')[0]?.trim() ?? e.message;
       setError(errorMessage);
-    } finally {
       setIsLoading(false);
       setSaveProfileBtnLabel("Save Profile");
-      // close modal
-      (document.getElementById('create_profile_modal') as HTMLDialogElement)?.close();
     }
   }
 
@@ -140,6 +129,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
           <span className="text-error text-center text-xs px-8 sm:px-16">{error}</span>
         </div>
       )}
+
     </div>
   )
 };

@@ -1,28 +1,29 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { HandThumbDownIcon as HandThumDownIconFilled, HandThumbUpIcon as HandThumbUpIconFilled } from "@heroicons/react/24/solid";
-import { useState, type FC, useContext } from "react";
-import { useActiveWallet } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
-import { LOG_A_DOG } from "~/constants/addresses";
+import { useState, type FC } from "react";
 import { toast } from "react-toastify";
-import { client } from "~/providers/Thirdweb";
-import { getContract, sendTransaction } from "thirdweb";
-import { attestHotdogLog, revokeAttestation } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
-import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
+import { useSession } from "next-auth/react";
+import { api } from "~/utils/api";
+import { InsufficientStake } from "../Stake/InsufficientStake";
+import { Portal } from "../utils/Portal";
+import { TransactionStatus } from "../utils/TransactionStatus";
 
 type Props = {
   disabled?: boolean;
-  logId: bigint;
+  logId: string;
+  chainId: number;
   userAttested: boolean | undefined;
   userAttestation: boolean | undefined;
-  validAttestations: bigint | undefined;
-  invalidAttestations: bigint | undefined;
+  validAttestations: string | undefined;
+  invalidAttestations: string | undefined;
   onAttestationMade?: () => void;
   onAttestationAffirmationRevoked?: () => void;
 }
+
 export const JudgeAttestation: FC<Props> = ({ 
   disabled,
   logId,
+  chainId,
   userAttested,
   userAttestation,
   validAttestations,
@@ -30,140 +31,167 @@ export const JudgeAttestation: FC<Props> = ({
   onAttestationMade,
   onAttestationAffirmationRevoked,
 }) => {
-  const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
-
+  const { data: sessionData } = useSession();
   const [isLoadingValidAttestation, setIsLoadingValidAttestation] = useState<boolean>(false);
   const [isLoadingInvalidAttestation, setIsLoadingInvalidValidAttestation] = useState<boolean>(false);
+  const [optimisticValidCount, setOptimisticValidCount] = useState<string | undefined>(validAttestations);
+  const [optimisticInvalidCount, setOptimisticInvalidCount] = useState<string | undefined>(invalidAttestations);
+  const [optimisticUserAttested, setOptimisticUserAttested] = useState<boolean | undefined>(userAttested);
+  const [optimisticUserAttestation, setOptimisticUserAttestation] = useState<boolean | undefined>(userAttestation);
+  const [isInsufficientStake, setIsInsufficientStake] = useState<boolean>(false);
+  const [pendingTransactionId, setPendingTransactionId] = useState<string | null>(null);
+
+  const judgeMutation = api.hotdog.judge.useMutation({
+    onMutate: async ({ isValid }) => {
+      // Optimistically update the counts
+      if (isValid) {
+        setOptimisticValidCount(prev => prev ? (BigInt(prev) + BigInt(1)).toString() : "1");
+        setOptimisticUserAttested(true);
+        setOptimisticUserAttestation(true);
+      } else {
+        setOptimisticInvalidCount(prev => prev ? (BigInt(prev) + BigInt(1)).toString() : "1");
+        setOptimisticUserAttested(true);
+        setOptimisticUserAttestation(false);
+      }
+    },
+    onSuccess: (data) => {
+      if (data) {
+        setPendingTransactionId(data);
+      } else {
+        toast.success("Attestation processed successfully!");
+        void onAttestationMade?.();
+      }
+    },
+    onError: (error) => {
+      // Revert optimistic updates on error
+      setOptimisticValidCount(validAttestations);
+      setOptimisticInvalidCount(invalidAttestations);
+      setOptimisticUserAttested(userAttested);
+      setOptimisticUserAttestation(userAttestation);
+      if (error.message.includes("Insufficient stake")) {
+        setIsInsufficientStake(true);
+      } else {
+        toast.error(`Operation failed: ${error.message}`);
+      }
+    },
+  });
 
   const attest = async (isValid: boolean) => {
     if (disabled) return;
-    if (!wallet) {
+    if (!sessionData?.user?.address) {
       return toast.error("You must login to attest to dogs!");
     }
     isValid ? setIsLoadingValidAttestation(true) : setIsLoadingInvalidValidAttestation(true);
+    
     // undo attestations if the user has already attested
-    if (userAttested && userAttestation === isValid) {
+    if (optimisticUserAttested && optimisticUserAttestation === isValid) {
       return void revoke(isValid);
     }
+
     try {
-      const transaction = attestHotdogLog({
-        contract: getContract({
-          chain: activeChain,
-          address: LOG_A_DOG[activeChain.id]!,
-          client,
-        }),
+      console.log({ logId })
+      await judgeMutation.mutateAsync({
+        chainId,
         logId,
         isValid,
+        shouldRevoke: false,
       });
-      const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
-      if (!wallet) return;
-      const walletCapabilities = await getCapabilities({ wallet });
-      if (walletCapabilities?.[chainIdAsHex]) {
-        await sendCalls({
-          chain: activeChain,
-          wallet,
-          calls: [transaction],
-          capabilities: {
-            paymasterService: {
-              url: `https://${activeChain.id}.bundler.thirdweb.com/${client.clientId}`
-            }
-          },
-        });
-      } else {
-        await sendTransaction({
-          account: wallet.getAccount()!,
-          transaction,
-        });
-      }
-      toast.success("Attestation made!");
     } catch (error) {
-      const e = error as Error;
-      console.error(error);
-      toast.error(`Attestation failed: ${e.message}`);
+      // Error is handled by mutation's onError callback
     } finally {
       isValid ? setIsLoadingValidAttestation(false) : setIsLoadingInvalidValidAttestation(false);
-      void onAttestationMade?.();
     }
   };
 
   const revoke = async (isValid: boolean) => {
     if (disabled) return;
-    if (!wallet) {
+    if (!sessionData?.user?.address) {
       return toast.error("You must login to revoke your attestations!");
     }
     try {
-      const transaction = revokeAttestation({
-        contract: getContract({
-          chain: activeChain,
-          address: LOG_A_DOG[activeChain.id]!,
-          client,
-        }),
-        logId,
-      });
-      const chainIdAsHex = activeChain.id.toString(16) as unknown as number;
-      if (!wallet) return;
-      const walletCapabilities = await getCapabilities({ wallet });
-      if (walletCapabilities?.[chainIdAsHex]) {
-        await sendCalls({
-          chain: activeChain,
-          wallet,
-          calls: [transaction],
-          capabilities: {
-            paymasterService: {
-              url: `https://${activeChain.id}.bundler.thirdweb.com/${client.clientId}`
-            }
-          },
-        });
+      // Optimistically update the counts
+      if (isValid) {
+        setOptimisticValidCount(prev => prev ? (BigInt(prev) - BigInt(1)).toString() : "0");
       } else {
-        await sendTransaction({
-          account: wallet.getAccount()!,
-          transaction,
-        });
+        setOptimisticInvalidCount(prev => prev ? (BigInt(prev) - BigInt(1)).toString() : "0");
       }
-      toast.success("Attestation revoked!");
-    }  catch (error) {
-      const e = error as Error;
-      toast.error(`Revocation failed: ${e.message}`);
+      setOptimisticUserAttested(false);
+      setOptimisticUserAttestation(undefined);
+
+      await judgeMutation.mutateAsync({
+        chainId,
+        logId,
+        isValid,
+        shouldRevoke: true,
+      });
+      void onAttestationAffirmationRevoked?.();
+    } catch (error) {
+      // Revert optimistic updates on error
+      setOptimisticValidCount(validAttestations);
+      setOptimisticInvalidCount(invalidAttestations);
+      setOptimisticUserAttested(userAttested);
+      setOptimisticUserAttestation(userAttestation);
+      // Error is handled by mutation's onError callback
     } finally {
       isValid ? setIsLoadingValidAttestation(false) : setIsLoadingInvalidValidAttestation(false);
-      void onAttestationAffirmationRevoked?.();
     }
-  }
+  };
 
   return (
-    <div className="flex items-center">
-      <button 
-        className="btn btn-xs btn-circle btn-ghost w-fit px-2"
-        onClick={() => attest(true)}
-      >
-        {isLoadingValidAttestation ? (
-          <div className="loading loading-spinner w-4 h-4" />
-        ) : (
-          (validAttestations ?? 0).toString()
-        )}
-        {userAttested && userAttestation === true ? (
-          <HandThumbUpIconFilled className="w-4 h-4" />
-        ) : (
-          <HandThumbUpIcon className="w-4 h-4" />
-        )}
-      </button>
-      <button 
-        className="btn btn-xs btn-circle btn-ghost w-fit px-2"
-        onClick={() => attest(false)}
-      >
-        {userAttested && userAttestation === false ? (
-          <HandThumDownIconFilled className="w-4 h-4" />
-        ) : (
-          <HandThumbDownIcon className="w-4 h-4" />
-        )}
-        {isLoadingInvalidAttestation ? (
-          <div className="loading loading-spinner w-4 h-4" />
-        ) : (
-          (invalidAttestations ?? 0).toString()
-        )}
-      </button>
-    </div>
+    <>
+      <Portal>
+        {isInsufficientStake && <InsufficientStake isOpen={isInsufficientStake} onClose={() => setIsInsufficientStake(false)} />}
+      </Portal>
+      {pendingTransactionId && (
+        <TransactionStatus
+          transactionId={pendingTransactionId}
+          loadingMessages={[
+            { message: "Processing attestation...", duration: 2000 },
+            { message: "Confirming on blockchain...", duration: 3000 },
+            { message: "Almost done...", duration: 2000 }
+          ]}
+          successMessage="Attestation confirmed successfully!"
+          onResolved={(success) => {
+            setPendingTransactionId(null);
+            if (success) {
+              void onAttestationMade?.();
+            }
+          }}
+        />
+      )}
+      <div className="flex items-center">
+        <button 
+          className="btn btn-xs btn-circle btn-ghost w-fit px-2"
+          onClick={() => attest(true)}
+        >
+          {isLoadingValidAttestation ? (
+            <div className="loading loading-spinner w-4 h-4" />
+          ) : (
+            (optimisticValidCount ?? 0).toString()
+          )}
+          {optimisticUserAttested && optimisticUserAttestation === true ? (
+            <HandThumbUpIconFilled className="w-4 h-4" />
+          ) : (
+            <HandThumbUpIcon className="w-4 h-4" />
+          )}
+        </button>
+        <button 
+          className="btn btn-xs btn-circle btn-ghost w-fit px-2"
+          onClick={() => attest(false)}
+        >
+          {optimisticUserAttested && optimisticUserAttestation === false ? (
+            <HandThumDownIconFilled className="w-4 h-4" />
+          ) : (
+            <HandThumbDownIcon className="w-4 h-4" />
+          )}
+          {isLoadingInvalidAttestation ? (
+            <div className="loading loading-spinner w-4 h-4" />
+          ) : (
+            (optimisticInvalidCount ?? 0).toString()
+          )}
+        </button>
+      </div>
+    </>
   )
 };
 

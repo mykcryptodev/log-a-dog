@@ -22,7 +22,6 @@ export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string 
       <div className="w-4 h-4 bg-base-200 rounded-full animate-pulse" />
     );
   }
-  console.log({ profile });
   if (profile?.imgUrl === "") {
     return (
       <div className={'mt-1.5'}>
@@ -51,7 +50,7 @@ export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string 
     <MediaRenderer
       client={client}
       src={profile.imgUrl}
-      className="w-4 h-4 rounded-full"
+      className={`${size ? size : "w-4 h-4"} rounded-full`}
       height={size ?? "32px"}
       width={size ?? "32px"}
     />

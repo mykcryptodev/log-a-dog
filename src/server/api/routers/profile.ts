@@ -1,40 +1,12 @@
 import { z } from "zod";
-import { BETA_PROFILES, MODERATION_V1, PROFILES } from "~/constants/addresses";
-import { ADDRESS_ZERO, createThirdwebClient, getContract, isAddress } from "thirdweb";
-import { readContract } from "thirdweb";
-import { env } from "~/env";
-import { SUPPORTED_CHAINS } from "~/constants/chains";
-
+import { getProfile as getZoraProfile } from '@zoralabs/coins-sdk';
+import { getOrSetCache, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
+import { neynarClient } from "~/lib/neynar";
 import {
   createTRPCRouter,
   publicProcedure,
 } from "~/server/api/trpc";
-import { usedUsernames } from "~/thirdweb/8453/0x2da5e4bba4e18f9a8f985651a846f64129459849";
-
-type NeynarUserResponse = Record<string, [
-  {
-    object: string;
-    fid: number;
-    custody_address: string;
-    username: string;
-    display_name: string;
-    pfp_url: string;
-    profile: {
-      bio: {
-        text: string;
-      };
-    };
-    follower_count: number;
-    following_count: number;
-    verifications: string[];
-    verified_addresses: {
-      eth_addresses: string[];
-      sol_addresses: string[];
-    };
-    active_status: string;
-    power_badge: boolean;
-  }
-]>;
+import { db } from "~/server/db";
 
 export const profileRouter = createTRPCRouter({
   getByAddress: publicProcedure
@@ -44,7 +16,18 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { address, chainId } = input;
-      const profile = await getProfile(address, chainId);
+      console.log({ address, chainId });
+      const cacheKey = `profile:${chainId}:${address}`;
+      console.log({ cacheKey });
+      const profile = await getOrSetCache(
+        cacheKey,
+        async () => {
+          const profile = await getProfile(address.toLowerCase());
+          return profile;
+        },
+        CACHE_DURATION.MEDIUM
+      );
+      console.log({ profile });
       return profile;
     }),
   getByUsername: publicProcedure
@@ -53,40 +36,42 @@ export const profileRouter = createTRPCRouter({
       username: z.string(),
     }))
     .query(async ({ input }) => {
-      const chain = SUPPORTED_CHAINS.find((c) => c.id === input.chainId);
-      const profileAddress = PROFILES[input.chainId];
-      if (!profileAddress || !chain) {
-        throw new Error("Chain not supported");
+      const { chainId, username } = input;
+      const cacheKey = `profile:${chainId}:username:${username}`;
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const profile = await getProfile(username);
+          return profile;
+        },
+        CACHE_DURATION.MEDIUM
+      );
+    }),
+  getById: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      id: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { id, chainId } = input;
+      const user = await ctx.db.user.findUniqueOrThrow({
+        where: {
+          id,
+        },
+      });
+      const { address } = user;
+      if (!address) {
+        throw new Error("User address not found");
       }
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
-      const profileContract = getContract({
-        client,
-        address: profileAddress,
-        chain,
-      });
-      const legacyProfileContract = getContract({
-        client,
-        address: BETA_PROFILES[input.chainId]!,
-        chain,
-      });
-      const [address, legacyAddress] = await Promise.all([
-        usedUsernames({
-          contract: profileContract,
-          arg_0: input.username,
-        }),
-        usedUsernames({
-          contract: legacyProfileContract,
-          arg_0: input.username,
-        }),
-      ]);
-      const usedAddress = address !== ADDRESS_ZERO ? address : legacyAddress;
-      if (usedAddress) {
-        const profile = await getProfile(usedAddress, input.chainId);
-        return profile;
-      }
-      return null;
+      const cacheKey = `profile:${chainId}:${address.toLowerCase()}`;
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const profile = await getProfile(address);
+          return profile;
+        },
+        CACHE_DURATION.MEDIUM
+      );
     }),
   getManyByAddress: publicProcedure
     .input(z.object({ 
@@ -95,7 +80,19 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { addresses, chainId } = input;
-      const profiles = await Promise.all(addresses.map((address) => getProfile(address, chainId)));
+      const profiles = await Promise.all(
+        addresses.map(async (address) => {
+          const cacheKey = `profile:${chainId}:${address.toLowerCase()}`;
+          return getOrSetCache(
+            cacheKey,
+            async () => {
+              const profile = await getProfile(address);
+              return profile;
+            },
+            CACHE_DURATION.MEDIUM
+          );
+        })
+      );
       return profiles;
     }),
   search: publicProcedure
@@ -105,163 +102,171 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { query, chainId } = input;
-      const profileAddress = PROFILES[chainId];
-      const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-      if (!profileAddress || !chain) {
-        throw new Error("Chain not supported");
-      }
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
+      const cacheKey = `profile:${chainId}:search:${query.toLowerCase()}`;
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const users = await db.user.findMany({
+            where: {
+              username: {
+                contains: query,
+              },
+            },
+            select: {
+              username: true,
+              image: true,
+              name: true,
+              fid: true,
+              address: true,
+            },
+            take: 10,
+          });
+          return users.map((user) => ({
+            username: user.username ?? '',
+            imgUrl: user.image ?? '',
+            metadata: '',
+            address: user.address,
+          }));
+        },
+        CACHE_DURATION.MEDIUM
+      );
+    }),
+  create: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      address: z.string(),
+      username: z.string(),
+      imgUrl: z.string(),
+      metadata: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const { chainId, address, username, imgUrl } = input;
+      
+      // Save profile data to database
+      // First try to find existing user by address
+      let user = await db.user.findFirst({
+        where: {
+          address: address.toLowerCase(),
+        },
       });
-      const profileContract = getContract({
-        client,
-        address: profileAddress,
-        chain,
-      });
-      if (isAddress(query)) {
-        const result = await readContract({
-          contract: profileContract,
-          method: {
-            name: "profiles",
-            type: "function",
-            stateMutability: "view",
-            inputs: [{ name: "address", type: "address" }],
-            outputs: [
-              { name: "username", type: "string" },
-              { name: "imgUrl", type: "string" },
-              { name: "metadata", type: "string" },
-            ],
+
+      if (user) {
+        // Update existing user
+        user = await db.user.update({
+          where: {
+            id: user.id,
           },
-          params: [query],
+          data: {
+            username,
+            image: imgUrl,
+            name: username, // Use username as display name for now
+          },
         });
-        if (result) {
-          return {
-            address: query,
-            username: result[0],
-            imgUrl: result[1],
-            metadata: result[2],
-          }
-        }
       } else {
-        const result = await readContract({
-          contract: profileContract,
-          method: {
-            name: "usedUsernames",
-            type: "function",
-            stateMutability: "view",
-            inputs: [{ name: "username", type: "string" }],
-            outputs: [{ name: "address", type: "address" }],
+        // Create new user
+        user = await db.user.create({
+          data: {
+            address: address.toLowerCase(),
+            username,
+            image: imgUrl,
+            name: username, // Use username as display name for now
           },
-          params: [query],
         });
-        if (result) {
-          const profile = await getProfile(result, chainId);
-          return profile
-        }
       }
-      return null;
+
+      // Invalidate Redis cache for all profile queries for this chain
+      const pattern = `profile:${chainId}:*`;
+      await deleteCachedData(pattern);
+
+      // Return a success indicator instead of queueId since we're not using blockchain
+      return { success: true, userId: user.id };
     }),
 });
 
-async function getProfile (address: string, chainId: number) {
-  const profileAddress = PROFILES[chainId];
-  const betaProfileAddress = BETA_PROFILES[chainId]!;
-  const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
-  const moderationAddress = MODERATION_V1[chainId];
-  if (!profileAddress || !chain || !moderationAddress) {
-    throw new Error("Chain not supported");
-  }
-  const client = createThirdwebClient({
-    secretKey: env.THIRDWEB_SECRET_KEY,
-  });
-  const betaProfileContract = getContract({
-    client,
-    address: betaProfileAddress,
-    chain,
-  });
-  const profileContract = getContract({
-    client,
-    address: profileAddress,
-    chain,
-  });
-  const moderationContract = getContract({
-    client,
-    address: moderationAddress,
-    chain,
-  });
-  const [legacyProfile, profile, isRedacted] = await Promise.all([
-    readContract({
-      contract: betaProfileContract,
-      method: {
-        name: "profiles",
-        type: "function",
-        stateMutability: "view",
-        inputs: [{ name: "address", type: "address" }],
-        outputs: [
-          { name: "username", type: "string" },
-          { name: "imgUrl", type: "string" },
-          { name: "metadata", type: "string" },
-        ],
-      },
-      params: [address],
-    }),
-    readContract({
-      contract: profileContract,
-      method: {
-        name: "profiles",
-        type: "function",
-        stateMutability: "view",
-        inputs: [{ name: "address", type: "address" }],
-        outputs: [
-          { name: "username", type: "string" },
-          { name: "imgUrl", type: "string" },
-          { name: "metadata", type: "string" },
-        ],
-      },
-      params: [address],
-    }),
-    readContract({
-      contract: moderationContract,
-      method: {
-        name: "redactedAddresses",
-        type: "function",
-        stateMutability: "view",
-        inputs: [{ name: "address", type: "address" }],
-        outputs: [{ name: "redacted", type: "bool" }],
-      },
-      params: [address],
-    }),
-  ]);
-  if (profile[0] === '' && legacyProfile[0] === '') {
-    // check if the user has a neynar profile and return that if they do
-    const response = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk-by-address?addresses=${address}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        api_key: 'NEYNAR_API_DOCS',
-      },
+async function getZoraProfileData(addressOrUsername: string) {
+  try {
+    const response = await getZoraProfile({
+      identifier: addressOrUsername,
     });
-
-    const neynarUser = await response.json() as NeynarUserResponse;
-    if (neynarUser[address]) {
-      const user = neynarUser[address]?.[0];
-      if (user) {
+    
+    if (response?.data?.profile) {
+      const profile = response.data.profile;
+      const zoraAddresses = [
+        profile.publicWallet.walletAddress,
+        ...profile.linkedWallets.edges.map(w => w.node.walletAddress),
+      ];
+      // the user's zora addresses must match the address we were given.
+      if (zoraAddresses.includes(addressOrUsername)) {
         return {
-          username: user.username,
-          imgUrl: user.pfp_url,
-          metadata: '',
-          address,
+          username: profile.displayName ?? profile.handle ?? '',
+          imgUrl: profile.avatar?.medium ?? '',
+          metadata: profile,
+          address: profile.publicWallet.walletAddress,
         };
       }
     }
+    return null;
+  } catch (error) {
+    console.error('Error fetching Zora profile:', error);
+    return null;
   }
-  const usedProfile = profile?.[0] !== '' ? profile : legacyProfile;
-  const redactedImage = "https://ipfs.io/ipfs/QmTsT4VEnakeaJNYorc1dVWfyAyLGTc1sMWpqnYzRq39Q4/avatar.webp";
-  const shortenedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+async function getProfile (address: string) {
+  // First check if we have user data in our database (from sessionData)
+  const dbUser = await db.user.findFirst({
+    where: {
+      address: address.toLowerCase(),
+    },
+    select: {
+      username: true,
+      image: true,
+      name: true,
+      fid: true,
+    },
+  });
+
+  // If we have database user data with username and image, use that
+  if (dbUser?.username && dbUser?.image) {
+    return {
+      username: dbUser.username,
+      imgUrl: dbUser.image,
+      metadata: '',
+      address,
+    };
+  }
+
+  // First try to get Zora profile
+  const zoraProfile = await getZoraProfileData(address);
+  if (zoraProfile) {
+    console.log('Zora profile found', zoraProfile);
+    return zoraProfile;
+  }
+
+  try {
+    const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
+      addresses: [address],
+    });
+    
+    const addressKey = address.toLowerCase();
+    const user = response[addressKey]?.[0];
+    
+    if (user) {
+      return {
+        username: user.display_name ?? user.username,
+        imgUrl: user.pfp_url,
+        metadata: '',
+        address,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching from Neynar:", error);
+  }
+
   return {
-    username: isRedacted ? shortenedAddress : usedProfile[0],
-    imgUrl: isRedacted ? redactedImage : usedProfile[1],
-    metadata: usedProfile[2],
+    username: '',
+    imgUrl: '',
+    metadata: '',
     address,
   };
 }

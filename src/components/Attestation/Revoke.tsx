@@ -7,11 +7,11 @@ import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { LOG_A_DOG } from "~/constants/addresses";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
-import { revokeHotdogLog } from "~/thirdweb/84532/0x1bf5c7e676c8b8940711613086052451dcf1681d";
+import { revokeHotdogLog } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c";
 
 type Props = {
   hotdog: {
-    logId: bigint;
+    logId: string;
     eater: string;
   }
   onRevocation?: () => void;
@@ -33,7 +33,7 @@ export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
         address: LOG_A_DOG[activeChain.id]!,
         client,
       }),
-      logId: hotdog.logId,
+      logId: BigInt(hotdog.logId),
     });
 
     setIsLoading(true);

@@ -55,7 +55,7 @@ export const JoinRequestList: FC<Props> = ({ contest, onRequestAccepted, onReque
         return (
           <div key={request} className="flex items-center gap-2">
             <Image
-              src={profile?.imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/") ?? ""}
+              src={profile?.imgUrl?.replace("ipfs://", "https://ipfs.io/ipfs/") ?? ""}
               width={24}
               height={24}
               className="rounded-full"

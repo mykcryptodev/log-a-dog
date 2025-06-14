@@ -10,6 +10,8 @@ import { ThirdwebProviderWithActiveChain } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
 import { Layout } from "~/components/utils/Layout";
 import 'react-toastify/dist/ReactToastify.css';
+import '@farcaster/auth-kit/styles.css';
+import { FarcasterProvider } from "~/providers/Farcaster";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -28,12 +30,14 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <SessionProvider session={session}>
       <ActiveChainContext.Provider value={activeChainContext}>
-        <ThirdwebProviderWithActiveChain>
-          <Layout>
-            <Component {...pageProps} />
-            <div id="portal" />
-          </Layout>
-        </ThirdwebProviderWithActiveChain>
+        <FarcasterProvider>
+          <ThirdwebProviderWithActiveChain>
+            <Layout>
+              <Component {...pageProps} />
+              <div id="portal" />
+            </Layout>
+          </ThirdwebProviderWithActiveChain>
+        </FarcasterProvider>
       </ActiveChainContext.Provider>
     </SessionProvider>
   );

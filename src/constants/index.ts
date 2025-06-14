@@ -1,7 +1,10 @@
-import { base, baseSepolia } from "thirdweb/chains";
+import { parseEther } from "viem";
 
-type ProjectId = Record<number, string>;
-export const COINBASE_WAAS_PROJECT_ID: ProjectId = {
-  [baseSepolia.id]: "9418738b-c109-4db5-9ac0-3333e0aabbe9",
-  [base.id]: "d5c9dcbc-0f56-418c-8ca8-8e3081fbb2bf",
-};
+export * from "./addresses";
+export * from "./chains";
+
+// TODO: update start time
+export const CONTEST_START_TIME = "2025-04-23T12:00:00-04:00"
+export const CONTEST_END_TIME = "2025-09-05T12:00:00-04:00"
+
+export const MINIMUM_STAKE = parseEther("100");
