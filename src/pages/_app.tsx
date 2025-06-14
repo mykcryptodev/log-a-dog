@@ -9,7 +9,6 @@ import { useRouter } from "next/router";
 import { ThirdwebProviderWithActiveChain } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
 import { Layout } from "~/components/utils/Layout";
-import 'react-toastify/dist/ReactToastify.css';
 import '@farcaster/auth-kit/styles.css';
 import { FarcasterProvider } from "~/providers/Farcaster";
 

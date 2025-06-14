@@ -1,9 +1,8 @@
 import { type FC, type ReactNode,useEffect, useState } from "react"
-import { ToastContainer } from 'react-toastify';
 import { useRouter } from "next/router";
-import Changelog from "~/components/utils/Changelog";
 import Link from "next/link";
 import { BottomNav } from "./BottomNav";
+import { ToastProvider } from "~/providers/Toast";
 interface LayoutProps {
   children: ReactNode
 }
@@ -43,11 +42,8 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               </Link>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Changelog />
-          </div>
         </div>
-        <ToastContainer />
+        <ToastProvider />
         {children}
         <BottomNav />
       </div>

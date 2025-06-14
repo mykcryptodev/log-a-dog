@@ -73,7 +73,7 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate, refetchTimes
   });
 
   return (
-    <div className="w-full max-w-2xl card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow p-4">
+    <div className="w-full max-w-2xl card bg-base-200 bg-opacity-25 backdrop-blur-sm p-4">
       <div className="flex items-center mb-4 relative">
         <div className="absolute right-0">
           <button 
