@@ -103,12 +103,12 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     <div>
       {!hideTitle && <h1 className="text-2xl font-bold mb-4">Stake $HOTDOG</h1>}
       <div className="space-y-4">
-        <div className="stats shadow w-full">
+        <div className="stats shadow w-full max-w-full stats-vertical md:stats-horizontal">
           <div className="stat text-center">
             <div className="stat-title">Amount to Stake</div>
             <input
               type="number"
-              className="stat-value text-primary bg-transparent text-center focus:outline-none"
+              className="stat-value text-primary bg-transparent text-center focus:outline-none w-full max-w-[12ch]"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
