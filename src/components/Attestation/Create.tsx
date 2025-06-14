@@ -1,4 +1,4 @@
-import { type FC,useContext, useState, useMemo } from 'react';
+import { type FC, useContext, useState, useMemo } from 'react';
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
@@ -8,6 +8,8 @@ import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { TransactionStatus } from '../utils/TransactionStatus';
 import { DEFAULT_UPLOAD_PHRASE } from '~/constants';
+import { FarcasterContext } from "~/providers/Farcaster";
+import { sdk } from "@farcaster/frame-sdk";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -22,6 +24,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
   const utils = api.useUtils();
   const [imgUri, setImgUri] = useState<string | undefined>();
+  const [lastLoggedImgUri, setLastLoggedImgUri] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const wallet = useActiveWallet();
 
@@ -31,6 +34,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
+  const farcaster = useContext(FarcasterContext);
+  const isMiniApp = farcaster?.isMiniApp ?? false;
   const [transactionId, setTransactionId] = useState<string | undefined>();
   const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
 
@@ -56,6 +61,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
       // Invalidate the hotdog query cache
       void utils.hotdog.getAll.invalidate();
+
+      if (isMiniApp) {
+        const dialog = document.getElementById('share_cast_modal') as HTMLDialogElement;
+        dialog?.showModal();
+      }
     }
     setIsTransactionIdResolved(true);
   }
@@ -83,6 +93,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           imageUri: imgUri!,
           metadataUri: '',
         });
+        setLastLoggedImgUri(imgUri!);
         setTransactionId(transactionId);
 
         // close the modal
@@ -111,6 +122,19 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         Log a Dog
       </button>
     )
+  };
+
+  const shareOnFarcaster = async () => {
+    try {
+      await sdk.actions.composeCast({
+        text: 'Just logged a dog on Log a Dog!',
+        embeds: lastLoggedImgUri ? [lastLoggedImgUri] : [],
+      });
+    } catch (err) {
+      console.error('Failed to compose cast', err);
+    } finally {
+      (document.getElementById('share_cast_modal') as HTMLDialogElement)?.close();
+    }
   };
 
   return (
@@ -169,9 +193,9 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         </div>
       </dialog>
       {transactionId && !isTransactionIdResolved && (
-        <TransactionStatus 
-          onResolved={handleOnResolved} 
-          transactionId={transactionId} 
+        <TransactionStatus
+          onResolved={handleOnResolved}
+          transactionId={transactionId}
           loadingMessages={[
             { message: "Beaming dog into space..." },
             { message: "Guzzlin glizzy into the blockchain..."},
@@ -185,6 +209,18 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           errorMessage="Failed to log your dog"
         />
       )}
+      <dialog id="share_cast_modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Share on Farcaster?</h3>
+          <p className="py-4">Would you like to share your logged dog on Farcaster?</p>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn">No thanks</button>
+            </form>
+            <button className="btn btn-primary" onClick={shareOnFarcaster}>Share</button>
+          </div>
+        </div>
+      </dialog>
     </>
   )
 };
