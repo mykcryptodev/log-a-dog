@@ -29,14 +29,14 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <SessionProvider session={session}>
       <ActiveChainContext.Provider value={activeChainContext}>
-        <FarcasterProvider>
-          <ThirdwebProviderWithActiveChain>
+        <ThirdwebProviderWithActiveChain>
+          <FarcasterProvider>
             <Layout>
               <Component {...pageProps} />
               <div id="portal" />
             </Layout>
-          </ThirdwebProviderWithActiveChain>
-        </FarcasterProvider>
+          </FarcasterProvider>
+        </ThirdwebProviderWithActiveChain>
       </ActiveChainContext.Provider>
     </SessionProvider>
   );
