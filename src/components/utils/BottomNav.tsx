@@ -14,24 +14,24 @@ export const BottomNav: FC = () => {
   const isActive = (path: string) => router.pathname === path;
 
   return (
-    <div className="btm-nav z-50 text-sm">
+    <div className="btm-nav bg-opacity-50 backdrop-blur-lg z-50 text-sm">
       <button 
         onClick={() => void router.push('/')}
-        className={isActive('/') ? 'active' : ''}
+        className={isActive('/') ? 'border-t-2 border-primary' : ''}
       >
         <NewspaperIcon className="h-6 w-6" />
         Feed
       </button>
       <button 
         onClick={() => void router.push('/earn')}
-        className={isActive('/earn') ? 'active' : ''}
+        className={isActive('/earn') ? 'border-t-2 border-primary' : ''}
       >
         <CurrencyDollarIcon className="h-6 w-6" />
         Earn
       </button>
       <button 
         onClick={() => void router.push('/faq')}
-        className={isActive('/faq') ? 'active' : ''}
+        className={isActive('/faq') ? 'border-t-2 border-primary' : ''}
       >
         <QuestionMarkCircleIcon className="h-6 w-6" />
         FAQ
