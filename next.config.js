@@ -8,7 +8,7 @@ await import("./src/env.js");
 const config = {
   reactStrictMode: false,
   experimental: {
-    optimizePackageImports: ['thirdweb']
+    optimizePackageImports: ['thirdweb', '@farcaster/frame-sdk']
   },
 
   /**
@@ -20,7 +20,7 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
-  transpilePackages: ['react-tweet'],
+  transpilePackages: ['react-tweet', '@farcaster/frame-sdk'],
   images: {
     remotePatterns: [
       {
