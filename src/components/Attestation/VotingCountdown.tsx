@@ -1,4 +1,4 @@
-import { FC, useContext, useEffect, useState } from "react";
+import { type FC, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useReadContract } from "thirdweb/react";
 import { getContract } from "thirdweb";
@@ -6,7 +6,7 @@ import { formatEther } from "viem";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { STAKING, ATTESTATION_MANAGER } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
-
+        
 interface Props {
   timestamp: string; // unix timestamp in seconds
   logId?: string;
@@ -39,6 +39,7 @@ export const VotingCountdown: FC<Props> = ({
       setSecondsLeft(calculateTimeLeft());
     }, 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timestamp]);
 
   const hours = Math.floor(secondsLeft / 3600)

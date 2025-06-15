@@ -7,18 +7,18 @@ import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
-import Revoke from "~/components/Attestation/Revoke";
-import AiJudgement from "~/components/Attestation/AiJudgement";
-import Comments from "~/components/Attestation/Comments";
-import JudgeAttestation from "~/components/Attestation/Judge";
-import VotingCountdown from "~/components/Attestation/VotingCountdown";
 import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
 import { ZERO_ADDRESS } from "thirdweb";
 import { env } from "~/env";
-import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import dynamic from "next/dynamic";
+
+// Make heavy components dynamic
 const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
+const Revoke = dynamic(() => import("~/components/Attestation/Revoke"), { ssr: false });
+const AiJudgement = dynamic(() => import("~/components/Attestation/AiJudgement"), { ssr: false });
+const JudgeAttestation = dynamic(() => import("~/components/Attestation/Judge"), { ssr: false });
+const VotingCountdown = dynamic(() => import("~/components/Attestation/VotingCountdown"), { ssr: false });
 
 const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60; // 48 hours
 
@@ -26,6 +26,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const { logId } = context.params as { logId: string };
   return { props: { logId } };
 };
+
+// Replace viem's isAddressEqual with a simple utility
+const isAddressEqual = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
@@ -134,10 +137,12 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
                 />
               </div>
               <div className="flex justify-end items-center gap-1">
-                <Comments
-                  logId={hotdog.logId.toString()}
-                  metadataUri={hotdog.metadataUri}
-                />
+                {/* 
+                  <Comments
+                    logId={hotdog.logId.toString()}
+                    metadataUri={hotdog.metadataUri}
+                  /> 
+                 */}
                 {!isExpired && (
                   <JudgeAttestation
                     userAttested={userAttested}
