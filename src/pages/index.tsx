@@ -9,7 +9,7 @@ import { APP_DESCRIPTION } from "~/constants";
 
 const miniAppMetadata = {
   version: "next",
-  imageUrl: "https://logadog.xyz/images/logo.png",
+  imageUrl: "https://logadog.xyz/images/og-image.png",
   button: {
     title: "🌭 Log a Dog",
     action: {
