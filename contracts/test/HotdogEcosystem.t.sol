@@ -240,7 +240,7 @@ contract HotdogEcosystemTest is Test {
         vm.stopPrank();
         
         // Check that attestation period was started
-        (uint256 startTime, uint256 endTime, AttestationManager.AttestationStatus status,,, ) = attestationManager.getAttestationPeriod(logId);
+        (uint256 startTime, uint256 endTime, AttestationManager.AttestationStatus status,,,, ) = attestationManager.getAttestationPeriod(logId);
         assertTrue(startTime > 0);
         assertEq(endTime, startTime + 48 hours);
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
@@ -273,7 +273,7 @@ contract HotdogEcosystemTest is Test {
         vm.stopPrank();
         
         // Check attestation period state
-        (,, AttestationManager.AttestationStatus status, uint256 totalValidStake, uint256 totalInvalidStake,) = attestationManager.getAttestationPeriod(logId);
+        (,, AttestationManager.AttestationStatus status, uint256 totalValidStake, uint256 totalInvalidStake,,) = attestationManager.getAttestationPeriod(logId);
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
         assertEq(totalValidStake, 100 * 10**18);
         assertEq(totalInvalidStake, 50 * 10**18);
@@ -349,7 +349,7 @@ contract HotdogEcosystemTest is Test {
         logADog.resolveAttestationPeriod(logId);
         
         // Check resolution
-        (,, AttestationManager.AttestationStatus status,,, bool isValid) = attestationManager.getAttestationPeriod(logId);
+        (,, AttestationManager.AttestationStatus status,,, bool isValid,) = attestationManager.getAttestationPeriod(logId);
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Resolved));
         assertTrue(isValid); // Valid side won
         
@@ -535,7 +535,7 @@ contract HotdogEcosystemTest is Test {
         assertEq(stakingContract.getAvailableStake(user2), 250 * 10**18); // 300 - 50
 
         // Verify attestation period info
-        (,, AttestationManager.AttestationStatus status, uint256 totalValidStake, uint256 totalInvalidStake,) = 
+        (,, AttestationManager.AttestationStatus status, uint256 totalValidStake, uint256 totalInvalidStake,,) = 
             attestationManager.getAttestationPeriod(logId);
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
         assertEq(totalValidStake, 50 * 10**18);

@@ -65,3 +65,36 @@ model VerificationToken {
 
     @@unique([identifier, token])
 }
+
+model DogEvent {
+    id                String   @id @default(cuid())
+    // Blockchain data
+    chainId           String
+    transactionHash   String   @unique // Ensures no duplicate events
+    address           String
+    blockTimestamp    BigInt
+
+    
+    logId             String
+    logger            String
+    eater             String
+    imageUri          String
+    metadataUri       String?
+    timestamp         BigInt
+    zoraCoin          String
+    
+    webhookId         String   @unique // The 'id' field from webhook payload
+    
+    attestationResolved     Boolean?  @default(false)
+    attestationValid        Boolean?
+    attestationTotalValidStake    String?
+    attestationTotalInvalidStake  String?
+    attestationResolvedAt   DateTime?
+    attestationTransactionHash    String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    @@index([transactionHash])
+    @@index([eater])
+}

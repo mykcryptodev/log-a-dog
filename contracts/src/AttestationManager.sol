@@ -30,7 +30,7 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
     ILogADog public logADogContract;
     
     // Attestation parameters
-    uint256 public constant ATTESTATION_WINDOW = 48 hours;
+    uint256 public constant ATTESTATION_WINDOW = 3 minutes;
     uint256 public constant MINIMUM_ATTESTATION_STAKE = 50 * 10**18; // 50 HOTDOG
     uint256 public constant SLASH_PERCENTAGE = 15; // 15% of staked amount
     
@@ -52,6 +52,7 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
         mapping(address => uint256) attestorStakes;
         mapping(address => bool) hasAttested;
         bool isValid; // Final result
+        uint256 resolvedAt; // Timestamp when period was resolved
     }
     
     mapping(uint256 => AttestationPeriod) public attestationPeriods;
@@ -255,6 +256,7 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
             emit TokensSlashed(logId, losers, slashedAmounts);
         }
         
+        period.resolvedAt = block.timestamp;
         emit AttestationPeriodResolved(logId, logIsValid, period.totalValidStake, period.totalInvalidStake);
     }
     
@@ -267,6 +269,7 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
      * @return totalValidStake Total stake on valid side
      * @return totalInvalidStake Total stake on invalid side
      * @return isValid Final result (only valid after resolution)
+     * @return resolvedAt Timestamp when period was resolved (0 if not resolved)
      */
     function getAttestationPeriod(uint256 logId) external view returns (
         uint256 startTime,
@@ -274,7 +277,8 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
         AttestationStatus status,
         uint256 totalValidStake,
         uint256 totalInvalidStake,
-        bool isValid
+        bool isValid,
+        uint256 resolvedAt
     ) {
         AttestationPeriod storage period = attestationPeriods[logId];
         return (
@@ -283,7 +287,8 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
             period.status,
             period.totalValidStake,
             period.totalInvalidStake,
-            period.isValid
+            period.isValid,
+            period.resolvedAt
         );
     }
     
@@ -398,5 +403,30 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
      */
     function addLogManager(address manager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(LOG_MANAGER_ROLE, manager);
+    }
+
+    /**
+     * @notice Get batch attestation status for multiple logs
+     * @param logIds Array of log IDs to query
+     * @return statuses Array of attestation statuses
+     * @return isValid Array indicating if each log is valid
+     * @return endTimes Array of attestation end times
+     */
+    function getBatchAttestationStatus(uint256[] calldata logIds) 
+        external view returns (
+            AttestationStatus[] memory statuses,
+            bool[] memory isValid,
+            uint256[] memory endTimes
+        ) {
+        statuses = new AttestationStatus[](logIds.length);
+        isValid = new bool[](logIds.length);
+        endTimes = new uint256[](logIds.length);
+        
+        for (uint256 i = 0; i < logIds.length; i++) {
+            AttestationPeriod storage period = attestationPeriods[logIds[i]];
+            statuses[i] = period.status;
+            isValid[i] = period.isValid;
+            endTimes[i] = period.endTime;
+        }
     }
 } 
