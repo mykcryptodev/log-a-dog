@@ -11,7 +11,7 @@ import {
 import { client, serverWallet } from "~/server/utils";
 import { getHotdogLogs, getTotalPagesForLogs, logHotdogOnBehalf, getHotdogLogsCount, getHotdogLogsRange } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
-import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
+import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
@@ -80,6 +80,14 @@ interface ProcessedHotdog {
   logger: string;
   zoraCoin: ZoraCoinDetails | null;
   metadata: HotdogMetadata | null;
+  attestationPeriod?: {
+    startTime: string;
+    endTime: string;
+    status: number;
+    totalValidStake: string;
+    totalInvalidStake: string;
+    isValid: boolean;
+  };
 }
 
 interface GetAllResponse {
@@ -164,6 +172,76 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
   return coinDetailsMap;
 }
 
+// Helper function to fetch attestation periods in batch
+async function getAttestationPeriodsBatch(logIds: string[], chainId: number): Promise<Map<string, {
+  logId: string;
+  startTime: string;
+  endTime: string;
+  status: number;
+  totalValidStake: string;
+  totalInvalidStake: string;
+  isValid: boolean;
+}>> {
+  const attestationPeriodMap = new Map<string, {
+    logId: string;
+    startTime: string;
+    endTime: string;
+    status: number;
+    totalValidStake: string;
+    totalInvalidStake: string;
+    isValid: boolean;
+  }>();
+  
+  // Process in chunks to avoid overwhelming the RPC
+  const chunkSize = 50;
+  for (let i = 0; i < logIds.length; i += chunkSize) {
+    const chunk = logIds.slice(i, i + chunkSize);
+    
+    try {
+      const attestationContract = getContract({
+        address: ATTESTATION_MANAGER[chainId]!,
+        client,
+        chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+      });
+
+      // Fetch attestation periods for this chunk
+      const attestationPeriods = await Promise.all(
+        chunk.map(async (logId) => {
+          try {
+            const period = await getAttestationPeriod({
+              contract: attestationContract,
+              logId: BigInt(logId),
+            });
+            return {
+              logId,
+              startTime: period[0].toString(),
+              endTime: period[1].toString(),
+              status: Number(period[2]),
+              totalValidStake: period[3].toString(),
+              totalInvalidStake: period[4].toString(),
+              isValid: Boolean(period[5]),
+            };
+          } catch (error) {
+            console.error(`Error fetching attestation period for log ${logId}:`, error);
+            return null;
+          }
+        })
+      );
+
+      // Add to map
+      attestationPeriods.forEach(period => {
+        if (period) {
+          attestationPeriodMap.set(period.logId, period);
+        }
+      });
+    } catch (error) {
+      console.error(`Error fetching attestation periods for chunk:`, error);
+    }
+  }
+  
+  return attestationPeriodMap;
+}
+
 export const hotdogRouter = createTRPCRouter({
   getAll: publicProcedure
     .input(z.object({ 
@@ -227,15 +305,19 @@ export const hotdogRouter = createTRPCRouter({
         })
       ]);
 
-      // Get attestation counts for each log ID
-      const attestationCounts = await getAttestationCounts({
-        contract: getContract({
-          address: ATTESTATION_MANAGER[chainId]!,
-          client,
-          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+      // Get attestation counts and periods for each log ID
+      const logIds = dogResponse[0].map(log => log.logId.toString());
+      const [attestationCounts, attestationPeriods] = await Promise.all([
+        getAttestationCounts({
+          contract: getContract({
+            address: ATTESTATION_MANAGER[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+          logIds: dogResponse[0].map(log => log.logId),
         }),
-        logIds: dogResponse[0].map(log => log.logId),
-      });
+        getAttestationPeriodsBatch(logIds, chainId)
+      ]);
 
       console.log({ dogResponse })
       // Convert redactedLogIds from readonly bigint[] to string[]
@@ -291,11 +373,13 @@ export const hotdogRouter = createTRPCRouter({
       const processedHotdogs = processedResponse.logs.map(log => {
         const zoraCoin = zoraCoinDetails.get(log.zoraCoin.toLowerCase()) ?? null;
         const metadata = metadataMap.get(log.metadataUri.toLowerCase()) ?? null;
+        const attestationPeriod = attestationPeriods.get(log.logId);
 
         return {
           ...log,
           zoraCoin,
           metadata,
+          attestationPeriod,
         } as ProcessedHotdog;
       });
 
@@ -398,7 +482,7 @@ export const hotdogRouter = createTRPCRouter({
         return cachedData;
       }
 
-      const [redactedLogIds, dogResponse, attestationCounts, userAttestations] = await Promise.all([
+      const [redactedLogIds, dogResponse, attestationCounts, userAttestations, attestationPeriods] = await Promise.all([
         getRedactedLogIds({
           contract: getContract({
             address: MODERATION[chainId]!,
@@ -431,6 +515,7 @@ export const hotdogRouter = createTRPCRouter({
           }),
           user,
         }),
+        getAttestationPeriodsBatch([logId], chainId)
       ]);
 
       const hotdogLog = dogResponse?.[0];
@@ -464,6 +549,7 @@ export const hotdogRouter = createTRPCRouter({
         ...processedResponse.logs[0]!,
         zoraCoin: processedResponse.logs[0]?.zoraCoin ? zoraCoinDetails.get(processedResponse.logs[0].zoraCoin.toLowerCase()) ?? null : null,
         metadata,
+        attestationPeriod: attestationPeriods.get(logId),
       };
 
       const response = {
@@ -801,6 +887,38 @@ export const hotdogRouter = createTRPCRouter({
         return transactionId;
       } catch (error) {
         console.error("Error processing attestation:", error);
+        throw error;
+      }
+    }),
+  rewardModerators: protectedProcedure
+    .input(z.object({
+      chainId: z.number(),
+      logId: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const { chainId, logId } = input;
+
+      try {
+        const transaction = resolveAttestationPeriod({
+          contract: getContract({
+            address: ATTESTATION_MANAGER[chainId]!,
+            client,
+            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          }),
+          logId: BigInt(logId),
+        });
+
+        const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
+
+        // Invalidate Redis cache for all hotdog queries and leaderboard for this chain
+        const hotdogPattern = `hotdogs:${chainId}:*`;
+        const leaderboardPattern = `leaderboard:${chainId}:*`;
+        await deleteCachedData(hotdogPattern);
+        await deleteCachedData(leaderboardPattern);
+
+        return transactionId;
+      } catch (error) {
+        console.error("Error resolving attestation period:", error);
         throw error;
       }
     }),

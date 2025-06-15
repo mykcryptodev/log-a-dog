@@ -114,7 +114,14 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
                   />
                 </div>
                 <div className="flex justify-end items-center gap-2">
-                  <VotingCountdown timestamp={hotdog.timestamp.toString()} />
+                  <VotingCountdown 
+                    timestamp={hotdog.timestamp.toString()} 
+                    logId={hotdog.logId.toString()}
+                    validAttestations={validAttestations?.toString()}
+                    invalidAttestations={invalidAttestations?.toString()}
+                    onResolutionComplete={() => void refetchDogData()}
+                    attestationPeriod={undefined}
+                  />
                   <JudgeAttestation
                     disabled
                     userAttested={undefined}
