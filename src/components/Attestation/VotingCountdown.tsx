@@ -6,6 +6,8 @@ import { formatEther } from "viem";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { STAKING, ATTESTATION_MANAGER } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
+import { QuestionMarkCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Portal } from "~/components/utils/Portal";
         
 interface Props {
   timestamp: string; // unix timestamp in seconds
@@ -138,10 +140,35 @@ export const VotingCountdown: FC<Props> = ({
     return <span className="font-mono text-xs">Voting ended</span>;
   }
 
+  const id = `${logId ?? timestamp}-voting-info`;
+
   return (
-    <span className="font-mono text-xs">
-      {hours}h {minutes}m {seconds}s
-    </span>
+    <>
+      <span className="font-mono text-xs flex items-center gap-1">
+        <label htmlFor={id} className="btn btn-ghost btn-circle btn-xs">
+          <QuestionMarkCircleIcon className="h-3 w-3" />
+        </label>
+        {hours}h {minutes}m {seconds}s
+      </span>
+      <Portal>
+        <input type="checkbox" id={id} className="modal-toggle" />
+        <div className="modal modal-bottom sm:modal-middle" role="dialog">
+          <div className="modal-box relative bg-base-100 bg-opacity-90 backdrop-blur-lg">
+            <label htmlFor={id} className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4">
+              <XMarkIcon className="h-4 w-4" />
+            </label>
+            <h3 className="font-bold text-lg">Hotdog vs Not Hotdog</h3>
+            <p className="py-2">The countdown timer is how long you have to judge whether or not the hotdog is valid or not.</p>
+            <p className="py-2">Users moderate each other by judging if an uploaded photo should count towards the contest or not. This prevents duplicates, fakes, and other spam.</p>
+            <p className="py-2">To keep users honest, they stake $HOTDOG tokens. If their judgement aligns with the majority of other judgements, they earn a portion of $HOTDOG tokens from voters who judged incorrectly.</p>
+            <p className="py-2">Once the timer is over, nobody can vote on this submission anymore and if the submission received more yes&apos;s than no&apos;s, it counts towards the total.</p>
+            <div className="modal-action">
+              <label htmlFor={id} className="btn">Close</label>
+            </div>
+          </div>
+        </div>
+      </Portal>
+    </>
   );
 };
 
