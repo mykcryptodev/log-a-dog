@@ -161,7 +161,7 @@ export const VotingCountdown: FC<Props> = ({
             <p className="py-2">The countdown timer is how long you have to judge whether or not the hotdog is valid or not.</p>
             <p className="py-2">Users moderate each other by judging if an uploaded photo should count towards the contest or not. This prevents duplicates, fakes, and other spam.</p>
             <p className="py-2">To keep users honest, they stake $HOTDOG tokens. If their judgement aligns with the majority of other judgements, they earn a portion of $HOTDOG tokens from voters who judged incorrectly.</p>
-            <p className="py-2">Once the timer is over, nobody can vote on this submission anymore and if the submission received more yes's than no's, it counts towards the total.</p>
+            <p className="py-2">Once the timer is over, nobody can vote on this submission anymore and if the submission received more yes&apos;s than no&apos;s, it counts towards the total.</p>
             <div className="modal-action">
               <label htmlFor={id} className="btn">Close</label>
             </div>

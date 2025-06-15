@@ -1,4 +1,4 @@
-import { FC, useContext } from "react";
+import { type FC, useContext } from "react";
 import { useSession } from "next-auth/react";
 import { TransactionButton, useActiveWallet, useReadContract } from "thirdweb/react";
 import { getContract } from "thirdweb";
