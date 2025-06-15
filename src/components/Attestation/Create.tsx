@@ -51,11 +51,16 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const handleOnResolved = async (success: boolean, data?: unknown) => {
     if (success && account) {
-      if (data && typeof data === "object" && (data as ExecutionResult).transactionHash) {
+      if (
+        data &&
+        typeof data === "object" &&
+        "transactionHash" in data &&
+        (data as ExecutionResult & { transactionHash: `0x${string}` }).transactionHash
+      ) {
         try {
-          const executionData = data as ExecutionResult;
+          const executionData = data as ExecutionResult & { transactionHash: `0x${string}` };
           const chainId = executionData.chain.id;
-          const txHash = executionData.transactionHash as `0x${string}`;
+          const txHash = executionData.transactionHash;
           const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
           if (chain) {
             const rpcRequest = getRpcClient({ client: thirdwebClient, chain });
