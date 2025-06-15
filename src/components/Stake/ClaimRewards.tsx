@@ -1,0 +1,66 @@
+import { FC, useContext } from "react";
+import { useSession } from "next-auth/react";
+import { TransactionButton, useActiveWallet, useReadContract } from "thirdweb/react";
+import { getContract } from "thirdweb";
+import { formatEther } from "viem";
+import ActiveChainContext from "~/contexts/ActiveChain";
+import { STAKING } from "~/constants/addresses";
+import { client } from "~/providers/Thirdweb";
+import { claimRewards } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
+import { toast } from "react-toastify";
+
+export const ClaimRewards: FC = () => {
+  const { data: sessionData } = useSession();
+  const wallet = useActiveWallet();
+  const { activeChain } = useContext(ActiveChainContext);
+
+  const { data: pendingRewards } = useReadContract({
+    contract: getContract({
+      address: STAKING[activeChain.id]!,
+      client,
+      chain: activeChain,
+    }),
+    method: "function getPendingRewards(address user) view returns (uint256)",
+    params: [sessionData?.user.address ?? "0x0"],
+    queryOptions: {
+      enabled: !!sessionData?.user.address,
+    },
+  });
+
+  const reward = pendingRewards ? Number(formatEther(pendingRewards)).toFixed(4) : "0";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">Pending Rewards</span>
+        <span className="font-mono text-sm">{reward} $HOTDOG</span>
+      </div>
+      <TransactionButton
+        className="!btn !btn-primary !btn-block"
+        transaction={() =>
+          claimRewards({
+            contract: getContract({
+              address: STAKING[activeChain.id]!,
+              client,
+              chain: activeChain,
+            }),
+          })
+        }
+        onTransactionSent={() => toast.loading("Claiming rewards...")}
+        onTransactionConfirmed={() => {
+          toast.dismiss();
+          toast.success("Rewards claimed!");
+        }}
+        onError={(err) => {
+          toast.dismiss();
+          toast.error(`Claim failed: ${err.message}`);
+        }}
+        disabled={!wallet || !pendingRewards || pendingRewards === 0n}
+      >
+        Claim
+      </TransactionButton>
+    </div>
+  );
+};
+
+export default ClaimRewards;
