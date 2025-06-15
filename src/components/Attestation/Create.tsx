@@ -34,6 +34,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const utils = api.useUtils();
   const [imgUri, setImgUri] = useState<string | undefined>();
   const [lastLoggedLogId, setLastLoggedLogId] = useState<string | undefined>();
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
   const wallet = useActiveWallet();
@@ -101,6 +102,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
       if (isMiniApp) {
         const dialog = document.getElementById('share_cast_modal') as HTMLDialogElement;
+        setIsShareModalOpen(true);
         dialog?.showModal();
       }
     }
@@ -172,6 +174,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       console.error('Failed to compose cast', err);
     } finally {
       (document.getElementById('share_cast_modal') as HTMLDialogElement)?.close();
+      setIsShareModalOpen(false);
     }
   };
 
@@ -261,13 +264,20 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           errorMessage="Failed to log your dog"
         />
       )}
-      <dialog id="share_cast_modal" className="modal modal-bottom sm:modal-middle">
+      <dialog
+        id="share_cast_modal"
+        className="modal modal-bottom sm:modal-middle"
+        open={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+      >
         <div className="modal-box bg-opacity-50 backdrop-blur-lg">
           <h3 className="font-bold text-lg">Share on Farcaster?</h3>
           <p className="py-4">Would you like to share your logged dog on Farcaster?</p>
           <div className="modal-action">
             <form method="dialog">
-              <button className="btn">No thanks</button>
+              <button className="btn" onClick={() => setIsShareModalOpen(false)}>
+                No thanks
+              </button>
             </form>
             <button className="btn btn-primary" onClick={shareOnFarcaster}>Share</button>
           </div>
