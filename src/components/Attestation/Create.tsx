@@ -182,23 +182,23 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
               }}
               label={DEFAULT_UPLOAD_PHRASE}
             />
-            <div className="collapse collapse-arrow border w-full bg-base-200 bg-opacity-30">
+            <span className="text-center text-xs opacity-50">
+              Images uploaded here are public and will be displayed on the global leaderboard
+            </span>
+            <div className="collapse collapse-arrow w-full bg-base-200 bg-opacity-30">
               <input type="checkbox" />
               <div className="collapse-title text-sm font-medium">
-                Add optional text
+                Advanced
               </div>
               <div className="collapse-content">
                 <textarea
                   className="textarea textarea-bordered w-full"
-                  placeholder="Describe your hotdog"
+                  placeholder="Add a message to your dog"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
             </div>
-            <span className="text-center text-xs opacity-50">
-              Images uploaded here are public and will be displayed on the global leaderboard
-            </span>
           </div>
           <div className="modal-action">
             <form method="dialog">
