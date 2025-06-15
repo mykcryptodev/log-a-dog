@@ -46,7 +46,6 @@ contract LogADog is AccessControl {
     event OperatorAdded(address indexed operator);
     event OperatorRemoved(address indexed operator);
 
-    event DebugInfo(uint256 msgValue, uint256 contractBalance);
 
     modifier onlyLogOwner(uint256 logId) {
         require(hotdogLogs[logId].eater == msg.sender, "Caller is not the owner of this log");
@@ -106,7 +105,6 @@ contract LogADog is AccessControl {
     function _logHotdog(string memory imageUri, string memory metadataUri, string memory coinUri, address eater, bytes calldata poolConfig) internal returns (uint256 logId) {
         logId = hotdogLogs.length;
         
-        emit DebugInfo(msg.value, address(this).balance);
 
         // Deploy coin using CoinDeploymentManager
         address coinAddress;
