@@ -26,6 +26,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const [imgUri, setImgUri] = useState<string | undefined>();
   const [lastLoggedImgUri, setLastLoggedImgUri] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [description, setDescription] = useState<string>('');
   const wallet = useActiveWallet();
 
   const isDisabled = useMemo(() => {
@@ -92,6 +93,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           chainId: activeChain.id,
           imageUri: imgUri!,
           metadataUri: '',
+          description,
         });
         setLastLoggedImgUri(imgUri);
         setTransactionId(transactionId);
@@ -99,6 +101,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         // close the modal
         (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
         setImgUri(undefined);
+        setDescription('');
       } catch (error) {
         const e = error as Error;
         console.error(error);
@@ -167,7 +170,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         <div className="modal-box overflow-hidden">
           <h3 className="font-bold text-2xl mb-4">Log a Dog</h3>
           <div className="flex flex-col gap-2">
-            <Upload 
+            <Upload
               onUpload={({ uris }) => {
                 if (!uris) return;
                 setImgUri(uris[0]);
@@ -179,6 +182,20 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
               }}
               label={DEFAULT_UPLOAD_PHRASE}
             />
+            <div className="collapse collapse-arrow border w-full bg-base-200 bg-opacity-30">
+              <input type="checkbox" />
+              <div className="collapse-title text-sm font-medium">
+                Add optional text
+              </div>
+              <div className="collapse-content">
+                <textarea
+                  className="textarea textarea-bordered w-full"
+                  placeholder="Describe your hotdog"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+            </div>
             <span className="text-center text-xs opacity-50">
               Images uploaded here are public and will be displayed on the global leaderboard
             </span>
