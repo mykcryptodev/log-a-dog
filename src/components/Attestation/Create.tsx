@@ -10,8 +10,13 @@ import { TransactionStatus } from '../utils/TransactionStatus';
 import { DEFAULT_UPLOAD_PHRASE } from '~/constants';
 import { FarcasterContext } from "~/providers/Farcaster";
 import { sdk } from "@farcaster/frame-sdk";
+import { keccak256, toBytes } from "viem";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
+
+const HOTDOG_LOGGED_TOPIC = keccak256(
+  toBytes('HotdogLogged(uint256,address,address,string,string,uint256,address)')
+);
 
 type Props = {
   onAttestationCreated?: (attestation: {
@@ -40,8 +45,20 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const [transactionId, setTransactionId] = useState<string | undefined>();
   const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
 
-  const handleOnResolved = (success: boolean) => {
+  const handleOnResolved = (success: boolean, data?: unknown) => {
     if (success && account) {
+      if (data && typeof data === 'object' && (data as any).receipt?.logs) {
+        try {
+          const logs = (data as any).receipt.logs as Array<{ topics: string[] }>;
+          const log = logs.find(l => l.topics?.[0]?.toLowerCase() === HOTDOG_LOGGED_TOPIC.toLowerCase());
+          if (log) {
+            const logId = BigInt(log.topics[1]).toString();
+            setLastLoggedLogId(logId);
+          }
+        } catch (e) {
+          console.error('Failed to parse logId', e);
+        }
+      }
       // pop confetti
       const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
       canvas.style.display = 'block';
@@ -89,13 +106,12 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         setTransactionId(undefined);
         setIsTransactionIdResolved(false);
         // Call the backend tRPC procedure
-        const { transactionId, logId } = await logHotdog({
+        const { transactionId } = await logHotdog({
           chainId: activeChain.id,
           imageUri: imgUri!,
           metadataUri: '',
           description,
         });
-        setLastLoggedLogId(logId);
         setTransactionId(transactionId);
 
         // close the modal

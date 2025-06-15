@@ -12,7 +12,7 @@ type Props = {
   loadingMessages?: LoadingMessage[];
   successMessage?: string;
   errorMessage?: string;
-  onResolved?: (success: boolean) => void;
+  onResolved?: (success: boolean, data?: unknown) => void;
 }
 
 export const TransactionStatus: FC<Props> = ({ 
@@ -87,14 +87,14 @@ export const TransactionStatus: FC<Props> = ({
         toast.success(successMessage ?? "Transaction completed successfully!", {
           toastId: `${transactionId}-mined`,
         });
-        onResolved?.(true);
+        onResolved?.(true, data);
         break;
       case "FAILED":
         toast.dismiss(`${transactionId}-pending`);
         toast.error(errorMessage ?? data.error ?? "Transaction failed: Unknown error", {
           toastId: `${transactionId}-errored`,
         });
-        onResolved?.(false);
+        onResolved?.(false, data);
         break;
     }
   }, [dataUpdatedAt, data, transactionId, successMessage, errorMessage, onResolved]);

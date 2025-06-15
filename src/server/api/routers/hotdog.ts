@@ -801,8 +801,6 @@ export const hotdogRouter = createTRPCRouter({
         chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
       });
 
-      const logCount = await getHotdogLogsCount({ contract });
-
       const transaction = logHotdogOnBehalf({
         contract,
         imageUri,
@@ -829,7 +827,7 @@ export const hotdogRouter = createTRPCRouter({
         await deleteCachedData(hotdogPattern);
         await deleteCachedData(leaderboardPattern);
   
-        return { transactionId, logId: logCount.toString() };
+        return { transactionId };
       } catch (error) {
         console.error("Error logging hotdog:", error);
         throw error;
