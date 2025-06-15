@@ -145,7 +145,8 @@ export default async function handler(req: NextRequest) {
         
         {/* Log a Dog title in upper left */}
         <div style={{ position: 'absolute', top: 20, left: 20, display:'flex', alignItems:'center', gap:12, background:'rgba(0,0,0,0.5)', padding:'12px 20px', borderRadius:12 }}>
-          <div style={{ fontSize: 36, display: 'flex', fontFamily: 'Segment' }}>🌭 Log a Dog</div>
+          <img src={`${base}/images/logo.png`} width="40" height="40" style={{ borderRadius: '4px' }} />
+          <div style={{ fontSize: 36, display: 'flex', fontFamily: 'Segment' }}>Log a Dog</div>
         </div>
 
         {/* Username in bottom right */}
