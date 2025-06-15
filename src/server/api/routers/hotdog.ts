@@ -173,8 +173,24 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
 }
 
 // Helper function to fetch attestation periods in batch
-async function getAttestationPeriodsBatch(logIds: string[], chainId: number): Promise<Map<string, any>> {
-  const attestationPeriodMap = new Map<string, any>();
+async function getAttestationPeriodsBatch(logIds: string[], chainId: number): Promise<Map<string, {
+  logId: string;
+  startTime: string;
+  endTime: string;
+  status: number;
+  totalValidStake: string;
+  totalInvalidStake: string;
+  isValid: boolean;
+}>> {
+  const attestationPeriodMap = new Map<string, {
+    logId: string;
+    startTime: string;
+    endTime: string;
+    status: number;
+    totalValidStake: string;
+    totalInvalidStake: string;
+    isValid: boolean;
+  }>();
   
   // Process in chunks to avoid overwhelming the RPC
   const chunkSize = 50;
@@ -879,7 +895,7 @@ export const hotdogRouter = createTRPCRouter({
       chainId: z.number(),
       logId: z.string(),
     }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const { chainId, logId } = input;
 
       try {

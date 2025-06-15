@@ -83,7 +83,7 @@ export const VotingCountdown: FC<Props> = ({
   }, [timestamp]);
 
   const isExpired = timeLeft === "Expired";
-  const totalVotes = Number(validAttestations || 0) + Number(invalidAttestations || 0);
+  const totalVotes = Number(validAttestations ?? 0) + Number(invalidAttestations ?? 0);
   
   // Check if the attestation period is resolved using the cached data
   const isResolved = attestationPeriod?.status === 2; // Assuming status 2 means resolved
@@ -130,7 +130,7 @@ export const VotingCountdown: FC<Props> = ({
 
       {isExpired && totalVotes > 0 && (
         <span className="text-xs opacity-50">
-          Final: {validAttestations || 0} valid, {invalidAttestations || 0} invalid
+          Final: {validAttestations ?? 0} valid, {invalidAttestations ?? 0} invalid
         </span>
       )}
 
