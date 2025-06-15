@@ -30,6 +30,7 @@
     "@trpc/react-query": "^10.45.1",
     "@trpc/server": "^10.45.1",
     "@upstash/redis": "^1.34.8",
+    "@vercel/og": "^0.6.8",
     "@wagmi/core": "^2.17.1",
     "@zoralabs/coins-sdk": "^0.2.1",
     "apexcharts": "^3.46.0",

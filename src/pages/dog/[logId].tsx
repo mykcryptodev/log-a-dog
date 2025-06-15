@@ -12,7 +12,7 @@ const DogPageComponent = dynamic(() => import('./DogPageComponent'), { ssr: fals
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const miniAppMetadata = {
     version: "next",
-    imageUrl: "https://logadog.xyz/images/logo.png",
+    imageUrl: `https://logadog.xyz/api/og/${logId}`,
     button: {
       title: "🌭 Log a Dog",
       action: {
