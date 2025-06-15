@@ -139,11 +139,11 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                   : `Balance: ${Number(balance?.displayValue ?? 0).toLocaleString()}`}
               </div>
             </div>
+            <div className="text-center text-xs mt-2 opacity-60">
+              Current APY:
+              {isLoadingApy ? " Loading..." : ` ${apy?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "0"}%`}
+            </div>
           </div>
-        </div>
-        <div className="text-center text-sm">
-          Current APY:
-          {isLoadingApy ? " Loading..." : ` ${apy?.toFixed(2) ?? "0"}%`}
         </div>
         {amountExceedsBalance && (
           <div className="text-center text-sm text-error">
