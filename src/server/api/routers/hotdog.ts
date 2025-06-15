@@ -679,10 +679,11 @@ export const hotdogRouter = createTRPCRouter({
       chainId: z.number(),
       imageUri: z.string(),
       metadataUri: z.string(),
+      description: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       console.log({ user: ctx.session?.user });
-      const { chainId, imageUri, metadataUri } = input;
+      const { chainId, imageUri, metadataUri, description } = input;
 
       if (!ctx.session?.user.address) {
         throw new Error("User address not found");
@@ -695,7 +696,7 @@ export const hotdogRouter = createTRPCRouter({
       })
       const coinMetadata = {
         name: "Logged Dog",
-        description: "Logging dogs onchain",
+        description: description && description.trim() !== '' ? description : "Logging dogs onchain",
         image: imageUri,
         properties: {
           category: "social",
