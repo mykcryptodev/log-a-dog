@@ -3,8 +3,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { type NextPage } from "next";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import Head from "next/head";
+import { MediaRenderer, useActiveAccount } from "thirdweb/react";
+import { client } from "~/providers/Thirdweb";
+import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
@@ -14,43 +17,19 @@ import Comments from "~/components/Attestation/Comments";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import VotingCountdown from "~/components/Attestation/VotingCountdown";
 import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
+import { ZERO_ADDRESS } from "thirdweb";
 import { env } from "~/env";
+import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import dynamic from "next/dynamic";
 
 const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
 
-// Define constants locally to avoid static imports
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60; // 48 hours
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
+  const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
-  const [thirdwebHooks, setThirdwebHooks] = useState<any>(null);
-  const [client, setClient] = useState<any>(null);
-  const [isAddressEqual, setIsAddressEqual] = useState<any>(null);
-  const [api, setApi] = useState<any>(null);
-
-  // Dynamic imports to avoid server-side loading
-  useEffect(() => {
-    const loadDependencies = async () => {
-      const [thirdwebReact, thirdwebCore, viem, trpcApi] = await Promise.all([
-        import("thirdweb/react"),
-        import("~/providers/Thirdweb"),
-        import("viem"),
-        import("~/utils/api")
-      ]);
-      
-      setThirdwebHooks({
-        useActiveAccount: thirdwebReact.useActiveAccount,
-        MediaRenderer: thirdwebReact.MediaRenderer
-      });
-      setClient(thirdwebCore.client);
-      setIsAddressEqual(viem.isAddressEqual);
-      setApi(trpcApi.api);
-    };
-
-    loadDependencies().catch(console.error);
-  }, []);
 
   const miniAppMetadata = {
     version: "next",
@@ -66,23 +45,6 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
       },
     },
   };
-
-  // Wait for dynamic imports to load
-  if (!thirdwebHooks || !client || !isAddressEqual || !api) {
-    return (
-      <>
-        <Head>
-          <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
-        </Head>
-        <main className="flex flex-col items-center justify-center">
-          <div className="w-64 h-64 bg-base-300 animate-pulse rounded-lg" />
-        </main>
-      </>
-    );
-  }
-
-  const account = thirdwebHooks.useActiveAccount();
-  const { MediaRenderer } = thirdwebHooks;
 
   const { data, isLoading, refetch } = api.hotdog.getById.useQuery({
     chainId: activeChain.id,
@@ -110,6 +72,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   }
 
   const { hotdog, validAttestations, invalidAttestations, userAttested, userAttestation } = data;
+  const isExpired = Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <= Date.now();
 
   return (
     <>
@@ -175,16 +138,18 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
                   logId={hotdog.logId.toString()}
                   metadataUri={hotdog.metadataUri}
                 />
-                <JudgeAttestation
-                  userAttested={userAttested}
-                  userAttestation={userAttestation}
-                  validAttestations={validAttestations}
-                  invalidAttestations={invalidAttestations}
-                  logId={hotdog.logId}
-                  chainId={activeChain.id}
-                  onAttestationMade={() => void refetch()}
-                  onAttestationAffirmationRevoked={() => void refetch()}
-                />
+                {!isExpired && (
+                  <JudgeAttestation
+                    userAttested={userAttested}
+                    userAttestation={userAttestation}
+                    validAttestations={validAttestations}
+                    invalidAttestations={invalidAttestations}
+                    logId={hotdog.logId}
+                    chainId={activeChain.id}
+                    onAttestationMade={() => void refetch()}
+                    onAttestationAffirmationRevoked={() => void refetch()}
+                  />
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 w-full justify-end pr-2 opacity-50 text-xs">

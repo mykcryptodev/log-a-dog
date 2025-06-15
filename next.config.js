@@ -7,6 +7,9 @@ await import("./src/env.js");
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: false,
+  experimental: {
+    optimizePackageImports: ['thirdweb', 'viem', '@walletconnect/sign-client', 'neverthrow']
+  },
 
   /**
    * If you are using `appDir` then you must comment the below `i18n` config out.
