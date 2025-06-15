@@ -19,6 +19,7 @@ import { MINIMUM_STAKE } from "~/constants";
 import { parseEther, formatEther, InsufficientFundsError } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
 import { Buy } from "~/components/utils/Buy";
+import { api } from "~/utils/api";
 
 type Props = {
   onStake?: (amount: string) => void;
@@ -52,6 +53,11 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
       enabled: !!sessionData?.user.address,
     },
   });
+
+  const { data: apy, isLoading: isLoadingApy } = api.staking.getApy.useQuery(
+    { chainId: activeChain.id },
+    { staleTime: 30_000 }
+  );
 
   useEffect(() => {
     const checkAllowance = async () => {
@@ -102,14 +108,14 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
 
   return (
     <div>
-      {!hideTitle && <h1 className="text-2xl font-bold mb-4">Stake $HOTDOG</h1>}
+      {!hideTitle && <h1 className="mb-4 text-2xl font-bold">Stake $HOTDOG</h1>}
       <div className="space-y-4">
-        <div className="stats shadow w-full max-w-full stats-vertical md:stats-horizontal">
+        <div className="stats stats-vertical w-full max-w-full shadow md:stats-horizontal">
           <div className="stat text-center">
             <div className="stat-title">Amount to Stake</div>
             <input
               type="number"
-              className="stat-value text-primary bg-transparent text-center focus:outline-none w-full max-w-[12ch]"
+              className="stat-value w-full max-w-[12ch] bg-transparent text-center text-primary focus:outline-none"
               value={amount}
               onChange={(e) => {
                 let value = e.target.value;
@@ -133,10 +139,14 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                   : `Balance: ${Number(balance?.displayValue ?? 0).toLocaleString()}`}
               </div>
             </div>
+            <div className="text-center text-xs mt-2 opacity-60">
+              Current APY:
+              {isLoadingApy ? " Loading..." : ` ${apy?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "0"}%`}
+            </div>
           </div>
         </div>
         {amountExceedsBalance && (
-          <div className="text-error text-center text-sm">
+          <div className="text-center text-sm text-error">
             Amount exceeds balance
           </div>
         )}
@@ -144,7 +154,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         <div>
           <label
             htmlFor="percentage"
-            className="block text-sm font-medium mb-1"
+            className="mb-1 block text-sm font-medium"
           >
             Percentage of Balance: {percentage}%
           </label>
@@ -158,7 +168,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             className="range"
             step="1"
           />
-          <div className="w-full flex justify-between text-xs px-2">
+          <div className="flex w-full justify-between px-2 text-xs">
             <button
               type="button"
               className="hover:text-primary"
