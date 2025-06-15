@@ -8,7 +8,7 @@ await import("./src/env.js");
 const config = {
   reactStrictMode: false,
   experimental: {
-    optimizePackageImports: ['thirdweb', 'viem', '@walletconnect/sign-client', 'neverthrow']
+    optimizePackageImports: ['thirdweb']
   },
 
   /**
