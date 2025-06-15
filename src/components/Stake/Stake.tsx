@@ -19,6 +19,7 @@ import { MINIMUM_STAKE } from "~/constants";
 import { parseEther, formatEther, InsufficientFundsError } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
 import { Buy } from "~/components/utils/Buy";
+import { api } from "~/utils/api";
 
 type Props = {
   onStake?: (amount: string) => void;
@@ -53,51 +54,10 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     },
   });
 
-  const { data: totalStakedTokens } = useReadContract({
-    contract: getContract({
-      address: STAKING[activeChain.id]!,
-      client,
-      chain: activeChain,
-    }),
-    method: "function totalStaked() view returns (uint256)",
-  });
-
-  const { data: rewardsPoolAmount } = useReadContract({
-    contract: getContract({
-      address: STAKING[activeChain.id]!,
-      client,
-      chain: activeChain,
-    }),
-    method: "function rewardsPool() view returns (uint256)",
-  });
-
-  const { data: timeRemaining } = useReadContract({
-    contract: getContract({
-      address: STAKING[activeChain.id]!,
-      client,
-      chain: activeChain,
-    }),
-    method: "function getTimeRemaining() view returns (uint256)",
-  });
-
-  const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
-
-  const apy = useMemo(() => {
-    if (
-      !totalStakedTokens ||
-      !rewardsPoolAmount ||
-      !timeRemaining ||
-      timeRemaining === 0n
-    )
-      return 0;
-
-    const emissionRate =
-      Number(formatEther(rewardsPoolAmount)) / Number(timeRemaining);
-    const yearlyRewards = emissionRate * SECONDS_PER_YEAR;
-    const totalStakedNum = Number(formatEther(totalStakedTokens));
-    if (totalStakedNum === 0) return 0;
-    return (yearlyRewards / totalStakedNum) * 100;
-  }, [totalStakedTokens, rewardsPoolAmount, timeRemaining]);
+  const { data: apy, isLoading: isLoadingApy } = api.staking.getApy.useQuery(
+    { chainId: activeChain.id },
+    { staleTime: 30_000 }
+  );
 
   useEffect(() => {
     const checkAllowance = async () => {
@@ -182,7 +142,8 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
           </div>
         </div>
         <div className="text-center text-sm">
-          Current APY: {apy.toFixed(2)}%
+          Current APY:
+          {isLoadingApy ? " Loading..." : ` ${apy?.toFixed(2) ?? "0"}%`}
         </div>
         {amountExceedsBalance && (
           <div className="text-center text-sm text-error">

@@ -6,6 +6,7 @@ import { hotdogRouter } from "~/server/api/routers/hotdog";
 import { profileRouter } from "~/server/api/routers/profile";
 import { userRouter } from "~/server/api/routers/user";
 import { warpcastRouter } from "~/server/api/routers/warpcast";
+import { stakingRouter } from "~/server/api/routers/staking";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   engine: engineRouter,
   hotdog: hotdogRouter,
   profile: profileRouter,
+  staking: stakingRouter,
   user: userRouter,
   warpcast: warpcastRouter,
 });
