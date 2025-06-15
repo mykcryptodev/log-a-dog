@@ -1,5 +1,6 @@
 import { type NextPage } from "next";
 import { Stake } from "~/components/Stake/Stake";
+import ClaimRewards from "~/components/Stake/ClaimRewards";
 import { useState } from "react";
 import { 
   CurrencyDollarIcon, 
@@ -14,6 +15,7 @@ import { Buy } from "~/components/utils/Buy";
 
 const EarnPage: NextPage = () => {
   const [mode, setMode] = useState<"eat" | "judge">("judge");
+  const [stakeTab, setStakeTab] = useState<"stake" | "claim">("stake");
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
@@ -38,7 +40,23 @@ const EarnPage: NextPage = () => {
           {/* Staking Component */}
           <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
             <div className="card-body">
-              <Stake />
+              <div role="tablist" className="tabs tabs-bordered mb-4">
+                <a
+                  role="tab"
+                  className={`tab ${stakeTab === "stake" ? "tab-active" : ""}`}
+                  onClick={() => setStakeTab("stake")}
+                >
+                  Stake
+                </a>
+                <a
+                  role="tab"
+                  className={`tab ${stakeTab === "claim" ? "tab-active" : ""}`}
+                  onClick={() => setStakeTab("claim")}
+                >
+                  Claim Rewards
+                </a>
+              </div>
+              {stakeTab === "stake" ? <Stake /> : <ClaimRewards />}
             </div>
           </div>
 
