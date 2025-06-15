@@ -33,7 +33,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
 
   const miniAppMetadata = {
     version: "next",
-    imageUrl: "https://yoink.party/framesV2/opengraph-image",
+    imageUrl: `https://logadog.xyz/api/og/${logId}`,
     button: {
       title: "🌭 Log a Dog",
       action: {
