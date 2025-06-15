@@ -7,6 +7,29 @@ import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { APP_DESCRIPTION } from "~/constants";
 
+const miniAppMetadata = {
+  version: "next",
+  imageUrl: "https://logadog.xyz/images/logo.png",
+  button: {
+    title: "🌭 Log a Dog",
+    action: {
+      type: "launch_frame",
+      name: "Log a Dog",
+      url: `https://logadog.xyz`,
+      splashImageUrl: "https://logadog.xyz/images/logo.png",
+      splashBackgroundColor: "#faf8f7",
+    },
+  },
+};
+
+// This generates the page at build time with ISR (recommended for better performance)
+export const getStaticProps = async () => {
+  return {
+    props: {},
+    revalidate: 60, // Revalidate every 60 seconds
+  };
+};
+
 export default function Home() {
   const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
 
@@ -15,6 +38,7 @@ export default function Home() {
       <Head>
         <title>Log a Dog</title>
         <meta name="description" content="Track how many hotdogs you eat and compete against your friends!" />
+        <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
