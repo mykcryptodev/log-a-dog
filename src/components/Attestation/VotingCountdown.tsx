@@ -86,7 +86,8 @@ export const VotingCountdown: FC<Props> = ({
   const totalVotes = Number(validAttestations ?? 0) + Number(invalidAttestations ?? 0);
   
   // Check if the attestation period is resolved using the cached data
-  const isResolved = attestationPeriod?.status === 2; // Assuming status 2 means resolved
+  // AttestationStatus enum: 0 = Active, 1 = Resolved, 2 = Disputed
+  const isResolved = attestationPeriod?.status === 1;
   
   const handleRewardModerators = () => {
     if (!logId || !session?.user?.address || !activeChain) return;
