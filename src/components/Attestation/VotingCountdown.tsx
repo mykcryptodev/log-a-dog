@@ -57,7 +57,6 @@ export const VotingCountdown: FC<Props> = ({
   };
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
-  const [showExplanationModal, setShowExplanationModal] = useState(false);
   const [isRewardingModerators, setIsRewardingModerators] = useState(false);
   
   const { data: session } = useSession();
@@ -100,11 +99,16 @@ export const VotingCountdown: FC<Props> = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center">
       {!isExpired && (
-        <span className="text-xs opacity-50">
-          Vote ends in: {timeLeft}
-        </span>
+        <>
+          <label htmlFor={`${logId ?? timestamp}-voting-info`} className="btn btn-ghost btn-circle btn-xs">
+            <QuestionMarkCircleIcon className="w-3 h-3" />
+          </label>
+          <span className="font-mono text-xs opacity-50">
+            {timeLeft}
+          </span>
+        </>
       )}
       
       {isExpired && !isResolved && logId && session?.user?.address && (
@@ -118,12 +122,9 @@ export const VotingCountdown: FC<Props> = ({
             {isRewardingModerators ? "Processing..." : "Reward Moderators"}
           </button>
           
-          <button
-            onClick={() => setShowExplanationModal(true)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+          <label htmlFor={`${logId}-reward-explanation`} className="btn btn-ghost btn-circle btn-xs">
             <QuestionMarkCircleIcon className="w-4 h-4" />
-          </button>
+          </label>
         </>
       )}
 
@@ -133,44 +134,57 @@ export const VotingCountdown: FC<Props> = ({
         </span>
       )}
 
-      {showExplanationModal && (
+      {/* Voting Info Modal */}
+      <Portal>
+        <input type="checkbox" id={`${logId ?? timestamp}-voting-info`} className="modal-toggle" />
+        <div className="modal modal-bottom sm:modal-middle" role="dialog">
+          <div className="modal-box relative bg-base-100 bg-opacity-90 backdrop-blur-lg">
+            <label htmlFor={`${logId ?? timestamp}-voting-info`} className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4">
+              <XMarkIcon className="w-4 h-4" />
+            </label>
+            <h3 className="font-bold text-lg">Hotdog vs Not Hotdog</h3>
+            <p className="py-2">The countdown timer is how long you have to judge whether or not the hotdog is valid or not.</p>
+            <p className="py-2">Users moderate each other by judging if an uploaded photo should count towards the contest or not. This prevents duplicates, fakes, and other spam.</p>
+            <p className="py-2">To keep users honest, they stake $HOTDOG tokens. If their judgement aligns with the majority of other judgements, they earn a portion of $HOTDOG tokens from voters who judged incorrectly.</p>
+            <p className="py-2">Once the timer is over, nobody can vote on this submission anymore and if the submission received more yes&apos;s than no&apos;s, it counts towards the total.</p>
+            <div className="modal-action">
+              <label htmlFor={`${logId ?? timestamp}-voting-info`} className="btn">Close</label>
+            </div>
+          </div>
+        </div>
+      </Portal>
+
+      {/* Reward Moderators Explanation Modal */}
+      {logId && (
         <Portal>
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Reward Moderators</h3>
-                <button
-                  onClick={() => setShowExplanationModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XMarkIcon className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="space-y-3 text-sm text-gray-600">
-                <p>
-                  The voting period for this hotdog submission has ended. Click "Reward Moderators" to:
-                </p>
-                
-                <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>Calculate the final result based on all votes</li>
-                  <li>Distribute $HOTDOG token rewards to moderators who voted with the majority</li>
-                  <li>Slash tokens from moderators who voted incorrectly</li>
-                  <li>Finalize whether this submission counts toward the contest</li>
-                </ul>
-                
-                <p className="text-xs text-gray-500 mt-4">
-                  This action can be performed by anyone and helps keep the system running smoothly.
-                </p>
-              </div>
-              
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={() => setShowExplanationModal(false)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                >
-                  Got it
-                </button>
+          <input type="checkbox" id={`${logId}-reward-explanation`} className="modal-toggle" />
+          <div className="modal modal-bottom sm:modal-middle" role="dialog">
+            <div className="modal-box relative bg-base-100 bg-opacity-90 backdrop-blur-lg">
+              <label htmlFor={`${logId}-reward-explanation`} className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4">
+                <XMarkIcon className="w-4 h-4" />
+              </label>
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <GiftIcon className="h-6 w-6" />
+                Reward Moderators
+              </h3>
+              <p className="py-2">
+                The voting period has ended! Click this button to finalize the results and distribute rewards to moderators.
+              </p>
+              <p className="py-2">
+                This action will:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>Determine the final winner based on total staked votes</li>
+                <li>Distribute $HOTDOG rewards to correct voters proportionally</li>
+                <li>Slash 15% of incorrect voters&apos; stakes</li>
+                <li>Unlock all remaining staked tokens</li>
+                <li>Mark this submission as officially counted</li>
+              </ul>
+              <p className="py-2 text-sm text-base-content/70">
+                Anyone can trigger this action once the 48-hour voting period ends.
+              </p>
+              <div className="modal-action">
+                <label htmlFor={`${logId}-reward-explanation`} className="btn">Close</label>
               </div>
             </div>
           </div>
