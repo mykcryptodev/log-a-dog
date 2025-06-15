@@ -13,3 +13,5 @@ export const APP_NAME = "Log a Dog";
 export const APP_DESCRIPTION = `Earn money eating hotdogs`;
 
 export const DEFAULT_UPLOAD_PHRASE = '📷 Take a picture of you eating it!';
+
+export const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60; // 48 hours

@@ -22,10 +22,9 @@ import { env } from "~/env";
 import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import dynamic from "next/dynamic";
+import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 
 const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
-
-const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60; // 48 hours
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
