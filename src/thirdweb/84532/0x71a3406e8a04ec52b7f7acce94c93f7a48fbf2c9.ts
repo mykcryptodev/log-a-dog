@@ -85,29 +85,6 @@ export function attestationRevokedEvent(filters: AttestationRevokedEventFilters 
 
 
 /**
- * Creates an event object for the DebugInfo event.
- * @returns The prepared event object.
- * @example
- * ```
- * import { getContractEvents } from "thirdweb";
- * import { debugInfoEvent } from "TODO";
- *
- * const events = await getContractEvents({
- * contract,
- * events: [
- *  debugInfoEvent()
- * ],
- * });
- * ```
- */
-export function debugInfoEvent() {
-  return prepareEvent({
-    signature: "event DebugInfo(uint256 msgValue, uint256 contractBalance)",
-  });
-};
-  
-
-/**
  * Represents the filters for the "HotdogLogRevoked" event.
  */
 export type HotdogLogRevokedEventFilters = Partial<{
