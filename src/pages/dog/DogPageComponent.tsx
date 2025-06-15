@@ -21,7 +21,7 @@ import dynamic from "next/dynamic";
 const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
 
 // Define constants locally to avoid static imports
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const { activeChain } = useContext(ActiveChainContext);
