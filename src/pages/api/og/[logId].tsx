@@ -131,7 +131,7 @@ export default async function handler(req: NextRequest) {
       <div
         style={{
           width: '1200px',
-          height: '630px',
+          height: '800px',
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
@@ -141,7 +141,7 @@ export default async function handler(req: NextRequest) {
           fontFamily: 'Segment',
         }}
       >
-        <img src={convertIpfsToHttp(hotdog.imageUri)} style={{ objectFit: 'cover', width: '1200px', height: '630px', position: 'absolute', top:0, left:0 }} />
+        <img src={convertIpfsToHttp(hotdog.imageUri)} style={{ objectFit: 'cover', width: '1200px', height: '800px', position: 'absolute', top:0, left:0 }} />
         
         {/* Log a Dog title in upper left */}
         <div style={{ position: 'absolute', top: 20, left: 20, display:'flex', alignItems:'center', gap:12, background:'rgba(0,0,0,0.5)', padding:'12px 20px', borderRadius:12 }}>
@@ -161,7 +161,7 @@ export default async function handler(req: NextRequest) {
     ),
     {
       width: 1200,
-      height: 630,
+      height: 800,
       fonts: [
         {
           name: 'Segment',
