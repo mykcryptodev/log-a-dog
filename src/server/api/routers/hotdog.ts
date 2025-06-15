@@ -795,12 +795,16 @@ export const hotdogRouter = createTRPCRouter({
 
       const POOL_CONFIG = encodePoolConfig();
 
+      const contract = getContract({
+        address: LOG_A_DOG[chainId]!,
+        client,
+        chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+      });
+
+      const logCount = await getHotdogLogsCount({ contract });
+
       const transaction = logHotdogOnBehalf({
-        contract: getContract({
-          address: LOG_A_DOG[chainId]!,
-          client,
-          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-        }),
+        contract,
         imageUri,
         metadataUri,
         coinUri: coinMetadataUri,
@@ -825,7 +829,7 @@ export const hotdogRouter = createTRPCRouter({
         await deleteCachedData(hotdogPattern);
         await deleteCachedData(leaderboardPattern);
   
-        return transactionId;
+        return { transactionId, logId: logCount.toString() };
       } catch (error) {
         console.error("Error logging hotdog:", error);
         throw error;

@@ -24,7 +24,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
   const utils = api.useUtils();
   const [imgUri, setImgUri] = useState<string | undefined>();
-  const [lastLoggedImgUri, setLastLoggedImgUri] = useState<string | undefined>();
+  const [lastLoggedLogId, setLastLoggedLogId] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
   const wallet = useActiveWallet();
@@ -89,13 +89,13 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         setTransactionId(undefined);
         setIsTransactionIdResolved(false);
         // Call the backend tRPC procedure
-        const transactionId = await logHotdog({
+        const { transactionId, logId } = await logHotdog({
           chainId: activeChain.id,
           imageUri: imgUri!,
           metadataUri: '',
           description,
         });
-        setLastLoggedImgUri(imgUri);
+        setLastLoggedLogId(logId);
         setTransactionId(transactionId);
 
         // close the modal
@@ -131,7 +131,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     try {
       await sdk.actions.composeCast({
         text: 'Just logged a dog on Log a Dog!',
-        embeds: lastLoggedImgUri ? [lastLoggedImgUri] : [],
+        embeds: lastLoggedLogId ? [`https://logadog.xyz/dog/${lastLoggedLogId}`] : [],
       });
     } catch (err) {
       console.error('Failed to compose cast', err);
