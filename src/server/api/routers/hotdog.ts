@@ -669,10 +669,40 @@ export const hotdogRouter = createTRPCRouter({
           return true;
         });
 
-        // Count hotdogs per user
+        const logIds = filteredLogs.map(log => log.logId.toString());
+
+        const [attestationCounts, attestationPeriods] = await Promise.all([
+          getAttestationCounts({
+            contract: getContract({
+              address: ATTESTATION_MANAGER[chainId]!,
+              client,
+              chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+            }),
+            logIds: filteredLogs.map(log => log.logId),
+          }),
+          getAttestationPeriodsBatch(logIds, chainId)
+        ]);
+
+        const now = Math.floor(Date.now() / 1000);
         const userCounts = new Map<string, number>();
-        
-        for (const log of filteredLogs) {
+
+        for (let i = 0; i < filteredLogs.length; i++) {
+          const log = filteredLogs[i];
+          const period = attestationPeriods.get(logIds[i]);
+          const valid = attestationCounts[0][i];
+          const invalid = attestationCounts[1][i];
+
+          if (!period) continue;
+          const windowEnded = Number(period.endTime) <= now;
+          let isValid = false;
+          if (period.status === 1) {
+            isValid = period.isValid;
+          } else if (windowEnded) {
+            isValid = BigInt(valid) > BigInt(invalid);
+          }
+
+          if (!windowEnded || !isValid) continue;
+
           const eater = log.eater.toLowerCase();
           userCounts.set(eater, (userCounts.get(eater) ?? 0) + 1);
         }
