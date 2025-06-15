@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "pages/dog/[logId].tsx": {
+      "memory": 1024
+    }
+  }
+} 
