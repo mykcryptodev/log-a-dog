@@ -687,10 +687,11 @@ export const hotdogRouter = createTRPCRouter({
         const userCounts = new Map<string, number>();
 
         for (let i = 0; i < filteredLogs.length; i++) {
-          const log = filteredLogs[i];
-          const period = attestationPeriods.get(logIds[i]);
-          const valid = attestationCounts[0][i];
-          const invalid = attestationCounts[1][i];
+          const log = filteredLogs[i]!;
+          const logId = logIds[i]!;
+          const period = attestationPeriods.get(logId);
+          const valid = attestationCounts[0][i]!;
+          const invalid = attestationCounts[1][i]!;
 
           if (!period) continue;
           const windowEnded = Number(period.endTime) <= now;
