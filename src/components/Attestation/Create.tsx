@@ -10,7 +10,8 @@ import { TransactionStatus } from '../utils/TransactionStatus';
 import { DEFAULT_UPLOAD_PHRASE } from '~/constants';
 import { FarcasterContext } from "~/providers/Farcaster";
 import { sdk } from "@farcaster/frame-sdk";
-import { keccak256, toBytes } from "viem";
+import { keccak256, toBytes, createPublicClient, http } from "viem";
+import { SUPPORTED_CHAINS } from "~/constants/chains";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -45,18 +46,24 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const [transactionId, setTransactionId] = useState<string | undefined>();
   const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
 
-  const handleOnResolved = (success: boolean, data?: unknown) => {
+  const handleOnResolved = async (success: boolean, data?: unknown) => {
     if (success && account) {
-      if (data && typeof data === 'object' && (data as any).receipt?.logs) {
+      if (data && typeof data === 'object' && (data as any).transactionHash) {
         try {
-          const logs = (data as any).receipt.logs as Array<{ topics: string[] }>;
-          const log = logs.find(l => l.topics?.[0]?.toLowerCase() === HOTDOG_LOGGED_TOPIC.toLowerCase());
-          if (log) {
-            const logId = BigInt(log.topics[1]).toString();
-            setLastLoggedLogId(logId);
+          const chainId = (data as any).chain?.id as number | undefined;
+          const txHash = (data as any).transactionHash as `0x${string}`;
+          const chain = SUPPORTED_CHAINS.find(c => c.id === chainId);
+          if (chain) {
+            const client = createPublicClient({ chain, transport: http() });
+            const receipt = await client.getTransactionReceipt({ hash: txHash });
+            const log = receipt.logs.find(l => l.topics?.[0]?.toLowerCase() === HOTDOG_LOGGED_TOPIC.toLowerCase());
+            if (log) {
+              const logId = BigInt(log.topics[1]).toString();
+              setLastLoggedLogId(logId);
+            }
           }
         } catch (e) {
-          console.error('Failed to parse logId', e);
+          console.error('Failed to fetch logId', e);
         }
       }
       // pop confetti
