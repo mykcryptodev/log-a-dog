@@ -10,6 +10,7 @@ import { QuestionMarkCircleIcon, XMarkIcon, GiftIcon } from "@heroicons/react/24
 import { Portal } from "~/components/utils/Portal";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
+import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
         
 interface Props {
   timestamp: string; // unix timestamp in seconds
@@ -29,7 +30,6 @@ interface Props {
   };
 }
 
-const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60; // 48 hours
 
 export const VotingCountdown: FC<Props> = ({
   timestamp,

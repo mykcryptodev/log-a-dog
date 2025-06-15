@@ -18,7 +18,7 @@ import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import dynamic from "next/dynamic";
 const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
 
-const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60; // 48 hours
+import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 
 type Props = {
   attestors?: string[];
