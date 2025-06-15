@@ -2,10 +2,10 @@ import { type NextPage } from "next";
 import { Stake } from "~/components/Stake/Stake";
 import ClaimRewards from "~/components/Stake/ClaimRewards";
 import { useState } from "react";
-import { 
-  CurrencyDollarIcon, 
-  ShieldCheckIcon, 
-  ClockIcon, 
+import {
+  CurrencyDollarIcon,
+  ShieldCheckIcon,
+  ClockIcon,
   TrophyIcon,
   ExclamationTriangleIcon,
   HandThumbDownIcon,
@@ -20,7 +20,6 @@ const EarnPage: NextPage = () => {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        
         {/* Header */}
         <div className="text-center">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
@@ -29,16 +28,13 @@ const EarnPage: NextPage = () => {
           <p className="mt-4 text-xl text-base-content/70">
             Stake your tokens and moderate submissions to earn rewards
           </p>
-          <p className="mt-4 mb-2 text-base-content/70">
-            Need some $HOTDOG?
-          </p>
+          <p className="mb-2 mt-4 text-base-content/70">Need some $HOTDOG?</p>
           <Buy />
         </div>
 
         <div className="grid w-full max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">
-          
           {/* Staking Component */}
-          <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
+          <div className="card bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
             <div className="card-body">
               <div role="tablist" className="tabs tabs-bordered mb-4">
                 <a
@@ -62,11 +58,10 @@ const EarnPage: NextPage = () => {
 
           {/* Information Panel */}
           <div className="space-y-6">
-
             {/* How It Works */}
-            <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
+            <div className="card bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
               <div className="card-body">
-                <h2 className="card-title text-2xl mb-4 flex items-center gap-2">
+                <h2 className="card-title mb-4 flex items-center gap-2 text-2xl">
                   <CurrencyDollarIcon className="h-6 w-6" />
                   How Earning Works
                 </h2>
@@ -104,7 +99,8 @@ const EarnPage: NextPage = () => {
                       <div>
                         <h3 className="font-semibold">Earn rewards</h3>
                         <p className="text-sm text-base-content/70">
-                          Your picture can be bought and sold by traders, you earn the trading fees!
+                          Your picture can be bought and sold by traders, you
+                          earn the trading fees!
                         </p>
                       </div>
                     </div>
@@ -116,7 +112,8 @@ const EarnPage: NextPage = () => {
                       <div>
                         <h3 className="font-semibold">Stake $HOTDOG</h3>
                         <p className="text-sm text-base-content/70">
-                          Stake your $HOTDOG tokens to earn 10% APY and participate in moderation
+                          Stake your $HOTDOG tokens to earn rewards (see current
+                          APY above)
                         </p>
                       </div>
                     </div>
@@ -125,7 +122,8 @@ const EarnPage: NextPage = () => {
                       <div>
                         <h3 className="font-semibold">Judge Submissions</h3>
                         <p className="text-sm text-base-content/70">
-                          Vote on hotdog submissions to help maintain quality and earn additional rewards
+                          Vote on hotdog submissions to help maintain quality
+                          and earn additional rewards
                         </p>
                       </div>
                     </div>
@@ -134,7 +132,8 @@ const EarnPage: NextPage = () => {
                       <div>
                         <h3 className="font-semibold">Earn Rewards</h3>
                         <p className="text-sm text-base-content/70">
-                          Win rewards from incorrect voters and earn staking yields
+                          Win rewards from incorrect voters and earn staking
+                          yields
                         </p>
                       </div>
                     </div>
@@ -144,9 +143,9 @@ const EarnPage: NextPage = () => {
             </div>
 
             {/* Voting Guidelines */}
-            <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl">
+            <div className="card bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
               <div className="card-body">
-                <h2 className="card-title text-2xl mb-4 flex items-center gap-2">
+                <h2 className="card-title mb-4 flex items-center gap-2 text-2xl">
                   <ShieldCheckIcon className="h-6 w-6" />
                   Voting Guidelines
                 </h2>
@@ -155,7 +154,7 @@ const EarnPage: NextPage = () => {
                     <HandThumbDownIcon className="h-5 w-5" />
                     <div>
                       <h4 className="font-semibold">Downvote if:</h4>
-                      <ul className="text-sm mt-1 space-y-1">
+                      <ul className="mt-1 space-y-1 text-sm">
                         <li>• Image is not someone eating a hotdog</li>
                         <li>• Submission is a duplicate entry</li>
                         <li>• Content violates competition spirit</li>
@@ -167,7 +166,7 @@ const EarnPage: NextPage = () => {
                     <HandThumbUpIcon className="h-5 w-5" />
                     <div>
                       <h4 className="font-semibold">Upvote if:</h4>
-                      <ul className="text-sm mt-1 space-y-1">
+                      <ul className="mt-1 space-y-1 text-sm">
                         <li>• Person is clearly eating a hotdog</li>
                         <li>• Image is original and authentic</li>
                         <li>• Submission follows all guidelines</li>
@@ -177,64 +176,77 @@ const EarnPage: NextPage = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
 
         {/* Voting Process */}
-        <div className="card bg-base-100 bg-opacity-50 backdrop-blur-lg shadow-xl w-full max-w-4xl">
+        <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
           <div className="card-body">
-            <h2 className="card-title text-2xl mb-6 flex items-start gap-2">
-              <ClockIcon className="h-6 w-6 mt-1" />
+            <h2 className="card-title mb-6 flex items-start gap-2 text-2xl">
+              <ClockIcon className="mt-1 h-6 w-6" />
               Voting Process & Rewards
             </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div className="text-center">
-                <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                   <ShieldCheckIcon className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="font-semibold mb-2">Vote with Stake</h3>
+                <h3 className="mb-2 font-semibold">Vote with Stake</h3>
                 <p className="text-sm text-base-content/70">
-                  Stake minimum 50 $HOTDOG on your vote. Higher stakes = higher potential rewards.
+                  Stake minimum 50 $HOTDOG on your vote. Higher stakes = higher
+                  potential rewards.
                 </p>
               </div>
 
               <div className="text-center">
-                <div className="bg-warning/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-warning/10">
                   <ClockIcon className="h-8 w-8 text-warning" />
                 </div>
-                <h3 className="font-semibold mb-2">48-Hour Window</h3>
+                <h3 className="mb-2 font-semibold">48-Hour Window</h3>
                 <p className="text-sm text-base-content/70">
-                  Voting closes 48 hours after submission. Make sure to vote before the deadline!
+                  Voting closes 48 hours after submission. Make sure to vote
+                  before the deadline!
                 </p>
               </div>
 
               <div className="text-center">
-                <div className="bg-success/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
                   <TrophyIcon className="h-8 w-8 text-success" />
                 </div>
-                <h3 className="font-semibold mb-2">Majority Wins</h3>
+                <h3 className="mb-2 font-semibold">Majority Wins</h3>
                 <p className="text-sm text-base-content/70">
-                  Majority voters split 15% of the minority&apos;s staked tokens as rewards.
+                  Majority voters split 15% of the minority&apos;s staked tokens
+                  as rewards.
                 </p>
               </div>
-
             </div>
 
             <div className="divider"></div>
 
-            <div className="bg-info/10 rounded-lg p-4">
-              <h4 className="font-semibold text-info mb-2">💡 Pro Tips for Maximizing Earnings</h4>
-              <ul className="text-sm space-y-1">
-                <li>• <strong>Stake more:</strong> Higher stakes mean higher potential rewards from winning votes</li>
-                <li>• <strong>Vote accurately:</strong> Consistent correct voting builds your reputation and earnings</li>
-                <li>• <strong>Vote early:</strong> Don&apos;t wait until the last minute - voting closes after 48 hours</li>
-                <li>• <strong>Stay active:</strong> Regular participation in both staking and voting maximizes your $HOTDOG earnings</li>
+            <div className="rounded-lg bg-info/10 p-4">
+              <h4 className="mb-2 font-semibold text-info">
+                💡 Pro Tips for Maximizing Earnings
+              </h4>
+              <ul className="space-y-1 text-sm">
+                <li>
+                  • <strong>Stake more:</strong> Higher stakes mean higher
+                  potential rewards from winning votes
+                </li>
+                <li>
+                  • <strong>Vote accurately:</strong> Consistent correct voting
+                  builds your reputation and earnings
+                </li>
+                <li>
+                  • <strong>Vote early:</strong> Don&apos;t wait until the last
+                  minute - voting closes after 48 hours
+                </li>
+                <li>
+                  • <strong>Stay active:</strong> Regular participation in both
+                  staking and voting maximizes your $HOTDOG earnings
+                </li>
               </ul>
             </div>
-
           </div>
         </div>
 
@@ -244,15 +256,15 @@ const EarnPage: NextPage = () => {
           <div>
             <h3 className="font-bold">Important Risk Notice</h3>
             <div className="text-sm">
-              Voting incorrectly will result in losing 15% of your staked tokens to the winning side. 
-              Only vote if you&apos;re confident in your judgment. Your staked tokens remain locked during active votes.
+              Voting incorrectly will result in losing 15% of your staked tokens
+              to the winning side. Only vote if you&apos;re confident in your
+              judgment. Your staked tokens remain locked during active votes.
             </div>
           </div>
         </div>
-
       </div>
     </main>
   );
 };
 
-export default EarnPage; 
+export default EarnPage;

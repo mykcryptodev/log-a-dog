@@ -53,6 +53,52 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     },
   });
 
+  const { data: totalStakedTokens } = useReadContract({
+    contract: getContract({
+      address: STAKING[activeChain.id]!,
+      client,
+      chain: activeChain,
+    }),
+    method: "function totalStaked() view returns (uint256)",
+  });
+
+  const { data: rewardsPoolAmount } = useReadContract({
+    contract: getContract({
+      address: STAKING[activeChain.id]!,
+      client,
+      chain: activeChain,
+    }),
+    method: "function rewardsPool() view returns (uint256)",
+  });
+
+  const { data: timeRemaining } = useReadContract({
+    contract: getContract({
+      address: STAKING[activeChain.id]!,
+      client,
+      chain: activeChain,
+    }),
+    method: "function getTimeRemaining() view returns (uint256)",
+  });
+
+  const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+
+  const apy = useMemo(() => {
+    if (
+      !totalStakedTokens ||
+      !rewardsPoolAmount ||
+      !timeRemaining ||
+      timeRemaining === 0n
+    )
+      return 0;
+
+    const emissionRate =
+      Number(formatEther(rewardsPoolAmount)) / Number(timeRemaining);
+    const yearlyRewards = emissionRate * SECONDS_PER_YEAR;
+    const totalStakedNum = Number(formatEther(totalStakedTokens));
+    if (totalStakedNum === 0) return 0;
+    return (yearlyRewards / totalStakedNum) * 100;
+  }, [totalStakedTokens, rewardsPoolAmount, timeRemaining]);
+
   useEffect(() => {
     const checkAllowance = async () => {
       if (!wallet || !amount) return;
@@ -102,14 +148,14 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
 
   return (
     <div>
-      {!hideTitle && <h1 className="text-2xl font-bold mb-4">Stake $HOTDOG</h1>}
+      {!hideTitle && <h1 className="mb-4 text-2xl font-bold">Stake $HOTDOG</h1>}
       <div className="space-y-4">
-        <div className="stats shadow w-full max-w-full stats-vertical md:stats-horizontal">
+        <div className="stats stats-vertical w-full max-w-full shadow md:stats-horizontal">
           <div className="stat text-center">
             <div className="stat-title">Amount to Stake</div>
             <input
               type="number"
-              className="stat-value text-primary bg-transparent text-center focus:outline-none w-full max-w-[12ch]"
+              className="stat-value w-full max-w-[12ch] bg-transparent text-center text-primary focus:outline-none"
               value={amount}
               onChange={(e) => {
                 let value = e.target.value;
@@ -135,8 +181,11 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             </div>
           </div>
         </div>
+        <div className="text-center text-sm">
+          Current APY: {apy.toFixed(2)}%
+        </div>
         {amountExceedsBalance && (
-          <div className="text-error text-center text-sm">
+          <div className="text-center text-sm text-error">
             Amount exceeds balance
           </div>
         )}
@@ -144,7 +193,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         <div>
           <label
             htmlFor="percentage"
-            className="block text-sm font-medium mb-1"
+            className="mb-1 block text-sm font-medium"
           >
             Percentage of Balance: {percentage}%
           </label>
@@ -158,7 +207,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             className="range"
             step="1"
           />
-          <div className="w-full flex justify-between text-xs px-2">
+          <div className="flex w-full justify-between px-2 text-xs">
             <button
               type="button"
               className="hover:text-primary"
