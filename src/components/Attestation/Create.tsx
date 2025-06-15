@@ -157,7 +157,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         Log a Dog
       </button>
       <button 
-        className="btn btn-primary text-4xl btn-circle btn-lg fixed bottom-20 right-6 z-50 shadow-xl shadow-pink-500/75" 
+        className="btn btn-primary text-4xl btn-circle btn-lg fixed bottom-24 right-6 z-50 shadow-xl shadow-pink-500/75" 
         style={{ filter: 'drop-shadow(0 -9px 19px rgba(236, 72, 153, 0.75)) drop-shadow(0 -6px 15px rgba(254, 240, 138, 0.5))' }}
         onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
       >

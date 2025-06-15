@@ -14,7 +14,7 @@ export const BottomNav: FC = () => {
   const isActive = (path: string) => router.pathname === path;
 
   return (
-    <div className="btm-nav h-24 bg-opacity-50 backdrop-blur-lg z-50 text-sm pb">
+    <div className="btm-nav h-20 pb-2 bg-opacity-50 backdrop-blur-lg z-50 text-sm pb">
       <button 
         onClick={() => void router.push('/')}
         className={isActive('/') ? 'border-t-2 border-primary' : ''}
