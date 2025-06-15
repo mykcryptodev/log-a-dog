@@ -185,6 +185,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   userAttestation={userAttestationMap[hotdog.logId]}
                   validAttestations={validMap[hotdog.logId]?.toString()}
                   invalidAttestations={invalidMap[hotdog.logId]?.toString()}
+                  onResolutionComplete={() => void refetchDogData()}
+                  attestationPeriod={hotdog.attestationPeriod}
                 />
               </div>
             </div>
