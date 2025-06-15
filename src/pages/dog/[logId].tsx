@@ -6,6 +6,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   return { props: { logId } };
 };
 
-const DogPage = dynamic<NextPage<{ logId: string }>>(() => import('./DogPageComponent'), { ssr: false });
+const DogPage = dynamic(() => import('./DogPageComponent'), { ssr: true });
 
 export default DogPage;
