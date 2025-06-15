@@ -45,6 +45,7 @@ contract LogADog is AccessControl {
     event AttestationRevoked(uint256 indexed logId, address indexed attestor);
     event OperatorAdded(address indexed operator);
     event OperatorRemoved(address indexed operator);
+    event DogValidityUpdated(uint256 indexed logId, address indexed eater, bool isValid, uint256 timestamp);
 
 
     modifier onlyLogOwner(uint256 logId) {
@@ -359,7 +360,7 @@ contract LogADog is AccessControl {
     function _isValidLog(uint256 logId) internal view returns (bool) {
         // Check if attestation manager is set and has resolved this log
         if (address(attestationManager) != address(0)) {
-            (,, AttestationManager.AttestationStatus status,,, bool isValid) = attestationManager.getAttestationPeriod(logId);
+            (,, AttestationManager.AttestationStatus status,,, bool isValid,) = attestationManager.getAttestationPeriod(logId);
             if (status == AttestationManager.AttestationStatus.Resolved) {
                 return isValid;
             }
@@ -382,5 +383,89 @@ contract LogADog is AccessControl {
 
     function getAttestationCount(uint256 logId) external view returns (uint256) {
         return attestations[logId].length;
+    }
+
+    /**
+     * @notice Gets dogs logged within a time range with their attestation status
+     * @param startTime The start time for the query
+     * @param endTime The end time for the query
+     * @param offset The starting index for pagination
+     * @param limit The maximum number of logs to return
+     * @return logIds Array of log IDs
+     * @return eaters Array of eater addresses
+     * @return timestamps Array of log timestamps
+     * @return hasAttestationEnded Array indicating if attestation window has ended
+     * @return isValid Array indicating if log is valid (only meaningful if attestation ended)
+     */
+    function getDogsInTimeRange(
+        uint256 startTime,
+        uint256 endTime,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (
+        uint256[] memory logIds,
+        address[] memory eaters,
+        uint256[] memory timestamps,
+        bool[] memory hasAttestationEnded,
+        bool[] memory isValid
+    ) {
+        // Count logs in range
+        uint256 totalInRange = 0;
+        for (uint256 i = 0; i < hotdogLogs.length; i++) {
+            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
+                totalInRange++;
+            }
+        }
+
+        // Calculate actual return size
+        uint256 returnSize = totalInRange > offset ? totalInRange - offset : 0;
+        returnSize = returnSize > limit ? limit : returnSize;
+
+        // Initialize arrays
+        logIds = new uint256[](returnSize);
+        eaters = new address[](returnSize);
+        timestamps = new uint256[](returnSize);
+        hasAttestationEnded = new bool[](returnSize);
+        isValid = new bool[](returnSize);
+
+        // Populate arrays
+        uint256 index = 0;
+        uint256 skipped = 0;
+        for (uint256 i = 0; i < hotdogLogs.length && index < returnSize; i++) {
+            if (hotdogLogs[i].timestamp >= startTime && hotdogLogs[i].timestamp <= endTime) {
+                if (skipped >= offset) {
+                    logIds[index] = i;
+                    eaters[index] = hotdogLogs[i].eater;
+                    timestamps[index] = hotdogLogs[i].timestamp;
+                    
+                    // Check attestation status
+                    if (address(attestationManager) != address(0)) {
+                        (, uint256 attestationEndTime, AttestationManager.AttestationStatus status,,, bool logIsValid,) = 
+                            attestationManager.getAttestationPeriod(i);
+                        hasAttestationEnded[index] = (block.timestamp > attestationEndTime) || 
+                                                    (status == AttestationManager.AttestationStatus.Resolved);
+                        isValid[index] = logIsValid;
+                    } else {
+                        // Fallback to old system
+                        hasAttestationEnded[index] = true;
+                        isValid[index] = _isValidLog(i);
+                    }
+                    
+                    index++;
+                } else {
+                    skipped++;
+                }
+            }
+        }
+    }
+
+    /**
+     * @notice Emit validity update event for a resolved log (admin only)
+     * @param logId The ID of the hotdog log
+     */
+    function emitValidityUpdate(uint256 logId) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(logId < hotdogLogs.length, "Log does not exist");
+        bool isValid = _isValidLog(logId);
+        emit DogValidityUpdated(logId, hotdogLogs[logId].eater, isValid, block.timestamp);
     }
 }
