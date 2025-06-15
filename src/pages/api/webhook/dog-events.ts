@@ -55,7 +55,7 @@ export default async function handler(
     
     // Debug: Check if db and dogEvent are available
     console.log("Database client:", !!db);
-    console.log("DogEvent model available:", !!(db as any).dogEvent);
+    console.log("DogEvent model available:", !!db.dogEvent);
     
     // Parse and validate the webhook payload
     const payload = WebhookPayloadSchema.parse(req.body);
@@ -78,7 +78,7 @@ export default async function handler(
 
           // Create or update the dog event
           // Using upsert to handle potential race conditions
-          const dogEvent = await (db as any).dogEvent.upsert({
+          const dogEvent = await db.dogEvent.upsert({
             where: {
               transactionHash: eventData.transaction_hash,
             },

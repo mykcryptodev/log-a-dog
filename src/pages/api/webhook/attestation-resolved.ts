@@ -38,6 +38,12 @@ const WebhookPayloadSchema = z.object({
   topic: z.string(),
 });
 
+// Type for the result of processing an event
+type ProcessResult = 
+  | { success: true; skipped: true; eventName: string }
+  | { success: true; id: string; logId: string; isValid: boolean; transactionHash: string }
+  | { success: false; error: string; logId: string };
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -56,7 +62,7 @@ export default async function handler(
 
     // Process each attestation resolution event
     const results = await Promise.allSettled(
-      payload.data.map(async (event) => {
+      payload.data.map(async (event): Promise<ProcessResult> => {
         const eventData = event.data;
         const decoded = eventData.decoded;
 
@@ -70,7 +76,7 @@ export default async function handler(
           }
 
           // Find the corresponding DogEvent by logId
-          const dogEvent = await (db as any).dogEvent.findFirst({
+          const dogEvent = await db.dogEvent.findFirst({
             where: {
               logId: decoded.indexed_params.logId,
             },
@@ -86,7 +92,7 @@ export default async function handler(
           }
 
           // Update the DogEvent with attestation results
-          const updatedDogEvent = await (db as any).dogEvent.update({
+          const updatedDogEvent = await db.dogEvent.update({
             where: {
               id: dogEvent.id,
             },
@@ -117,16 +123,37 @@ export default async function handler(
     );
 
     // Count successful and failed operations
-    const successful = results.filter((r) => r.status === "fulfilled" && (r.value as any).success).length;
-    const failed = results.filter((r) => r.status === "rejected" || (r.status === "fulfilled" && !(r.value as any).success)).length;
-    const skipped = results.filter((r) => r.status === "fulfilled" && (r.value as any).skipped).length;
+    const successful = results.filter((r) => {
+      if (r.status === "fulfilled") {
+        const value = r.value;
+        return value.success === true && !('skipped' in value && value.skipped);
+      }
+      return false;
+    }).length;
+    
+    const failed = results.filter((r) => {
+      if (r.status === "rejected") return true;
+      if (r.status === "fulfilled") {
+        const value = r.value;
+        return value.success === false;
+      }
+      return false;
+    }).length;
+    
+    const skipped = results.filter((r) => {
+      if (r.status === "fulfilled") {
+        const value = r.value;
+        return value.success === true && 'skipped' in value && value.skipped;
+      }
+      return false;
+    }).length;
 
     // Log any failures for debugging
     results.forEach((result, index) => {
       if (result.status === "rejected") {
         console.error(`Failed to process attestation event ${index}:`, result.reason);
-      } else if (result.status === "fulfilled" && !(result.value as any).success && !(result.value as any).skipped) {
-        console.error(`Failed to process attestation event ${index}:`, (result.value as any).error);
+      } else if (result.status === "fulfilled" && !result.value.success) {
+        console.error(`Failed to process attestation event ${index}:`, result.value.error);
       }
     });
 

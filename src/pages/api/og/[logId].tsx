@@ -142,19 +142,19 @@ export default async function handler(req: NextRequest) {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={convertIpfsToHttp(hotdog.imageUri)} style={{ objectFit: 'cover', width: '1200px', height: '800px', position: 'absolute', top:0, left:0 }} />
+        <img src={convertIpfsToHttp(hotdog.imageUri)} style={{ objectFit: 'cover', width: '1200px', height: '800px', position: 'absolute', top:0, left:0 }} alt="Hotdog image" />
         
         {/* Log a Dog title in upper left */}
         <div style={{ position: 'absolute', top: 20, left: 20, display:'flex', alignItems:'center', gap:12, background:'rgba(0,0,0,0.5)', padding:'12px 20px', borderRadius:12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`${base}/images/logo.png`} width="40" height="40" style={{ borderRadius: '4px' }} />
+          <img src={`${base}/images/logo.png`} width="40" height="40" style={{ borderRadius: '4px' }} alt="Log a Dog logo" />
           <div style={{ fontSize: 36, display: 'flex', fontFamily: 'Segment' }}>Log a Dog</div>
         </div>
 
         {/* Username in bottom right */}
         <div style={{ position: 'absolute', bottom: 20, right: 20, display:'flex', alignItems:'center', gap:16, background:'rgba(0,0,0,0.5)', padding:'12px 20px', borderRadius:12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={convertIpfsToHttp(avatar)} width="64" height="64" style={{ borderRadius: '50%' }} />
+          <img src={convertIpfsToHttp(avatar)} width="64" height="64" style={{ borderRadius: '50%' }} alt={`${username} avatar`} />
           <div style={{ display:'flex', flexDirection:'column' }}>
             <div style={{ fontSize: 36, display: 'flex', fontFamily: 'Segment' }}>{username}</div>
             <div style={{ fontSize: 24, display: 'flex', fontFamily: 'Segment' }}>{userHotdogCount} dog{userHotdogCount !== 1 ? 's' : ''} logged!</div>

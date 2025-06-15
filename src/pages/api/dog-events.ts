@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { getDogEvents, getDogEventStats } from "~/server/api/dog-events";
+import type { Prisma } from "@prisma/client";
 
 const QuerySchema = z.object({
   logger: z.string().optional(),
@@ -30,7 +31,7 @@ export default async function handler(
     }
 
     // Build where clause based on query parameters
-    const where: any = {};
+    const where: Prisma.DogEventWhereInput = {};
     if (query.logger) where.logger = query.logger;
     if (query.eater) where.eater = query.eater;
     

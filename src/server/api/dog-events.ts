@@ -62,9 +62,9 @@ export async function getDogEventStats() {
     }),
   ]);
 
-  const validCount = attestationStats.find(s => s.attestationValid === true)?._count || 0;
-  const invalidCount = attestationStats.find(s => s.attestationValid === false)?._count || 0;
-  const pendingCount = attestationStats.find(s => s.attestationValid === null)?._count || 0;
+  const validCount = attestationStats.find(s => s.attestationValid === true)?._count ?? 0;
+  const invalidCount = attestationStats.find(s => s.attestationValid === false)?._count ?? 0;
+  const pendingCount = attestationStats.find(s => s.attestationValid === null)?._count ?? 0;
 
   return {
     totalEvents,

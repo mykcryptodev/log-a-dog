@@ -1,11 +1,6 @@
-import { type FC, useContext, useEffect, useState } from "react";
+import { type FC, useContext, useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useReadContract } from "thirdweb/react";
-import { getContract } from "thirdweb";
-import { formatEther } from "viem";
 import ActiveChainContext from "~/contexts/ActiveChain";
-import { STAKING, ATTESTATION_MANAGER } from "~/constants/addresses";
-import { client } from "~/providers/Thirdweb";
 import { QuestionMarkCircleIcon, XMarkIcon, GiftIcon } from "@heroicons/react/24/outline";
 import { Portal } from "~/components/utils/Portal";
 import { api } from "~/utils/api";
@@ -41,7 +36,7 @@ export const VotingCountdown: FC<Props> = ({
   onResolutionComplete,
   attestationPeriod,
 }) => {
-  const calculateTimeLeft = () => {
+  const calculateTimeLeft = useCallback(() => {
     const end = Number(timestamp) + ATTESTATION_WINDOW_SECONDS;
     const now = Math.floor(Date.now() / 1000);
     const difference = end - now;
@@ -54,7 +49,7 @@ export const VotingCountdown: FC<Props> = ({
     }
 
     return "Expired";
-  };
+  }, [timestamp]);
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
   const [isRewardingModerators, setIsRewardingModerators] = useState(false);
@@ -80,7 +75,7 @@ export const VotingCountdown: FC<Props> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timestamp]);
+  }, [calculateTimeLeft]);
 
   const isExpired = timeLeft === "Expired";
   const totalVotes = Number(validAttestations ?? 0) + Number(invalidAttestations ?? 0);
