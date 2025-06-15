@@ -61,14 +61,12 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
             const rpcRequest = getRpcClient({ client: thirdwebClient, chain });
             const receipt = await eth_getTransactionReceipt(rpcRequest, { hash: txHash });
             const log = receipt.logs.find(
-              (l) => l.topics?.[0]?.toLowerCase() === HOTDOG_LOGGED_TOPIC.toLowerCase()
+              (l: { topics?: string[] }) =>
+                l.topics?.[0]?.toLowerCase() === HOTDOG_LOGGED_TOPIC.toLowerCase(),
             );
-            if (log) {
-              const topic = log.topics?.[1];
-              if (topic) {
-                const logId = BigInt(topic).toString();
-                setLastLoggedLogId(logId);
-              }
+            if (log && log.topics?.[1]) {
+              const logId = BigInt(log.topics[1] as string).toString();
+              setLastLoggedLogId(logId);
             }
           }
         } catch (e) {
