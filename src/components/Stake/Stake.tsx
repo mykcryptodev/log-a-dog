@@ -75,7 +75,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         spender: STAKING[activeChain.id]!,
       });
 
-      setHasApproval(BigInt(allowanceAmt) >= parseEther(amount));
+      setHasApproval(allowanceAmt >= parseEther(amount));
     };
 
     void checkAllowance();
@@ -88,7 +88,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
   }, [percentage, balance]);
 
   const balanceIsInsufficient = useMemo(() => {
-    return Number(balance?.value ?? 0) < MINIMUM_STAKE;
+    return BigInt(balance?.value ?? 0) < BigInt(MINIMUM_STAKE);
   }, [balance]);
 
   const amountExceedsBalance = useMemo(() => {
