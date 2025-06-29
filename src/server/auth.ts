@@ -56,13 +56,27 @@ export const authOptions: NextAuthOptions = {
         token.address = user.address;
         token.fid = user.fid;
       } else if (token.address) {
-        // For existing sessions, fetch the user's fid from the database
-        const dbUser = await db.user.findFirst({
-          where: { 
-            address: (token.address as string).toLowerCase()
-          },
-          select: { fid: true }
-        });
+        // For existing sessions, fetch the user's fid from the database with retry logic
+        let dbUser;
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            dbUser = await db.user.findFirst({
+              where: { 
+                address: (token.address as string).toLowerCase()
+              },
+              select: { fid: true }
+            });
+            break;
+          } catch (dbError: unknown) {
+            console.error(`Database query failed in JWT callback (${4 - retries}/3):`, dbError);
+            retries--;
+            if (retries > 0) {
+              // Wait 1 second before retrying
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+        }
         if (dbUser?.fid) {
           token.fid = dbUser.fid;
         }
@@ -82,10 +96,10 @@ export const authOptions: NextAuthOptions = {
   providers: [
     EthereumProvider({
       async createUser(credentials) {
-        let fid;
-        let username;
-        let name;
-        let image;
+        let fid: number | undefined;
+        let username: string | undefined;
+        let name: string | undefined;
+        let image: string | undefined;
         try {
           // Fetch user's FID from Neynar using their Ethereum address
           const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
@@ -102,50 +116,83 @@ export const authOptions: NextAuthOptions = {
           console.error("Error fetching FID from Neynar:", error);
         }
 
+        // Helper function for database operations with retries
+        const withRetry = async <T>(operation: () => Promise<T>, context: string): Promise<T> => {
+          let retries = 3;
+          while (retries > 0) {
+            try {
+              return await operation();
+            } catch (dbError: unknown) {
+              console.error(`Database operation failed in ${context} (${4 - retries}/3):`, dbError);
+              retries--;
+              if (retries === 0) {
+                throw dbError;
+              }
+              // Wait 1 second before retrying
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+          throw new Error("Unexpected end of retry loop");
+        };
+
         // First try to find existing user by address (upserts would fail if the user already exists)
-        let user = await db.user.findFirst({
-          where: {
-            address: credentials.address.toLowerCase(),
-          },
-        });
+        let user = await withRetry(
+          () => db.user.findFirst({
+            where: {
+              address: credentials.address.toLowerCase(),
+            },
+          }),
+          'findFirst user'
+        );
 
         if (user) {
           // Update existing user
-          user = await db.user.update({
-            where: {
-              id: user.id,
-            },
-            data: {
-              fid,
-              username,
-              image,
-              name,
-            },
-          });
+          const userId = user.id; // Capture the ID to avoid null reference issues
+          user = await withRetry(
+            () => db.user.update({
+              where: {
+                id: userId,
+              },
+              data: {
+                fid,
+                username,
+                image,
+                name,
+              },
+            }),
+            'update user'
+          );
         } else {
           // Create new user
-          user = await db.user.create({
-            data: {
-              address: credentials.address.toLowerCase(),
-              fid,
-              username,
-              image,
-              name,
-            },
-          });
+          user = await withRetry(
+            () => db.user.create({
+              data: {
+                address: credentials.address.toLowerCase(),
+                fid,
+                username,
+                image,
+                name,
+              },
+            }),
+            'create user'
+          );
         }
 
         // Link any existing DogEvents to this user
         try {
-          const unlinkedEvents = await db.dogEvent.updateMany({
-            where: {
-              eater: credentials.address.toLowerCase(),
-              userId: null,
-            },
-            data: {
-              userId: user.id,
-            },
-          });
+          const finalUserId = user.id; // Capture user ID to avoid null reference issues
+          const unlinkedEvents = await withRetry(
+            () => db.dogEvent.updateMany({
+              where: {
+                eater: credentials.address.toLowerCase(),
+                userId: null,
+              },
+              data: {
+                userId: finalUserId,
+              },
+            }),
+            'update dog events'
+          );
           
           if (unlinkedEvents.count > 0) {
             console.log(`Linked ${unlinkedEvents.count} historical DogEvents to user ${user.id}`);
@@ -157,23 +204,27 @@ export const authOptions: NextAuthOptions = {
 
         console.log({ user });
         // Create a new account for the user
-        await db.account.upsert({ 
-          where: {
-            provider_providerAccountId: {
+        const accountUserId = user.id; // Capture user ID to avoid null reference issues
+        await withRetry(
+          () => db.account.upsert({ 
+            where: {
+              provider_providerAccountId: {
+                provider: "ethereum",
+                providerAccountId: credentials.address,
+              },
+            },
+            update: {
+              type: "ethereum",
+            },
+            create: {
+              userId: accountUserId,
+              type: "ethereum",
               provider: "ethereum",
               providerAccountId: credentials.address,
             },
-          },
-          update: {
-            type: "ethereum",
-          },
-          create: {
-            userId: user.id,
-            type: "ethereum",
-            provider: "ethereum",
-            providerAccountId: credentials.address,
-          },
-        });
+          }),
+          'upsert account'
+        );
         console.log(' returning user ');
         return user;
       },
