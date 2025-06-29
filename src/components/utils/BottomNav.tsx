@@ -37,7 +37,7 @@ export const BottomNav: FC = () => {
         FAQ
       </button>
       <button>
-        <ProfileButton />
+        <ProfileButton hideNameAndBadge />
       </button>
     </div>
   )
