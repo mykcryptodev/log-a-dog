@@ -32,6 +32,9 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
 
       if (isValid) {
         console.log('Signature is valid');
+        
+        const walletAddress = credentials.address.toLowerCase(); // Capture address to avoid undefined issues
+        
         // if the credentials.message includes "Link User:", we can extract the user id
         const linkUserRegex = /Link User: ([a-zA-Z0-9]+)/;
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
@@ -50,10 +53,10 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
         while (retries > 0) {
           try {
             user = await db.user.findFirst({
-              where: { address: credentials.address.toLowerCase() },
+              where: { address: walletAddress },
             });
             break;
-          } catch (dbError: any) {
+          } catch (dbError: unknown) {
             console.error(`Database query failed (${4 - retries}/3):`, dbError);
             retries--;
             if (retries === 0) {
@@ -66,13 +69,13 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
 
         if (!user) {
           console.log('Creating new user');
-          user = await createUser({ address: credentials.address.toLowerCase() });
+          user = await createUser({ address: walletAddress });
         }
 
         console.log('Returning user:', user);
         return {
           id: user.id,
-          address: credentials.address.toLowerCase(),
+          address: walletAddress,
         }
       }
 
@@ -85,6 +88,8 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
 
     async function linkAddressToExistingUser({ existingUserId }: { existingUserId: string }) {
       if (!credentials?.address) return null;
+      
+      const walletAddress = credentials.address.toLowerCase(); // Capture address to avoid undefined issues
 
       // Helper function for database operations with retries
       const withRetry = async <T>(operation: () => Promise<T>, context: string): Promise<T> => {
@@ -92,7 +97,7 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
         while (retries > 0) {
           try {
             return await operation();
-          } catch (dbError: any) {
+          } catch (dbError: unknown) {
             console.error(`Database operation failed in ${context} (${4 - retries}/3):`, dbError);
             retries--;
             if (retries === 0) {
@@ -110,7 +115,7 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
       const ethereumWalletUser = await withRetry(
         () => db.user.findFirst({
           where: {
-            address: credentials.address.toLowerCase(),
+            address: walletAddress,
           },
         }),
         'find ethereum wallet user'
@@ -165,7 +170,7 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
             id: existingUserId,
           },
           data: {
-            address: credentials.address.toLowerCase(),
+            address: walletAddress,
           },
         }),
         'update user with address'
@@ -176,7 +181,7 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
             userId: user.id,
             type: "ethereum",
             provider: "ethereum",
-            providerAccountId: credentials.address.toLowerCase(),
+            providerAccountId: walletAddress,
           },
         }),
         'create ethereum account'
@@ -184,7 +189,7 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
 
       return {
         id: user.id,
-        address: credentials.address.toLowerCase(),
+        address: walletAddress,
       }
     }
   },

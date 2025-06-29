@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
               select: { fid: true }
             });
             break;
-          } catch (dbError: any) {
+          } catch (dbError: unknown) {
             console.error(`Database query failed in JWT callback (${4 - retries}/3):`, dbError);
             retries--;
             if (retries > 0) {
@@ -96,10 +96,10 @@ export const authOptions: NextAuthOptions = {
   providers: [
     EthereumProvider({
       async createUser(credentials) {
-        let fid;
-        let username;
-        let name;
-        let image;
+        let fid: number | undefined;
+        let username: string | undefined;
+        let name: string | undefined;
+        let image: string | undefined;
         try {
           // Fetch user's FID from Neynar using their Ethereum address
           const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
@@ -122,7 +122,7 @@ export const authOptions: NextAuthOptions = {
           while (retries > 0) {
             try {
               return await operation();
-            } catch (dbError: any) {
+            } catch (dbError: unknown) {
               console.error(`Database operation failed in ${context} (${4 - retries}/3):`, dbError);
               retries--;
               if (retries === 0) {
@@ -147,10 +147,11 @@ export const authOptions: NextAuthOptions = {
 
         if (user) {
           // Update existing user
+          const userId = user.id; // Capture the ID to avoid null reference issues
           user = await withRetry(
             () => db.user.update({
               where: {
-                id: user.id,
+                id: userId,
               },
               data: {
                 fid,
@@ -179,6 +180,7 @@ export const authOptions: NextAuthOptions = {
 
         // Link any existing DogEvents to this user
         try {
+          const finalUserId = user.id; // Capture user ID to avoid null reference issues
           const unlinkedEvents = await withRetry(
             () => db.dogEvent.updateMany({
               where: {
@@ -186,7 +188,7 @@ export const authOptions: NextAuthOptions = {
                 userId: null,
               },
               data: {
-                userId: user.id,
+                userId: finalUserId,
               },
             }),
             'update dog events'
@@ -202,6 +204,7 @@ export const authOptions: NextAuthOptions = {
 
         console.log({ user });
         // Create a new account for the user
+        const accountUserId = user.id; // Capture user ID to avoid null reference issues
         await withRetry(
           () => db.account.upsert({ 
             where: {
@@ -214,7 +217,7 @@ export const authOptions: NextAuthOptions = {
               type: "ethereum",
             },
             create: {
-              userId: user.id,
+              userId: accountUserId,
               type: "ethereum",
               provider: "ethereum",
               providerAccountId: credentials.address,
