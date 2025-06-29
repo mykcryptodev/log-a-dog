@@ -2,6 +2,7 @@ import Head from "next/head";
 import { type NextPage } from "next";
 import Instructions from "~/components/Help/Instructions";
 import Rules from "~/components/Help/Rules";
+import Media from "~/components/Help/Media";
 
 const FAQPage: NextPage = () => {
   return (
@@ -22,6 +23,7 @@ const FAQPage: NextPage = () => {
           
           <Rules />
           <Instructions />
+          <Media />
         </div>
       </main>
     </>
