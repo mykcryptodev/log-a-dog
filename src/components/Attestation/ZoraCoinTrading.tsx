@@ -54,6 +54,12 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
       return;
     }
 
+    // TODO: tradeCoin is not yet available in the current SDK version
+    toast.info("Coin trading functionality is coming soon!");
+    setShowBuyModal(false);
+    return;
+
+    /* Commented out until tradeCoin is available in the SDK
     setIsLoading(true);
     try {
       // const { walletClient, publicClient } = convertWalletToViem(wallet);
@@ -82,6 +88,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   const handleSell = async () => {
@@ -90,6 +97,12 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
       return;
     }
 
+    // TODO: tradeCoin is not yet available in the current SDK version
+    toast.info("Coin trading functionality is coming soon!");
+    setShowSellModal(false);
+    return;
+
+    /* Commented out until tradeCoin is available in the SDK
     setIsLoading(true);
     try {
       // const { walletClient, publicClient } = convertWalletToViem(wallet);
@@ -118,6 +131,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   return (
