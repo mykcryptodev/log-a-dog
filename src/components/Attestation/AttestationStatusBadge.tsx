@@ -1,4 +1,5 @@
 import type { FC } from "react";
+import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export type AttestationPeriod = {
   status: number;
@@ -11,19 +12,24 @@ interface Props {
 
 const AttestationStatusBadge: FC<Props> = ({ attestationPeriod }) => {
   let label = "pending";
-  let color = "neutral";
+  let icon = null as JSX.Element | null;
 
   if (attestationPeriod?.status === 1) {
     if (attestationPeriod.isValid) {
       label = "valid";
-      color = "primary";
+      icon = <CheckIcon className="w-3 h-3" />;
     } else {
       label = "invalid";
-      color = "secondary";
+      icon = <XMarkIcon className="w-3 h-3" />;
     }
   }
 
-  return <span className={`badge badge-${color} text-xs capitalize`}>{label}</span>;
+  return (
+    <span className="badge badge-neutral text-xs capitalize flex items-center gap-1">
+      {icon}
+      {label}
+    </span>
+  );
 };
 
 export default AttestationStatusBadge;
