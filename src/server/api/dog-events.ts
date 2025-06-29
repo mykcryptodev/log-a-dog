@@ -101,12 +101,12 @@ export async function getDogEventLeaderboard(options?: {
 }) {
   const where: Prisma.DogEventWhereInput = {};
 
-  if (options?.startDate || options?.endDate) {
+  if (options?.startDate != null || options?.endDate != null) {
     where.timestamp = {} as Prisma.BigIntFilter;
-    if (options.startDate) {
+    if (options?.startDate != null) {
       (where.timestamp as Prisma.BigIntFilter).gte = BigInt(options.startDate);
     }
-    if (options.endDate) {
+    if (options?.endDate != null) {
       (where.timestamp as Prisma.BigIntFilter).lte = BigInt(options.endDate);
     }
   }

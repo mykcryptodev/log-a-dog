@@ -10,8 +10,6 @@ import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 interface Props {
   timestamp: string; // unix timestamp in seconds
   logId?: string;
-  userAttested?: boolean;
-  userAttestation?: boolean;
   validAttestations?: string;
   invalidAttestations?: string;
   onResolutionComplete?: () => void;
@@ -29,8 +27,6 @@ interface Props {
 export const VotingCountdown: FC<Props> = ({
   timestamp,
   logId,
-  userAttested,
-  userAttestation,
   validAttestations,
   invalidAttestations,
   onResolutionComplete,
