@@ -15,7 +15,7 @@ import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, resolveAttestationPerio
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
-import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
+import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData, invalidateCache } from "~/server/utils/redis";
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 import { encodePoolConfig } from "~/server/utils/poolConfig";
 import { upload } from "thirdweb/storage";
@@ -127,23 +127,31 @@ async function getMetadataFromUri(uri: string): Promise<HotdogMetadata | null> {
 // Helper function to fetch Zora coin details in batch
 async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Promise<Map<string, ZoraCoinDetails>> {
   const coinDetailsMap = new Map<string, ZoraCoinDetails>();
+  const uncachedAddresses: string[] = [];
   
-  // Process addresses in chunks to avoid overwhelming the API
-  const chunkSize = 50;
-  for (let i = 0; i < addresses.length; i += chunkSize) {
-    const chunk = addresses.slice(i, i + chunkSize);
-    const cacheKey = `zora-coins:${chunk.join(',')}`;
+  // First, check cache for each individual coin
+  for (const address of addresses) {
+    const normalizedAddress = address.toLowerCase();
+    const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
     
-    const cachedData = await getCachedData<ZoraCoinDetails[]>(cacheKey);
-    if (cachedData) {
-      cachedData.forEach(coin => {
-        if (coin?.address) {
-          coinDetailsMap.set(coin.address, coin);
-        }
-      });
-      continue;
+    const cachedCoin = await getCachedData<ZoraCoinDetails>(cacheKey);
+    if (cachedCoin) {
+      coinDetailsMap.set(normalizedAddress, cachedCoin);
+    } else {
+      uncachedAddresses.push(address);
     }
-
+  }
+  
+  // If all coins were cached, return early
+  if (uncachedAddresses.length === 0) {
+    return coinDetailsMap;
+  }
+  
+  // Fetch uncached coins in chunks
+  const chunkSize = 50;
+  for (let i = 0; i < uncachedAddresses.length; i += chunkSize) {
+    const chunk = uncachedAddresses.slice(i, i + chunkSize);
+    
     try {
       const response = await getCoins({
         coins: chunk.map(address => ({
@@ -153,14 +161,19 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
       });
       
       if (response.data?.zora20Tokens) {
-        response.data.zora20Tokens.forEach(coin => {
+        // Cache each coin individually
+        for (const coin of response.data.zora20Tokens) {
           if (coin?.address) {
-            coinDetailsMap.set(coin.address.toLowerCase(), coin);
+            const normalizedAddress = coin.address.toLowerCase();
+            coinDetailsMap.set(normalizedAddress, coin);
+            
+            // Cache this coin individually
+            const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
+            await setCachedData(cacheKey, coin, CACHE_DURATION.MEDIUM);
           } else {
             console.log('Skipping coin with no address:', coin);
           }
-        });
-        await setCachedData(cacheKey, response.data.zora20Tokens, CACHE_DURATION.MEDIUM);
+        }
       } else {
         console.log('No zora20Tokens in response:', response);
       }
@@ -171,6 +184,49 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
   }
   
   return coinDetailsMap;
+}
+
+// Helper function to invalidate a specific coin's cache
+async function invalidateZoraCoinCache(address: string, chainId: number): Promise<void> {
+  const normalizedAddress = address.toLowerCase();
+  const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
+  await invalidateCache(cacheKey);
+}
+
+// Helper function to pre-warm cache for specific coins
+async function prewarmZoraCoinCache(addresses: string[], chainId: number): Promise<void> {
+  // This uses the same function which will cache any uncached coins
+  await getZoraCoinDetailsBatch(addresses, chainId);
+}
+
+// Helper function to refresh stale coin data
+async function refreshZoraCoinData(address: string, chainId: number): Promise<ZoraCoinDetails | null> {
+  const normalizedAddress = address.toLowerCase();
+  const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
+  
+  // Invalidate existing cache
+  await invalidateCache(cacheKey);
+  
+  // Fetch fresh data
+  try {
+    const response = await getCoins({
+      coins: [{
+        collectionAddress: address as `0x${string}`,
+        chainId,
+      }],
+    });
+    
+    if (response.data?.zora20Tokens?.[0]) {
+      const coin = response.data.zora20Tokens[0];
+      // Cache the fresh data
+      await setCachedData(cacheKey, coin, CACHE_DURATION.MEDIUM);
+      return coin;
+    }
+  } catch (error) {
+    console.error(`Error refreshing Zora coin data for ${address}:`, error);
+  }
+  
+  return null;
 }
 
 // Helper function to fetch attestation periods in batch
