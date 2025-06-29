@@ -80,6 +80,32 @@ export default async function handler(
           const eaterAddress = decoded.indexed_params.eater.toLowerCase();
           console.log(`Looking up user for eater address: ${eaterAddress}`);
           
+          // First, let's check if ANY users exist with addresses
+          const userCount = await db.user.count({
+            where: {
+              address: { not: null }
+            }
+          });
+          console.log(`Total users with addresses: ${userCount}`);
+          
+          // Also check for case sensitivity issues
+          const allUsersWithSimilarAddress = await db.user.findMany({
+            where: {
+              OR: [
+                { address: eaterAddress },
+                { address: decoded.indexed_params.eater },
+                { address: { contains: eaterAddress.substring(2) } } // Check without 0x prefix
+              ]
+            },
+            select: {
+              id: true,
+              address: true,
+              fid: true,
+            }
+          });
+          
+          console.log(`Users with similar addresses: ${JSON.stringify(allUsersWithSimilarAddress)}`);
+          
           const user = await db.user.findFirst({
             where: {
               address: eaterAddress,
@@ -95,6 +121,13 @@ export default async function handler(
             console.log(`Found user: ${user.id} with address: ${user.address} and FID: ${user.fid}`);
           } else {
             console.log(`No user found for address: ${eaterAddress}`);
+            // Let's also check what addresses DO exist
+            const sampleUsers = await db.user.findMany({
+              where: { address: { not: null } },
+              take: 3,
+              select: { address: true }
+            });
+            console.log(`Sample user addresses in DB: ${JSON.stringify(sampleUsers)}`);
           }
 
           // Create or update the dog event

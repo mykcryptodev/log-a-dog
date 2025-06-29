@@ -12,7 +12,8 @@
     "lint": "next lint",
     "start": "next start",
     "script:fix-addresses": "tsx src/scripts/fix-address-case.ts",
-    "script:migrate-events": "tsx src/scripts/migrate-dog-events.ts"
+    "script:migrate-events": "tsx src/scripts/migrate-dog-events.ts",
+    "script:diagnose": "tsx src/scripts/diagnose-linking.ts"
   },
   "dependencies": {
     "@apollo/client": "^3.9.5",
