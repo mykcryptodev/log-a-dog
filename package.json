@@ -10,11 +10,7 @@
     "dev": "next dev",
     "postinstall": "prisma generate",
     "lint": "next lint",
-    "start": "next start",
-    "script:fix-addresses": "tsx src/scripts/fix-address-case.ts",
-    "script:migrate-events": "tsx src/scripts/migrate-dog-events.ts",
-    "script:diagnose": "tsx src/scripts/diagnose-linking.ts",
-    "script:link-specific": "tsx src/scripts/link-specific-events.ts"
+    "start": "next start"
   },
   "dependencies": {
     "@apollo/client": "^3.9.5",

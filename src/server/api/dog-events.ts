@@ -111,67 +111,45 @@ export async function getDogEventLeaderboard(options?: {
     }
   }
 
-  // Get all dog events with the filters
-  const dogEvents = await db.dogEvent.findMany({
+  // Optimized single query approach - get dog events with user data in one query
+  const dogEventsWithUsers = await db.dogEvent.findMany({
     where,
     select: {
       eater: true,
-    },
-  });
-
-  // Get unique eater addresses
-  const uniqueEaters = [...new Set(dogEvents.map((e: { eater: string }) => e.eater.toLowerCase()))];
-
-  // Fetch users with FIDs for these addresses
-  const users = await db.user.findMany({
-    where: {
-      address: {
-        in: uniqueEaters,
+      user: {
+        select: {
+          fid: true,
+          address: true,
+        },
       },
     },
-    select: {
-      address: true,
-      fid: true,
-    },
   });
 
-  // Create a map of address to FID
-  const addressToFid = new Map<string, number>();
-  const fidToAddresses = new Map<number, Set<string>>();
-  
-  users.forEach((user: { address: string | null; fid: number | null }) => {
-    if (user.fid) {
-      addressToFid.set(user.address!.toLowerCase(), user.fid);
-      if (!fidToAddresses.has(user.fid)) {
-        fidToAddresses.set(user.fid, new Set());
-      }
-      fidToAddresses.get(user.fid)!.add(user.address!.toLowerCase());
-    }
-  });
+  // Group events by FID (or address if no FID) in a single pass
+  const groupedCounts = new Map<string, { count: number; addresses: Set<string>; fid?: number }>();
 
-  // Group events by FID (or address if no FID)
-  const groupedCounts = new Map<string, { count: number; addresses: string[]; fid?: number }>();
-
-  dogEvents.forEach((event: { eater: string }) => {
+  dogEventsWithUsers.forEach((event) => {
     const eaterLower = event.eater.toLowerCase();
-    const fid = addressToFid.get(eaterLower);
+    const userFid = event.user?.fid;
     
-    if (fid) {
+    if (userFid) {
       // Group by FID
-      const key = `fid:${fid}`;
+      const key = `fid:${userFid}`;
       if (!groupedCounts.has(key)) {
         groupedCounts.set(key, { 
           count: 0, 
-          addresses: Array.from(fidToAddresses.get(fid) ?? []),
-          fid 
+          addresses: new Set(),
+          fid: userFid 
         });
       }
-      groupedCounts.get(key)!.count++;
+      const group = groupedCounts.get(key)!;
+      group.count++;
+      group.addresses.add(eaterLower);
     } else {
       // No FID, group by address
       const key = `addr:${eaterLower}`;
       if (!groupedCounts.has(key)) {
-        groupedCounts.set(key, { count: 0, addresses: [eaterLower] });
+        groupedCounts.set(key, { count: 0, addresses: new Set([eaterLower]) });
       }
       groupedCounts.get(key)!.count++;
     }
@@ -181,10 +159,10 @@ export async function getDogEventLeaderboard(options?: {
   const leaderboard = Array.from(groupedCounts.entries())
     .map(([_key, data]) => ({
       // Use the first address associated with the FID (or the single address if no FID)
-      eater: data.addresses[0] ?? '',
+      eater: Array.from(data.addresses)[0] ?? '',
       count: data.count,
       fid: data.fid,
-      addresses: data.addresses,
+      addresses: Array.from(data.addresses),
     }))
     .sort((a, b) => b.count - a.count);
 

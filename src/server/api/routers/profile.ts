@@ -80,20 +80,81 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { addresses, chainId } = input;
-      const profiles = await Promise.all(
-        addresses.map(async (address) => {
-          const cacheKey = `profile:${chainId}:${address.toLowerCase()}`;
-          return getOrSetCache(
-            cacheKey,
-            async () => {
-              const profile = await getProfile(address);
-              return profile;
+      
+      // Early return if no addresses
+      if (addresses.length === 0) {
+        return [];
+      }
+
+      // Generate cache key for the batch
+      const sortedAddresses = addresses.map(addr => addr.toLowerCase()).sort();
+      const batchCacheKey = `profile:batch:${chainId}:${sortedAddresses.join(',')}`;
+
+      // Try to get cached batch result first
+      const cachedBatch = await getOrSetCache(
+        batchCacheKey,
+        async () => {
+          // Fetch all users in a single query
+          const users = await db.user.findMany({
+            where: {
+              address: {
+                in: sortedAddresses,
+              },
             },
-            CACHE_DURATION.MEDIUM
+            select: {
+              address: true,
+              username: true,
+              image: true,
+              name: true,
+              fid: true,
+            },
+          });
+
+          // Create a map for quick lookup
+          const userMap = new Map<string, typeof users[0]>();
+          users.forEach(user => {
+            if (user.address) {
+              userMap.set(user.address.toLowerCase(), user);
+            }
+          });
+
+          // Process all addresses and get profiles
+          const profiles = await Promise.all(
+            sortedAddresses.map(async (address) => {
+              const user = userMap.get(address);
+              
+              // If we have complete user data, use it
+              if (user?.username && user?.image) {
+                return {
+                  username: user.username,
+                  imgUrl: user.image,
+                  metadata: '',
+                  address,
+                };
+              }
+
+              // Otherwise fall back to external services
+              return await getProfileFromExternalServices(address);
+            })
           );
-        })
+
+          return profiles;
+        },
+        CACHE_DURATION.MEDIUM
       );
-      return profiles;
+
+      // Return profiles in the same order as input addresses
+      return addresses.map(inputAddr => {
+        const lowerAddr = inputAddr.toLowerCase();
+        return cachedBatch.find(profile => 
+          profile.address.toLowerCase() === lowerAddr
+        ) ?? {
+          username: '',
+          imgUrl: '',
+          metadata: '',
+          address: inputAddr,
+        };
+      });
     }),
   search: publicProcedure
     .input(z.object({ 
@@ -210,6 +271,42 @@ async function getZoraProfileData(addressOrUsername: string) {
     console.error('Error fetching Zora profile:', error);
     return null;
   }
+}
+
+// Helper function to get profile from external services (Zora, Neynar)
+async function getProfileFromExternalServices(address: string) {
+  // First try to get Zora profile
+  const zoraProfile = await getZoraProfileData(address);
+  if (zoraProfile) {
+    return zoraProfile;
+  }
+
+  try {
+    const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
+      addresses: [address],
+    });
+    
+    const addressKey = address.toLowerCase();
+    const user = response[addressKey]?.[0];
+    
+    if (user) {
+      return {
+        username: user.display_name ?? user.username,
+        imgUrl: user.pfp_url,
+        metadata: '',
+        address,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching from Neynar:", error);
+  }
+
+  return {
+    username: '',
+    imgUrl: '',
+    metadata: '',
+    address,
+  };
 }
 
 async function getProfile (address: string) {
