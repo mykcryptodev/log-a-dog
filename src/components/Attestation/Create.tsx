@@ -10,6 +10,7 @@ import { TransactionStatus } from '../utils/TransactionStatus';
 import { DEFAULT_UPLOAD_PHRASE } from '~/constants';
 import { FarcasterContext } from "~/providers/Farcaster";
 import { sdk } from "@farcaster/frame-sdk";
+import { usePendingTransactionsStore } from "~/stores/pendingTransactions";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -23,6 +24,7 @@ type Props = {
 export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
   const utils = api.useUtils();
+  const { addPendingDog, removePendingDog } = usePendingTransactionsStore();
   const [imgUri, setImgUri] = useState<string | undefined>();
   const [lastLoggedImgUri, setLastLoggedImgUri] = useState<string | undefined>();
   const [lastLoggedDescription, setLastLoggedDescription] = useState<string>('');
@@ -58,7 +60,10 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   }, [isMiniApp, dogEvent, isTransactionIdResolved]);
 
   const handleOnResolved = (success: boolean) => {
-    if (success && account) {
+    if (success && account && transactionId) {
+      // Remove from pending store
+      removePendingDog(transactionId);
+      
       // pop confetti
       const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
       canvas.style.display = 'block';
@@ -72,13 +77,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         }, 3000);
       });
 
-      void onAttestationCreated?.({
-        hotdogEater: account.address,
-        imageUri: imgUri!,
-      });
-
-      // Invalidate the hotdog query cache
+      // Invalidate the hotdog query cache to refresh with real data
       void utils.hotdog.getAll.invalidate();
+    } else if (!success && transactionId) {
+      // If transaction failed, remove the optimistic update
+      removePendingDog(transactionId);
     }
     setIsTransactionIdResolved(true);
   }
@@ -101,15 +104,29 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         setTransactionId(undefined);
         setIsTransactionIdResolved(false);
         // Call the backend tRPC procedure
-        const transactionId = await logHotdog({
+        const result = await logHotdog({
           chainId: activeChain.id,
           imageUri: imgUri!,
           metadataUri: '',
           description,
         });
+        
+        // Add optimistic update to store
+        addPendingDog({
+          ...result.optimisticData,
+          transactionId: result.transactionId,
+          createdAt: Date.now(),
+        });
+        
         setLastLoggedImgUri(imgUri);
         setLastLoggedDescription(description);
-        setTransactionId(transactionId);
+        setTransactionId(result.transactionId);
+
+        // Trigger immediate UI update
+        void onAttestationCreated?.({
+          hotdogEater: account.address,
+          imageUri: imgUri!,
+        });
 
         // close the modal
         (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();

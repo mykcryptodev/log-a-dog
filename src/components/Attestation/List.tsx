@@ -17,8 +17,24 @@ import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import dynamic from "next/dynamic";
 const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
+import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 
 import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
+
+// Type for hotdog from tRPC
+type RealDogEvent = {
+  logId: string;
+  imageUri: string;
+  metadataUri: string;
+  timestamp: string;
+  eater: string;
+  logger: string;
+  zoraCoin: string | null;
+  attestationPeriod?: any;
+  metadata?: any;
+};
+
+type HotdogItem = RealDogEvent | PendingDogEvent;
 
 type Props = {
   attestors?: string[];
@@ -34,6 +50,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
+  const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery({
     chainId: activeChain.id,
@@ -51,9 +68,20 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     void refetchDogData();
   }, [account, refetchDogData]);
 
-  const showLoggedVia = (hotdog: { eater: `0x${string}`, logger: `0x${string}` }) => {
-    const loggerIsNotEater = !isAddressEqual(hotdog.eater, hotdog.logger);
-    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger, env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`);
+  // Clear expired pending transactions
+  useEffect(() => {
+    clearExpiredPending();
+  }, [clearExpiredPending]);
+
+  // Get pending dogs for current chain
+  const pendingDogs = getPendingDogsForChain(activeChain.id.toString());
+
+  // Merge pending dogs with real data
+  const allHotdogs = dogData?.hotdogs ? [...pendingDogs, ...dogData.hotdogs as any[]] : pendingDogs;
+
+  const showLoggedVia = (hotdog: { eater: string, logger: string }) => {
+    const loggerIsNotEater = !isAddressEqual(hotdog.eater as `0x${string}`, hotdog.logger as `0x${string}`);
+    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger as `0x${string}`, env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`);
     return loggerIsNotEater && loggerIsNotBackendWallet;
   }
 
@@ -62,6 +90,29 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const invalidMap = dogData?.hotdogs && dogData.invalidAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.invalidAttestations[i]])) : {};
   const userAttestedMap = dogData?.hotdogs && dogData.userAttested ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttested[i]])) : {};
   const userAttestationMap = dogData?.hotdogs && dogData.userAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttestations[i]])) : {};
+
+  // Helper function to get attestation data for a hotdog
+  const getAttestationData = (hotdog: any): {
+    validAttestations: string;
+    invalidAttestations: string;
+    userAttested: boolean;
+    userAttestation: boolean;
+  } => {
+    if ('isPending' in hotdog && hotdog.isPending) {
+      return {
+        validAttestations: "0",
+        invalidAttestations: "0", 
+        userAttested: false,
+        userAttestation: false,
+      };
+    }
+    return {
+      validAttestations: validMap[hotdog.logId] ?? "0",
+      invalidAttestations: invalidMap[hotdog.logId] ?? "0",
+      userAttested: userAttestedMap[hotdog.logId] ?? false,
+      userAttestation: userAttestationMap[hotdog.logId] ?? false,
+    };
+  };
 
   return (
     <>
@@ -97,9 +148,11 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
           </div>
         ))
       }
-      {dogData?.hotdogs.map((hotdog) => {
+      {allHotdogs.map((hotdog) => {
         const isExpired =
           Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <= Date.now();
+        const attestationData = getAttestationData(hotdog);
+        const isPending = 'isPending' in hotdog && hotdog.isPending;
         return (
           <div className="card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow" key={hotdog.logId}>
             <div className="card-body p-4 max-w-lg">
@@ -108,9 +161,15 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   <div className="flex items-center gap-2 w-fit">
                     <Avatar address={hotdog.eater} fallbackSize={24} />
                     <Name address={hotdog.eater} />
+                    {isPending && (
+                      <div className="badge badge-warning badge-sm gap-1">
+                        <div className="loading loading-spinner loading-xs" />
+                        Pending
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col">
-                    {showLoggedVia({ eater: hotdog.eater as `0x${string}`, logger: hotdog.logger as `0x${string}` }) && (
+                    {showLoggedVia({ eater: hotdog.eater, logger: hotdog.logger }) && (
                       <div className="flex items-center gap-1 text-xs opacity-75">
                         <span>via</span>
                         <Avatar address={hotdog.logger} size="16px" />
@@ -165,10 +224,11 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   />
                   {!isExpired && (
                     <JudgeAttestation
-                      userAttested={userAttestedMap[hotdog.logId]}
-                      userAttestation={userAttestationMap[hotdog.logId]}
-                      validAttestations={validMap[hotdog.logId]?.toString()}
-                      invalidAttestations={invalidMap[hotdog.logId]?.toString()}
+                      disabled={isPending}
+                      userAttested={attestationData.userAttested}
+                      userAttestation={attestationData.userAttestation}
+                      validAttestations={attestationData.validAttestations}
+                      invalidAttestations={attestationData.invalidAttestations}
                       logId={hotdog.logId}
                       chainId={activeChain.id}
                       onAttestationMade={() => void refetchDogData()}
@@ -181,8 +241,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 <VotingCountdown
                   timestamp={hotdog.timestamp.toString()}
                   logId={hotdog.logId.toString()}
-                  validAttestations={validMap[hotdog.logId]?.toString()}
-                  invalidAttestations={invalidMap[hotdog.logId]?.toString()}
+                  validAttestations={attestationData.validAttestations}
+                  invalidAttestations={attestationData.invalidAttestations}
                   onResolutionComplete={() => void refetchDogData()}
                   attestationPeriod={hotdog.attestationPeriod}
                 />

@@ -821,7 +821,21 @@ export const hotdogRouter = createTRPCRouter({
         await deleteCachedData(hotdogPattern);
         await deleteCachedData(leaderboardPattern);
   
-        return transactionId;
+        // Return data needed for optimistic updates
+        return {
+          transactionId,
+          optimisticData: {
+            logId: transactionId, // Use transactionId as temporary logId
+            imageUri,
+            metadataUri,
+            eater: ctx.session.user.address,
+            logger: ctx.session.user.address,
+            zoraCoin: '', // Will be populated later
+            timestamp: Math.floor(Date.now() / 1000).toString(),
+            chainId: chainId.toString(),
+            isPending: true as const,
+          }
+        };
       } catch (error) {
         console.error("Error logging hotdog:", error);
         throw error;
