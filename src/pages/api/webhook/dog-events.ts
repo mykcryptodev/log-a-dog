@@ -2,6 +2,17 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { db } from "~/server/db";
 
+// Type for the result of processing each event
+type EventProcessingResult = {
+  success: boolean;
+  id?: string;
+  transactionHash?: string;
+  skipped?: boolean;
+  eventName?: string;
+  duplicate?: boolean;
+  error?: string;
+};
+
 // Define the schema for the webhook payload
 const DogEventSchema = z.object({
   data: z.object({
@@ -62,8 +73,8 @@ export default async function handler(
     console.log("Payload validated successfully");
 
     // Process each event in the payload
-    const results = await Promise.allSettled(
-      payload.data.map(async (event) => {
+    const results: PromiseSettledResult<EventProcessingResult>[] = await Promise.allSettled(
+      payload.data.map(async (event): Promise<EventProcessingResult> => {
         const eventData = event.data;
         const decoded = eventData.decoded;
 
@@ -76,6 +87,60 @@ export default async function handler(
             return { success: true, skipped: true, eventName: decoded.name };
           }
 
+          // Look up the user by eater address
+          const eaterAddress = decoded.indexed_params.eater.toLowerCase();
+          console.log(`Looking up user for eater address: ${eaterAddress}`);
+          
+          // First, let's check if ANY users exist with addresses
+          const userCount = await db.user.count({
+            where: {
+              address: { not: null }
+            }
+          });
+          console.log(`Total users with addresses: ${userCount}`);
+          
+          // Also check for case sensitivity issues
+          const allUsersWithSimilarAddress = await db.user.findMany({
+            where: {
+              OR: [
+                { address: eaterAddress },
+                { address: decoded.indexed_params.eater },
+                { address: { contains: eaterAddress.substring(2) } } // Check without 0x prefix
+              ]
+            },
+            select: {
+              id: true,
+              address: true,
+              fid: true,
+            }
+          });
+          
+          console.log(`Users with similar addresses: ${JSON.stringify(allUsersWithSimilarAddress)}`);
+          
+          const user = await db.user.findFirst({
+            where: {
+              address: eaterAddress,
+            },
+            select: {
+              id: true,
+              address: true,
+              fid: true,
+            },
+          });
+          
+          if (user) {
+            console.log(`Found user: ${user.id} with address: ${user.address} and FID: ${user.fid}`);
+          } else {
+            console.log(`No user found for address: ${eaterAddress}`);
+            // Let's also check what addresses DO exist
+            const sampleUsers = await db.user.findMany({
+              where: { address: { not: null } },
+              take: 3,
+              select: { address: true }
+            });
+            console.log(`Sample user addresses in DB: ${JSON.stringify(sampleUsers)}`);
+          }
+
           // Create or update the dog event
           // Using upsert to handle potential race conditions
           const dogEvent = await db.dogEvent.upsert({
@@ -85,6 +150,8 @@ export default async function handler(
             update: {
               // Update only the updatedAt timestamp in case of redelivery
               updatedAt: new Date(),
+              // Also update userId in case user was created after the event
+              userId: user?.id,
             },
             create: {
               // Blockchain data
@@ -95,8 +162,8 @@ export default async function handler(
 
               // Decoded event data
               logId: decoded.indexed_params.logId,
-              logger: decoded.indexed_params.logger,
-              eater: decoded.indexed_params.eater,
+              logger: decoded.indexed_params.logger.toLowerCase(),
+              eater: decoded.indexed_params.eater.toLowerCase(),
               imageUri: decoded.non_indexed_params.imageUri,
               metadataUri: decoded.non_indexed_params.metadataUri || "",
               timestamp: BigInt(decoded.non_indexed_params.timestamp),
@@ -104,6 +171,9 @@ export default async function handler(
 
               // Webhook metadata
               webhookId: event.id,
+
+              // Link to user if found
+              userId: user?.id,
             },
           });
 
@@ -154,7 +224,7 @@ export default async function handler(
 
     return res.status(500).json({
       error: "Internal server error",
-      message: error instanceof Error ? error.message : "Unknown error",
+      message: error instanceof Error ? error.message : String(error),
     });
   }
-} 
+}
