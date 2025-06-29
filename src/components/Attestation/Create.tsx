@@ -148,11 +148,12 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       }
       
       const dogUrl = `https://logadog.xyz/dog/${dogEvent.logId}`;
-      const shareText = lastLoggedDescription.trim() || 'Just logged a dog on Log a Dog!';
+      const userMessage = lastLoggedDescription.trim() || 'Just logged a dog on Log a Dog!';
+      // Include the URL in the text instead of as an embed
+      const shareText = `${userMessage}\n\n${dogUrl}`;
       
       await sdk.actions.composeCast({
         text: shareText,
-        embeds: [dogUrl],
       });
     } catch (err) {
       console.error('Failed to compose cast', err);
