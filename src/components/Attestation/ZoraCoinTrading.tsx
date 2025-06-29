@@ -2,7 +2,7 @@ import { useState, type FC, useContext } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { parseEther, createPublicClient, createWalletClient, custom, http } from "viem";
-import { tradeCoin } from "@zoralabs/coins-sdk";
+// import { tradeCoin } from "@zoralabs/coins-sdk";
 import { base, baseSepolia } from "viem/chains";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { EIP1193, type Wallet } from "thirdweb/wallets";
@@ -54,6 +54,12 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
       return;
     }
 
+    // TODO: tradeCoin is not yet available in the current SDK version
+    toast.info("Coin trading functionality is coming soon!");
+    setShowBuyModal(false);
+    return;
+
+    /* Commented out until tradeCoin is available in the SDK
     setIsLoading(true);
     try {
       const { walletClient, publicClient } = convertWalletToViem(wallet);
@@ -81,6 +87,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   const handleSell = async () => {
@@ -89,6 +96,12 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
       return;
     }
 
+    // TODO: tradeCoin is not yet available in the current SDK version
+    toast.info("Coin trading functionality is coming soon!");
+    setShowSellModal(false);
+    return;
+
+    /* Commented out until tradeCoin is available in the SDK
     setIsLoading(true);
     try {
       const { walletClient, publicClient } = convertWalletToViem(wallet);
@@ -116,6 +129,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   return (
