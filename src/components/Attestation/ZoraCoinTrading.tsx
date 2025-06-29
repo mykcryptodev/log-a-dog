@@ -4,7 +4,7 @@ import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 // import { createPublicClient, createWalletClient, custom, http } from "viem";
 // import { tradeCoin } from "@zoralabs/coins-sdk"; // Temporarily removed from SDK
 // import { base, baseSepolia } from "viem/chains";
-import ActiveChainContext from "~/contexts/ActiveChain";
+// import ActiveChainContext from "~/contexts/ActiveChain";
 // import { EIP1193, type Wallet } from "thirdweb/wallets";
 import { Portal } from "../utils/Portal";
 // import { client } from "~/providers/Thirdweb";
@@ -18,7 +18,7 @@ type Props = {
 export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, referrer: _referrer }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
+  // const { activeChain } = useContext(ActiveChainContext);
   const [isLoading] = useState(false);
   const [buyAmount, setBuyAmount] = useState("0.001");
   const [sellAmount, setSellAmount] = useState("1");
