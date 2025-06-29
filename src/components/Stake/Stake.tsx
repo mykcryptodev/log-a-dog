@@ -75,7 +75,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         spender: STAKING[activeChain.id]!,
       });
 
-      setHasApproval(BigInt(allowanceAmt) >= parseEther(amount));
+      setHasApproval(allowanceAmt >= parseEther(amount));
     };
 
     void checkAllowance();
@@ -88,14 +88,30 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
   }, [percentage, balance]);
 
   const balanceIsInsufficient = useMemo(() => {
-    return Number(balance?.value ?? 0) < MINIMUM_STAKE;
+    return BigInt(balance?.value ?? 0) < BigInt(MINIMUM_STAKE);
   }, [balance]);
 
   const amountExceedsBalance = useMemo(() => {
-    const bal = Number(balance?.displayValue ?? 0);
-    if (!amount) return false;
-    return Number(amount) > bal;
+    if (!amount || !balance?.value) return false;
+    try {
+      const amountInWei = parseEther(amount);
+      return amountInWei > BigInt(balance.value);
+    } catch {
+      // If parsing fails, fall back to displayValue comparison
+      const bal = Number(balance?.displayValue ?? 0);
+      return Number(amount) > bal;
+    }
   }, [amount, balance]);
+
+  const amountBelowMinimum = useMemo(() => {
+    if (!amount) return false;
+    try {
+      const amountInWei = parseEther(amount);
+      return amountInWei < BigInt(MINIMUM_STAKE);
+    } catch {
+      return Number(amount) < 100; // Fallback to 100 tokens
+    }
+  }, [amount]);
 
   const invalidAmount = Number(amount) <= 0;
   const showInsufficientBalance = balanceIsInsufficient && !invalidAmount;
@@ -148,6 +164,11 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         {amountExceedsBalance && (
           <div className="text-center text-sm text-error">
             Amount exceeds balance
+          </div>
+        )}
+        {amountBelowMinimum && Number(amount) > 0 && (
+          <div className="text-center text-sm text-warning">
+            Minimum stake is 100 $HOTDOG tokens
           </div>
         )}
 
@@ -228,17 +249,28 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             }}
             onError={(err) => {
               toast.dismiss();
-              toast.error(`Staking failed: ${err.message}`);
+              // Format large numbers in error messages to be human-readable
+              const formattedMessage = err.message.replace(/\b\d{19,}\b/g, (match) => {
+                try {
+                  const tokenAmount = Number(formatEther(BigInt(match)));
+                  return `${tokenAmount.toLocaleString()} tokens`;
+                } catch {
+                  return match;
+                }
+              });
+              toast.error(`Staking failed: ${formattedMessage}`);
             }}
             disabled={
-              showInsufficientBalance || amountExceedsBalance || invalidAmount
+              showInsufficientBalance || amountExceedsBalance || amountBelowMinimum || invalidAmount
             }
           >
             {showInsufficientBalance
-              ? "Insufficient balance"
+              ? "Insufficient balance (need 100+ tokens)"
               : amountExceedsBalance
-                ? "Amount too high"
-                : "Stake"}
+                ? "Amount exceeds balance"
+                : amountBelowMinimum
+                  ? "Minimum stake is 100 tokens"
+                  : "Stake"}
           </TransactionButton>
         ) : (
           <TransactionButton
@@ -262,17 +294,28 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
             }}
             onError={(err) => {
               toast.dismiss();
-              toast.error(`Approval failed: ${err.message}`);
+              // Format large numbers in error messages to be human-readable
+              const formattedMessage = err.message.replace(/\b\d{19,}\b/g, (match) => {
+                try {
+                  const tokenAmount = Number(formatEther(BigInt(match)));
+                  return `${tokenAmount.toLocaleString()} tokens`;
+                } catch {
+                  return match;
+                }
+              });
+              toast.error(`Approval failed: ${formattedMessage}`);
             }}
             disabled={
-              showInsufficientBalance || amountExceedsBalance || invalidAmount
+              showInsufficientBalance || amountExceedsBalance || amountBelowMinimum || invalidAmount
             }
           >
             {showInsufficientBalance
-              ? "Insufficient balance"
+              ? "Insufficient balance (need 100+ tokens)"
               : amountExceedsBalance
-                ? "Amount too high"
-                : "Approve"}
+                ? "Amount exceeds balance"
+                : amountBelowMinimum
+                  ? "Minimum stake is 100 tokens"
+                  : "Approve"}
           </TransactionButton>
         )}
         {stakedAmount !== undefined &&
@@ -297,7 +340,16 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
               }}
               onError={(err) => {
                 toast.dismiss();
-                toast.error(`Unstaking failed: ${err.message}`);
+                // Format large numbers in error messages to be human-readable
+                const formattedMessage = err.message.replace(/\b\d{19,}\b/g, (match) => {
+                  try {
+                    const tokenAmount = Number(formatEther(BigInt(match)));
+                    return `${tokenAmount.toLocaleString()} tokens`;
+                  } catch {
+                    return match;
+                  }
+                });
+                toast.error(`Unstaking failed: ${formattedMessage}`);
               }}
             >
               Unstake all
