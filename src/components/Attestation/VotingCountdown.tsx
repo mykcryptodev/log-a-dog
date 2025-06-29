@@ -74,8 +74,6 @@ export const VotingCountdown: FC<Props> = ({
   }, [calculateTimeLeft]);
 
   const isExpired = timeLeft === "Expired";
-  const totalVotes = Number(validAttestations ?? 0) + Number(invalidAttestations ?? 0);
-  
   // Check if the attestation period is resolved using the cached data
   // AttestationStatus enum: 0 = Active, 1 = Resolved, 2 = Disputed
   const isResolved = attestationPeriod?.status === 1;
@@ -119,13 +117,6 @@ export const VotingCountdown: FC<Props> = ({
           </label>
         </>
       )}
-
-      {isExpired && totalVotes > 0 && (
-        <span className="text-xs opacity-50">
-          Final: {validAttestations ?? 0} valid, {invalidAttestations ?? 0} invalid
-        </span>
-      )}
-
       {/* Voting Info Modal */}
       <Portal>
         <input type="checkbox" id={`${logId ?? timestamp}-voting-info`} className="modal-toggle" />

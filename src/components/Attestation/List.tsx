@@ -15,8 +15,7 @@ import Comments from "~/components/Attestation/Comments";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
-import dynamic from "next/dynamic";
-const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
+import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
 
 import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 
@@ -140,11 +139,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
               <div className="opacity-50 flex flex-row w-full items-center justify-between">
                 <div className="text-xs flex items-center gap-1">
                   {hotdog.zoraCoin?.address ? (
-                    <ZoraCoinTrading
-                      referrer={hotdog.eater}
-                      coinAddress={hotdog.zoraCoin.address}
-                      logId={hotdog.logId.toString()}
-                    />
+                    <AttestationStatusBadge attestationPeriod={hotdog.attestationPeriod} />
                   ) : (
                     <>
                       <TagIcon className="w-4 h-4" />
