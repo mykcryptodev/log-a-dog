@@ -22,6 +22,7 @@ import { upload } from "thirdweb/storage";
 import { canParticipateInAttestation } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
 import { getUserAttestationsWithChoices } from "~/thirdweb/84532/0xfbc7552a4bc2eaa35ba5e7644b67f3f05b161a56";
 import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
+import { getDogEventLeaderboard } from "~/server/api/dog-events";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -604,20 +605,20 @@ export const hotdogRouter = createTRPCRouter({
 
     }),
   getLeaderboard: publicProcedure
-    .input(z.object({ 
+    .input(z.object({
       chainId: z.number(),
       startDate: z.number().optional(),
       endDate: z.number().optional(),
     }))
     .query(async ({ input }) => {
       const { chainId, startDate, endDate } = input;
-      
+
       // Generate cache key for this query
       const cacheKey = `leaderboard:${chainId}:${startDate ?? 'all'}:${endDate ?? 'all'}`;
-      
+
       // Try to get cached data first
       const cachedData = await getCachedData<{ users: string[], hotdogs: string[] }>(cacheKey);
-      
+
       if (cachedData) {
         return {
           users: cachedData.users,
@@ -625,73 +626,22 @@ export const hotdogRouter = createTRPCRouter({
         };
       }
 
-      const contract = getContract({
-        address: LOG_A_DOG[chainId]!,
-        client,
-        chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-      });
-
       try {
-        // Get total count of hotdog logs
-        const totalLogs = await getHotdogLogsCount({ contract });
-        
-        if (totalLogs === 0n) {
-          return { users: [], hotdogs: [] };
-        }
-
-        // Get all hotdog logs in batches to avoid gas limits
-        const batchSize = 100;
-        const allLogs: Array<{
-          logId: bigint;
-          imageUri: string;
-          metadataUri: string;
-          timestamp: bigint;
-          eater: string;
-          logger: string;
-          zoraCoin: string;
-        }> = [];
-
-        for (let start = 0; start < Number(totalLogs); start += batchSize) {
-          const limit = Math.min(batchSize, Number(totalLogs) - start);
-          const logs = await getHotdogLogsRange({
-            contract,
-            start: BigInt(start),
-            limit: BigInt(limit)
-          });
-          allLogs.push(...logs);
-        }
-
-        // Filter logs by date range if provided
-        const filteredLogs = allLogs.filter(log => {
-          const logTimestamp = Number(log.timestamp) * 1000; // Convert to milliseconds
-          if (startDate && logTimestamp < startDate) return false;
-          if (endDate && logTimestamp > endDate) return false;
-          return true;
+        const leaderboard = await getDogEventLeaderboard({
+          startDate,
+          endDate,
         });
 
-        // Count hotdogs per user
-        const userCounts = new Map<string, number>();
-        
-        for (const log of filteredLogs) {
-          const eater = log.eater.toLowerCase();
-          userCounts.set(eater, (userCounts.get(eater) ?? 0) + 1);
-        }
-
-        // Sort users by hotdog count (descending)
-        const sortedUsers = Array.from(userCounts.entries())
-          .sort((a, b) => b[1] - a[1])
-
         const result = {
-          users: sortedUsers.map(([user]) => user),
-          hotdogs: sortedUsers.map(([, count]) => count.toString()),
+          users: leaderboard.map(l => l.eater.toLowerCase()),
+          hotdogs: leaderboard.map(l => l.count.toString()),
         };
 
-        // Cache the result
         await setCachedData(cacheKey, result, CACHE_DURATION.MEDIUM);
 
         return result;
       } catch (error) {
-        console.error("Error fetching leaderboard from contract:", error);
+        console.error("Error fetching leaderboard from DB:", error);
         throw error;
       }
     }),
