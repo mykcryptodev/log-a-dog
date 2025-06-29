@@ -199,3 +199,41 @@ export async function getDogEventLeaderboard(options?: {
 
   return paginatedLeaderboard;
 }
+
+export async function getUserValidDogEventCount(address: string) {
+  const lowerAddress = address.toLowerCase();
+
+  // Look up the user by address to get fid and id
+  const user = await db.user.findFirst({
+    where: { address: lowerAddress },
+    select: { id: true, fid: true },
+  });
+
+  if (user?.fid) {
+    // Find all user IDs that share this fid
+    const usersWithFid = await db.user.findMany({
+      where: { fid: user.fid },
+      select: { id: true },
+    });
+    const userIds = usersWithFid.map(u => u.id);
+
+    return db.dogEvent.count({
+      where: {
+        userId: { in: userIds },
+        attestationValid: true,
+      },
+    });
+  }
+
+  if (user?.id) {
+    // Count by userId if we found the user but no fid
+    return db.dogEvent.count({
+      where: { userId: user.id, attestationValid: true },
+    });
+  }
+
+  // Fallback: count by address directly
+  return db.dogEvent.count({
+    where: { eater: lowerAddress, attestationValid: true },
+  });
+}
