@@ -76,6 +76,16 @@ export default async function handler(
             return { success: true, skipped: true, eventName: decoded.name };
           }
 
+          // Look up the user by eater address
+          const user = await db.user.findFirst({
+            where: {
+              address: decoded.indexed_params.eater.toLowerCase(),
+            },
+            select: {
+              id: true,
+            },
+          });
+
           // Create or update the dog event
           // Using upsert to handle potential race conditions
           const dogEvent = await db.dogEvent.upsert({
@@ -85,6 +95,8 @@ export default async function handler(
             update: {
               // Update only the updatedAt timestamp in case of redelivery
               updatedAt: new Date(),
+              // Also update userId in case user was created after the event
+              userId: user?.id,
             },
             create: {
               // Blockchain data
@@ -104,6 +116,9 @@ export default async function handler(
 
               // Webhook metadata
               webhookId: event.id,
+
+              // Link to user if found
+              userId: user?.id,
             },
           });
 
@@ -123,11 +138,11 @@ export default async function handler(
     );
 
     // Count successful and failed operations
-    const successful = results.filter((r) => r.status === "fulfilled").length;
-    const failed = results.filter((r) => r.status === "rejected").length;
+    const successful = results.filter((r: PromiseSettledResult<any>) => r.status === "fulfilled").length;
+    const failed = results.filter((r: PromiseSettledResult<any>) => r.status === "rejected").length;
 
     // Log any failures for debugging
-    results.forEach((result, index) => {
+    results.forEach((result: PromiseSettledResult<any>, index: number) => {
       if (result.status === "rejected") {
         console.error(`Failed to process event ${index}:`, result.reason);
       }
@@ -138,8 +153,8 @@ export default async function handler(
     return res.status(200).json({
       success: true,
       message: `Processed ${successful} events successfully, ${failed} failed`,
-      results: results.map((r) => 
-        r.status === "fulfilled" ? r.value : { error: String(r.reason) }
+      results: results.map((r: PromiseSettledResult<any>) => 
+        r.status === "fulfilled" ? r.value : { error: String((r as PromiseRejectedResult).reason) }
       ),
     });
   } catch (error) {
@@ -154,7 +169,7 @@ export default async function handler(
 
     return res.status(500).json({
       error: "Internal server error",
-      message: error instanceof Error ? error.message : "Unknown error",
+      message: error instanceof Error ? error.message : String(error),
     });
   }
-} 
+}
