@@ -24,7 +24,7 @@ export const Media: FC = () => {
                 className="rounded-lg"
               />
               <p className="text-sm mt-2 opacity-75">
-                Episode 4: "Are Hotdogs Sandwiches?" - A deep dive into the Log a Dog app and the eternal hotdog debate.
+                Episode 4: &quot;Are Hotdogs Sandwiches?&quot; - A deep dive into the Log a Dog app and the eternal hotdog debate.
               </p>
             </div>
           </div>
