@@ -44,6 +44,7 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL: z.string(),
     UPSTASH_REDIS_REST_TOKEN: z.string(),
     GHOST_PROTOCOL_API_KEY: z.string(),
+    CRON_SECRET: z.string(),
   },
 
   /**
@@ -89,6 +90,7 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_APP_DOMAIN: process.env.NEXT_PUBLIC_APP_DOMAIN,
     GHOST_PROTOCOL_API_KEY: process.env.GHOST_PROTOCOL_API_KEY,
+    CRON_SECRET: process.env.CRON_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

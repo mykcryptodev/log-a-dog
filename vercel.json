@@ -3,5 +3,11 @@
     "pages/dog/[logId].tsx": {
       "memory": 1024
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/reward-moderators",
+      "schedule": "0 * * * *"
+    }
+  ]
 } 
