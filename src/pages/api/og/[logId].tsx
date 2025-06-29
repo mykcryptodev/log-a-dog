@@ -7,9 +7,10 @@ import { getSocialProfiles } from 'thirdweb/social';
 import { env } from '~/env';
 import { getHotdogLogsRange } from '~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f';
 import { LOG_A_DOG } from '~/constants/addresses';
+import { getDogEventCountForUser } from '~/server/api/dog-events';
 
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
 };
 
 // Helper function to convert IPFS URLs to HTTP gateway URLs
@@ -73,17 +74,8 @@ export default async function handler(req: NextRequest) {
       logger: logs[0]!.logger,
     };
 
-    // Get all logs for this user to count their total hotdogs
     try {
-      // Get a large range to find all user's logs (starting from log 0 to current log + some buffer)
-      const allLogs = await getHotdogLogsRange({
-        contract,
-        start: 0n,
-        limit: BigInt(parseInt(logId) + 100), // Get logs up to current + buffer
-      });
-      
-      // Count logs where the eater matches this user
-      userHotdogCount = allLogs.filter(log => log.eater.toLowerCase() === hotdog.eater.toLowerCase()).length;
+      userHotdogCount = await getDogEventCountForUser(hotdog.eater);
     } catch (countError) {
       console.error('Error counting user hotdogs:', countError);
       userHotdogCount = 1; // Fallback to 1 since we know they have at least this log

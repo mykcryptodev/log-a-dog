@@ -199,3 +199,31 @@ export async function getDogEventLeaderboard(options?: {
 
   return paginatedLeaderboard;
 }
+
+export async function getDogEventCountForUser(address: string) {
+  const user = await db.user.findFirst({
+    where: { address: address.toLowerCase() },
+    select: { fid: true },
+  });
+
+  let addresses: string[] = [address.toLowerCase()];
+
+  if (user?.fid) {
+    const related = await db.user.findMany({
+      where: { fid: user.fid },
+      select: { address: true },
+    });
+
+    addresses = related
+      .map(u => u.address)
+      .filter((a): a is string => !!a)
+      .map(a => a.toLowerCase());
+  }
+
+  return db.dogEvent.count({
+    where: {
+      eater: { in: addresses },
+      attestationValid: true,
+    },
+  });
+}

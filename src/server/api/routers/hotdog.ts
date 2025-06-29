@@ -23,6 +23,7 @@ import { canParticipateInAttestation } from "~/thirdweb/84532/0xe6b5534390596422
 import { getUserAttestationsWithChoices } from "~/thirdweb/84532/0xfbc7552a4bc2eaa35ba5e7644b67f3f05b161a56";
 import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
 import { getDogEventLeaderboard } from "~/server/api/dog-events";
+import { getDogEventCountForUser } from "~/server/api/dog-events";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -642,6 +643,18 @@ export const hotdogRouter = createTRPCRouter({
         return result;
       } catch (error) {
         console.error("Error fetching leaderboard from DB:", error);
+        throw error;
+      }
+    }),
+  getUserHotdogCount: publicProcedure
+    .input(z.object({ address: z.string() }))
+    .query(async ({ input }) => {
+      const { address } = input;
+      try {
+        const count = await getDogEventCountForUser(address);
+        return count;
+      } catch (error) {
+        console.error("Error fetching hotdog count for user:", error);
         throw error;
       }
     }),
