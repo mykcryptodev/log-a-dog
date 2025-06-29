@@ -21,6 +21,52 @@ import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pend
 
 import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 
+// Types from hotdog router
+type AttestationPeriod = {
+  startTime: string;
+  endTime: string;
+  status: number;
+  totalValidStake: string;
+  totalInvalidStake: string;
+  isValid: boolean;
+};
+
+type HotdogMetadata = {
+  imageUri: string;
+  eater: string;
+  zoraCoin?: {
+    address: string;
+    name: string;
+    symbol: string;
+  };
+};
+
+type ZoraCoinDetails = {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  symbol: string;
+  totalSupply: string;
+  totalVolume: string;
+  volume24h: string;
+  createdAt?: string;
+  creatorAddress?: string;
+  marketCap?: string;
+  marketCapDelta24h?: string;
+  chainId?: number;
+  uniqueHolders?: number;
+  mediaContent?: {
+    mimeType?: string;
+    originalUri?: string;
+    previewImage?: {
+      small?: string;
+      medium?: string;
+      blurhash?: string;
+    };
+  };
+};
+
 // Type for hotdog from tRPC
 type RealDogEvent = {
   logId: string;
@@ -29,9 +75,9 @@ type RealDogEvent = {
   timestamp: string;
   eater: string;
   logger: string;
-  zoraCoin: string | null;
-  attestationPeriod?: any;
-  metadata?: any;
+  zoraCoin: ZoraCoinDetails | null;
+  attestationPeriod?: AttestationPeriod;
+  metadata?: HotdogMetadata | null;
 };
 
 type HotdogItem = RealDogEvent | PendingDogEvent;
@@ -77,7 +123,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const pendingDogs = getPendingDogsForChain(activeChain.id.toString());
 
   // Merge pending dogs with real data
-  const allHotdogs = dogData?.hotdogs ? [...pendingDogs, ...dogData.hotdogs as any[]] : pendingDogs;
+  const allHotdogs: HotdogItem[] = dogData?.hotdogs ? [...pendingDogs, ...dogData.hotdogs] : pendingDogs;
 
   const showLoggedVia = (hotdog: { eater: string, logger: string }) => {
     const loggerIsNotEater = !isAddressEqual(hotdog.eater as `0x${string}`, hotdog.logger as `0x${string}`);
@@ -92,7 +138,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const userAttestationMap = dogData?.hotdogs && dogData.userAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttestations[i]])) : {};
 
   // Helper function to get attestation data for a hotdog
-  const getAttestationData = (hotdog: any): {
+  const getAttestationData = (hotdog: HotdogItem): {
     validAttestations: string;
     invalidAttestations: string;
     userAttested: boolean;
@@ -183,7 +229,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   onRevocation={refetchDogData}
                 />
               </div>
-              {hotdog.zoraCoin && (
+              {('zoraCoin' in hotdog && hotdog.zoraCoin && typeof hotdog.zoraCoin === 'object' && hotdog.zoraCoin.marketCap) && (
                 <div className="flex items-center text-xs opacity-50 w-full justify-between">
                   <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}</div>
                   <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
@@ -198,7 +244,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
               />
               <div className="opacity-50 flex flex-row w-full items-center justify-between">
                 <div className="text-xs flex items-center gap-1">
-                  {hotdog.zoraCoin?.address ? (
+                  {('zoraCoin' in hotdog && hotdog.zoraCoin && typeof hotdog.zoraCoin === 'object' && hotdog.zoraCoin.address) ? (
                     <ZoraCoinTrading
                       referrer={hotdog.eater}
                       coinAddress={hotdog.zoraCoin.address}
@@ -244,7 +290,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   validAttestations={attestationData.validAttestations}
                   invalidAttestations={attestationData.invalidAttestations}
                   onResolutionComplete={() => void refetchDogData()}
-                  attestationPeriod={hotdog.attestationPeriod}
+                  attestationPeriod={'attestationPeriod' in hotdog ? hotdog.attestationPeriod : undefined}
                 />
               </div>
             </div>
