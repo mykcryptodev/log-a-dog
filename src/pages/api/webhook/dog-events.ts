@@ -77,14 +77,25 @@ export default async function handler(
           }
 
           // Look up the user by eater address
+          const eaterAddress = decoded.indexed_params.eater.toLowerCase();
+          console.log(`Looking up user for eater address: ${eaterAddress}`);
+          
           const user = await db.user.findFirst({
             where: {
-              address: decoded.indexed_params.eater.toLowerCase(),
+              address: eaterAddress,
             },
             select: {
               id: true,
+              address: true,
+              fid: true,
             },
           });
+          
+          if (user) {
+            console.log(`Found user: ${user.id} with address: ${user.address} and FID: ${user.fid}`);
+          } else {
+            console.log(`No user found for address: ${eaterAddress}`);
+          }
 
           // Create or update the dog event
           // Using upsert to handle potential race conditions
@@ -107,8 +118,8 @@ export default async function handler(
 
               // Decoded event data
               logId: decoded.indexed_params.logId,
-              logger: decoded.indexed_params.logger,
-              eater: decoded.indexed_params.eater,
+              logger: decoded.indexed_params.logger.toLowerCase(),
+              eater: decoded.indexed_params.eater.toLowerCase(),
               imageUri: decoded.non_indexed_params.imageUri,
               metadataUri: decoded.non_indexed_params.metadataUri || "",
               timestamp: BigInt(decoded.non_indexed_params.timestamp),

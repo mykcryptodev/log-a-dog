@@ -45,18 +45,18 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
         }
 
         let user = await db.user.findFirst({
-          where: { address: credentials.address },
+          where: { address: credentials.address.toLowerCase() },
         });
 
         if (!user) {
           console.log('Creating new user');
-          user = await createUser({ address: credentials.address });
+          user = await createUser({ address: credentials.address.toLowerCase() });
         }
 
         console.log('Returning user:', user);
         return {
           id: user.id,
-          address: credentials.address,
+          address: credentials.address.toLowerCase(),
         }
       }
 
@@ -74,7 +74,7 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
       // has already linked an ethereum address
       const ethereumWalletUser = await db.user.findFirst({
         where: {
-          address: credentials.address,
+          address: credentials.address.toLowerCase(),
         },
       });
       // if the user has already linked an ethereum address to another user,
@@ -117,7 +117,7 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
           id: existingUserId,
         },
         data: {
-          address: credentials.address,
+          address: credentials.address.toLowerCase(),
         },
       });
       await db.account.create({
@@ -125,13 +125,13 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
           userId: user.id,
           type: "ethereum",
           provider: "ethereum",
-          providerAccountId: credentials.address,
+          providerAccountId: credentials.address.toLowerCase(),
         },
       });
 
       return {
         id: user.id,
-        address: credentials.address,
+        address: credentials.address.toLowerCase(),
       }
     }
   },
