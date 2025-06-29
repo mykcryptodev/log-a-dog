@@ -27,8 +27,9 @@ type Props = {
   createProfileBtnLabel?: string;
   hideLogout?: boolean;
   hideNameAndBadge?: boolean;
+  label?: string;
 }
-export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout, hideNameAndBadge }) => {
+export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout, hideNameAndBadge, label }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const { data: sessionData } = useSession();
   const account = useActiveAccount();
@@ -138,17 +139,19 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
                     src={img()}
                     alt="Profile Pic"
                     width={"24px"}
-                    height={"24px"} 
+                    height={"24px"}
                     className="rounded-full"
                     client={client}
                   />
-                  {!hideNameAndBadge && (
+                  {!hideNameAndBadge ? (
                     <>
                       <span className="text-sm font-normal">{displayUsername}</span>
                       {sessionData?.user?.fid && (
                         <CheckBadgeIcon className="w-4 h-4 text-primary" />
                       )}
                     </>
+                  ) : (
+                    label && <span className="text-sm font-normal">{label}</span>
                   )}
                 </div>
               </div>
