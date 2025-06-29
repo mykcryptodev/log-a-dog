@@ -192,7 +192,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
               </div>
               <div className="collapse-content">
                 <textarea
-                  className="textarea textarea-bordered w-full"
+                  className="textarea textarea-bordered w-full text-base"
                   placeholder="Add a message to your dog"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
