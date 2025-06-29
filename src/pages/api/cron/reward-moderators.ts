@@ -23,6 +23,26 @@ export default async function handler(
   try {
     console.log("Starting automated moderator reward process...");
 
+    // Ensure database connection is established with retry logic
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        await db.$connect();
+        console.log("Database connection established successfully");
+        break;
+      } catch (error) {
+        retryCount++;
+        console.log(`Database connection attempt ${retryCount} failed:`, error);
+        if (retryCount >= maxRetries) {
+          throw new Error(`Failed to connect to database after ${maxRetries} attempts`);
+        }
+        // Wait before retry with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+      }
+    }
+
     // Find DogEvents that are eligible for moderator rewards
     // Using Supabase/database as the source of truth for which events need processing
     // Criteria:
@@ -180,6 +200,9 @@ export default async function handler(
       // Don't fail the cron job if Telegram fails
     }
 
+    // Explicitly disconnect from database
+    await db.$disconnect();
+
     return res.status(200).json({
       success: true,
       summary: {
@@ -193,6 +216,14 @@ export default async function handler(
 
   } catch (error) {
     console.error("Error in moderator reward cron job:", error);
+    
+    // Ensure cleanup even on error
+    try {
+      await db.$disconnect();
+    } catch (disconnectError) {
+      console.error("Error disconnecting from database:", disconnectError);
+    }
+    
     return res.status(500).json({
       error: "Internal server error",
       message: error instanceof Error ? error.message : "Unknown error"
