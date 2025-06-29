@@ -117,8 +117,8 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
                   <VotingCountdown 
                     timestamp={hotdog.timestamp.toString()} 
                     logId={hotdog.logId.toString()}
-                    validAttestations={validAttestations?.toString()}
-                    invalidAttestations={invalidAttestations?.toString()}
+                    validAttestations={validAttestations?.toString() ?? "0"}
+                    invalidAttestations={invalidAttestations?.toString() ?? "0"}
                     onResolutionComplete={() => void refetchDogData()}
                     attestationPeriod={undefined}
                   />
@@ -126,8 +126,8 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
                     disabled
                     userAttested={undefined}
                     userAttestation={undefined}
-                    validAttestations={validAttestations?.toString()}
-                    invalidAttestations={invalidAttestations?.toString()}
+                    validAttestations={validAttestations?.toString() ?? "0"}
+                    invalidAttestations={invalidAttestations?.toString() ?? "0"}
                     logId={hotdog.logId.toString()}
                     chainId={activeChain.id}
                     onAttestationMade={() => void refetchDogData()}

@@ -9,20 +9,21 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
-import { getHotdogLogs, getTotalPagesForLogs, logHotdogOnBehalf, getHotdogLogsRange } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
+import { logHotdogOnBehalf } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
-import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData, invalidateCache } from "~/server/utils/redis";
+import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 import { encodePoolConfig } from "~/server/utils/poolConfig";
 import { upload } from "thirdweb/storage";
 import { canParticipateInAttestation } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
 import { getUserAttestationsWithChoices } from "~/thirdweb/84532/0xfbc7552a4bc2eaa35ba5e7644b67f3f05b161a56";
 import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
-import { getDogEventLeaderboard } from "~/server/api/dog-events";
+import { getDogEvents, getDogEventsByEater, getDogEventLeaderboard } from "~/server/api/dog-events";
+import { db } from "~/server/db";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -195,48 +196,6 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
   return coinDetailsMap;
 }
 
-// Helper function to invalidate a specific coin's cache
-async function invalidateZoraCoinCache(address: string, chainId: number): Promise<void> {
-  const normalizedAddress = address.toLowerCase();
-  const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
-  await invalidateCache(cacheKey);
-}
-
-// Helper function to pre-warm cache for specific coins
-async function prewarmZoraCoinCache(addresses: string[], chainId: number): Promise<void> {
-  // This uses the same function which will cache any uncached coins
-  await getZoraCoinDetailsBatch(addresses, chainId);
-}
-
-// Helper function to refresh stale coin data
-async function refreshZoraCoinData(address: string, chainId: number): Promise<ZoraCoinDetails | null> {
-  const normalizedAddress = address.toLowerCase();
-  const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
-  
-  // Invalidate existing cache
-  await invalidateCache(cacheKey);
-  
-  // Fetch fresh data
-  try {
-    const response = await getCoins({
-      coins: [{
-        collectionAddress: address as `0x${string}`,
-        chainId,
-      }],
-    });
-    
-    if (response.data?.zora20Tokens?.[0]) {
-      const coin = response.data.zora20Tokens[0];
-      // Cache the fresh data
-      await setCachedData(cacheKey, coin, CACHE_DURATION.MEDIUM);
-      return coin;
-    }
-  } catch (error) {
-    console.error(`Error refreshing Zora coin data for ${address}:`, error);
-  }
-  
-  return null;
-}
 
 // Helper function to fetch attestation periods in batch
 async function getAttestationPeriodsBatch(logIds: string[], chainId: number): Promise<Map<string, {
@@ -331,35 +290,44 @@ export const hotdogRouter = createTRPCRouter({
         return cachedData;
       }
 
-      const [redactedLogIds, totalPages, dogResponse, userAttestations] = await Promise.all([
+      // Get dog events from database instead of blockchain
+      const contestStartTime = BigInt(new Date(CONTEST_START_TIME).getTime() / 1000);
+      const contestEndTime = BigInt(new Date(CONTEST_END_TIME).getTime() / 1000);
+      
+      const dogEvents = await getDogEvents({
+        where: {
+          chainId: chainId.toString(),
+          timestamp: {
+            gte: contestStartTime,
+            lte: contestEndTime,
+          },
+          ...(user !== "0x0000000000000000000000000000000000000000" && { eater: user.toLowerCase() }),
+        },
+        orderBy: { timestamp: "desc" },
+        take: limit,
+        skip: start,
+      });
+
+      // Get total count for pagination
+      const totalEvents = await db.dogEvent.count({
+        where: {
+          chainId: chainId.toString(),
+          timestamp: {
+            gte: contestStartTime,
+            lte: contestEndTime,
+          },
+          ...(user !== "0x0000000000000000000000000000000000000000" && { eater: user.toLowerCase() }),
+        },
+      });
+      const totalPages = Math.ceil(totalEvents / limit);
+
+      const [redactedLogIds, userAttestations] = await Promise.all([
         getRedactedLogIds({
           contract: getContract({
             address: MODERATION[chainId]!,
             client,
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
-        }),
-        getTotalPagesForLogs({
-          contract: getContract({
-            address: LOG_A_DOG[chainId]!,
-            client,
-            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-          }),
-          startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
-          endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
-          pageSize: BigInt(limit),
-        }),
-        getHotdogLogs({
-          contract: getContract({
-            address: LOG_A_DOG[chainId]!,
-            client,
-            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-          }),
-          startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
-          endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
-          user,
-          start: BigInt(start),
-          limit: BigInt(limit)
         }),
         getUserAttestationsWithChoices({
           contract: getContract({
@@ -372,7 +340,7 @@ export const hotdogRouter = createTRPCRouter({
       ]);
 
       // Get attestation counts and periods for each log ID
-      const logIds = dogResponse[0].map(log => log.logId.toString());
+      const logIds = dogEvents.map(event => event.logId);
       const [attestationCounts, attestationPeriods] = await Promise.all([
         getAttestationCounts({
           contract: getContract({
@@ -380,31 +348,33 @@ export const hotdogRouter = createTRPCRouter({
             client,
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
-          logIds: dogResponse[0].map(log => log.logId),
+          logIds: dogEvents.map(event => BigInt(event.logId)),
         }),
         getAttestationPeriodsBatch(logIds, chainId)
       ]);
 
-      console.log({ dogResponse })
+      console.log({ dogEvents })
       // Convert redactedLogIds from readonly bigint[] to string[]
       const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
 
       console.log({ redactedLogIds })
 
-      // Convert the raw response to our string-based types
+      // Convert database events to our string-based types
       const processedResponse: HotdogResponse = {
-        logs: dogResponse[0].map(log => ({
-          ...log,
-          logId: log.logId.toString(),
-          timestamp: log.timestamp.toString(),
-          // Replace image with redacted version if log is redacted
-          imageUri: redactedLogIdsStr.includes(log.logId.toString()) ? redactedImage : log.imageUri
+        logs: dogEvents.map(event => ({
+          logId: event.logId,
+          timestamp: event.timestamp.toString(),
+          imageUri: redactedLogIdsStr.includes(event.logId) ? redactedImage : event.imageUri,
+          metadataUri: event.metadataUri ?? '',
+          eater: event.eater,
+          logger: event.logger,
+          zoraCoin: event.zoraCoin ?? '',
         })),
         // Get valid/invalid counts from attestationCounts response
         validCounts: attestationCounts[0].map(count => count.toString()),
         invalidCounts: attestationCounts[1].map(count => count.toString()),
-        userHasAttested: dogResponse[0].map(log => userAttestations[0].includes(BigInt(log.logId))),
-        userAttestations: dogResponse[0].map(log => userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(log.logId))] ?? false),
+        userHasAttested: dogEvents.map(event => userAttestations[0].includes(BigInt(event.logId))),
+        userAttestations: dogEvents.map(event => userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(event.logId))] ?? false),
       };
 
       console.log({ processedResponse })
@@ -472,7 +442,35 @@ export const hotdogRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { chainId, user, limit } = input;
-      const [redactedLogIds, totalPages, dogResponse] = await Promise.all([
+      // Get dog events from database for specific user
+      const contestStartTime = BigInt(new Date(CONTEST_START_TIME).getTime() / 1000);
+      const contestEndTime = BigInt(new Date(CONTEST_END_TIME).getTime() / 1000);
+      
+      const userDogEvents = await getDogEventsByEater(user.toLowerCase(), {
+        take: limit,
+      });
+
+      // Filter by contest time period
+      const filteredEvents = userDogEvents.filter(event => 
+        event.chainId === chainId.toString() &&
+        event.timestamp >= contestStartTime &&
+        event.timestamp <= contestEndTime
+      );
+
+      // Get total count for pagination
+      const totalEvents = await db.dogEvent.count({
+        where: {
+          eater: user.toLowerCase(),
+          chainId: chainId.toString(),
+          timestamp: {
+            gte: contestStartTime,
+            lte: contestEndTime,
+          },
+        },
+      });
+      const totalPages = Math.ceil(totalEvents / limit);
+
+      const [redactedLogIds] = await Promise.all([
         getRedactedLogIds({
           contract: getContract({
             address: MODERATION[chainId]!,
@@ -480,49 +478,28 @@ export const hotdogRouter = createTRPCRouter({
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
         }),
-        getTotalPagesForLogs({
-          contract: getContract({
-            address: LOG_A_DOG[chainId]!,
-            client,
-            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-          }),
-          startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
-          endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
-          pageSize: BigInt(limit),
-        }),
-        getHotdogLogs({
-          contract: getContract({
-            address: LOG_A_DOG[chainId]!,
-            client,
-            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-          }),
-          startTime: BigInt(new Date(CONTEST_START_TIME).getTime() / 1000),
-          endTime: BigInt(new Date(CONTEST_END_TIME).getTime() / 1000),
-          user,
-          start: BigInt(0),
-          limit: BigInt(limit)
-        }),
       ]);
       const currentPage = 1;
       const hasNextPage = currentPage < totalPages;
 
-      const moderatedHotdogs = dogResponse[0].map(hotdog => {
-        if (redactedLogIds.includes(hotdog.logId)) {
-          return {
-            ...hotdog,
-            imageUri: redactedImage,
-          }
-        }
-        return hotdog;
-      });
+      const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
+      const moderatedHotdogs = filteredEvents.map(event => ({
+        logId: BigInt(event.logId),
+        timestamp: event.timestamp,
+        imageUri: redactedLogIdsStr.includes(event.logId) ? redactedImage : event.imageUri,
+        metadataUri: event.metadataUri ?? '',
+        eater: event.eater,
+        logger: event.logger,
+        zoraCoin: event.zoraCoin ?? '',
+      }));
 
-      // filter the hotdogs that were not eaten by the user
-      const userHotdogs = moderatedHotdogs.filter(hotdog => hotdog.eater.toLowerCase() === user.toLowerCase());
+      // Events are already filtered by user in the database query
+      const userHotdogs = moderatedHotdogs;
 
       return {
         hotdogs: userHotdogs,
-        validAttestations: dogResponse[1],
-        invalidAttestations: dogResponse[2],
+        validAttestations: userHotdogs.map(() => "0"), // Default to 0 for each hotdog
+        invalidAttestations: userHotdogs.map(() => "0"), // Default to 0 for each hotdog
         totalPages,
         hasNextPage,
       }
@@ -548,22 +525,25 @@ export const hotdogRouter = createTRPCRouter({
         return cachedData;
       }
 
-      const [redactedLogIds, dogResponse, attestationCounts, userAttestations, attestationPeriods] = await Promise.all([
+      // Get dog event from database by logId
+      const dogEvent = await db.dogEvent.findFirst({
+        where: {
+          logId,
+          chainId: chainId.toString(),
+        },
+      });
+
+      if (!dogEvent) {
+        return null;
+      }
+
+      const [redactedLogIds, attestationCounts, userAttestations, attestationPeriods] = await Promise.all([
         getRedactedLogIds({
           contract: getContract({
             address: MODERATION[chainId]!,
             client,
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
-        }),
-        getHotdogLogsRange({
-          contract: getContract({
-            address: LOG_A_DOG[chainId]!,
-            client,
-            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-          }),
-          start: BigInt(logId),
-          limit: 1n,
         }),
         getAttestationCounts({
           contract: getContract({
@@ -584,25 +564,23 @@ export const hotdogRouter = createTRPCRouter({
         getAttestationPeriodsBatch([logId], chainId)
       ]);
 
-      const hotdogLog = dogResponse?.[0];
-      if (!hotdogLog) {
-        return null;
-      }
-
       const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
       const processedResponse: HotdogResponse = {
         logs: [
           {
-            ...hotdogLog,
-            logId: hotdogLog.logId.toString(),
-            timestamp: hotdogLog.timestamp.toString(),
-            imageUri: redactedLogIdsStr.includes(hotdogLog.logId.toString()) ? redactedImage : hotdogLog.imageUri,
+            logId: dogEvent.logId,
+            timestamp: dogEvent.timestamp.toString(),
+            imageUri: redactedLogIdsStr.includes(dogEvent.logId) ? redactedImage : dogEvent.imageUri,
+            metadataUri: dogEvent.metadataUri ?? '',
+            eater: dogEvent.eater,
+            logger: dogEvent.logger,
+            zoraCoin: dogEvent.zoraCoin ?? '',
           },
         ],
         validCounts: [attestationCounts[0]?.[0]?.toString() ?? '0'],
         invalidCounts: [attestationCounts[1]?.[0]?.toString() ?? '0'],
-        userHasAttested: [userAttestations[0].includes(BigInt(hotdogLog.logId))],
-        userAttestations: [userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(hotdogLog.logId))] ?? false],
+        userHasAttested: [userAttestations[0].includes(BigInt(dogEvent.logId))],
+        userAttestations: [userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(dogEvent.logId))] ?? false],
       };
 
       const zoraCoinAddressesArray = processedResponse.logs[0]?.zoraCoin ? [processedResponse.logs[0].zoraCoin] : [];
@@ -634,33 +612,36 @@ export const hotdogRouter = createTRPCRouter({
     .input(z.object({ chainId: z.number(), logId: z.string(), timestamp: z.string() }))
     .query(async ({ input }) => {
       const { chainId, timestamp, logId } = input;
-      const hotdogLogResponse = await getHotdogLogs({
+      // Get dog event from database
+      const dogEvent = await db.dogEvent.findFirst({
+        where: {
+          logId,
+          chainId: chainId.toString(),
+          timestamp: BigInt(timestamp),
+        },
+      });
+
+      if (!dogEvent) {
+        throw new Error("Hotdog log not found");
+      }
+
+      // Get AI attestation status from blockchain
+      const userAttestations = await getUserAttestationsWithChoices({
         contract: getContract({
-          address: LOG_A_DOG[chainId]!,
+          address: ATTESTATION_MANAGER[chainId]!,
           client,
           chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
         }),
-        startTime: BigInt(timestamp),
-        endTime: BigInt(timestamp),
         user: AI_AFFIRMATION[chainId]!,
-        start: BigInt(0),
-        limit: BigInt(10),
       });
-      const hotdogLogs = hotdogLogResponse[0];
 
-      const logIndex = hotdogLogs.findIndex(log => log.logId.toString() === logId);
-      const hotdogLog = hotdogLogs.find(log => log.logId.toString() === logId);
-
-      if (!hotdogLog) {
-        throw new Error("Hotdog log not found");
-      }
-      const aiHasAttested = hotdogLogResponse[3][logIndex];
+      const aiHasAttested = userAttestations[0].includes(BigInt(logId));
 
       if (!aiHasAttested) {
         return "NOT_ATTESTED";
       }
 
-      const aiAttestation = hotdogLogResponse[4][logIndex];
+      const aiAttestation = userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(logId))];
 
       if (aiAttestation === undefined) {
         throw new Error("AI attestation not found");
