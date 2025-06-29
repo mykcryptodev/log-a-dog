@@ -162,7 +162,7 @@ export async function getDogEventLeaderboard(options?: {
       if (!groupedCounts.has(key)) {
         groupedCounts.set(key, { 
           count: 0, 
-          addresses: Array.from(fidToAddresses.get(fid) || []),
+          addresses: Array.from(fidToAddresses.get(fid) ?? []),
           fid 
         });
       }
@@ -179,9 +179,9 @@ export async function getDogEventLeaderboard(options?: {
 
   // Convert to array and sort by count
   const leaderboard = Array.from(groupedCounts.entries())
-    .map(([key, data]) => ({
+    .map(([_key, data]) => ({
       // Use the first address associated with the FID (or the single address if no FID)
-      eater: data.addresses[0] || '',
+      eater: data.addresses[0] ?? '',
       count: data.count,
       fid: data.fid,
       addresses: data.addresses,
@@ -190,8 +190,8 @@ export async function getDogEventLeaderboard(options?: {
 
   // Apply pagination
   const paginatedLeaderboard = leaderboard.slice(
-    options?.skip || 0,
-    (options?.skip || 0) + (options?.take || leaderboard.length)
+    options?.skip ?? 0,
+    (options?.skip ?? 0) + (options?.take ?? leaderboard.length)
   );
 
   return paginatedLeaderboard;

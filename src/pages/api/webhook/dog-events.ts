@@ -2,6 +2,17 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { db } from "~/server/db";
 
+// Type for the result of processing each event
+type EventProcessingResult = {
+  success: boolean;
+  id?: string;
+  transactionHash?: string;
+  skipped?: boolean;
+  eventName?: string;
+  duplicate?: boolean;
+  error?: string;
+};
+
 // Define the schema for the webhook payload
 const DogEventSchema = z.object({
   data: z.object({
@@ -62,8 +73,8 @@ export default async function handler(
     console.log("Payload validated successfully");
 
     // Process each event in the payload
-    const results = await Promise.allSettled(
-      payload.data.map(async (event) => {
+    const results: PromiseSettledResult<EventProcessingResult>[] = await Promise.allSettled(
+      payload.data.map(async (event): Promise<EventProcessingResult> => {
         const eventData = event.data;
         const decoded = eventData.decoded;
 
@@ -182,11 +193,11 @@ export default async function handler(
     );
 
     // Count successful and failed operations
-    const successful = results.filter((r: PromiseSettledResult<any>) => r.status === "fulfilled").length;
-    const failed = results.filter((r: PromiseSettledResult<any>) => r.status === "rejected").length;
+    const successful = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
 
     // Log any failures for debugging
-    results.forEach((result: PromiseSettledResult<any>, index: number) => {
+    results.forEach((result, index) => {
       if (result.status === "rejected") {
         console.error(`Failed to process event ${index}:`, result.reason);
       }
@@ -197,8 +208,8 @@ export default async function handler(
     return res.status(200).json({
       success: true,
       message: `Processed ${successful} events successfully, ${failed} failed`,
-      results: results.map((r: PromiseSettledResult<any>) => 
-        r.status === "fulfilled" ? r.value : { error: String((r as PromiseRejectedResult).reason) }
+      results: results.map((r) => 
+        r.status === "fulfilled" ? r.value : { error: String(r.reason) }
       ),
     });
   } catch (error) {
