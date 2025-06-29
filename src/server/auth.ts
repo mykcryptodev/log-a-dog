@@ -134,6 +134,27 @@ export const authOptions: NextAuthOptions = {
             },
           });
         }
+
+        // Link any existing DogEvents to this user
+        try {
+          const unlinkedEvents = await db.dogEvent.updateMany({
+            where: {
+              eater: credentials.address.toLowerCase(),
+              userId: null,
+            },
+            data: {
+              userId: user.id,
+            },
+          });
+          
+          if (unlinkedEvents.count > 0) {
+            console.log(`Linked ${unlinkedEvents.count} historical DogEvents to user ${user.id}`);
+          }
+        } catch (error) {
+          console.error('Error linking historical DogEvents:', error);
+          // Don't fail auth if this fails
+        }
+
         console.log({ user });
         // Create a new account for the user
         await db.account.upsert({ 
