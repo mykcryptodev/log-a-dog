@@ -4,22 +4,22 @@ type ContractAddress = Record<number, string>;
 
 export const LOG_A_DOG: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
-  [baseSepolia.id]: "0x5D9A90b707c144D350A50e2628e94101013d76D1",
+  [baseSepolia.id]: "0x7bC35e42781d2581009042777E8EFdE2217a794e",
 }
 
 export const STAKING: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
-  [baseSepolia.id]: "0x729e681F419A780755476c75c3598446025017B4",
+  [baseSepolia.id]: "0x08979879dF6BD0e84A1487BD2E5C63Ef79046559",
 }
 
 export const ATTESTATION_MANAGER: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
-  [baseSepolia.id]: "0xe900720fdF8aBF69Ba275CAeFA85288436DDb277",
+  [baseSepolia.id]: "0xD520724dC4d977b154F34e0AAB7fB6f0A59e6a8E",
 }
 
 export const HOTDOG_TOKEN: ContractAddress = {
   [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
-  [baseSepolia.id]: "0x29B85652461088Fe89Db817C6C0e163A5589a96e",
+  [baseSepolia.id]: "0x2b7A59D8b9180B1e6Bb0f5844546D813481DAE7C",
 }
 
 export const AI_AFFIRMATION: ContractAddress = {
