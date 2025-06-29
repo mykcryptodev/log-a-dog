@@ -1,8 +1,8 @@
 import { useContext, useEffect, type FC, useState } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
-import { useActiveAccount } from "thirdweb/react";
-import HotdogImage from "~/components/utils/HotdogImage";
+import { MediaRenderer, useActiveAccount } from "thirdweb/react";
+import { client } from "~/providers/Thirdweb";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
@@ -95,12 +95,12 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
                   onRevocation={refetchDogData}
                 />
               </div>
-              <HotdogImage
+              <MediaRenderer
                 src={hotdog.imageUri}
-                zoraCoin={hotdog.zoraCoin}
+                client={client}
                 className="rounded-lg"
-                width="100%"
-                height="100%"
+                width={"100%"}
+                height={"100%"}
               />
               <div className="opacity-50 flex flex-row w-full items-center justify-between">
                 <div className="text-xs flex items-center gap-1">

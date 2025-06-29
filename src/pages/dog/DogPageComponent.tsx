@@ -5,9 +5,8 @@
 import { type NextPage } from "next";
 import { useContext } from "react";
 import Head from "next/head";
-import { useActiveAccount } from "thirdweb/react";
+import { MediaRenderer, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
-import HotdogImage from "~/components/utils/HotdogImage";
 import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { Avatar } from "~/components/Profile/Avatar";
@@ -105,12 +104,12 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
                 <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
               </div>
             )}
-            <HotdogImage
+            <MediaRenderer
               src={hotdog.imageUri}
-              zoraCoin={hotdog.zoraCoin}
+              client={client}
               className="rounded-lg"
-              width="100%"
-              height="100%"
+              width={"100%"}
+              height={"100%"}
             />
             <div className="opacity-50 flex flex-row w-full items-center justify-between">
               <div className="text-xs flex items-center gap-1">
