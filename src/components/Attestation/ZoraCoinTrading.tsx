@@ -2,7 +2,7 @@ import { useState, type FC, useContext } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { parseEther, createPublicClient, createWalletClient, custom, http } from "viem";
-// import { tradeCoin } from "@zoralabs/coins-sdk";
+// import { tradeCoin } from "@zoralabs/coins-sdk"; // Temporarily removed from SDK
 import { base, baseSepolia } from "viem/chains";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { EIP1193, type Wallet } from "thirdweb/wallets";
@@ -62,24 +62,25 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
     /* Commented out until tradeCoin is available in the SDK
     setIsLoading(true);
     try {
-      const { walletClient, publicClient } = convertWalletToViem(wallet);
+      // const { walletClient, publicClient } = convertWalletToViem(wallet);
 
       // Define buy parameters
-      const buyParams = {
-        direction: "buy" as const,
-        target: coinAddress,
-        args: {
-          recipient: account.address,
-          orderSize: parseEther(buyAmount),
-          minAmountOut: 0n, // No minimum - adjust for slippage if needed
-          tradeReferrer: referrer,
-        }
-      };
+      // const buyParams = {
+      //   direction: "buy" as const,
+      //   target: coinAddress,
+      //   args: {
+      //     recipient: account.address,
+      //     orderSize: parseEther(buyAmount),
+      //     minAmountOut: 0n, // No minimum - adjust for slippage if needed
+      //     tradeReferrer: referrer,
+      //   }
+      // };
 
       // Execute the buy
-      const result = await tradeCoin(buyParams, walletClient, publicClient);
-
-      toast.success(`Buy successful! TX: ${result.hash}`);
+      // const result = await tradeCoin(buyParams, walletClient, publicClient); // Temporarily commented - function removed from SDK
+      
+      // TODO: Re-enable when tradeCoin is added back to @zoralabs/coins-sdk
+      toast.error("Trading functionality temporarily unavailable");
       setShowBuyModal(false);
     } catch (error) {
       console.error("Buy error:", error);
@@ -104,24 +105,25 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => 
     /* Commented out until tradeCoin is available in the SDK
     setIsLoading(true);
     try {
-      const { walletClient, publicClient } = convertWalletToViem(wallet);
+      // const { walletClient, publicClient } = convertWalletToViem(wallet);
 
       // Define sell parameters
-      const sellParams = {
-        direction: "sell" as const,
-        target: coinAddress,
-        args: {
-          recipient: account.address,
-          orderSize: parseEther(sellAmount),
-          minAmountOut: 0n, // No minimum - adjust for slippage if needed
-          tradeReferrer: referrer,
-        }
-      };
+      // const sellParams = {
+      //   direction: "sell" as const,
+      //   target: coinAddress,
+      //   args: {
+      //     recipient: account.address,
+      //     orderSize: parseEther(sellAmount),
+      //     minAmountOut: 0n, // No minimum - adjust for slippage if needed
+      //     tradeReferrer: referrer,
+      //   }
+      // };
 
       // Execute the sell
-      const result = await tradeCoin(sellParams, walletClient, publicClient);
-
-      toast.success(`Sell successful! TX: ${result.hash}`);
+      // const result = await tradeCoin(sellParams, walletClient, publicClient); // Temporarily commented - function removed from SDK
+      
+      // TODO: Re-enable when tradeCoin is added back to @zoralabs/coins-sdk
+      toast.error("Trading functionality temporarily unavailable");
       setShowSellModal(false);
     } catch (error) {
       console.error("Sell error:", error);

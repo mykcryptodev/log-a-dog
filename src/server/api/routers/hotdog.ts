@@ -9,7 +9,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
-import { getHotdogLogs, getTotalPagesForLogs, logHotdogOnBehalf, getHotdogLogsCount, getHotdogLogsRange } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
+import { getHotdogLogs, getTotalPagesForLogs, logHotdogOnBehalf, getHotdogLogsRange } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { env } from "~/env";
