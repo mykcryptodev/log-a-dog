@@ -27,7 +27,7 @@ export default async function handler(
     // Using Supabase/database as the source of truth for which events need processing
     // Criteria:
     // 1. Created more than ATTESTATION_WINDOW_SECONDS ago (attestation window has passed)
-    // 2. attestationResolved is false or null (not yet processed by our system)
+    // 2. attestationValid is null (not yet processed by our system)
     const cutoffTime = new Date(Date.now() - ATTESTATION_WINDOW_SECONDS * 1000);
     
     const eligibleEvents = await db.dogEvent.findMany({
@@ -35,10 +35,7 @@ export default async function handler(
         createdAt: {
           lt: cutoffTime
         },
-        OR: [
-          { attestationResolved: false },
-          { attestationResolved: null }
-        ]
+        attestationValid: null
       },
       orderBy: {
         createdAt: "asc"
@@ -122,20 +119,7 @@ export default async function handler(
           continue;
         }
 
-        // Check if there are any attestations to resolve
-        const totalStake = Number(totalValidStake) + Number(totalInvalidStake);
-        if (totalStake === 0) {
-          // No stakes to resolve
-          results.skipped++;
-          results.details.push({
-            logId,
-            status: "skipped",
-            reason: "No stakes to resolve"
-          });
-          continue;
-        }
-
-        console.log(`Processing logId ${logId} - Total stake: ${totalStake}`);
+        console.log(`Processing logId ${logId} - Total stake: ${Number(totalValidStake) + Number(totalInvalidStake)}`);
 
         // Execute the reward transaction - webhook will handle database updates
         const transaction = resolveAttestationPeriod({
