@@ -16,10 +16,10 @@ const AttestationStatusBadge: FC<Props> = ({ attestationPeriod }) => {
   if (attestationPeriod?.status === 1) {
     if (attestationPeriod.isValid) {
       label = "valid";
-      color = "success";
+      color = "primary";
     } else {
       label = "invalid";
-      color = "error";
+      color = "secondary";
     }
   }
 
