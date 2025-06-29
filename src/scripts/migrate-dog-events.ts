@@ -19,42 +19,52 @@ async function migrateExistingDogEvents() {
 
     let updated = 0;
     let notFound = 0;
-    const batchSize = 100;
+    let errors = 0;
 
-    for (let i = 0; i < dogEventsWithoutUser.length; i += batchSize) {
-      const batch = dogEventsWithoutUser.slice(i, i + batchSize);
+    // Process events sequentially to avoid connection pool issues
+    for (let i = 0; i < dogEventsWithoutUser.length; i++) {
+      const event = dogEventsWithoutUser[i];
       
-      const results = await Promise.all(
-        batch.map(async (event: { id: string; eater: string }) => {
-          const user = await db.user.findFirst({
-            where: { address: event.eater.toLowerCase() },
-            select: { id: true, address: true, fid: true }
+      try {
+        console.log(`Processing event ${i + 1}/${dogEventsWithoutUser.length} - Eater: ${event!.eater}`);
+        
+        const user = await db.user.findFirst({
+          where: { address: event!.eater.toLowerCase() },
+          select: { id: true, address: true, fid: true }
+        });
+
+        if (user) {
+          await db.dogEvent.update({
+            where: { id: event!.id },
+            data: { userId: user.id }
           });
-
-          if (user) {
-            await db.dogEvent.update({
-              where: { id: event.id },
-              data: { userId: user.id }
-            });
-            return { success: true, user };
-          }
-          return { success: false };
-        })
-      );
-
-      const batchUpdated = results.filter((r: any) => r.success).length;
-      updated += batchUpdated;
-      notFound += results.filter((r: any) => !r.success).length;
-
-      console.log(`Progress: ${Math.min(i + batchSize, dogEventsWithoutUser.length)}/${dogEventsWithoutUser.length} events processed`);
-      console.log(`  - Batch results: ${batchUpdated} linked, ${batch.length - batchUpdated} users not found`);
+          updated++;
+          console.log(`  ✓ Linked to user ${user.address} (FID: ${user.fid || 'none'})`);
+        } else {
+          notFound++;
+          console.log(`  ✗ No user found for address ${event!.eater}`);
+        }
+      } catch (error) {
+        errors++;
+        console.error(`  ✗ Error processing event ${event!.id}:`, error);
+        
+        // If we get a connection error, wait a bit before continuing
+        if (error instanceof Error && error.message.includes("Can't reach database")) {
+          console.log('  Waiting 2 seconds before continuing...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
     }
 
     console.log('\n=== Migration Complete! ===');
     console.log(`Total events processed: ${dogEventsWithoutUser.length}`);
     console.log(`Successfully linked: ${updated} events`);
     console.log(`Users not found: ${notFound} events`);
-    console.log(`Success rate: ${((updated / dogEventsWithoutUser.length) * 100).toFixed(2)}%`);
+    console.log(`Errors: ${errors} events`);
+    
+    if (errors > 0) {
+      console.log('\nNote: Some events had errors. You may want to run the migration again.');
+    }
 
   } catch (error) {
     console.error('Migration failed:', error);
