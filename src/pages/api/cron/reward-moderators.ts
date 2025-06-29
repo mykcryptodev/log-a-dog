@@ -119,43 +119,7 @@ export default async function handler(
           continue;
         }
 
-        // Check if there are any attestations to resolve
-        const totalStake = Number(totalValidStake) + Number(totalInvalidStake);
-        if (totalStake === 0) {
-          // No stakes to resolve - mark as resolved with no winner
-          // This prevents the event from being processed again
-          try {
-            await db.dogEvent.update({
-              where: { id: event.id },
-              data: {
-                attestationResolved: true,
-                attestationValid: null, // No votes means no determination
-                attestationTotalValidStake: "0",
-                attestationTotalInvalidStake: "0",
-                attestationResolvedAt: new Date(),
-              }
-            });
-            
-            results.processed++;
-            results.details.push({
-              logId,
-              status: "processed",
-              reason: "No stakes - marked as resolved with no determination"
-            });
-            console.log(`Marked logId ${logId} as resolved with no stakes`);
-          } catch (dbError) {
-            console.error(`Failed to update database for logId ${logId}:`, dbError);
-            results.errors++;
-            results.details.push({
-              logId,
-              status: "error",
-              reason: "Database update failed for no-stakes case"
-            });
-          }
-          continue;
-        }
-
-        console.log(`Processing logId ${logId} - Total stake: ${totalStake}`);
+        console.log(`Processing logId ${logId} - Total stake: ${Number(totalValidStake) + Number(totalInvalidStake)}`);
 
         // Execute the reward transaction - webhook will handle database updates
         const transaction = resolveAttestationPeriod({
