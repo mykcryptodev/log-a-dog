@@ -13,6 +13,7 @@ type Props = {
   successMessage?: string;
   errorMessage?: string;
   onResolved?: (success: boolean) => void;
+  onTransactionHash?: (transactionHash: string) => void;
 }
 
 export const TransactionStatus: FC<Props> = ({ 
@@ -20,7 +21,8 @@ export const TransactionStatus: FC<Props> = ({
   loadingMessages = [{ message: "Transaction is pending...", duration: 1500 }], 
   successMessage, 
   errorMessage, 
-  onResolved 
+  onResolved,
+  onTransactionHash 
 }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const { data, dataUpdatedAt } = api.engine.getTransactionStatus.useQuery(
@@ -87,6 +89,10 @@ export const TransactionStatus: FC<Props> = ({
         toast.success(successMessage ?? "Transaction completed successfully!", {
           toastId: `${transactionId}-mined`,
         });
+        // Extract transaction hash from the data if available
+        if (data && 'transactionHash' in data && typeof data.transactionHash === 'string') {
+          onTransactionHash?.(data.transactionHash);
+        }
         onResolved?.(true);
         break;
       case "FAILED":
@@ -97,7 +103,7 @@ export const TransactionStatus: FC<Props> = ({
         onResolved?.(false);
         break;
     }
-  }, [dataUpdatedAt, data, transactionId, successMessage, errorMessage, onResolved]);
+  }, [dataUpdatedAt, data, transactionId, successMessage, errorMessage, onResolved, onTransactionHash]);
 
   return null; // We don't need to render anything since we're using toasts
 };

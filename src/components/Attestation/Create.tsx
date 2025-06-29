@@ -1,4 +1,4 @@
-import { type FC, useContext, useState, useMemo } from 'react';
+import { type FC, useContext, useState, useMemo, useEffect } from 'react';
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
@@ -25,6 +25,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const utils = api.useUtils();
   const [imgUri, setImgUri] = useState<string | undefined>();
   const [lastLoggedImgUri, setLastLoggedImgUri] = useState<string | undefined>();
+  const [lastLoggedDescription, setLastLoggedDescription] = useState<string>('');
+  const [lastLoggedTransactionHash, setLastLoggedTransactionHash] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
   const wallet = useActiveWallet();
@@ -38,7 +40,22 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
   const [transactionId, setTransactionId] = useState<string | undefined>();
+  const [transactionHash, setTransactionHash] = useState<string | undefined>();
   const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
+
+  // Query for dog event when we have a transaction hash
+  const { data: dogEvent } = api.hotdog.getDogEventByTransactionHash.useQuery(
+    { transactionHash: transactionHash! },
+    { enabled: !!transactionHash && isTransactionIdResolved }
+  );
+
+  // Show share dialog when dog event is loaded
+  useEffect(() => {
+    if (isMiniApp && dogEvent && isTransactionIdResolved) {
+      const dialog = document.getElementById('share_cast_modal') as HTMLDialogElement;
+      dialog?.showModal();
+    }
+  }, [isMiniApp, dogEvent, isTransactionIdResolved]);
 
   const handleOnResolved = (success: boolean) => {
     if (success && account) {
@@ -62,11 +79,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
       // Invalidate the hotdog query cache
       void utils.hotdog.getAll.invalidate();
-
-      if (isMiniApp) {
-        const dialog = document.getElementById('share_cast_modal') as HTMLDialogElement;
-        dialog?.showModal();
-      }
     }
     setIsTransactionIdResolved(true);
   }
@@ -96,6 +108,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           description,
         });
         setLastLoggedImgUri(imgUri);
+        setLastLoggedDescription(description);
         setTransactionId(transactionId);
 
         // close the modal
@@ -129,9 +142,17 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const shareOnFarcaster = async () => {
     try {
+      if (!dogEvent) {
+        toast.error("Dog details not found yet. Please try again.");
+        return;
+      }
+      
+      const dogUrl = `https://logadog.xyz/dog/${dogEvent.logId}`;
+      const shareText = lastLoggedDescription.trim() || 'Just logged a dog on Log a Dog!';
+      
       await sdk.actions.composeCast({
-        text: 'Just logged a dog on Log a Dog!',
-        embeds: lastLoggedImgUri ? [lastLoggedImgUri] : [],
+        text: shareText,
+        embeds: [dogUrl],
       });
     } catch (err) {
       console.error('Failed to compose cast', err);
@@ -213,6 +234,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         <TransactionStatus
           onResolved={handleOnResolved}
           transactionId={transactionId}
+          onTransactionHash={setTransactionHash}
           loadingMessages={[
             { message: "Beaming dog into space..." },
             { message: "Guzzlin glizzy into the blockchain..."},

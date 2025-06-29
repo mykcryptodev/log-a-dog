@@ -872,4 +872,24 @@ export const hotdogRouter = createTRPCRouter({
         throw error;
       }
     }),
+  getDogEventByTransactionHash: publicProcedure
+    .input(z.object({
+      transactionHash: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const { transactionHash } = input;
+      const { getDogEventByTransactionHash } = await import("~/server/api/dog-events");
+      
+      const dogEvent = await getDogEventByTransactionHash(transactionHash);
+      
+      if (!dogEvent) {
+        return null;
+      }
+      
+      return {
+        logId: dogEvent.logId,
+        imageUri: dogEvent.imageUri,
+        eater: dogEvent.eater,
+      };
+    }),
 });
