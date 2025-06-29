@@ -98,16 +98,16 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const [start, setStart] = useState<number>(0);
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
 
-  const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery({
+  const { data: dogData, isLoading: isLoadingHotdogs, error, refetch: refetchDogData } = api.hotdog.getAll.useQuery({
     chainId: activeChain.id,
     user: account?.address ?? ZERO_ADDRESS,
     start,
     limit: limitOrDefault,
   }, {
     enabled: !!activeChain.id,
+    retry: 3,
+    retryDelay: 1000,
   });
-
-  console.log({ dogData })
 
   useEffect(() => {
     if (!account) return;
@@ -164,7 +164,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     <>
     <div id="top-of-list" className="invisible" />
     <div className="flex flex-col gap-4">
-      {isLoadingHotdogs && 
+      {!dogData && 
         Array.from({ length: limitOrDefault }).map((_, index) => (
           <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
             <div className="flex gap-2 items-center">
@@ -239,8 +239,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 src={hotdog.imageUri}
                 zoraCoin={hotdog.zoraCoin}
                 className="rounded-lg"
-                width="100%"
-                height="100%"
+                width="400"
+                height="400"
               />
               <div className="opacity-50 flex flex-row w-full items-center justify-between">
                 <div className="text-xs flex items-center gap-1">
