@@ -83,7 +83,7 @@ export async function getDogEventsByAttestationStatus(isValid: boolean | null, o
   skip?: number;
 }) {
   return db.dogEvent.findMany({
-    where: { 
+    where: {
       attestationValid: isValid,
       attestationResolved: isValid === null ? false : true,
     },
@@ -91,4 +91,37 @@ export async function getDogEventsByAttestationStatus(isValid: boolean | null, o
     take: options?.take,
     skip: options?.skip,
   });
-} 
+}
+
+export async function getDogEventLeaderboard(options?: {
+  startDate?: number;
+  endDate?: number;
+  take?: number;
+  skip?: number;
+}) {
+  const where: Prisma.DogEventWhereInput = {};
+
+  if (options?.startDate != null || options?.endDate != null) {
+    where.timestamp = {} as Prisma.BigIntFilter;
+    if (options?.startDate != null) {
+      (where.timestamp as Prisma.BigIntFilter).gte = BigInt(options.startDate);
+    }
+    if (options?.endDate != null) {
+      (where.timestamp as Prisma.BigIntFilter).lte = BigInt(options.endDate);
+    }
+  }
+
+  const grouped = await db.dogEvent.groupBy({
+    by: ["eater"],
+    where,
+    _count: { eater: true },
+    orderBy: { _count: { eater: "desc" } },
+    take: options?.take,
+    skip: options?.skip,
+  });
+
+  return grouped.map(g => ({
+    eater: g.eater,
+    count: g._count.eater,
+  }));
+}

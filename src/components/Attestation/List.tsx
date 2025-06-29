@@ -181,8 +181,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 <VotingCountdown
                   timestamp={hotdog.timestamp.toString()}
                   logId={hotdog.logId.toString()}
-                  userAttested={userAttestedMap[hotdog.logId]}
-                  userAttestation={userAttestationMap[hotdog.logId]}
                   validAttestations={validMap[hotdog.logId]?.toString()}
                   invalidAttestations={invalidMap[hotdog.logId]?.toString()}
                   onResolutionComplete={() => void refetchDogData()}
