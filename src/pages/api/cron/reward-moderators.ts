@@ -5,7 +5,6 @@ import { client, serverWallet } from "~/server/utils";
 import { ATTESTATION_MANAGER, ATTESTATION_WINDOW_SECONDS } from "~/constants";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
-import { deleteCachedData } from "~/server/utils/redis";
 
 export default async function handler(
   req: NextApiRequest,
@@ -24,10 +23,10 @@ export default async function handler(
     console.log("Starting automated moderator reward process...");
 
     // Find DogEvents that are eligible for moderator rewards
+    // Using Supabase/database as the source of truth for which events need processing
     // Criteria:
     // 1. Created more than ATTESTATION_WINDOW_SECONDS ago (attestation window has passed)
-    // 2. attestationResolved is false or null (not yet processed)
-    // 3. Has attestation activity (we'll verify this on-chain)
+    // 2. attestationResolved is false or null (not yet processed by our system)
     const cutoffTime = new Date(Date.now() - ATTESTATION_WINDOW_SECONDS * 1000);
     
     const eligibleEvents = await db.dogEvent.findMany({
@@ -73,7 +72,7 @@ export default async function handler(
           chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
         });
 
-        // Check if attestation period exists and is still active on-chain
+        // Check if attestation period exists and validate eligibility on-chain
         let attestationPeriod;
         try {
           attestationPeriod = await getAttestationPeriod({
@@ -82,7 +81,6 @@ export default async function handler(
           });
         } catch (error) {
           // No attestation period exists for this log
-          await markAsProcessed(event.id, "No attestation period found");
           results.skipped++;
           results.details.push({
             logId,
@@ -94,7 +92,7 @@ export default async function handler(
 
         // Destructure the attestation period tuple
         // [startTime, endTime, status, totalValidStake, totalInvalidStake, isValid]
-        const [startTime, endTime, status, totalValidStake, totalInvalidStake, isValid] = attestationPeriod;
+        const [startTime, , status, totalValidStake, totalInvalidStake] = attestationPeriod;
 
         // Check if attestation period has ended and is still active
         const currentTime = Math.floor(Date.now() / 1000);
@@ -113,8 +111,7 @@ export default async function handler(
 
         // Check if already resolved on-chain (status: 0 = Active, 1 = Resolved)
         if (Number(status) === 1) {
-          // Already resolved on-chain, update our database
-          await markAsProcessed(event.id, "Already resolved on-chain");
+          // Already resolved on-chain, skip (webhook will handle database update)
           results.skipped++;
           results.details.push({
             logId,
@@ -128,7 +125,6 @@ export default async function handler(
         const totalStake = Number(totalValidStake) + Number(totalInvalidStake);
         if (totalStake === 0) {
           // No stakes to resolve
-          await markAsProcessed(event.id, "No stakes to resolve");
           results.skipped++;
           results.details.push({
             logId,
@@ -140,29 +136,13 @@ export default async function handler(
 
         console.log(`Processing logId ${logId} - Total stake: ${totalStake}`);
 
-        // Execute the reward transaction
+        // Execute the reward transaction - webhook will handle database updates
         const transaction = resolveAttestationPeriod({
           contract: attestationContract,
           logId: BigInt(logId),
         });
 
         const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
-
-        // Update database to mark as processed
-        await db.dogEvent.update({
-          where: { id: event.id },
-          data: {
-            attestationResolved: true,
-            attestationResolvedAt: new Date(),
-            attestationTransactionHash: transactionId,
-          }
-        });
-
-        // Invalidate Redis cache
-        const hotdogPattern = `hotdogs:${chainId}:*`;
-        const leaderboardPattern = `leaderboard:${chainId}:*`;
-        await deleteCachedData(hotdogPattern);
-        await deleteCachedData(leaderboardPattern);
 
         results.processed++;
         results.details.push({
@@ -171,7 +151,8 @@ export default async function handler(
           transactionId
         });
 
-        console.log(`Successfully processed logId ${logId}, transaction: ${transactionId}`);
+        console.log(`Successfully queued transaction for logId ${logId}, transaction: ${transactionId}`);
+        console.log(`Database will be updated automatically via webhook when transaction is mined`);
 
         // Add a small delay between transactions to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -207,16 +188,4 @@ export default async function handler(
       message: error instanceof Error ? error.message : "Unknown error"
     });
   }
-}
-
-// Helper function to mark events as processed without rewards
-async function markAsProcessed(eventId: string, reason: string) {
-  await db.dogEvent.update({
-    where: { id: eventId },
-    data: {
-      attestationResolved: true,
-      attestationResolvedAt: new Date(),
-    }
-  });
-  console.log(`Marked event ${eventId} as processed: ${reason}`);
 }

@@ -10,9 +10,9 @@ This document describes the automated cron jobs configured for the Log a Dog app
 
 ### What it does
 
-This cron job automatically executes the "Reward Moderators" functionality on a schedule, eliminating the need for manual intervention. It:
+This cron job automatically executes the "Reward Moderators" functionality on a schedule, eliminating the need for manual intervention. It uses the Supabase database as the source of truth and relies on webhooks for automatic database updates:
 
-1. **Finds eligible events** - Looks for DogEvents that:
+1. **Finds eligible events** - Queries the Supabase database for DogEvents that:
    - Were created more than `ATTESTATION_WINDOW_SECONDS` ago (attestation window has passed)
    - Have `attestationResolved` set to `false` or `null`
    - May have attestation activity to resolve
@@ -29,12 +29,10 @@ This cron job automatically executes the "Reward Moderators" functionality on a 
    - Distributes slashed tokens proportionally to winners
    - Unlocks remaining stakes for all participants
 
-4. **Updates database** - Marks events as processed:
-   - Sets `attestationResolved` to `true`
-   - Records `attestationResolvedAt` timestamp
-   - Stores the transaction hash in `attestationTransactionHash`
-
-5. **Invalidates cache** - Clears Redis cache for affected data
+4. **Webhook handles database updates** - When the transaction is mined:
+   - The `AttestationPeriodResolved` event is emitted on-chain
+   - The attestation webhook (`/api/webhook/attestation-resolved`) automatically updates the database
+   - Sets `attestationResolved` to `true`, `attestationValid`, stake amounts, and timestamps
 
 ### Configuration
 
@@ -99,7 +97,8 @@ The cron job returns detailed information about its execution:
 - Individual event processing errors are caught and logged
 - Failed events don't prevent processing of other events
 - Detailed error information is included in the response
-- Database is updated to mark events as processed even if they're skipped (to avoid reprocessing)
+- Database updates are handled automatically by webhooks when transactions are mined
+- Events are only marked as processed by webhooks after successful on-chain resolution
 
 ### Performance
 
@@ -108,4 +107,4 @@ The cron job returns detailed information about its execution:
 - Batches processing to 50 events per run to stay within serverless timeout limits
 - Uses efficient database queries with proper indexing
 
-This automation ensures that moderator rewards are distributed promptly without requiring manual intervention, improving the user experience and ensuring fair compensation for community moderators.
+This automation ensures that moderator rewards are distributed promptly without requiring manual intervention. The webhook-driven architecture provides reliable database consistency and improves the user experience while ensuring fair compensation for community moderators.
