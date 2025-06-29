@@ -111,6 +111,9 @@ export async function getDogEventLeaderboard(options?: {
     }
   }
 
+  // Only include events with a valid attestation
+  where.attestationValid = true;
+
   // Get all dog events with the filters
   const dogEvents = await db.dogEvent.findMany({
     where,

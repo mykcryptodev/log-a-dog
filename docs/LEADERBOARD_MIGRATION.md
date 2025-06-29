@@ -93,6 +93,7 @@ Updated `src/pages/api/webhook/dog-events.ts`:
    - Groups all addresses belonging to the same FID together
    - Shows the total count across all addresses
    - Falls back to grouping by address for users without FID
+   - Only counts dogs whose attestations were marked as valid
 
 ## Benefits
 
