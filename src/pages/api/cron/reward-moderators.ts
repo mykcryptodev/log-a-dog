@@ -5,6 +5,7 @@ import { client, serverWallet } from "~/server/utils";
 import { ATTESTATION_MANAGER, ATTESTATION_WINDOW_SECONDS } from "~/constants";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
+import { sendTelegramMessage, formatCronJobMessage } from "~/lib/telegram";
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,7 +16,7 @@ export default async function handler(
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  if (req.method !== "POST") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -169,6 +170,15 @@ export default async function handler(
     }
 
     console.log(`Moderator reward process completed: ${results.processed} processed, ${results.skipped} skipped, ${results.errors} errors`);
+
+    // Send Telegram notification for cron job completion
+    try {
+      const message = formatCronJobMessage(results.processed, results.skipped);
+      await sendTelegramMessage(message);
+    } catch (telegramError) {
+      console.error('Failed to send Telegram notification:', telegramError);
+      // Don't fail the cron job if Telegram fails
+    }
 
     return res.status(200).json({
       success: true,

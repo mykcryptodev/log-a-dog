@@ -45,6 +45,9 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: z.string(),
     GHOST_PROTOCOL_API_KEY: z.string(),
     CRON_SECRET: z.string(),
+    TELEGRAM_BOT_TOKEN: z.string().optional(),
+    TELEGRAM_CHAT_ID: z.string().optional(),
+    TELEGRAM_NOTIFICATIONS_ENABLED: z.string().optional(),
   },
 
   /**
@@ -91,6 +94,9 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_DOMAIN: process.env.NEXT_PUBLIC_APP_DOMAIN,
     GHOST_PROTOCOL_API_KEY: process.env.GHOST_PROTOCOL_API_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
+    TELEGRAM_NOTIFICATIONS_ENABLED: process.env.TELEGRAM_NOTIFICATIONS_ENABLED,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
