@@ -82,6 +82,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Vercel OG**: Dynamic social media image generation
 - **Prisma**: Database ORM with PostgreSQL
 
+### Automated Jobs
+- **Moderator Rewards Cron**: Runs hourly to automatically distribute rewards for resolved attestation periods
+  - Path: `/api/cron/reward-moderators`
+  - Schedule: Every hour (`0 * * * *`)
+  - See `CRON_JOBS.md` for detailed documentation
+
 ## Development Notes
 
 ### Environment Setup
