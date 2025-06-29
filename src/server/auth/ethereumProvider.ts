@@ -44,9 +44,25 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
           });
         }
 
-        let user = await db.user.findFirst({
-          where: { address: credentials.address.toLowerCase() },
-        });
+        // Add retry logic for database connection issues
+        let user;
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            user = await db.user.findFirst({
+              where: { address: credentials.address.toLowerCase() },
+            });
+            break;
+          } catch (dbError: any) {
+            console.error(`Database query failed (${4 - retries}/3):`, dbError);
+            retries--;
+            if (retries === 0) {
+              throw dbError;
+            }
+            // Wait 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
 
         if (!user) {
           console.log('Creating new user');
@@ -70,13 +86,35 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
     async function linkAddressToExistingUser({ existingUserId }: { existingUserId: string }) {
       if (!credentials?.address) return null;
 
+      // Helper function for database operations with retries
+      const withRetry = async <T>(operation: () => Promise<T>, context: string): Promise<T> => {
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            return await operation();
+          } catch (dbError: any) {
+            console.error(`Database operation failed in ${context} (${4 - retries}/3):`, dbError);
+            retries--;
+            if (retries === 0) {
+              throw dbError;
+            }
+            // Wait 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+        throw new Error("Unexpected end of retry loop");
+      };
+
       // check if the user who is trying to link (the ethereum wallet that signed)
       // has already linked an ethereum address
-      const ethereumWalletUser = await db.user.findFirst({
-        where: {
-          address: credentials.address.toLowerCase(),
-        },
-      });
+      const ethereumWalletUser = await withRetry(
+        () => db.user.findFirst({
+          where: {
+            address: credentials.address.toLowerCase(),
+          },
+        }),
+        'find ethereum wallet user'
+      );
       // if the user has already linked an ethereum address to another user,
       // we should remove the link before linking to the new user
       // 
@@ -86,48 +124,63 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
       
       // delete the existing link
       if (ethereumWalletUser) {
-        await db.user.update({
-          where: {
-            id: ethereumWalletUser.id,
-          },
-          data: {
-            address: null,
-          },
-        });
+        await withRetry(
+          () => db.user.update({
+            where: {
+              id: ethereumWalletUser.id,
+            },
+            data: {
+              address: null,
+            },
+          }),
+          'update ethereum wallet user'
+        );
         // delete the associated ethereum account
-        await db.account.deleteMany({
-          where: {
-            userId: ethereumWalletUser.id,
-            type: "ethereum",
-          },
-        });
+        await withRetry(
+          () => db.account.deleteMany({
+            where: {
+              userId: ethereumWalletUser.id,
+              type: "ethereum",
+            },
+          }),
+          'delete ethereum accounts'
+        );
       }
 
-      const existingLinkedUser = await db.user.findUnique({
-        where: {
-          id: existingUserId,
-        },
-      });
+      const existingLinkedUser = await withRetry(
+        () => db.user.findUnique({
+          where: {
+            id: existingUserId,
+          },
+        }),
+        'find existing linked user'
+      );
       if (existingLinkedUser?.address) {
         console.error("User already has an ethereum address linked")
         return null;
       }
-      const user = await db.user.update({
-        where: {
-          id: existingUserId,
-        },
-        data: {
-          address: credentials.address.toLowerCase(),
-        },
-      });
-      await db.account.create({
-        data: {
-          userId: user.id,
-          type: "ethereum",
-          provider: "ethereum",
-          providerAccountId: credentials.address.toLowerCase(),
-        },
-      });
+      const user = await withRetry(
+        () => db.user.update({
+          where: {
+            id: existingUserId,
+          },
+          data: {
+            address: credentials.address.toLowerCase(),
+          },
+        }),
+        'update user with address'
+      );
+      await withRetry(
+        () => db.account.create({
+          data: {
+            userId: user.id,
+            type: "ethereum",
+            provider: "ethereum",
+            providerAccountId: credentials.address.toLowerCase(),
+          },
+        }),
+        'create ethereum account'
+      );
 
       return {
         id: user.id,
