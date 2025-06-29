@@ -8,8 +8,8 @@ const digitCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrs
 
 function decode83(str: string) {
   let value = 0;
-  for (let i = 0; i < str.length; i++) {
-    const idx = digitCharacters.indexOf(str[i]!);
+  for (const char of str) {
+    const idx = digitCharacters.indexOf(char);
     value = value * 83 + idx;
   }
   return value;
@@ -35,14 +35,14 @@ function signPow(val: number, exp: number) {
   return sign(val) * Math.pow(Math.abs(val), exp);
 }
 
-function decodeDC(value: number) {
+function decodeDC(value: number): [number, number, number] {
   const r = value >> 16;
   const g = (value >> 8) & 255;
   const b = value & 255;
   return [sRGBToLinear(r), sRGBToLinear(g), sRGBToLinear(b)];
 }
 
-function decodeAC(value: number, maximumValue: number) {
+function decodeAC(value: number, maximumValue: number): [number, number, number] {
   const quantR = Math.floor(value / (19 * 19));
   const quantG = Math.floor(value / 19) % 19;
   const quantB = value % 19;
@@ -61,7 +61,7 @@ function decodeBlurHash(blurhash: string, width: number, height: number, punch =
   const quantisedMaximumValue = decode83(blurhash[1]!);
   const maximumValue = (quantisedMaximumValue + 1) / 166;
 
-  const colors = new Array(numX * numY);
+  const colors = new Array<[number, number, number]>(numX * numY);
   for (let i = 0; i < colors.length; i++) {
     if (i === 0) {
       const value = decode83(blurhash.substring(2, 6));
@@ -85,7 +85,7 @@ function decodeBlurHash(blurhash: string, width: number, height: number, punch =
         const basisY = Math.cos((Math.PI * y * j) / height);
         for (let i = 0; i < numX; i++) {
           const basis = Math.cos((Math.PI * x * i) / width) * basisY;
-          const color = colors[i + j * numX];
+          const color = colors[i + j * numX]!;
           r += color[0] * basis;
           g += color[1] * basis;
           b += color[2] * basis;
