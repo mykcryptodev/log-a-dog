@@ -2,13 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getContract } from "thirdweb";
 import { db } from "~/server/db";
 import { client, serverWallet } from "~/server/utils";
-import { ATTESTATION_MANAGER } from "~/constants/addresses";
+import { ATTESTATION_MANAGER, ATTESTATION_WINDOW_SECONDS } from "~/constants";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { deleteCachedData } from "~/server/utils/redis";
-
-// Attestation window in seconds (3 minutes)
-const ATTESTATION_WINDOW_SECONDS = 180;
 
 export default async function handler(
   req: NextApiRequest,
@@ -28,7 +25,7 @@ export default async function handler(
 
     // Find DogEvents that are eligible for moderator rewards
     // Criteria:
-    // 1. Created more than 3 minutes ago (attestation window has passed)
+    // 1. Created more than ATTESTATION_WINDOW_SECONDS ago (attestation window has passed)
     // 2. attestationResolved is false or null (not yet processed)
     // 3. Has attestation activity (we'll verify this on-chain)
     const cutoffTime = new Date(Date.now() - ATTESTATION_WINDOW_SECONDS * 1000);

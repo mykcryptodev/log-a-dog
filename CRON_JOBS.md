@@ -13,7 +13,7 @@ This document describes the automated cron jobs configured for the Log a Dog app
 This cron job automatically executes the "Reward Moderators" functionality on a schedule, eliminating the need for manual intervention. It:
 
 1. **Finds eligible events** - Looks for DogEvents that:
-   - Were created more than 3 minutes ago (attestation window has passed)
+   - Were created more than `ATTESTATION_WINDOW_SECONDS` ago (attestation window has passed)
    - Have `attestationResolved` set to `false` or `null`
    - May have attestation activity to resolve
 
@@ -90,7 +90,7 @@ The cron job returns detailed information about its execution:
 ### Common Skip Reasons
 
 - **"No attestation period found"** - Log has no on-chain attestation activity
-- **"Attestation period still active"** - 3-minute window hasn't elapsed yet
+- **"Attestation period still active"** - Attestation window hasn't elapsed yet
 - **"Already resolved on-chain"** - Another process already resolved this period
 - **"No stakes to resolve"** - No moderators participated in this attestation
 
