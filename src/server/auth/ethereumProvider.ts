@@ -110,6 +110,25 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
         throw new Error("Unexpected end of retry loop");
       };
 
+      // Helper function for database operations with retries
+      const withRetry = async <T>(operation: () => Promise<T>, context: string): Promise<T> => {
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            return await operation();
+          } catch (dbError: any) {
+            console.error(`Database operation failed in ${context} (${4 - retries}/3):`, dbError);
+            retries--;
+            if (retries === 0) {
+              throw dbError;
+            }
+            // Wait 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+        throw new Error("Unexpected end of retry loop");
+      };
+
       // check if the user who is trying to link (the ethereum wallet that signed)
       // has already linked an ethereum address
       const ethereumWalletUser = await withRetry(
