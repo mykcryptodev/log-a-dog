@@ -119,6 +119,17 @@ export const Rules: FC = () => {
               <li>Downvote spam, duplicates, and other off-topic content.</li>
               <li>Incorrect votes will be slashed and the slashed amount will be distributed to the correct voters.</li>
             </ul>
+            <br />
+            <p className="font-bold">
+              Learn More
+            </p>
+            <ul style={{listStyleType: 'circle'}} className="ml-5">
+              <li>
+                <Link href="/earn" className="text-secondary hover:underline">
+                  Visit the earn page to learn more about earning opportunities
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
         <div className="collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
