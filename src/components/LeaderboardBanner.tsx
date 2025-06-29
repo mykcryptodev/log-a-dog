@@ -46,7 +46,7 @@ export const LeaderboardBanner: FC<Props> = ({
   });
 
   if (!leaderboard || !profiles) return (
-    <div className="bg-base-200 rounded-lg animate-pulse w-full h-20" />
+    <div className="bg-base-200 rounded-lg w-full h-20" />
   );
 
   const users = leaderboard.users ?? [];
