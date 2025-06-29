@@ -48,6 +48,15 @@ interface ZoraCoinDetails {
   marketCapDelta24h?: string;
   chainId?: number;
   uniqueHolders?: number;
+  mediaContent?: {
+    mimeType?: string;
+    originalUri?: string;
+    previewImage?: {
+      small?: string;
+      medium?: string;
+      blurhash?: string;
+    };
+  };
 }
 
 interface HotdogMetadata {
