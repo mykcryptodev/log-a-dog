@@ -281,9 +281,8 @@ export const hotdogRouter = createTRPCRouter({
       // Generate cache key for this query
       const cacheKey = `hotdogs:${chainId}:${user}:${start}:${limit}`;
       
-      // TEMPORARILY DISABLE REDIS CACHE for development stability
-      // const cachedData = await getCachedData<GetAllResponse>(cacheKey);
-      const cachedData = null;
+      // Check cache first for better performance
+      const cachedData = await getCachedData<GetAllResponse>(cacheKey);
       
       if (cachedData) {
         return cachedData;
@@ -685,7 +684,7 @@ export const hotdogRouter = createTRPCRouter({
           hotdogs: leaderboard.map(l => l.count.toString()),
         };
 
-        await setCachedData(cacheKey, result, CACHE_DURATION.MEDIUM);
+        await setCachedData(cacheKey, result, CACHE_DURATION.LONG);
 
         return result;
       } catch (error) {

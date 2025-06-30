@@ -26,7 +26,7 @@ const miniAppMetadata = {
 export const getStaticProps = async () => {
   return {
     props: {},
-    revalidate: 60, // Revalidate every 60 seconds
+    revalidate: 300, // Revalidate every 5 minutes for better performance
   };
 };
 

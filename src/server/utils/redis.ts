@@ -9,10 +9,11 @@ export const redis = new Redis({
 
 // Cache duration in seconds
 export const CACHE_DURATION = {
-  SHORT: 60, // 1 minute
-  MEDIUM: 300, // 5 minutes
-  LONG: 3600, // 1 hour
-  VERY_LONG: 86400, // 24 hours
+  SHORT: 60, // 1 minute - for rapidly changing data (staking APY)
+  MEDIUM: 900, // 15 minutes - for user profiles and search results
+  LONG: 1800, // 30 minutes - for leaderboards and aggregated data
+  VERY_LONG: 3600, // 1 hour - for IPFS metadata and static content
+  EXTRA_LONG: 86400, // 24 hours - for permanent or rarely changing data
 } as const;
 
 // Helper function to get cached data
@@ -75,5 +76,31 @@ export async function deleteCachedData(pattern: string): Promise<void> {
     }
   } catch (error) {
     console.error('Error deleting cached data:', error);
+  }
+}
+
+// Helper function to warm cache with data
+export async function warmCache<T>(
+  key: string,
+  fetchFn: () => Promise<T>,
+  ttl: number = CACHE_DURATION.MEDIUM
+): Promise<void> {
+  try {
+    const data = await fetchFn();
+    await setCachedData(key, data, ttl);
+  } catch (error) {
+    console.error('Error warming cache:', error);
+  }
+}
+
+// Helper function to get cache metrics (for monitoring)
+export async function getCacheInfo(key: string): Promise<{ exists: boolean; ttl: number | null }> {
+  try {
+    const exists = await redis.exists(key);
+    const ttl = exists ? await redis.ttl(key) : null;
+    return { exists: exists === 1, ttl };
+  } catch (error) {
+    console.error('Error getting cache info:', error);
+    return { exists: false, ttl: null };
   }
 }
