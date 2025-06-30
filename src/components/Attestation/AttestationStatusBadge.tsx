@@ -14,7 +14,7 @@ interface Props {
 const AttestationStatusBadge: FC<Props> = ({ attestationPeriod }) => {
   let label = "pending";
   let icon = null as JSX.Element | null;
-  let modalId = `attestation-status-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const modalId = `attestation-status-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   if (attestationPeriod?.status === 1) {
     if (attestationPeriod.isValid) {
@@ -45,7 +45,7 @@ const AttestationStatusBadge: FC<Props> = ({ attestationPeriod }) => {
           content: (
             <>
               <p className="py-2">This submission has been judged as <strong>invalid</strong> by the community.</p>
-              <p className="py-2">Invalid submissions are typically photos that don't show someone eating a hotdog, duplicates, or other spam.</p>
+              <p className="py-2">Invalid submissions are typically photos that don&apos;t show someone eating a hotdog, duplicates, or other spam.</p>
               <p className="py-2 font-bold">Invalid submissions do not count towards the leaderboard.</p>
               <p className="py-2">Judges who voted correctly received $HOTDOG rewards from those who voted incorrectly.</p>
             </>
