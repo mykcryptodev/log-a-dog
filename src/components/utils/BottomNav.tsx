@@ -36,9 +36,9 @@ export const BottomNav: FC = () => {
         <QuestionMarkCircleIcon className="h-6 w-6" />
         FAQ
       </button>
-      <button>
-        <ProfileButton hideNameAndBadge />
-      </button>
-    </div>
-  )
-}
+        <button>
+          <ProfileButton hideNameAndBadge label="Profile" />
+        </button>
+      </div>
+    )
+  }
