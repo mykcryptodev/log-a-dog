@@ -13,8 +13,7 @@ import Comments from "~/components/Attestation/Comments";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
-import dynamic from "next/dynamic";
-const ZoraCoinTrading = dynamic(() => import("~/components/Attestation/ZoraCoinTrading"), { ssr: false });
+import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 
 import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
@@ -290,17 +289,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
               />
               <div className="opacity-50 flex flex-row w-full items-center justify-between">
                 <div className="text-xs flex items-center gap-1">
-                  {('zoraCoin' in hotdog && hotdog.zoraCoin && typeof hotdog.zoraCoin === 'object' && hotdog.zoraCoin.address) ? (
-                    <ZoraCoinTrading
-                      referrer={hotdog.eater}
-                      coinAddress={hotdog.zoraCoin.address}
-                      logId={hotdog.logId.toString()}
-                    />
-                  ) : (
-                    <>
-                      <TagIcon className="w-4 h-4" />
-                      {hotdog.logId.toString()}
-                    </>
+                  {('attestationPeriod' in hotdog && hotdog.attestationPeriod) && (
+                    <AttestationStatusBadge attestationPeriod={hotdog.attestationPeriod} />
                   )}
                 </div>
                 <div className="flex justify-end items-center gap-2 text-xs">
