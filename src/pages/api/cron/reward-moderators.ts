@@ -5,6 +5,7 @@ import { client, serverWallet } from "~/server/utils";
 import { ATTESTATION_MANAGER, ATTESTATION_WINDOW_SECONDS } from "~/constants";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
+import { sendTelegramMessage, formatCronJobMessage } from "~/lib/telegram";
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,18 +16,38 @@ export default async function handler(
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  if (req.method !== "POST") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
     console.log("Starting automated moderator reward process...");
 
+    // Ensure database connection is established with retry logic
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        await db.$connect();
+        console.log("Database connection established successfully");
+        break;
+      } catch (error) {
+        retryCount++;
+        console.log(`Database connection attempt ${retryCount} failed:`, error);
+        if (retryCount >= maxRetries) {
+          throw new Error(`Failed to connect to database after ${maxRetries} attempts`);
+        }
+        // Wait before retry with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+      }
+    }
+
     // Find DogEvents that are eligible for moderator rewards
     // Using Supabase/database as the source of truth for which events need processing
     // Criteria:
     // 1. Created more than ATTESTATION_WINDOW_SECONDS ago (attestation window has passed)
-    // 2. attestationResolved is false or null (not yet processed by our system)
+    // 2. attestationValid is null (not yet processed by our system)
     const cutoffTime = new Date(Date.now() - ATTESTATION_WINDOW_SECONDS * 1000);
     
     const eligibleEvents = await db.dogEvent.findMany({
@@ -34,10 +55,7 @@ export default async function handler(
         createdAt: {
           lt: cutoffTime
         },
-        OR: [
-          { attestationResolved: false },
-          { attestationResolved: null }
-        ]
+        attestationValid: null
       },
       orderBy: {
         createdAt: "asc"
@@ -121,20 +139,7 @@ export default async function handler(
           continue;
         }
 
-        // Check if there are any attestations to resolve
-        const totalStake = Number(totalValidStake) + Number(totalInvalidStake);
-        if (totalStake === 0) {
-          // No stakes to resolve
-          results.skipped++;
-          results.details.push({
-            logId,
-            status: "skipped",
-            reason: "No stakes to resolve"
-          });
-          continue;
-        }
-
-        console.log(`Processing logId ${logId} - Total stake: ${totalStake}`);
+        console.log(`Processing logId ${logId} - Total stake: ${Number(totalValidStake) + Number(totalInvalidStake)}`);
 
         // Execute the reward transaction - webhook will handle database updates
         const transaction = resolveAttestationPeriod({
@@ -170,6 +175,18 @@ export default async function handler(
 
     console.log(`Moderator reward process completed: ${results.processed} processed, ${results.skipped} skipped, ${results.errors} errors`);
 
+    // Send Telegram notification for cron job completion
+    try {
+      const message = formatCronJobMessage(results.processed, results.skipped);
+      await sendTelegramMessage(message);
+    } catch (telegramError) {
+      console.error('Failed to send Telegram notification:', telegramError);
+      // Don't fail the cron job if Telegram fails
+    }
+
+    // Explicitly disconnect from database
+    await db.$disconnect();
+
     return res.status(200).json({
       success: true,
       summary: {
@@ -183,6 +200,14 @@ export default async function handler(
 
   } catch (error) {
     console.error("Error in moderator reward cron job:", error);
+    
+    // Ensure cleanup even on error
+    try {
+      await db.$disconnect();
+    } catch (disconnectError) {
+      console.error("Error disconnecting from database:", disconnectError);
+    }
+    
     return res.status(500).json({
       error: "Internal server error",
       message: error instanceof Error ? error.message : "Unknown error"

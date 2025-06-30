@@ -98,6 +98,43 @@ export const Rules: FC = () => {
         <div className="collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
           <input type="checkbox" /> 
           <div className="collapse-title font-bold">
+            How do I earn from eating hotdogs?
+          </div>
+          <div className="collapse-content"> 
+            <p className="font-bold">
+              Eat to Earn
+            </p>
+            <ul style={{listStyleType: 'circle'}} className="ml-5">
+              <li>Upload a pic of you eating a hotdog (one pic per dog).</li> 
+              <li>Your pic is now a tradeable onchain token where you earn trading fees.</li>
+              <li>There will be prizes for the people who eat the most hotdogs throughout the competition.</li>
+            </ul>
+            <br />
+            <p className="font-bold">
+              Moderate to Earn
+            </p>
+            <ul style={{listStyleType: 'circle'}} className="ml-5">
+              <li>Stake $HOTDOG to become a judge.</li>
+              <li>Upvote pics of people eating hotdogs. A pic of the dog is not enough, you need to see the person eating it!</li>
+              <li>Downvote spam, duplicates, and other off-topic content.</li>
+              <li>Incorrect votes will be slashed and the slashed amount will be distributed to the correct voters.</li>
+            </ul>
+            <br />
+            <p className="font-bold">
+              Learn More
+            </p>
+            <ul style={{listStyleType: 'circle'}} className="ml-5">
+              <li>
+                <Link href="/earn" className="text-secondary hover:underline">
+                  Visit the earn page to learn more about earning opportunities
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+          <input type="checkbox" /> 
+          <div className="collapse-title font-bold">
             Why does this exist?
           </div>
           <div className="collapse-content"> 

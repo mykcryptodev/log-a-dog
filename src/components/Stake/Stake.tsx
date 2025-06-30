@@ -4,6 +4,7 @@ import {
   useActiveWallet,
   useWalletBalance,
   useReadContract,
+  useActiveAccount,
 } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
@@ -20,6 +21,7 @@ import { parseEther, formatEther, InsufficientFundsError } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
 import { Buy } from "~/components/utils/Buy";
 import { api } from "~/utils/api";
+import Connect from "~/components/utils/Connect";
 
 type Props = {
   onStake?: (amount: string) => void;
@@ -32,14 +34,23 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
   const [hasApproval, setHasApproval] = useState(false);
   const { activeChain } = useActiveChain();
   const wallet = useActiveWallet();
+  const account = useActiveAccount();
   const { data: sessionData } = useSession();
 
-  const { data: balance, isLoading: isLoadingBalance } = useWalletBalance({
+  const { data: balance, isLoading: isLoadingBalance, refetch } = useWalletBalance({
     client,
-    address: sessionData?.user.address,
+    address: account?.address,
     chain: activeChain,
     tokenAddress: HOTDOG_TOKEN[activeChain.id],
   });
+
+  useEffect(() => {
+    if (account?.address) {
+      void refetch();
+    }
+  }, [account?.address, refetch]);
+
+
 
   const { data: stakedAmount, isLoading: isLoadingStaked } = useReadContract({
     contract: getContract({
@@ -48,9 +59,9 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
       chain: activeChain,
     }),
     method: "function stakes(address user) view returns (uint256)",
-    params: [sessionData?.user.address ?? "0x0"],
+    params: [account?.address ?? "0x0"],
     queryOptions: {
-      enabled: !!sessionData?.user.address,
+      enabled: !!account?.address,
     },
   });
 
@@ -121,6 +132,8 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     if (isNaN(newPercentage)) return;
     setPercentage(newPercentage);
   };
+
+  const isDisabled = showInsufficientBalance || amountExceedsBalance || amountBelowMinimum || invalidAmount;
 
   return (
     <div>
@@ -228,7 +241,12 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
           </div>
         </div>
 
-        {hasApproval ? (
+        {!wallet ? (
+          <div className="text-center">
+            <p className="mb-4 text-sm opacity-75">Connect your wallet to stake tokens</p>
+            <Connect loginBtnLabel="Connect Wallet to Stake" />
+          </div>
+        ) : hasApproval ? (
           <TransactionButton
             className="!btn !btn-primary !btn-block"
             transaction={() =>
@@ -260,9 +278,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
               });
               toast.error(`Staking failed: ${formattedMessage}`);
             }}
-            disabled={
-              showInsufficientBalance || amountExceedsBalance || amountBelowMinimum || invalidAmount
-            }
+            disabled={isDisabled}
           >
             {showInsufficientBalance
               ? "Insufficient balance (need 100+ tokens)"
@@ -282,7 +298,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                   client,
                   chain: activeChain,
                 }),
-                amount: parseEther(amount).toString(),
+                amount,
                 spender: STAKING[activeChain.id]!,
               })
             }
@@ -305,9 +321,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
               });
               toast.error(`Approval failed: ${formattedMessage}`);
             }}
-            disabled={
-              showInsufficientBalance || amountExceedsBalance || amountBelowMinimum || invalidAmount
-            }
+            disabled={isDisabled}
           >
             {showInsufficientBalance
               ? "Insufficient balance (need 100+ tokens)"

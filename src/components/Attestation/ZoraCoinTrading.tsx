@@ -1,13 +1,13 @@
 import { useState, type FC, useContext } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
-import { parseEther, createPublicClient, createWalletClient, custom, http } from "viem";
+// import { createPublicClient, createWalletClient, custom, http } from "viem";
 // import { tradeCoin } from "@zoralabs/coins-sdk"; // Temporarily removed from SDK
-import { base, baseSepolia } from "viem/chains";
-import ActiveChainContext from "~/contexts/ActiveChain";
-import { EIP1193, type Wallet } from "thirdweb/wallets";
+// import { base, baseSepolia } from "viem/chains";
+// import ActiveChainContext from "~/contexts/ActiveChain";
+// import { EIP1193, type Wallet } from "thirdweb/wallets";
 import { Portal } from "../utils/Portal";
-import { client } from "~/providers/Thirdweb";
+// import { client } from "~/providers/Thirdweb";
 
 type Props = {
   referrer: string;
@@ -15,38 +15,39 @@ type Props = {
   logId: string;
 }
 
-export const ZoraCoinTrading: FC<Props> = ({ coinAddress, logId, referrer }) => {
+export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, referrer: _referrer }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
-  const [isLoading, setIsLoading] = useState(false);
+  // const { activeChain } = useContext(ActiveChainContext);
+  const [isLoading] = useState(false);
   const [buyAmount, setBuyAmount] = useState("0.001");
   const [sellAmount, setSellAmount] = useState("1");
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSellModal, setShowSellModal] = useState(false);
 
-  const convertWalletToViem = (wallet: Wallet) => {
-    const currentChain = activeChain.id === base.id ? base : baseSepolia;
+  // Temporarily disabled while trading functionality is unavailable
+  // const convertWalletToViem = (wallet: Wallet) => {
+  //   const currentChain = activeChain.id === base.id ? base : baseSepolia;
 
-    // Set up viem clients
-    const publicClient = createPublicClient({
-      chain: currentChain,
-      transport: http(),
-    });
+  //   // Set up viem clients
+  //   const publicClient = createPublicClient({
+  //     chain: currentChain,
+  //     transport: http(),
+  //   });
 
-    const provider = EIP1193.toProvider({
-      client,
-      wallet,
-      chain: activeChain,
-    });
+  //   const provider = EIP1193.toProvider({
+  //     client,
+  //     wallet,
+  //     chain: activeChain,
+  //   });
 
-    const walletClient = createWalletClient({
-      chain: currentChain,
-      transport: custom(provider),
-    });
+  //   const walletClient = createWalletClient({
+  //     chain: currentChain,
+  //     transport: custom(provider),
+  //   });
 
-    return { walletClient, publicClient };
-  };
+  //   return { walletClient, publicClient };
+  // };
 
   const handleBuy = async () => {
     if (!account || !wallet) {

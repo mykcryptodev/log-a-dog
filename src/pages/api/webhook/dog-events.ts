@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { db } from "~/server/db";
+import { sendTelegramMessage, formatDogLogMessage } from "~/lib/telegram";
 
 // Type for the result of processing each event
 type EventProcessingResult = {
@@ -178,6 +179,20 @@ export default async function handler(
           });
 
           console.log(`Successfully processed event: ${dogEvent.id}`);
+          
+          // Send Telegram notification for new dog event
+          try {
+            const message = formatDogLogMessage({
+              id: dogEvent.id,
+              userFid: user?.fid,
+              userName: undefined, // User object only has id, address, fid - no display name
+            });
+            await sendTelegramMessage(message);
+          } catch (telegramError) {
+            console.error('Failed to send Telegram notification:', telegramError);
+            // Don't fail the webhook if Telegram fails
+          }
+          
           return { success: true, id: dogEvent.id, transactionHash: eventData.transaction_hash };
         } catch (error) {
           console.error(`Error processing event ${eventData.transaction_hash}:`, error);

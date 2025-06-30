@@ -17,10 +17,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
   const account = useActiveAccount();
-  console.log('account', account);
-  console.log('client', client);
-  console.log('sessionData', sessionData);
-  console.log('status', status);
 
   useEffect(() => {
     setMounted(true);

@@ -17,9 +17,14 @@ export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string 
     refetchOnMount: false,
   });
 
+  const dimension = size ?? "32px";
+
   if (isLoading) {
     return (
-      <div className="w-4 h-4 bg-base-200 rounded-full animate-pulse" />
+      <div
+        style={{ width: dimension, height: dimension }}
+        className="bg-base-200 rounded-full animate-pulse"
+      />
     );
   }
   if (profile?.imgUrl === "") {
@@ -50,9 +55,8 @@ export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string 
     <MediaRenderer
       client={client}
       src={profile.imgUrl}
-      className={`${size ? size : "w-4 h-4"} rounded-full`}
-      height={size ?? "32px"}
-      width={size ?? "32px"}
+      className="rounded-full"
+      style={{ width: dimension, height: dimension, objectFit: "cover" }}
     />
   );
 };
