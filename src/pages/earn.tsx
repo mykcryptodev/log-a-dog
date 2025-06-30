@@ -1,6 +1,7 @@
 import { type NextPage } from "next";
 import { Stake } from "~/components/Stake/Stake";
 import ClaimRewards from "~/components/Stake/ClaimRewards";
+import ClaimProtocolRewards from "~/components/Zora/ClaimProtocolRewards";
 import { useState } from "react";
 import {
   CurrencyDollarIcon,
@@ -176,12 +177,23 @@ const EarnPage: NextPage = () => {
                 </div>
               </div>
             </div>
-          </div>
         </div>
+      </div>
 
-        {/* Voting Process */}
-        <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
-          <div className="card-body">
+      {/* Claim Creator Rewards */}
+      <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
+        <div className="card-body">
+          <h2 className="card-title mb-4 flex items-center gap-2 text-2xl">
+            <CurrencyDollarIcon className="h-6 w-6" />
+            Claim Trading Rewards
+          </h2>
+          <ClaimProtocolRewards />
+        </div>
+      </div>
+
+      {/* Voting Process */}
+      <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
+        <div className="card-body">
             <h2 className="card-title mb-6 flex items-start gap-2 text-2xl">
               <ClockIcon className="mt-1 h-6 w-6" />
               Voting Process & Rewards
