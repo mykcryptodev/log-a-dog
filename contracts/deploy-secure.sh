@@ -31,7 +31,7 @@ print_error() {
 }
 
 show_usage() {
-    echo "Usage: ./deploy-secure.sh [network] [wallet-type] [verify]"
+    echo "Usage: ./deploy-secure.sh [network] [wallet-type] [verify] [hotdog-token-address]"
     echo ""
     echo "Networks:"
     echo "  base-sepolia    Deploy to Base Sepolia testnet"
@@ -45,12 +45,14 @@ show_usage() {
     echo "  mnemonic        Use mnemonic phrase"
     echo ""
     echo "Options:"
-    echo "  verify          Verify contracts on Etherscan after deployment"
+    echo "  verify                 Verify contracts on Etherscan after deployment"
+    echo "  hotdog-token-address   Optional existing HotDog token address (0x...)"
     echo ""
     echo "Examples:"
+    echo "  ./deploy-secure.sh base-sepolia interactive"
     echo "  ./deploy-secure.sh base-sepolia interactive verify"
-    echo "  ./deploy-secure.sh base-mainnet ledger verify"
-    echo "  ./deploy-secure.sh base-sepolia keystore"
+    echo "  ./deploy-secure.sh base-mainnet ledger verify 0x1234...abcd"
+    echo "  ./deploy-secure.sh base-sepolia keystore noverify 0x5678...efgh"
 }
 
 # Check if network and wallet type are provided
@@ -62,7 +64,31 @@ fi
 
 NETWORK=$1
 WALLET_TYPE=$2
-VERIFY=$3
+VERIFY=""
+HOTDOG_TOKEN=""
+
+# Parse optional parameters
+if [ -n "$3" ]; then
+    if [ "$3" = "verify" ]; then
+        VERIFY="verify"
+        # Check if 4th parameter is hotdog token address
+        if [ -n "$4" ]; then
+            HOTDOG_TOKEN=$4
+        fi
+    elif [[ "$3" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
+        # 3rd parameter is a token address
+        HOTDOG_TOKEN=$3
+        # Check if 4th parameter is verify
+        if [ "$4" = "verify" ]; then
+            VERIFY="verify"
+        fi
+    elif [ "$3" = "noverify" ]; then
+        # Explicitly no verification, check for token address
+        if [ -n "$4" ]; then
+            HOTDOG_TOKEN=$4
+        fi
+    fi
+fi
 
 # Set network-specific variables
 case $NETWORK in
@@ -86,6 +112,18 @@ esac
 print_status "🔐 Secure deployment to $NETWORK using $WALLET_TYPE wallet"
 print_status "Chain ID: $CHAIN_ID"
 print_status "RPC URL: $RPC_URL"
+
+if [ -n "$HOTDOG_TOKEN" ]; then
+    # Validate token address format
+    if ! [[ "$HOTDOG_TOKEN" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
+        print_error "Invalid token address format: $HOTDOG_TOKEN"
+        print_status "Token address must be a valid Ethereum address (0x followed by 40 hex characters)"
+        exit 1
+    fi
+    print_status "Using existing HotDog token: $HOTDOG_TOKEN"
+else
+    print_status "Will deploy new HotDog token"
+fi
 
 # Check if .env file exists (for non-sensitive config)
 if [ ! -f .env ]; then
@@ -170,6 +208,11 @@ case $WALLET_TYPE in
         ;;
 esac
 
+# Set existing hotdog token if provided
+if [ -n "$HOTDOG_TOKEN" ]; then
+    export EXISTING_HOTDOG_TOKEN=$HOTDOG_TOKEN
+fi
+
 # Build deployment command
 DEPLOY_CMD="forge script script/Deploy.s.sol:DeployScript --rpc-url $RPC_URL --broadcast --legacy $WALLET_FLAGS"
 
@@ -236,6 +279,13 @@ if eval $DEPLOY_CMD; then
         echo "3. Consider transferring admin roles to a multisig wallet"
         echo "4. Monitor contract events and transactions"
         echo "5. Keep deployment details secure and backed up"
+        
+        if [ -n "$HOTDOG_TOKEN" ]; then
+            print_warning "Using existing HotDog token - additional notes:"
+            echo "- Ensure the deployer has MINTER_ROLE on the token for full functionality"
+            echo "- If not, manually grant MINTER_ROLE to HotdogStaking and AttestationManager"
+            echo "- Verify the token has sufficient supply/balance for rewards pool"
+        fi
         
         if [ "$NETWORK" = "base-mainnet" ]; then
             print_warning "MAINNET DEPLOYMENT - Additional Security Steps:"
