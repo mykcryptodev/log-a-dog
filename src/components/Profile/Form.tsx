@@ -4,7 +4,6 @@ import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
-import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
@@ -32,7 +31,6 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
   const [saveProfileBtnLabel, setSaveProfileBtnLabel] = useState<string>("Save Profile");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const router = useRouter();
   
   const createProfile = api.profile.create.useMutation({
     onSuccess: () => {
@@ -43,8 +41,6 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
       toast.success("Profile saved successfully!");
       // close the modal
       (document.getElementById('create_profile_modal') as HTMLDialogElement)?.close();
-      // navigate to the profile page of the new username
-      void router.push(`/profile/${username}`);
     },
     onError: (error) => {
       setError(error.message);
