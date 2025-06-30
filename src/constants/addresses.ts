@@ -56,3 +56,8 @@ export const CONTESTS: ContractAddress = {
   [base.id]: "0x5F0CCD30CB0776b87b19A97AC4Bd589705d7CC33",
   [baseSepolia.id]: "0xF25668d782C79d9359e239931cE3Ff133a8B688C",
 }
+export const PROTOCOL_REWARDS: ContractAddress = {
+  [base.id]: "0x7777777F279eba3d3Ad8F4E708545291A6fDBA8B",
+  [baseSepolia.id]: "0x7777777F279eba3d3Ad8F4E708545291A6fDBA8B",
+}
+
