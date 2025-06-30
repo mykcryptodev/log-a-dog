@@ -6,7 +6,6 @@ import { type NextPage } from "next";
 import { useContext } from "react";
 import Head from "next/head";
 import { useActiveAccount } from "thirdweb/react";
-import { client } from "~/providers/Thirdweb";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";

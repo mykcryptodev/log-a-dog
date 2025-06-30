@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState, useRef } from "react";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
 
@@ -25,6 +25,8 @@ export const TransactionStatus: FC<Props> = ({
   onTransactionHash 
 }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const resolvedRef = useRef(false);
+  
   const { data, dataUpdatedAt } = api.engine.getTransactionStatus.useQuery(
     { transactionId },
     {
@@ -79,12 +81,13 @@ export const TransactionStatus: FC<Props> = ({
 
   // Handle status changes
   useEffect(() => {
-    if (!data) return;
+    if (!data || resolvedRef.current) return;
     const status = data.status;
     console.log({ data, status });
 
     switch (status) {
       case "CONFIRMED":
+        resolvedRef.current = true;
         toast.dismiss(`${transactionId}-pending`);
         toast.success(successMessage ?? "Transaction completed successfully!", {
           toastId: `${transactionId}-mined`,
@@ -96,6 +99,7 @@ export const TransactionStatus: FC<Props> = ({
         onResolved?.(true);
         break;
       case "FAILED":
+        resolvedRef.current = true;
         toast.dismiss(`${transactionId}-pending`);
         toast.error(errorMessage ?? data.error ?? "Transaction failed: Unknown error", {
           toastId: `${transactionId}-errored`,
@@ -103,7 +107,7 @@ export const TransactionStatus: FC<Props> = ({
         onResolved?.(false);
         break;
     }
-  }, [dataUpdatedAt, data, transactionId, successMessage, errorMessage, onResolved, onTransactionHash]);
+  }, [dataUpdatedAt, data, transactionId, successMessage, errorMessage]);
 
   return null; // We don't need to render anything since we're using toasts
 };

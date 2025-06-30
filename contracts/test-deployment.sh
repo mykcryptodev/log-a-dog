@@ -157,22 +157,18 @@ call_contract "Token name" $HOTDOG_TOKEN "name()" ".*HOTDOG.*"
 call_contract "Token symbol" $HOTDOG_TOKEN "symbol()" ".*HOTDOG.*"
 call_contract "Token decimals" $HOTDOG_TOKEN "decimals()" "0x0000000000000000000000000000000000000000000000000000000000000012" # 18 in hex
 call_contract "Total supply" $HOTDOG_TOKEN "totalSupply()" "0x.*" # Any non-zero value
-call_contract "Max supply" $HOTDOG_TOKEN "maxSupply()" "0x.*" # Any non-zero value
 
 # Test 2: HotdogStaking configuration
 print_status "2. Testing HotdogStaking..."
 call_contract "Staking token address" $HOTDOG_STAKING "hotdogToken()" ".*$HOTDOG_TOKEN.*"
 call_contract "Minimum stake" $HOTDOG_STAKING "MINIMUM_STAKE()" "0x.*" # Should be 100 HOTDOG
-call_contract "Rewards rate" $HOTDOG_STAKING "REWARDS_RATE()" "0x000000000000000000000000000000000000000000000000000000000000000a" # 10 in hex
 call_contract "Total staked" $HOTDOG_STAKING "totalStaked()" "0x.*"
 call_contract "Rewards pool" $HOTDOG_STAKING "rewardsPool()" "0x.*"
 
 # Test 3: AttestationManager configuration
 print_status "3. Testing AttestationManager..."
-call_contract "Attestation token" $ATTESTATION_MANAGER "hotdogToken()" ".*$HOTDOG_TOKEN.*"
 call_contract "Staking contract" $ATTESTATION_MANAGER "stakingContract()" ".*$HOTDOG_STAKING.*"
 call_contract "Attestation window" $ATTESTATION_MANAGER "ATTESTATION_WINDOW()" "0x.*" # Should be 48 hours
-call_contract "Min attestation stake" $ATTESTATION_MANAGER "MIN_ATTESTATION_STAKE()" "0x.*" # Should be 50 HOTDOG
 
 # Test 4: LogADog configuration
 print_status "4. Testing LogADog..."

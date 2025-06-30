@@ -55,30 +55,21 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.address = user.address;
         token.fid = user.fid;
-      } else if (token.address) {
-        // For existing sessions, fetch the user's fid from the database with retry logic
-        let dbUser;
-        let retries = 3;
-        while (retries > 0) {
-          try {
-            dbUser = await db.user.findFirst({
-              where: { 
-                address: (token.address as string).toLowerCase()
-              },
-              select: { fid: true }
-            });
-            break;
-          } catch (dbError: unknown) {
-            console.error(`Database query failed in JWT callback (${4 - retries}/3):`, dbError);
-            retries--;
-            if (retries > 0) {
-              // Wait 1 second before retrying
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
+      } else if (token.address && !token.fid) {
+        // Only fetch FID from database if it's missing from the token
+        try {
+          const dbUser = await db.user.findFirst({
+            where: { 
+              address: (token.address as string).toLowerCase()
+            },
+            select: { fid: true }
+          });
+          if (dbUser?.fid) {
+            token.fid = dbUser.fid;
           }
-        }
-        if (dbUser?.fid) {
-          token.fid = dbUser.fid;
+        } catch (dbError: unknown) {
+          console.error('Database query failed in JWT callback:', dbError);
+          // Don't retry in JWT callback to avoid connection overload
         }
       }
       return token;
