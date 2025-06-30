@@ -15,7 +15,7 @@ import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, resolveAttestationPerio
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
-import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
+import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData, invalidateCache } from "~/server/utils/redis";
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 import { encodePoolConfig } from "~/server/utils/poolConfig";
 import { upload } from "thirdweb/storage";
@@ -281,11 +281,10 @@ export const hotdogRouter = createTRPCRouter({
       // Generate cache key for this query
       const cacheKey = `hotdogs:${chainId}:${user}:${start}:${limit}`;
       
-      // Try to get cached data first
-      const cachedData = await getCachedData<GetAllResponse>(cacheKey);
+      // TEMPORARILY DISABLE REDIS CACHE for development stability
+      // const cachedData = await getCachedData<GetAllResponse>(cacheKey);
+      const cachedData = null;
       
-      console.log({ cachedData })
-
       if (cachedData) {
         return cachedData;
       }
@@ -294,7 +293,7 @@ export const hotdogRouter = createTRPCRouter({
       const contestStartTime = BigInt(new Date(CONTEST_START_TIME).getTime() / 1000);
       const contestEndTime = BigInt(new Date(CONTEST_END_TIME).getTime() / 1000);
       
-      const dogEvents = await getDogEvents({
+      const queryParams = {
         where: {
           chainId: chainId.toString(),
           timestamp: {
@@ -303,10 +302,18 @@ export const hotdogRouter = createTRPCRouter({
           },
           ...(user !== "0x0000000000000000000000000000000000000000" && { eater: user.toLowerCase() }),
         },
-        orderBy: { timestamp: "desc" },
+        orderBy: { timestamp: "desc" as const },
         take: limit,
         skip: start,
-      });
+      };
+      
+      let dogEvents;
+      try {
+        dogEvents = await getDogEvents(queryParams);
+      } catch (error) {
+        console.error('Database query failed:', error);
+        throw error;
+      }
 
       // Get total count for pagination
       const totalEvents = await db.dogEvent.count({
@@ -353,11 +360,8 @@ export const hotdogRouter = createTRPCRouter({
         getAttestationPeriodsBatch(logIds, chainId)
       ]);
 
-      console.log({ dogEvents })
       // Convert redactedLogIds from readonly bigint[] to string[]
       const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
-
-      console.log({ redactedLogIds })
 
       // Convert database events to our string-based types
       const processedResponse: HotdogResponse = {
@@ -376,8 +380,6 @@ export const hotdogRouter = createTRPCRouter({
         userHasAttested: dogEvents.map(event => userAttestations[0].includes(BigInt(event.logId))),
         userAttestations: dogEvents.map(event => userAttestations[1][userAttestations[0].findIndex(id => id === BigInt(event.logId))] ?? false),
       };
-
-      console.log({ processedResponse })
 
       const zoraCoinAddresses = new Set<string>();
       const metadataUris = new Set<string>();
@@ -429,8 +431,8 @@ export const hotdogRouter = createTRPCRouter({
         hasNextPage: start + limit < Number(totalPages),
       };
 
-      // Cache the processed data
-      await setCachedData(cacheKey, response);
+      // TEMPORARILY DISABLE CACHING during development
+      // await setCachedData(cacheKey, response);
 
       return response;
     }),
@@ -484,8 +486,8 @@ export const hotdogRouter = createTRPCRouter({
 
       const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
       const moderatedHotdogs = filteredEvents.map(event => ({
-        logId: BigInt(event.logId),
-        timestamp: event.timestamp,
+        logId: event.logId,
+        timestamp: event.timestamp.toString(),
         imageUri: redactedLogIdsStr.includes(event.logId) ? redactedImage : event.imageUri,
         metadataUri: event.metadataUri ?? '',
         eater: event.eater,

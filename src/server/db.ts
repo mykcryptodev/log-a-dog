@@ -4,7 +4,7 @@ import { env } from "~/env";
 const createPrismaClient = () => {
   const client = new PrismaClient({
     log:
-      env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+      env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     datasources: {
       db: {
         url: env.DATABASE_URL,
@@ -16,6 +16,13 @@ const createPrismaClient = () => {
   if (env.NODE_ENV === "production") {
     client.$connect().catch((error) => {
       console.error("Failed to warm up Prisma connection:", error);
+    });
+  }
+
+  // Add graceful shutdown handling
+  if (typeof window === 'undefined') {
+    process.on('beforeExit', async () => {
+      await client.$disconnect();
     });
   }
 

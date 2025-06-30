@@ -97,22 +97,18 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
+  const utils = api.useUtils();
 
-  const { data: dogData, isLoading: isLoadingHotdogs, error, refetch: refetchDogData } = api.hotdog.getAll.useQuery({
+  const queryParams = {
     chainId: activeChain.id,
-    user: account?.address ?? ZERO_ADDRESS,
+    user: ZERO_ADDRESS,
     start,
     limit: limitOrDefault,
-  }, {
-    enabled: !!activeChain.id,
-    retry: 3,
-    retryDelay: 1000,
-  });
+  };
 
-  useEffect(() => {
-    if (!account) return;
-    void refetchDogData();
-  }, [account, refetchDogData]);
+  const { data: dogData, isLoading: isLoadingHotdogs, error, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
+    enabled: !!activeChain.id,
+  });
 
   // Clear expired pending transactions
   useEffect(() => {
