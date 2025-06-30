@@ -21,8 +21,8 @@ const createPrismaClient = () => {
 
   // Add graceful shutdown handling
   if (typeof window === 'undefined') {
-    process.on('beforeExit', async () => {
-      await client.$disconnect();
+    process.on('beforeExit', () => {
+      void client.$disconnect();
     });
   }
 

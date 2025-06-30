@@ -108,7 +108,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     limit: limitOrDefault,
   };
 
-  const { data: dogData, isLoading: isLoadingHotdogs, error, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
+  const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
     enabled: !!activeChain.id && isClient, // Only run query on client side
   });
 
@@ -128,7 +128,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   }, [clearExpiredPending]);
 
   // Merge pending dogs with real data, but filter out duplicates
-  const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) || []);
+  const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);
   const filteredPendingDogs = pendingDogs.filter(pending => !realLogIds.has(pending.logId));
   const allHotdogs: HotdogItem[] = dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
 
