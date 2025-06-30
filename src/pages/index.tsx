@@ -43,7 +43,7 @@ export default function Home() {
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
         <LeaderboardBanner refetchTimestamp={refetchTimestamp} />
-        <div className="container flex flex-col items-center justify-center gap-6 px-4 pt-8 pb-20">
+        <div className="container flex flex-col items-center justify-center gap-6 px-4 pt-8 pb-8">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <div>🌭 Log <span className="text-secondary">a Dog</span> </div>
           </h1>

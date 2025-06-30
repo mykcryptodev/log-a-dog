@@ -13,7 +13,7 @@ const FAQPage: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
-        <div className="container flex flex-col items-center justify-center gap-6 px-4 pt-16">
+        <div className="container flex flex-col items-center justify-center gap-6 px-4 pt-16 pb-8">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <div>🌭 FAQ & <span className="text-secondary">Instructions</span></div>
           </h1>
