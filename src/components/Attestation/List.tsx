@@ -115,6 +115,18 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   // Get pending dogs for current chain
   const pendingDogs = getPendingDogsForChain(activeChain.id.toString());
 
+  // Debug logging
+  useEffect(() => {
+    console.log('📊 List component data state:', {
+      isLoading: isLoadingHotdogs,
+      hasData: !!dogData,
+      hotdogsCount: dogData?.hotdogs?.length ?? 0,
+      pendingCount: pendingDogs.length,
+      realLogIds: dogData?.hotdogs?.map(h => h.logId) ?? [],
+      pendingLogIds: pendingDogs.map(p => p.logId),
+    });
+  }, [isLoadingHotdogs, dogData, pendingDogs]);
+
   // Clear expired pending transactions more frequently
   useEffect(() => {
     clearExpiredPending();
@@ -127,13 +139,31 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     return () => clearInterval(interval);
   }, [clearExpiredPending]);
 
-  // Merge pending dogs with real data, but filter out duplicates
+  // Smart deduplication: only filter out optimistic data when real data with same logId exists
   const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);
-  const filteredPendingDogs = pendingDogs.filter(pending => !realLogIds.has(pending.logId));
+  const filteredPendingDogs = pendingDogs.filter(pending => {
+    const hasRealData = realLogIds.has(pending.logId);
+    if (hasRealData) {
+      console.log(`🔄 Filtering out optimistic dog ${pending.logId} - real data found`);
+    }
+    return !hasRealData;
+  });
   const allHotdogs: HotdogItem[] = dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
+
+  // Debug the rendering data
+  useEffect(() => {
+    console.log('🎯 Rendering data:', {
+      allHotdogsCount: allHotdogs.length,
+      allHotdogsLogIds: allHotdogs.map(h => h.logId),
+      filteredPendingCount: filteredPendingDogs.length,
+      realHotdogsCount: dogData?.hotdogs?.length ?? 0,
+      isLoadingOrNoData: isLoadingHotdogs || !dogData,
+    });
+  }, [allHotdogs, filteredPendingDogs, dogData, isLoadingHotdogs]);
 
   // Show loading state while client-side query is fetching
   if (isLoadingHotdogs || !dogData) {
+    console.log('🔄 Showing loading state:', { isLoadingHotdogs, dogData: !!dogData });
     return (
       <>
         <div id="top-of-list" className="invisible" />
@@ -216,6 +246,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     <div id="top-of-list" className="invisible" />
     <div className="flex flex-col gap-4">
       {allHotdogs.map((hotdog) => {
+        console.log('🌭 Rendering hotdog:', hotdog.logId, { isPending: 'isPending' in hotdog && hotdog.isPending });
         const isExpired =
           Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <= Date.now();
         const attestationData = getAttestationData(hotdog);

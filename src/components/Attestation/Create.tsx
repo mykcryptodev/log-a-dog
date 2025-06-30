@@ -61,8 +61,8 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const handleOnResolved = (success: boolean) => {
     if (success && account && transactionId) {
-      // Remove from pending store
-      removePendingDog(transactionId);
+      // Keep the optimistic data - don't remove it here
+      // Let it be naturally filtered out when real data appears
       
       // pop confetti
       const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
@@ -77,8 +77,10 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         }, 3000);
       });
 
-      // Invalidate the hotdog query cache to refresh with real data
+      // Just do a gentle invalidation - no forced refetch
+      console.log('🔄 Transaction resolved, gentle cache invalidation');
       void utils.hotdog.getAll.invalidate();
+      
     } else if (!success && transactionId) {
       // If transaction failed, remove the optimistic update
       removePendingDog(transactionId);
