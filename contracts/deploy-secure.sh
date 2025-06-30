@@ -31,7 +31,7 @@ print_error() {
 }
 
 show_usage() {
-    echo "Usage: ./deploy-secure.sh [network] [wallet-type] [verify] [hotdog-token-address]"
+    echo "Usage: ./deploy-secure.sh [network] [wallet-type] [verify]"
     echo ""
     echo "Networks:"
     echo "  base-sepolia    Deploy to Base Sepolia testnet"
@@ -46,13 +46,11 @@ show_usage() {
     echo ""
     echo "Options:"
     echo "  verify                 Verify contracts on Etherscan after deployment"
-    echo "  hotdog-token-address   Optional existing HotDog token address (0x...)"
     echo ""
     echo "Examples:"
     echo "  ./deploy-secure.sh base-sepolia interactive"
     echo "  ./deploy-secure.sh base-sepolia interactive verify"
-    echo "  ./deploy-secure.sh base-mainnet ledger verify 0x1234...abcd"
-    echo "  ./deploy-secure.sh base-sepolia keystore noverify 0x5678...efgh"
+    echo "  ./deploy-secure.sh base-mainnet ledger verify"
 }
 
 # Check if network and wallet type are provided
@@ -71,22 +69,9 @@ HOTDOG_TOKEN=""
 if [ -n "$3" ]; then
     if [ "$3" = "verify" ]; then
         VERIFY="verify"
-        # Check if 4th parameter is hotdog token address
-        if [ -n "$4" ]; then
-            HOTDOG_TOKEN=$4
-        fi
-    elif [[ "$3" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
-        # 3rd parameter is a token address
-        HOTDOG_TOKEN=$3
-        # Check if 4th parameter is verify
-        if [ "$4" = "verify" ]; then
-            VERIFY="verify"
-        fi
     elif [ "$3" = "noverify" ]; then
-        # Explicitly no verification, check for token address
-        if [ -n "$4" ]; then
-            HOTDOG_TOKEN=$4
-        fi
+        # Explicitly no verification
+        VERIFY=""
     fi
 fi
 
@@ -113,14 +98,27 @@ print_status "🔐 Secure deployment to $NETWORK using $WALLET_TYPE wallet"
 print_status "Chain ID: $CHAIN_ID"
 print_status "RPC URL: $RPC_URL"
 
-if [ -n "$HOTDOG_TOKEN" ]; then
-    # Validate token address format
-    if ! [[ "$HOTDOG_TOKEN" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
-        print_error "Invalid token address format: $HOTDOG_TOKEN"
-        print_status "Token address must be a valid Ethereum address (0x followed by 40 hex characters)"
-        exit 1
-    fi
-    print_status "Using existing HotDog token: $HOTDOG_TOKEN"
+# Prompt for existing HotDog token
+echo ""
+print_status "HotDog Token Configuration"
+echo "Do you want to use an existing HotDog token? (y/n)"
+read -p "Enter your choice: " use_existing_token
+
+if [[ "$use_existing_token" =~ ^[Yy]$ ]]; then
+    while true; do
+        echo ""
+        read -p "Enter the existing HotDog token address (0x...): " HOTDOG_TOKEN
+        
+        # Validate token address format
+        if [[ "$HOTDOG_TOKEN" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
+            print_status "Using existing HotDog token: $HOTDOG_TOKEN"
+            break
+        else
+            print_error "Invalid token address format: $HOTDOG_TOKEN"
+            print_status "Token address must be a valid Ethereum address (0x followed by 40 hex characters)"
+            echo "Please try again."
+        fi
+    done
 else
     print_status "Will deploy new HotDog token"
 fi
