@@ -45,12 +45,12 @@ show_usage() {
     echo "  mnemonic        Use mnemonic phrase"
     echo ""
     echo "Options:"
-    echo "  verify          Verify contracts on Etherscan after deployment"
+    echo "  verify                 Verify contracts on Etherscan after deployment"
     echo ""
     echo "Examples:"
+    echo "  ./deploy-secure.sh base-sepolia interactive"
     echo "  ./deploy-secure.sh base-sepolia interactive verify"
     echo "  ./deploy-secure.sh base-mainnet ledger verify"
-    echo "  ./deploy-secure.sh base-sepolia keystore"
 }
 
 # Check if network and wallet type are provided
@@ -62,7 +62,18 @@ fi
 
 NETWORK=$1
 WALLET_TYPE=$2
-VERIFY=$3
+VERIFY=""
+HOTDOG_TOKEN=""
+
+# Parse optional parameters
+if [ -n "$3" ]; then
+    if [ "$3" = "verify" ]; then
+        VERIFY="verify"
+    elif [ "$3" = "noverify" ]; then
+        # Explicitly no verification
+        VERIFY=""
+    fi
+fi
 
 # Set network-specific variables
 case $NETWORK in
@@ -86,6 +97,31 @@ esac
 print_status "🔐 Secure deployment to $NETWORK using $WALLET_TYPE wallet"
 print_status "Chain ID: $CHAIN_ID"
 print_status "RPC URL: $RPC_URL"
+
+# Prompt for existing HotDog token
+echo ""
+print_status "HotDog Token Configuration"
+echo "Do you want to use an existing HotDog token? (y/n)"
+read -p "Enter your choice: " use_existing_token
+
+if [[ "$use_existing_token" =~ ^[Yy]$ ]]; then
+    while true; do
+        echo ""
+        read -p "Enter the existing HotDog token address (0x...): " HOTDOG_TOKEN
+        
+        # Validate token address format
+        if [[ "$HOTDOG_TOKEN" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
+            print_status "Using existing HotDog token: $HOTDOG_TOKEN"
+            break
+        else
+            print_error "Invalid token address format: $HOTDOG_TOKEN"
+            print_status "Token address must be a valid Ethereum address (0x followed by 40 hex characters)"
+            echo "Please try again."
+        fi
+    done
+else
+    print_status "Will deploy new HotDog token"
+fi
 
 # Check if .env file exists (for non-sensitive config)
 if [ ! -f .env ]; then
@@ -170,6 +206,11 @@ case $WALLET_TYPE in
         ;;
 esac
 
+# Set existing hotdog token if provided
+if [ -n "$HOTDOG_TOKEN" ]; then
+    export EXISTING_HOTDOG_TOKEN=$HOTDOG_TOKEN
+fi
+
 # Build deployment command
 DEPLOY_CMD="forge script script/Deploy.s.sol:DeployScript --rpc-url $RPC_URL --broadcast --legacy $WALLET_FLAGS"
 
@@ -236,6 +277,13 @@ if eval $DEPLOY_CMD; then
         echo "3. Consider transferring admin roles to a multisig wallet"
         echo "4. Monitor contract events and transactions"
         echo "5. Keep deployment details secure and backed up"
+        
+        if [ -n "$HOTDOG_TOKEN" ]; then
+            print_warning "Using existing HotDog token - additional notes:"
+            echo "- Ensure the deployer has MINTER_ROLE on the token for full functionality"
+            echo "- If not, manually grant MINTER_ROLE to HotdogStaking and AttestationManager"
+            echo "- Verify the token has sufficient supply/balance for rewards pool"
+        fi
         
         if [ "$NETWORK" = "base-mainnet" ]; then
             print_warning "MAINNET DEPLOYMENT - Additional Security Steps:"
