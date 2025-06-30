@@ -47,7 +47,7 @@ export const usePendingTransactionsStore = create<PendingTransactionsStore>()(
       },
       
       clearExpiredPending: () => {
-        const EXPIRY_TIME = 10 * 60 * 1000; // 10 minutes
+        const EXPIRY_TIME = 2 * 60 * 1000; // 2 minutes instead of 10 minutes
         const now = Date.now();
         
         set((state) => ({

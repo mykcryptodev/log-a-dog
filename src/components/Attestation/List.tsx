@@ -96,30 +96,88 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
+  const [isClient, setIsClient] = useState(false);
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
-  const utils = api.useUtils();
+
+  // Fix hydration mismatch by only rendering dynamic content on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const queryParams = {
     chainId: activeChain.id,
-    user: ZERO_ADDRESS,
+    user: ZERO_ADDRESS, // Always use zero address to get ALL hotdogs for the homepage feed
     start,
     limit: limitOrDefault,
   };
 
   const { data: dogData, isLoading: isLoadingHotdogs, error, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
-    enabled: !!activeChain.id,
+    enabled: !!activeChain.id && isClient, // Only run query on client side
   });
-
-  // Clear expired pending transactions
-  useEffect(() => {
-    clearExpiredPending();
-  }, [clearExpiredPending]);
 
   // Get pending dogs for current chain
   const pendingDogs = getPendingDogsForChain(activeChain.id.toString());
 
-  // Merge pending dogs with real data
-  const allHotdogs: HotdogItem[] = dogData?.hotdogs ? [...pendingDogs, ...dogData.hotdogs] : pendingDogs;
+  // Clear expired pending transactions more frequently
+  useEffect(() => {
+    clearExpiredPending();
+    
+    // Set up interval to clear expired pending dogs every 30 seconds
+    const interval = setInterval(() => {
+      clearExpiredPending();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [clearExpiredPending]);
+
+  // Merge pending dogs with real data, but filter out duplicates
+  const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) || []);
+  const filteredPendingDogs = pendingDogs.filter(pending => !realLogIds.has(pending.logId));
+  const allHotdogs: HotdogItem[] = dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
+
+  // Show loading state while client-side query is fetching
+  if (isLoadingHotdogs || !dogData) {
+    return (
+      <>
+        <div id="top-of-list" className="invisible" />
+        <div className="flex flex-col gap-4">
+          {Array.from({ length: limitOrDefault }).map((_, index) => (
+            <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
+              <div className="flex gap-2 items-center">
+                <div className="h-10 w-10 bg-base-300 animate-pulse rounded-full" />
+                <div className="h-4 w-20 bg-base-300 animate-pulse rounded-lg" />
+              </div>
+              <div className="card-body p-4">
+                <div className="mx-auto w-56 h-56 bg-base-300 animate-pulse rounded-lg" />
+              </div>
+              <div className="flex flex-row w-full items-center justify-between">
+                <div className="text-xs flex items-center gap-1">
+                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
+                  <div className="h-4 w-8 bg-base-300 animate-pulse rounded-lg" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-4 h-4 bg-base-300 animate-pulse rounded-full" />
+                  <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
+                </div>
+                <div className="flex justify-end items-center gap-2">
+                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
+                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
+                </div>
+              </div>
+            </div>
+          ))}
+          <div className="join md:col-span-2 place-content-center">
+            <button className="join-item btn" disabled>«</button>
+            <button className="join-item btn">Page 1 of ...</button>
+            <button className="join-item btn" disabled>»</button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   const showLoggedVia = (hotdog: { eater: string, logger: string }) => {
     const loggerIsNotEater = !isAddressEqual(hotdog.eater as `0x${string}`, hotdog.logger as `0x${string}`);
@@ -160,36 +218,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     <>
     <div id="top-of-list" className="invisible" />
     <div className="flex flex-col gap-4">
-      {!dogData && 
-        Array.from({ length: limitOrDefault }).map((_, index) => (
-          <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
-            <div className="flex gap-2 items-center">
-              <div className="h-10 w-10 bg-base-300 animate-pulse rounded-full" />
-              <div className="h-4 w-20 bg-base-300 animate-pulse rounded-lg" />
-            </div>
-            <div className="card-body p-4">
-              <div className="mx-auto w-56 h-56 bg-base-300 animate-pulse rounded-lg" />
-            </div>
-            <div className="flex flex-row w-full items-center justify-between">
-              <div className="text-xs flex items-center gap-1">
-                <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-                <div className="h-4 w-8 bg-base-300 animate-pulse rounded-lg" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-base-300 animate-pulse rounded-full" />
-                <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
-              </div>
-              <div className="flex justify-end items-center gap-2">
-                <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-                <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-              </div>
-            </div>
-          </div>
-        ))
-      }
       {allHotdogs.map((hotdog) => {
         const isExpired =
           Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <= Date.now();
@@ -254,10 +282,11 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   )}
                 </div>
                 <div className="flex justify-end items-center gap-2 text-xs">
-                  <AiJudgement 
+                  {/* Temporarily disabled AI verification feature */}
+                  {/* <AiJudgement 
                     logId={hotdog.logId.toString()}
                     timestamp={hotdog.timestamp.toString()}
-                  />
+                  /> */}
                 </div>
                 <div className="flex justify-end items-center gap-1">
                   <Comments
