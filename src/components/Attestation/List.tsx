@@ -1,7 +1,6 @@
 import { useContext, useEffect, type FC, useState } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
-import { useActiveAccount } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
@@ -9,7 +8,6 @@ import Name from "~/components/Profile/Name";
 import { ZERO_ADDRESS } from "thirdweb";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
-import AiJudgement from "./AiJudgement";
 import VotingCountdown from "./VotingCountdown";
 import Comments from "~/components/Attestation/Comments";
 import { env } from "~/env";
@@ -93,7 +91,6 @@ type Props = {
 
 export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
-  const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
@@ -231,12 +228,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   <div className="flex items-center gap-2 w-fit">
                     <Avatar address={hotdog.eater} fallbackSize={24} />
                     <Name address={hotdog.eater} />
-                    {isPending && (
-                      <div className="badge badge-warning badge-sm gap-1">
-                        <div className="loading loading-spinner loading-xs" />
-                        Pending
-                      </div>
-                    )}
                   </div>
                   <div className="flex flex-col">
                     {showLoggedVia({ eater: hotdog.eater, logger: hotdog.logger }) && (
