@@ -63,24 +63,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     if (success && account && transactionId) {
       // Keep the optimistic data - don't remove it here
       // Let it be naturally filtered out when real data appears
-      
-      // pop confetti
-      const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-      canvas.style.display = 'block';
-      const jsConfetti = new JSConfetti({ canvas });
-      void jsConfetti.addConfetti({
-        emojis: ['🌭', '🎉', '🌈', '✨']
-      }).then(() => {
-        // Hide the canvas after confetti animation completes
-        setTimeout(() => {
-          canvas.style.display = 'none';
-        }, 3000);
-      });
 
       // Just do a gentle invalidation - no forced refetch
       console.log('🔄 Transaction resolved, gentle cache invalidation');
       void utils.hotdog.getAll.invalidate();
-      
+
     } else if (!success && transactionId) {
       // If transaction failed, remove the optimistic update
       removePendingDog(transactionId);
@@ -119,7 +106,20 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           transactionId: result.transactionId,
           createdAt: Date.now(),
         });
-        
+
+        // pop confetti immediately for dopamine hit
+        const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+        canvas.style.display = 'block';
+        const jsConfetti = new JSConfetti({ canvas });
+        void jsConfetti.addConfetti({
+          emojis: ['🌭', '🎉', '🌈', '✨']
+        }).then(() => {
+          // Hide the canvas after confetti animation completes
+          setTimeout(() => {
+            canvas.style.display = 'none';
+          }, 3000);
+        });
+
         setLastLoggedImgUri(imgUri);
         setLastLoggedDescription(description);
         setTransactionId(result.transactionId);
