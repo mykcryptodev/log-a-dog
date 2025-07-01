@@ -2,7 +2,7 @@ import { useContext, useEffect, type FC, useState } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import HotdogImage from "~/components/utils/HotdogImage";
-import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon, FireIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
 import { ZERO_ADDRESS } from "thirdweb";
@@ -10,6 +10,7 @@ import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import VotingCountdown from "./VotingCountdown";
 import Comments from "~/components/Attestation/Comments";
+import TradeButton from "~/components/utils/TradeButton";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
@@ -305,6 +306,13 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                     logId={hotdog.logId.toString()}
                     metadataUri={hotdog.metadataUri}
                   />
+                  {hotdog.zoraCoin?.address && (
+                    <TradeButton
+                      sellToken="ETH"
+                      buyToken={hotdog.zoraCoin.address as `0x${string}`}
+                      sellAmount="0.01"
+                    />
+                  )}
                   {!isExpired && (
                     <JudgeAttestation
                       disabled={isPending}
