@@ -7,8 +7,8 @@ import { Portal } from "./Portal";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 interface Props {
-  sellToken: `0x${string}`;
-  buyToken: `0x${string}`;
+  sellToken: string;
+  buyToken: string;
   sellAmount: string;
 }
 

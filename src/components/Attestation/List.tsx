@@ -306,12 +306,13 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                     logId={hotdog.logId.toString()}
                     metadataUri={hotdog.metadataUri}
                   />
-                  {hotdog.zoraCoin?.address && (
-                    <TradeButton
-                      sellToken="ETH"
-                      buyToken={hotdog.zoraCoin.address as `0x${string}`}
-                      sellAmount="0.01"
-                    />
+                  {typeof hotdog.zoraCoin === "object" &&
+                    hotdog.zoraCoin?.address && (
+                      <TradeButton
+                        sellToken="ETH"
+                        buyToken={hotdog.zoraCoin.address}
+                        sellAmount="0.01"
+                      />
                   )}
                   {!isExpired && (
                     <JudgeAttestation
