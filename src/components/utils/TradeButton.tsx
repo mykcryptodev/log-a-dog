@@ -8,7 +8,8 @@ import { sdk } from "@farcaster/miniapp-sdk";
 
 interface Props {
   sellToken: string;
-  buyToken: string;
+  /** Address of the token being purchased */
+  buyToken: `0x${string}`;
   sellAmount: string;
 }
 

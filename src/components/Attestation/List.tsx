@@ -310,7 +310,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                     hotdog.zoraCoin?.address && (
                       <TradeButton
                         sellToken="ETH"
-                        buyToken={hotdog.zoraCoin.address}
+                        buyToken={hotdog.zoraCoin.address as `0x${string}`}
                         sellAmount="0.01"
                       />
                   )}
