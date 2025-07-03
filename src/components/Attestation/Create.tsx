@@ -59,6 +59,13 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     }
   }, [isMiniApp, dogEvent, isTransactionIdResolved]);
 
+  // Remove the optimistic dog once the real data is available
+  useEffect(() => {
+    if (dogEvent && transactionId) {
+      removePendingDog(transactionId);
+    }
+  }, [dogEvent, transactionId, removePendingDog]);
+
   const handleOnResolved = (success: boolean) => {
     if (success && account && transactionId) {
       // Keep the optimistic data - don't remove it here
