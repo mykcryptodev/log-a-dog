@@ -22,6 +22,7 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
     uint256 public constant MINIMUM_STAKE = 100 * 10**18; // 100 HOTDOG minimum
     uint256 public constant REWARD_END_TIME = 1756684800; // September 1, 2025 00:00:00 UTC
     uint256 public constant SLASH_PERCENTAGE = 15; // 15% slashing for wrong attestations
+    uint256 public constant MINIMUM_STAKE_DURATION = 1 hours; // Minimum time before unstaking (flash loan protection)
     uint256 private constant PRECISION = 1e18; // Precision for reward calculations
     
     struct StakeInfo {
@@ -29,6 +30,7 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
         uint256 rewardDebt; // User's reward debt for accurate proportional calculation
         uint256 pendingRewards;
         bool isActive;
+        uint256 stakeTimestamp; // Timestamp when the stake was last increased (for flash loan protection)
     }
     
     mapping(address => StakeInfo) public stakes;
@@ -126,6 +128,9 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
             userStake.isActive = true;
         }
         
+        // Update stake timestamp to prevent flash loan attacks
+        userStake.stakeTimestamp = block.timestamp;
+        
         totalStaked += amount;
         
         // Update reward debt after stake change
@@ -144,6 +149,12 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
         require(amount <= userStake.amount, "Insufficient staked amount");
         require(amount <= getAvailableStake(msg.sender), "Tokens locked for attestation");
         
+        // Flash loan protection: enforce minimum staking duration
+        require(
+            block.timestamp >= userStake.stakeTimestamp + MINIMUM_STAKE_DURATION,
+            "Minimum stake duration not met"
+        );
+        
         // Update rewards before changing stake
         updateUserRewards(msg.sender);
         
@@ -153,6 +164,7 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
         if (userStake.amount == 0) {
             userStake.isActive = false;
             userStake.rewardDebt = 0;
+            userStake.stakeTimestamp = 0; // Reset timestamp when fully unstaked
         } else {
             // Update reward debt after stake change
             userStake.rewardDebt = (userStake.amount * accumulatedRewardPerToken) / PRECISION;
@@ -226,6 +238,7 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
         if (userStake.amount == 0) {
             userStake.isActive = false;
             userStake.rewardDebt = 0;
+            userStake.stakeTimestamp = 0; // Reset timestamp when fully slashed
         } else {
             // Update reward debt after stake change
             userStake.rewardDebt = (userStake.amount * accumulatedRewardPerToken) / PRECISION;
@@ -349,5 +362,27 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
             return 0;
         }
         return REWARD_END_TIME - block.timestamp;
+    }
+    
+    /**
+     * @notice Get timestamp when user can unstake (flash loan protection)
+     * @param user User address
+     * @return Timestamp when unstaking becomes available (0 if no active stake)
+     */
+    function getUnstakeAvailableTime(address user) external view returns (uint256) {
+        StakeInfo memory userStake = stakes[user];
+        if (!userStake.isActive) return 0;
+        return userStake.stakeTimestamp + MINIMUM_STAKE_DURATION;
+    }
+    
+    /**
+     * @notice Check if user can unstake now
+     * @param user User address
+     * @return Whether user can unstake now
+     */
+    function canUnstakeNow(address user) external view returns (bool) {
+        StakeInfo memory userStake = stakes[user];
+        if (!userStake.isActive) return false;
+        return block.timestamp >= userStake.stakeTimestamp + MINIMUM_STAKE_DURATION;
     }
 } 
