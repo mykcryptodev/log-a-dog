@@ -2,7 +2,8 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { STAKING } from "~/constants/addresses";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
-import { createThirdwebClient, getContract, readContract } from "thirdweb";
+import { getContract, readContract } from "thirdweb";
+import { client as serverClient } from "~/server/utils";
 import { env } from "~/env";
 import { formatEther } from "viem";
 import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
@@ -21,7 +22,7 @@ export const stakingRouter = createTRPCRouter({
         if (!address || !chain) {
           throw new Error("Chain not supported");
         }
-        const client = createThirdwebClient({ secretKey: env.THIRDWEB_SECRET_KEY });
+        const client = serverClient;
         const contract = getContract({ client, address, chain });
         const [totalStaked, rewardsPool, timeRemaining] = await Promise.all([
           readContract({ contract, method: "function totalStaked() view returns (uint256)" }),

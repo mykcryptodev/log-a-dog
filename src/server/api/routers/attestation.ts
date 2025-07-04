@@ -3,7 +3,8 @@ import { ApolloClient, InMemoryCache, HttpLink, gql } from '@apollo/client';
 import fetch from 'cross-fetch';
 import { EAS, type TransactionSigner } from "@ethereum-attestation-service/eas-sdk";
 import { EAS as EAS_ADDRESS, EAS_AFFIMRATION_SCHEMA_ID, EAS_SCHEMA_ID, MODERATION_V1 } from "~/constants/addresses";
-import { createThirdwebClient, getContract, readContract } from "thirdweb";
+import { getContract, readContract } from "thirdweb";
+import { client as serverClient } from "~/server/utils";
 import { ethers6Adapter } from "thirdweb/adapters/ethers6";
 import { ethers } from "ethers";
 
@@ -59,9 +60,7 @@ export const attestationRouter = createTRPCRouter({
       if (!easAddress || !chain || !moderationAddress) {
         throw new Error("Chain not supported");
       }
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
+      const client = serverClient;
       const provider = ethers6Adapter.provider.toEthers({
         client,
         chain,

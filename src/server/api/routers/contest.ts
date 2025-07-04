@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CONTESTS } from "~/constants/addresses";
-import { createThirdwebClient, getContract } from "thirdweb";
+import { getContract } from "thirdweb";
+import { client as serverClient } from "~/server/utils";
 import { readContract } from "thirdweb";
 import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
@@ -34,9 +35,7 @@ export const contestRouter = createTRPCRouter({
       if (!contestAddress || !chain) {
         throw new Error("Chain not supported");
       }
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
+      const client = serverClient;
       const contract = getContract({
         client,
         address: contestAddress,
@@ -83,9 +82,7 @@ export const contestRouter = createTRPCRouter({
       if (!contestAddress || !chain) {
         throw new Error("Chain not supported");
       }
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
+      const client = serverClient;
       const contract = getContract({
         client,
         address: contestAddress,
@@ -112,9 +109,7 @@ async function getContest (id: number, chainId: number) {
   if (!contestAddress || !chain) {
     throw new Error("Chain not supported");
   }
-  const client = createThirdwebClient({
-    secretKey: env.THIRDWEB_SECRET_KEY,
-  });
+  const client = serverClient;
   const contract = getContract({
     client,
     address: contestAddress,

@@ -1,5 +1,6 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
-import { createThirdwebClient, getContract, sendTransaction } from 'thirdweb';
+import { getContract, sendTransaction } from 'thirdweb';
+import { client } from '~/server/utils';
 import { type Account, privateKeyToAccount } from 'thirdweb/wallets';
 import { z } from 'zod';
 import { LOG_A_DOG } from '~/constants/addresses';
@@ -28,10 +29,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       console.log( ' secret passed! ');
-
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const account = privateKeyToAccount({

@@ -2,9 +2,9 @@ import React from 'react';
 import { ImageResponse } from '@vercel/og';
 import type { NextRequest } from 'next/server';
 import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from '~/constants/chains';
-import { createThirdwebClient, getContract } from 'thirdweb';
+import { getContract } from 'thirdweb';
+import { client } from '~/server/utils';
 import { getSocialProfiles } from 'thirdweb/social';
-import { env } from '~/env';
 import { getHotdogLogsRange } from '~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f';
 import { LOG_A_DOG } from '~/constants/addresses';
 import { getUserValidDogEventCount } from '~/server/api/dog-events';
@@ -34,9 +34,6 @@ export default async function handler(req: NextRequest) {
   const base = new URL(req.url).origin;
 
   // Directly call the contract instead of using tRPC
-  const client = createThirdwebClient({
-    secretKey: env.THIRDWEB_SECRET_KEY,
-  });
   
   const chain = SUPPORTED_CHAINS.find(chain => chain.id === DEFAULT_CHAIN.id)!;
   const contract = getContract({
