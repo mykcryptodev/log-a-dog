@@ -354,6 +354,24 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
                 <TransactionButton
                   className="!btn !btn-primary flex-1"
                   transaction={getTx}
+                  onTransactionSent={(tx) => {
+                    if (!account) return;
+                    setTransactionId(tx.transactionHash);
+                    setIsTransactionIdResolved(false);
+                    addPendingDog({
+                      logId: tx.transactionHash,
+                      imageUri: imgUri!,
+                      metadataUri: '',
+                      eater: account.address,
+                      logger: account.address,
+                      zoraCoin: '',
+                      timestamp: Math.floor(Date.now() / 1000).toString(),
+                      chainId: activeChain.id.toString(),
+                      isPending: true,
+                      transactionId: tx.transactionHash,
+                      createdAt: Date.now(),
+                    });
+                  }}
                   onTransactionConfirmed={handleOnSuccess}
                 >
                   Log a Dog
