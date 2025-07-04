@@ -252,7 +252,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         poolConfig,
       });
     };
-  }, [imgUri, description, account, coinMetadataUri]);
+  }, [imgUri, account, coinMetadataUri]);
 
   const handleOnSuccess = () => {
     // pop confetti immediately for dopamine hit

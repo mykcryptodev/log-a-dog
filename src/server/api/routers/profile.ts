@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { z } from "zod";
 import { getProfile as getZoraProfile } from '@zoralabs/coins-sdk';

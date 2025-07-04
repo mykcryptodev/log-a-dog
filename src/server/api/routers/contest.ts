@@ -3,7 +3,6 @@ import { CONTESTS } from "~/constants/addresses";
 import { getContract } from "thirdweb";
 import { client as serverClient } from "~/server/utils";
 import { readContract } from "thirdweb";
-import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
 import {

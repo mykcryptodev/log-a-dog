@@ -13,7 +13,6 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { baseSepolia, base } from "thirdweb/chains";
-import { env } from "~/env";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
 type Endpoints = Record<number, string>;

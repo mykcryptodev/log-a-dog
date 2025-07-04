@@ -4,7 +4,6 @@ import { STAKING } from "~/constants/addresses";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { getContract, readContract } from "thirdweb";
 import { client as serverClient } from "~/server/utils";
-import { env } from "~/env";
 import { formatEther } from "viem";
 import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 
