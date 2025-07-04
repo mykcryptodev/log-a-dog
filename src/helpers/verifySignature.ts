@@ -1,5 +1,14 @@
 import { createConfig, getPublicClient, http } from "@wagmi/core";
-import { type Address, isAddress, isAddressEqual, verifyMessage, zeroAddress } from 'viem';
+import {
+  type Address,
+  isAddress,
+  isAddressEqual,
+  verifyMessage,
+  hashMessage,
+  encodeFunctionData,
+  zeroAddress,
+} from "viem";
+import { smartAccountAbi } from "viem/constants";
 import type { Chain } from "wagmi/chains";
 
 import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from "~/constants";
@@ -36,12 +45,14 @@ const verifySignature = async(
         }, 
       });
       const client = getPublicClient(config);
-      const isValid = await client?.verifyMessage({
-        address, 
-        message, 
-        signature: signature as `0x${string}`,
+      const hash = hashMessage(message);
+      const data = encodeFunctionData({
+        abi: smartAccountAbi,
+        functionName: "isValidSignature",
+        args: [hash, signature as `0x${string}`],
       });
-      return isValid ?? false;
+      const result = await client.call({ account: address, to: address, data });
+      return result.data === "0x1626ba7e";
     } catch (error) {
       console.error("EIP-1271 verification failed:", error)
     }
