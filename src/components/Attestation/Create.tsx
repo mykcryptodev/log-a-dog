@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { type FC, useContext, useState, useMemo, useEffect } from 'react';
-import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
@@ -16,6 +16,7 @@ import { usePendingTransactionsStore } from "~/stores/pendingTransactions";
 import { logHotdog as logHotdogBase } from '~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974';
 import { getContract } from 'thirdweb';
 import { client } from '~/providers/Thirdweb';
+import Connect from "~/components/utils/Connect";
 import { upload } from 'thirdweb/storage';
 import { encodePoolConfig } from '~/server/utils/poolConfig';
 
@@ -349,7 +350,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
             </form>
             <div className="flex flex-col gap-2">
               {!account ? (
-                <ConnectButton client={client} />
+                <Connect loginBtnLabel="Connect Wallet" />
               ) : (
                 <TransactionButton
                   className="!btn !btn-primary flex-1"
