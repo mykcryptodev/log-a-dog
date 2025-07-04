@@ -1,8 +1,9 @@
-import { useContext, useEffect, type FC, useState } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useContext, useEffect, type FC, useState, useMemo } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import HotdogImage from "~/components/utils/HotdogImage";
-import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon, FireIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 import Name from "~/components/Profile/Name";
 import { ZERO_ADDRESS } from "thirdweb";
@@ -147,7 +148,10 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     }
     return !hasRealData;
   });
-  const allHotdogs: HotdogItem[] = dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
+  const allHotdogs: HotdogItem[] = useMemo(() => 
+    dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs,
+    [dogData?.hotdogs, filteredPendingDogs, pendingDogs]
+  );
 
   // Debug the rendering data
   useEffect(() => {

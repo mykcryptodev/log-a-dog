@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-misused-promises */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { type FC, useContext, useState, useMemo, useEffect } from 'react';
 import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
-import Connect from "~/components/utils/Connect";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { TransactionStatus } from '../utils/TransactionStatus';
@@ -116,89 +118,89 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     setIsTransactionIdResolved(true);
   }
 
-  const ActionButton: FC = () => {
-    if (!account) return (
-      <button className="btn btn-secondary flex-1" disabled>
-        Connect Wallet
-      </button>
-    )
+  // const ActionButton: FC = () => {
+  //   if (!account) return (
+  //     <button className="btn btn-secondary flex-1" disabled>
+  //       Connect Wallet
+  //     </button>
+  //   )
 
-    const logDog = async () => {
-      if (!wallet) {
-        return toast.error("You must login to attest to dogs!");
-      }
-      if (isDisabled) return;
-      setIsLoading(true);
-      try {
-        // Reset state for new logs
-        setTransactionId(undefined);
-        setIsTransactionIdResolved(false);
-        // Call the backend tRPC procedure
-        const result = await logHotdog({
-          chainId: activeChain.id,
-          imageUri: imgUri!,
-          metadataUri: '',
-          description,
-        });
+  //   const logDog = async () => {
+  //     if (!wallet) {
+  //       return toast.error("You must login to attest to dogs!");
+  //     }
+  //     if (isDisabled) return;
+  //     setIsLoading(true);
+  //     try {
+  //       // Reset state for new logs
+  //       setTransactionId(undefined);
+  //       setIsTransactionIdResolved(false);
+  //       // Call the backend tRPC procedure
+  //       const result = await logHotdog({
+  //         chainId: activeChain.id,
+  //         imageUri: imgUri!,
+  //         metadataUri: '',
+  //         description,
+  //       });
         
-        // Add optimistic update to store
-        addPendingDog({
-          ...result.optimisticData,
-          transactionId: result.transactionId,
-          createdAt: Date.now(),
-        });
+  //       // Add optimistic update to store
+  //       addPendingDog({
+  //         ...result.optimisticData,
+  //         transactionId: result.transactionId,
+  //         createdAt: Date.now(),
+  //       });
 
-        // pop confetti immediately for dopamine hit
-        const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-        canvas.style.display = 'block';
-        const jsConfetti = new JSConfetti({ canvas });
-        void jsConfetti.addConfetti({
-          emojis: ['🌭', '🎉', '🌈', '✨']
-        }).then(() => {
-          // Hide the canvas after confetti animation completes
-          setTimeout(() => {
-            canvas.style.display = 'none';
-          }, 3000);
-        });
+  //       // pop confetti immediately for dopamine hit
+  //       const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+  //       canvas.style.display = 'block';
+  //       const jsConfetti = new JSConfetti({ canvas });
+  //       void jsConfetti.addConfetti({
+  //         emojis: ['🌭', '🎉', '🌈', '✨']
+  //       }).then(() => {
+  //         // Hide the canvas after confetti animation completes
+  //         setTimeout(() => {
+  //           canvas.style.display = 'none';
+  //         }, 3000);
+  //       });
 
-        setLastLoggedImgUri(imgUri);
-        setLastLoggedDescription(description);
-        setTransactionId(result.transactionId);
+  //       setLastLoggedImgUri(imgUri);
+  //       setLastLoggedDescription(description);
+  //       setTransactionId(result.transactionId);
 
-        // Trigger immediate UI update
-        void onAttestationCreated?.({
-          hotdogEater: account.address,
-          imageUri: imgUri!,
-        });
+  //       // Trigger immediate UI update
+  //       void onAttestationCreated?.({
+  //         hotdogEater: account.address,
+  //         imageUri: imgUri!,
+  //       });
 
-        // close the modal
-        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-        setImgUri(undefined);
-        setDescription('');
-      } catch (error) {
-        const e = error as Error;
-        console.error(error);
-        toast.error(`Attestation failed: ${e.message}`);
-      } finally {
-        setIsLoading(false);
-        // close the modal
-        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-      }
-    };
+  //       // close the modal
+  //       (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+  //       setImgUri(undefined);
+  //       setDescription('');
+  //     } catch (error) {
+  //       const e = error as Error;
+  //       console.error(error);
+  //       toast.error(`Attestation failed: ${e.message}`);
+  //     } finally {
+  //       setIsLoading(false);
+  //       // close the modal
+  //       (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+  //     }
+  //   };
 
-    return (
-      <button
-        className="btn btn-secondary flex-1"
-        onClick={logDog}
-        disabled={isDisabled}
-      >
-        {isLoading && (
-          <div className="loading loading-spinner" />
-        )}
-        Backend
-      </button>
-    )
-  };
+  //   return (
+  //     <button
+  //       className="btn btn-secondary flex-1"
+  //       onClick={logDog}
+  //       disabled={isDisabled}
+  //     >
+  //       {isLoading && (
+  //         <div className="loading loading-spinner" />
+  //       )}
+  //       Backend
+  //     </button>
+  //   )
+  // };
 
   const shareOnFarcaster = async () => {
     try {

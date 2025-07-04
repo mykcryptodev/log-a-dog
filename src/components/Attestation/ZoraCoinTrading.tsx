@@ -1,4 +1,4 @@
-import { useState, type FC, useContext } from "react";
+import { useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 // import { createPublicClient, createWalletClient, custom, http } from "viem";
