@@ -156,6 +156,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           }
         }))
       ]}
+      accountAbstraction={{ chain: activeChain, sponsorGas: true }}
       showAllWallets={true}
     />
   );
