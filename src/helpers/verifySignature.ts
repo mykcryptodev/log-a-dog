@@ -6,8 +6,10 @@ import {
   verifyMessage,
   hashMessage,
   encodeFunctionData,
+  decodeAbiParameters,
   zeroAddress,
 } from "viem";
+import { verify as verifyWebAuthn } from "webauthn-p256";
 // Minimal ABI for ERC-1271 isValidSignature function
 const smartAccountAbi = [
   {
@@ -61,6 +63,49 @@ const verifySignature = async(
         throw new Error("Failed to create public client");
       }
       const hash = hashMessage(message);
+
+      // If the signature contains a WebAuthn payload, verify off-chain first
+      if (signature.includes("776562617574686e2e676574")) {
+        try {
+          const [_wallet, rest] = decodeAbiParameters(
+            [{ type: "address" }, { type: "bytes" }],
+            signature as `0x${string}`,
+          );
+          const [sigBytes, pubKey, webauthn] = decodeAbiParameters(
+            [
+              { type: "bytes" },
+              { type: "bytes" },
+              {
+                type: "tuple",
+                components: [
+                  { type: "bytes" },
+                  { type: "string" },
+                  { type: "uint256" },
+                  { type: "uint256" },
+                  { type: "bool" },
+                ],
+              },
+            ],
+            rest as `0x${string}`,
+          );
+          const valid = await verifyWebAuthn({
+            hash,
+            publicKey: pubKey as `0x${string}`,
+            signature: sigBytes as `0x${string}`,
+            webauthn: {
+              authenticatorData: webauthn[0] as `0x${string}`,
+              clientDataJSON: webauthn[1] as string,
+              challengeIndex: Number(webauthn[2]),
+              typeIndex: Number(webauthn[3]),
+              userVerificationRequired: webauthn[4] as boolean,
+            },
+          });
+          if (!valid) return false;
+        } catch (err) {
+          console.error("Local WebAuthn verification failed:", err);
+        }
+      }
+
       const data = encodeFunctionData({
         abi: smartAccountAbi,
         functionName: "isValidSignature",
