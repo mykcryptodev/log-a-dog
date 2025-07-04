@@ -444,6 +444,9 @@ contract HotdogEcosystemTest is Test {
         // Fast forward past minimum staking duration
         vm.warp(block.timestamp + 1 hours + 1);
         
+        // Fast forward past minimum staking duration
+        vm.warp(block.timestamp + 1 hours + 1);
+        
         // Unstake some tokens
         stakingContract.unstake(100000 * 10**18);
         
@@ -475,6 +478,9 @@ contract HotdogEcosystemTest is Test {
         // User2 attests
         vm.startPrank(user2);
         attestationManager.attestToLog(logId, true, 100000 * 10**18);
+        
+        // Fast forward past minimum staking duration
+        vm.warp(block.timestamp + 1 hours + 1);
         
         // Fast forward past minimum staking duration
         vm.warp(block.timestamp + 1 hours + 1);
