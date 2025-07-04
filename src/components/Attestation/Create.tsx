@@ -239,18 +239,19 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       
       const poolConfig = encodePoolConfig();
 
-      return logHotdogBase({
-        contract: getContract({
-          address: LOG_A_DOG[DEFAULT_CHAIN.id]!,
-          chain: DEFAULT_CHAIN,
-          client,
-        }),
-        imageUri: imgUri!,
-        metadataUri: '',
-        eater: account.address,
-        coinUri: coinMetadataUri,
-        poolConfig,
-      });
+        return logHotdogBase({
+          contract: getContract({
+            address: LOG_A_DOG[activeChain.id]!,
+            chain: activeChain,
+            client,
+          }),
+          imageUri: imgUri!,
+          metadataUri: '',
+          eater: account.address,
+          coinUri: coinMetadataUri,
+          poolConfig,
+          accountAbstraction: { chain: activeChain, sponsorGas: true },
+        });
     };
   }, [imgUri, account, coinMetadataUri]);
 
