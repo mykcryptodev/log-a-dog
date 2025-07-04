@@ -133,8 +133,8 @@ if [ ! -f .env ]; then
 # Etherscan API key for contract verification
 ETHERSCAN_API_KEY=your_etherscan_api_key_here
 
-# Platform referrer address (required for mainnet)
-PLATFORM_REFERRER=0x0000000000000000000000000000000000000000
+# Platform referrer address (hardcoded in deployment script)
+# Platform referrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F
 
 # RPC URLs (optional, uses public RPCs by default)
 BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
@@ -149,14 +149,6 @@ fi
 
 # Source environment variables
 source .env
-
-# Validate platform referrer for mainnet
-if [ "$NETWORK" = "base-mainnet" ]; then
-    if [ -z "$PLATFORM_REFERRER" ] || [ "$PLATFORM_REFERRER" = "0x0000000000000000000000000000000000000000" ]; then
-        print_error "Please set PLATFORM_REFERRER in your .env file for mainnet deployment"
-        exit 1
-    fi
-fi
 
 # Create deployments directory if it doesn't exist
 mkdir -p deployments

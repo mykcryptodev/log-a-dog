@@ -113,7 +113,10 @@ Create a secure `.env` file that only contains non-sensitive data:
 ```env
 # Safe to store - no private keys
 ETHERSCAN_API_KEY=your_etherscan_api_key_here
-PLATFORM_REFERRER=0x1234567890123456789012345678901234567890
+
+# Platform referrer address (hardcoded in deployment script)
+# Platform referrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F
+
 BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
 BASE_MAINNET_RPC_URL=https://mainnet.base.org
 

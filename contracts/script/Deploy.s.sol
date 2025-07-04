@@ -83,7 +83,7 @@ contract DeployScript is Script {
             // Base Sepolia
             config = NetworkConfig({
                 name: "Base Sepolia",
-                platformReferrer: deployer, // Use deployer as platform referrer for testnet
+                platformReferrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F, // Platform referrer for coin rewards
                 initialTokenSupply: 100000000000 * 10**18, // 100B tokens
                 initialRewardsPool: 50000 * 10**18 // 50K tokens for rewards
             });
@@ -91,7 +91,7 @@ contract DeployScript is Script {
             // Base Mainnet
             config = NetworkConfig({
                 name: "Base Mainnet",
-                platformReferrer: vm.envAddress("PLATFORM_REFERRER"), // Must be set in .env
+                platformReferrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F, // Platform referrer for coin rewards
                 initialTokenSupply: 100000000000 * 10**18, // 100B tokens
                 initialRewardsPool: 100000 * 10**18 // 100K tokens for rewards
             });
@@ -218,11 +218,11 @@ contract DeployScript is Script {
             return;
         }
         
-        // New token deployment - fund as usual
-        hotdogToken.mint(deployer, config.initialRewardsPool);
-        console2.log("Minted", config.initialRewardsPool / 10**18, "HOTDOG tokens for rewards pool");
+        // New token deployment - use already minted tokens for rewards pool
+        // (constructor already minted all 100B tokens to deployer)
+        console2.log("Using", config.initialRewardsPool / 10**18, "HOTDOG tokens from initial supply for rewards pool");
         
-        // Approve and deposit rewards
+        // Approve and deposit rewards from deployer's balance
         hotdogToken.approve(address(hotdogStaking), config.initialRewardsPool);
         hotdogStaking.depositRewards(config.initialRewardsPool);
         

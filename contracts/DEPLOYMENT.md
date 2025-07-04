@@ -39,8 +39,8 @@ This will create a `.env` file. Fill it out with your values:
 # Private key for deployment (without 0x prefix)
 PRIVATE_KEY=your_private_key_here
 
-# Platform referrer address (required for mainnet)
-PLATFORM_REFERRER=0x0000000000000000000000000000000000000000
+# Platform referrer address (hardcoded in deployment script)
+# Platform referrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F
 
 # Etherscan API key for contract verification
 ETHERSCAN_API_KEY=your_etherscan_api_key_here
@@ -122,7 +122,7 @@ The deployment script automatically:
 
 ### Base Mainnet
 - Chain ID: 8453
-- Platform referrer: Must be set in `.env` file
+- Platform referrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F (hardcoded)
 - Initial rewards: 100,000 HOTDOG tokens
 - Explorer: https://basescan.org
 
@@ -215,15 +215,11 @@ forge verify-contract \
    - Base Sepolia: Get testnet ETH from the faucet
    - Base Mainnet: You need real ETH
 
-2. **"PLATFORM_REFERRER not set"**
-   - For mainnet deployment, you must set a valid platform referrer address
-   - This cannot be the zero address
-
-3. **"Contract verification failed"**
+2. **"Contract verification failed"**
    - Check that your Etherscan API key is valid
    - Verification can be done manually later if needed
 
-4. **"RPC URL not responding"**
+3. **"RPC URL not responding"**
    - Try using a different RPC URL in your `.env` file
    - Check if the network is experiencing issues
 
