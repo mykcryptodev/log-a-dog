@@ -25,6 +25,10 @@ class MyDocument extends Document {
           <meta property="twitter:description" content="Track how many hotdogs you eat and compete against your friends!" />
           <meta property="twitter:image" content="https://logadog.xyz/images/og-image.png" />
 
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+          <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
           {/* Additional tags here */}
         </Head>
         <body>

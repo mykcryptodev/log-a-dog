@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
@@ -33,6 +33,13 @@ export const getStaticProps = async () => {
 
 export default function Home() {
   const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
+  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }, []);
 
   return (
     <>
@@ -45,14 +52,12 @@ export default function Home() {
       <main className="flex min-h-screen flex-col items-center justify-center">
         <LeaderboardBanner refetchTimestamp={refetchTimestamp} />
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pt-8 pb-8">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
-            <Image
-              src="/images/banner.png"
-              alt="Log a Dog"
-              width={500}
-              height={500}
-              priority
-            />
+          <h1
+            className={`font-league flex flex-col items-center text-5xl font-extrabold tracking-tight sm:text-[5rem] ${mounted ? (userPrefersDarkMode ? 'text-white' : 'text-black') : ''}`}
+            style={{ filter: 'drop-shadow(0 -9px 19px rgba(236, 72, 153, 0.75)) drop-shadow(0 -6px 15px rgba(254, 240, 138, 0.5))' }}
+          >
+            <span>Log a Dog</span>
+            <span className="sm:text-4xl text-2xl">Season 2</span>
           </h1>
           <div className="flex items-center gap-2 -mt-8">
             <p className="sm:text-lg text-sm text-center max-w-xs">{APP_DESCRIPTION}</p>
