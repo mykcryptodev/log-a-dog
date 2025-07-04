@@ -3,7 +3,7 @@ import { baseSepolia, base } from "thirdweb/chains";
 type ContractAddress = Record<number, string>;
 
 export const LOG_A_DOG: ContractAddress = {
-  [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
+  [base.id]: "0x61f47EC6D1d0ef9b095574D7b76cF0467d13fB07",
   [baseSepolia.id]: "0xa01Ee37F0A704221f5Bf3772a4207380090e1d32",
 }
 

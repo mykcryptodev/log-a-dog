@@ -77,8 +77,8 @@ BASE_MAINNET_RPC_URL=https://mainnet.base.org
 The deployment script deploys and configures the complete ecosystem:
 
 ### 1. **HotdogToken** (ERC-20)
-- Initial supply: 1,000,000 HOTDOG tokens
-- Max supply: 10,000,000 HOTDOG tokens
+- Initial supply: 100,000,000,000 HOTDOG tokens
+- Max supply: 100,000,000,000 HOTDOG tokens
 - Minting capabilities for rewards
 
 ### 2. **HotdogStaking**
@@ -171,8 +171,8 @@ AttestationManager: 0xijkl...
 LogADog: 0xmnop...
 
 === TOKEN INFO ===
-Total Supply: 1000000 HOTDOG
-Max Supply: 10000000 HOTDOG
+Total Supply: 100000000000 HOTDOG
+Max Supply: 100000000000 HOTDOG
 Rewards Pool: 50000 HOTDOG
 ```
 

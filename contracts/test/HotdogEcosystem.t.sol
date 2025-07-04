@@ -73,7 +73,7 @@ contract HotdogEcosystemTest is Test {
     function testTokenDeployment() public view {
         assertEq(hotdogToken.name(), "Hotdog Token");
         assertEq(hotdogToken.symbol(), "HOTDOG");
-        assertEq(hotdogToken.totalSupply(), 1_000_000 * 10**18);
+        assertEq(hotdogToken.totalSupply(), 100_000_000_000 * 10**18);
     }
 
     function testStaking() public {

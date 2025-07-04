@@ -84,7 +84,7 @@ contract DeployScript is Script {
             config = NetworkConfig({
                 name: "Base Sepolia",
                 platformReferrer: deployer, // Use deployer as platform referrer for testnet
-                initialTokenSupply: 1000000 * 10**18, // 1M tokens
+                initialTokenSupply: 100000000000 * 10**18, // 100B tokens
                 initialRewardsPool: 50000 * 10**18 // 50K tokens for rewards
             });
         } else if (chainId == 8453) {
@@ -92,7 +92,7 @@ contract DeployScript is Script {
             config = NetworkConfig({
                 name: "Base Mainnet",
                 platformReferrer: vm.envAddress("PLATFORM_REFERRER"), // Must be set in .env
-                initialTokenSupply: 1000000 * 10**18, // 1M tokens
+                initialTokenSupply: 100000000000 * 10**18, // 100B tokens
                 initialRewardsPool: 100000 * 10**18 // 100K tokens for rewards
             });
         } else {
@@ -209,27 +209,18 @@ contract DeployScript is Script {
         console2.log("Funding initial rewards pool...");
         
         if (existingHotdogToken != address(0)) {
-            // Check if deployer has minter role
-            if (hotdogToken.hasRole(hotdogToken.MINTER_ROLE(), deployer)) {
-                // Can mint new tokens
-                hotdogToken.mint(deployer, config.initialRewardsPool);
-                console2.log("Minted", config.initialRewardsPool / 10**18, "HOTDOG tokens for rewards pool");
-            } else {
-                // Check deployer's balance
-                uint256 balance = hotdogToken.balanceOf(deployer);
-                console2.log("Deployer balance:", balance / 10**18, "HOTDOG");
-                
-                if (balance < config.initialRewardsPool) {
-                    console2.log("WARNING: Insufficient balance to fund rewards pool");
-                    console2.log("Required:", config.initialRewardsPool / 10**18, "HOTDOG");
-                    console2.log("Please fund rewards pool manually or grant MINTER_ROLE to deployer");
-                    return;
-                }
-            }
-        } else {
-            // New token - mint as usual
-            hotdogToken.mint(deployer, config.initialRewardsPool);
+            // Using existing token - skip automatic funding
+            console2.log("Using existing HotdogToken - skipping automatic rewards pool funding");
+            console2.log("Please manually fund the rewards pool by calling:");
+            console2.log("1. hotdogToken.approve(stakingContract, amount)");
+            console2.log("2. stakingContract.depositRewards(amount)");
+            console2.log("HotdogStaking address:", address(hotdogStaking));
+            return;
         }
+        
+        // New token deployment - fund as usual
+        hotdogToken.mint(deployer, config.initialRewardsPool);
+        console2.log("Minted", config.initialRewardsPool / 10**18, "HOTDOG tokens for rewards pool");
         
         // Approve and deposit rewards
         hotdogToken.approve(address(hotdogStaking), config.initialRewardsPool);
@@ -252,8 +243,14 @@ contract DeployScript is Script {
         console2.log("LogADog:", address(logADog));
         console2.log("\n=== TOKEN INFO ===");
         console2.log("Total Supply:", hotdogToken.totalSupply() / 10**18, "HOTDOG");
-        console2.log("Max Supply:", 10000000, "HOTDOG"); // 10M tokens max supply
-        console2.log("Rewards Pool:", config.initialRewardsPool / 10**18, "HOTDOG");
+        console2.log("Max Supply:", 100000000000, "HOTDOG"); // 100B tokens max supply
+        
+        if (existingHotdogToken != address(0)) {
+            console2.log("Rewards Pool: NOT FUNDED (using existing token)");
+            console2.log("Please fund manually:", config.initialRewardsPool / 10**18, "HOTDOG recommended");
+        } else {
+            console2.log("Rewards Pool:", config.initialRewardsPool / 10**18, "HOTDOG");
+        }
     }
     
     function _saveDeploymentInfo() internal {
