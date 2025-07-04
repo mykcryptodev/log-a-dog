@@ -206,7 +206,7 @@ const EarnPage: NextPage = () => {
                 </div>
                 <h3 className="mb-2 font-semibold">Vote with Stake</h3>
                 <p className="text-sm text-base-content/70">
-                  Stake minimum 50 $HOTDOG on your vote. Higher stakes = higher
+                  Stake minimum 30,000 $HOTDOG on your vote. Higher stakes = higher
                   potential rewards.
                 </p>
               </div>

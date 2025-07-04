@@ -18,7 +18,7 @@ contract FlashLoanProtectionTest is Test {
     address public admin;
     
     uint256 constant INITIAL_REWARDS_POOL = 10000 * 10**18;
-    uint256 constant STAKE_AMOUNT = 1000 * 10**18;
+    uint256 constant STAKE_AMOUNT = 600000 * 10**18;
     
     function setUp() public {
         admin = address(this);
@@ -74,15 +74,15 @@ contract FlashLoanProtectionTest is Test {
     function testStakeTimestampUpdatesOnAdditionalStake() public {
         vm.startPrank(user1);
         
-        // User stakes tokens
+        // User stakes tokens (first stake with minimum amount)
         hotdogToken.approve(address(stakingContract), STAKE_AMOUNT);
-        stakingContract.stake(STAKE_AMOUNT / 2);
+        stakingContract.stake(300000 * 10**18); // Use minimum stake amount
         
         // Fast forward 30 minutes
         vm.warp(block.timestamp + 30 minutes);
         
         // Stake additional tokens (this should update the timestamp)
-        stakingContract.stake(STAKE_AMOUNT / 2);
+        stakingContract.stake(STAKE_AMOUNT - 300000 * 10**18); // Stake the rest
         
         // Try to unstake immediately - should fail because timestamp was updated
         vm.expectRevert("Minimum stake duration not met");

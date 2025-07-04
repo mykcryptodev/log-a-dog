@@ -181,7 +181,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         )}
         {amountBelowMinimum && Number(amount) > 0 && (
           <div className="text-center text-sm text-warning">
-            Minimum stake is 100 $HOTDOG tokens
+            Minimum stake is 300,000 $HOTDOG tokens
           </div>
         )}
 

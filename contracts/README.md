@@ -73,14 +73,14 @@ forge test --gas-report
 - **Features**: Minting for rewards, access control
 
 ### HotdogStaking
-- **Min Stake**: 100 HOTDOG
+- **Min Stake**: 300,000 HOTDOG
 - **Base APY**: 10%
 - **Slashing**: 15% for wrong attestations
 - **Features**: Token locking, rewards distribution
 
 ### AttestationManager
 - **Voting Window**: 48 hours
-- **Min Attestation Stake**: 50 HOTDOG
+- **Min Attestation Stake**: 30,000 HOTDOG
 - **Features**: Economic incentives, slashing, rewards
 
 ### LogADog
@@ -94,7 +94,7 @@ forge test --gas-report
 - **Bonus Rewards**: Additional rewards from slashed tokens
 
 ### Attestation Economics
-- **Stake Requirement**: 50 HOTDOG minimum
+- **Stake Requirement**: 30,000 HOTDOG minimum
 - **Voting Period**: 48 hours
 - **Rewards**: Winners get proportional share of 15% slashed from losers
 - **Slashing**: 15% of stake for wrong attestations

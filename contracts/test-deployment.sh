@@ -161,7 +161,7 @@ call_contract "Total supply" $HOTDOG_TOKEN "totalSupply()" "0x.*" # Any non-zero
 # Test 2: HotdogStaking configuration
 print_status "2. Testing HotdogStaking..."
 call_contract "Staking token address" $HOTDOG_STAKING "hotdogToken()" ".*$HOTDOG_TOKEN.*"
-call_contract "Minimum stake" $HOTDOG_STAKING "MINIMUM_STAKE()" "0x.*" # Should be 100 HOTDOG
+call_contract "Minimum stake" $HOTDOG_STAKING "MINIMUM_STAKE()" "0x.*" # Should be 300000 HOTDOG
 call_contract "Total staked" $HOTDOG_STAKING "totalStaked()" "0x.*"
 call_contract "Rewards pool" $HOTDOG_STAKING "rewardsPool()" "0x.*"
 

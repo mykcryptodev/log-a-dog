@@ -82,14 +82,14 @@ The deployment script deploys and configures the complete ecosystem:
 - Minting capabilities for rewards
 
 ### 2. **HotdogStaking**
-- Minimum stake: 100 HOTDOG tokens
+- Minimum stake: 300,000 HOTDOG tokens
 - Base APY: 10%
 - Slashing rate: 15% for wrong attestations
 - Initial rewards pool: 50K HOTDOG (testnet) / 100K HOTDOG (mainnet)
 
 ### 3. **AttestationManager**
 - 48-hour voting windows
-- Minimum attestation stake: 50 HOTDOG tokens
+- Minimum attestation stake: 30,000 HOTDOG tokens
 - Economic incentives for honest participation
 
 ### 4. **LogADog** (Main Contract)
