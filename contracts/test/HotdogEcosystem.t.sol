@@ -243,7 +243,7 @@ contract HotdogEcosystemTest is Test {
         // Check that attestation period was started
         (uint256 startTime, uint256 endTime, AttestationManager.AttestationStatus status,,,, ) = attestationManager.getAttestationPeriod(logId);
         assertTrue(startTime > 0);
-        assertEq(endTime, startTime + 3 minutes); // Attestation window is 3 minutes
+        assertEq(endTime, startTime + 48 hours); // Attestation window is 48 hours
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
     }
 
