@@ -8,7 +8,19 @@ import {
   encodeFunctionData,
   zeroAddress,
 } from "viem";
-import { smartAccountAbi } from "viem/constants";
+// Minimal ABI for ERC-1271 isValidSignature function
+const smartAccountAbi = [
+  {
+    name: "isValidSignature",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "hash", type: "bytes32" },
+      { name: "signature", type: "bytes" },
+    ],
+    outputs: [{ name: "", type: "bytes4" }],
+  },
+] as const;
 import type { Chain } from "wagmi/chains";
 
 import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from "~/constants";
