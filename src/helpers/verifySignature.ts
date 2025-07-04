@@ -57,6 +57,9 @@ const verifySignature = async(
         }, 
       });
       const client = getPublicClient(config);
+      if (!client) {
+        throw new Error("Failed to create public client");
+      }
       const hash = hashMessage(message);
       const data = encodeFunctionData({
         abi: smartAccountAbi,
