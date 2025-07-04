@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { type FC, useEffect, useState, useRef } from "react";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
@@ -107,7 +108,7 @@ export const TransactionStatus: FC<Props> = ({
         onResolved?.(false);
         break;
     }
-  }, [dataUpdatedAt, data, transactionId, successMessage, errorMessage]);
+  }, [dataUpdatedAt, data, transactionId, successMessage, errorMessage, onResolved, onTransactionHash]);
 
   return null; // We don't need to render anything since we're using toasts
 };

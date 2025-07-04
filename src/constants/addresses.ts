@@ -3,22 +3,22 @@ import { baseSepolia, base } from "thirdweb/chains";
 type ContractAddress = Record<number, string>;
 
 export const LOG_A_DOG: ContractAddress = {
-  [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
+  [base.id]: "0x6CfB88C8d0d7FFC563155e13C62b4Fa17bc25974",
   [baseSepolia.id]: "0xa01Ee37F0A704221f5Bf3772a4207380090e1d32",
 }
 
 export const STAKING: ContractAddress = {
-  [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
+  [base.id]: "0x388aC132F45bB5d6810BC5a6412a14935a5B70D6",
   [baseSepolia.id]: "0x605150F6be3E9b81963Cd6d895b7C11D73e34874",
 }
 
 export const ATTESTATION_MANAGER: ContractAddress = {
-  [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
+  [base.id]: "0xcBf054aA8FEb4fd0484E45b766B502Bc045076B8",
   [baseSepolia.id]: "0xC6073175c71Bd69dBb42aB92e024DD31BEE81f3A",
 }
 
 export const HOTDOG_TOKEN: ContractAddress = {
-  [base.id]: "0x82f276C283948b81f17EA5A98906Bd3159ccf4F5",
+  [base.id]: "0x61f47EC6D1d0ef9b095574D7b76cF0467d13fB07",
   [baseSepolia.id]: "0x113F2c74d66A5eFc1F114547cA97f6a1b62b0Bd8",
 }
 

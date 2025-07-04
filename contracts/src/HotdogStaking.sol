@@ -19,7 +19,7 @@ contract HotdogStaking is AccessControl, ReentrancyGuard {
     HotdogToken public immutable hotdogToken;
     
     // Staking parameters
-    uint256 public constant MINIMUM_STAKE = 100 * 10**18; // 100 HOTDOG minimum
+    uint256 public constant MINIMUM_STAKE = 300000 * 10**18; // 300,000 HOTDOG minimum
     uint256 public constant REWARD_END_TIME = 1756684800; // September 1, 2025 00:00:00 UTC
     uint256 public constant SLASH_PERCENTAGE = 15; // 15% slashing for wrong attestations
     uint256 public constant MINIMUM_STAKE_DURATION = 1 hours; // Minimum time before unstaking (flash loan protection)

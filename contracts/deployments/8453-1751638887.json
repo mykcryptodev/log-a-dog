@@ -1,0 +1,14 @@
+{
+  "network": "Base Mainnet",
+  "chainId": 8453,
+  "deployer": "0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38",
+  "platformReferrer": "0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F",
+  "contracts": {
+    "HotdogToken": "0x61f47EC6D1d0ef9b095574D7b76cF0467d13fB07",
+    "HotdogStaking": "0x388aC132F45bB5d6810BC5a6412a14935a5B70D6",
+    "AttestationManager": "0xcBf054aA8FEb4fd0484E45b766B502Bc045076B8",
+    "CoinDeploymentManager": "0xB249d4BB7400e8d6cFf4E7824ee2014A89a2bAAf",
+    "LogADog": "0x6CfB88C8d0d7FFC563155e13C62b4Fa17bc25974"
+  },
+  "timestamp": 1751638887
+}

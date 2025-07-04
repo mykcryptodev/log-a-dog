@@ -11,8 +11,8 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 contract HotdogToken is ERC20, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     
-    uint256 public constant INITIAL_SUPPLY = 1_000_000 * 10**18; // 1M tokens
-    uint256 public constant MAX_SUPPLY = 10_000_000 * 10**18; // 10M tokens max
+    uint256 public constant INITIAL_SUPPLY = 100_000_000_000 * 10**18; // 100B tokens
+    uint256 public constant MAX_SUPPLY = 100_000_000_000 * 10**18; // 100B tokens max
     
     constructor() ERC20("Hotdog Token", "HOTDOG") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);

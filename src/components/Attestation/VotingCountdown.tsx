@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { type FC, useContext, useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
@@ -27,8 +28,8 @@ interface Props {
 export const VotingCountdown: FC<Props> = ({
   timestamp,
   logId,
-  validAttestations,
-  invalidAttestations,
+  // validAttestations,
+  // invalidAttestations,
   onResolutionComplete,
   attestationPeriod,
 }) => {

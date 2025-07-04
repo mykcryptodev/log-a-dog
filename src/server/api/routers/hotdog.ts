@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
 import { z } from "zod";
 import { AI_AFFIRMATION, ATTESTATION_MANAGER, LOG_A_DOG, MODERATION, STAKING } from "~/constants/addresses";
 import { getContract } from "thirdweb";
@@ -15,7 +17,7 @@ import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, resolveAttestationPerio
 import { env } from "~/env";
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
-import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData, invalidateCache } from "~/server/utils/redis";
+import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData /*, invalidateCache */ } from "~/server/utils/redis";
 import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 import { encodePoolConfig } from "~/server/utils/poolConfig";
 import { upload } from "thirdweb/storage";
@@ -279,7 +281,7 @@ export const hotdogRouter = createTRPCRouter({
       const { chainId, user, start, limit } = input;
       console.log('GET ALL')
       // Generate cache key for this query
-      const cacheKey = `hotdogs:${chainId}:${user}:${start}:${limit}`;
+      // const cacheKey = `hotdogs:${chainId}:${user}:${start}:${limit}`;
       
       // TEMPORARILY DISABLE REDIS CACHE for development stability
       // const cachedData = await getCachedData<GetAllResponse>(cacheKey);
@@ -793,6 +795,7 @@ export const hotdogRouter = createTRPCRouter({
 
       const POOL_CONFIG = encodePoolConfig();
 
+      // Prepare base transaction
       const transaction = logHotdogOnBehalf({
         contract: getContract({
           address: LOG_A_DOG[chainId]!,
@@ -806,6 +809,14 @@ export const hotdogRouter = createTRPCRouter({
         poolConfig: POOL_CONFIG,
       });
 
+             // Create transaction with gas overrides
+       const transactionWithGas = {
+         ...transaction,
+         gas: BigInt(1000000), // 1M gas limit
+         maxFeePerGas: BigInt(50000000000), // 50 gwei
+         maxPriorityFeePerGas: BigInt(2000000000), // 2 gwei
+       };
+
       console.log({
         imageUri,
         metadataUri,
@@ -815,7 +826,7 @@ export const hotdogRouter = createTRPCRouter({
       })
       
       try {
-        const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
+        const { transactionId } = await serverWallet.enqueueTransaction({ transaction: transactionWithGas });
   
         // Invalidate Redis cache for all hotdog queries and leaderboard for this chain
         const hotdogPattern = `hotdogs:${chainId}:*`;

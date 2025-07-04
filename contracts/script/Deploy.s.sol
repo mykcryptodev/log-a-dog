@@ -83,16 +83,16 @@ contract DeployScript is Script {
             // Base Sepolia
             config = NetworkConfig({
                 name: "Base Sepolia",
-                platformReferrer: deployer, // Use deployer as platform referrer for testnet
-                initialTokenSupply: 1000000 * 10**18, // 1M tokens
+                platformReferrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F, // Platform referrer for coin rewards
+                initialTokenSupply: 100000000000 * 10**18, // 100B tokens
                 initialRewardsPool: 50000 * 10**18 // 50K tokens for rewards
             });
         } else if (chainId == 8453) {
             // Base Mainnet
             config = NetworkConfig({
                 name: "Base Mainnet",
-                platformReferrer: vm.envAddress("PLATFORM_REFERRER"), // Must be set in .env
-                initialTokenSupply: 1000000 * 10**18, // 1M tokens
+                platformReferrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F, // Platform referrer for coin rewards
+                initialTokenSupply: 100000000000 * 10**18, // 100B tokens
                 initialRewardsPool: 100000 * 10**18 // 100K tokens for rewards
             });
         } else {
@@ -109,11 +109,11 @@ contract DeployScript is Script {
             hotdogToken = HotdogToken(existingHotdogToken);
             console2.log("Using existing HotdogToken at:", address(hotdogToken));
             
-            // Verify it's a valid HotdogToken
-            try hotdogToken.MINTER_ROLE() returns (bytes32) {
-                console2.log("Verified HotdogToken interface");
+            // Basic validation - check if it's an ERC20 token
+            try hotdogToken.totalSupply() returns (uint256 supply) {
+                console2.log("Verified existing token is ERC20 compatible, total supply:", supply);
             } catch {
-                revert("Invalid HotdogToken address - contract does not have expected interface");
+                revert("Invalid token address - contract does not implement ERC20 interface");
             }
         } else {
             // Deploy new token
@@ -161,21 +161,29 @@ contract DeployScript is Script {
         
         // Check if we need to configure roles on HotdogToken
         if (existingHotdogToken != address(0)) {
-            // Using existing token - check if deployer has admin role
-            bytes32 adminRole = hotdogToken.DEFAULT_ADMIN_ROLE();
-            if (!hotdogToken.hasRole(adminRole, deployer)) {
-                console2.log("WARNING: Deployer does not have admin role on existing HotdogToken");
-                console2.log("Please manually grant MINTER_ROLE to:");
-                console2.log("- HotdogStaking:", address(hotdogStaking));
-                console2.log("- AttestationManager:", address(attestationManager));
-            } else {
-                // Grant minter role to staking contract for rewards
-                hotdogToken.grantRole(hotdogToken.MINTER_ROLE(), address(hotdogStaking));
-                console2.log("Granted MINTER_ROLE to HotdogStaking");
-                
-                // Grant minter role to attestation manager for rewards
-                hotdogToken.grantRole(hotdogToken.MINTER_ROLE(), address(attestationManager));
-                console2.log("Granted MINTER_ROLE to AttestationManager");
+            // Using existing token - try to configure roles if it supports AccessControl
+            try hotdogToken.DEFAULT_ADMIN_ROLE() returns (bytes32 adminRole) {
+                console2.log("Existing token supports AccessControl, checking permissions...");
+                if (!hotdogToken.hasRole(adminRole, deployer)) {
+                    console2.log("WARNING: Deployer does not have admin role on existing HotdogToken");
+                    console2.log("Please manually grant MINTER_ROLE to:");
+                    console2.log("- HotdogStaking:", address(hotdogStaking));
+                    console2.log("- AttestationManager: NOT NEEDED (only redistributes existing tokens)");
+                } else {
+                    // Grant minter role to staking contract for rewards
+                    hotdogToken.grantRole(hotdogToken.MINTER_ROLE(), address(hotdogStaking));
+                    console2.log("Granted MINTER_ROLE to HotdogStaking");
+                    
+                    // AttestationManager doesn't need minting - it only redistributes existing tokens
+                    console2.log("AttestationManager doesn't need MINTER_ROLE (only redistributes existing tokens)");
+                }
+            } catch {
+                console2.log("Existing token does not support AccessControl roles");
+                console2.log("WARNING: Cannot automatically configure minting permissions");
+                console2.log("The ecosystem will work, but some features may be limited:");
+                console2.log("- Staking rewards will not be mintable (but can use pre-funded pool)");
+                console2.log("- Attestation rewards use existing tokens (no minting needed)");
+                console2.log("- Consider using a token with sufficient pre-minted supply");
             }
         } else {
             // New token deployment - grant roles as usual
@@ -183,9 +191,8 @@ contract DeployScript is Script {
             hotdogToken.grantRole(hotdogToken.MINTER_ROLE(), address(hotdogStaking));
             console2.log("Granted MINTER_ROLE to HotdogStaking");
             
-            // Grant minter role to attestation manager for rewards
-            hotdogToken.grantRole(hotdogToken.MINTER_ROLE(), address(attestationManager));
-            console2.log("Granted MINTER_ROLE to AttestationManager");
+            // AttestationManager doesn't need minting - it only redistributes existing tokens
+            console2.log("AttestationManager doesn't need MINTER_ROLE (only redistributes existing tokens)");
         }
         
         // Grant attestation manager role to attestation manager in staking contract
@@ -209,29 +216,20 @@ contract DeployScript is Script {
         console2.log("Funding initial rewards pool...");
         
         if (existingHotdogToken != address(0)) {
-            // Check if deployer has minter role
-            if (hotdogToken.hasRole(hotdogToken.MINTER_ROLE(), deployer)) {
-                // Can mint new tokens
-                hotdogToken.mint(deployer, config.initialRewardsPool);
-                console2.log("Minted", config.initialRewardsPool / 10**18, "HOTDOG tokens for rewards pool");
-            } else {
-                // Check deployer's balance
-                uint256 balance = hotdogToken.balanceOf(deployer);
-                console2.log("Deployer balance:", balance / 10**18, "HOTDOG");
-                
-                if (balance < config.initialRewardsPool) {
-                    console2.log("WARNING: Insufficient balance to fund rewards pool");
-                    console2.log("Required:", config.initialRewardsPool / 10**18, "HOTDOG");
-                    console2.log("Please fund rewards pool manually or grant MINTER_ROLE to deployer");
-                    return;
-                }
-            }
-        } else {
-            // New token - mint as usual
-            hotdogToken.mint(deployer, config.initialRewardsPool);
+            // Using existing token - skip automatic funding
+            console2.log("Using existing HotdogToken - skipping automatic rewards pool funding");
+            console2.log("Please manually fund the rewards pool by calling:");
+            console2.log("1. hotdogToken.approve(stakingContract, amount)");
+            console2.log("2. stakingContract.depositRewards(amount)");
+            console2.log("HotdogStaking address:", address(hotdogStaking));
+            return;
         }
         
-        // Approve and deposit rewards
+        // New token deployment - use already minted tokens for rewards pool
+        // (constructor already minted all 100B tokens to deployer)
+        console2.log("Using", config.initialRewardsPool / 10**18, "HOTDOG tokens from initial supply for rewards pool");
+        
+        // Approve and deposit rewards from deployer's balance
         hotdogToken.approve(address(hotdogStaking), config.initialRewardsPool);
         hotdogStaking.depositRewards(config.initialRewardsPool);
         
@@ -252,8 +250,14 @@ contract DeployScript is Script {
         console2.log("LogADog:", address(logADog));
         console2.log("\n=== TOKEN INFO ===");
         console2.log("Total Supply:", hotdogToken.totalSupply() / 10**18, "HOTDOG");
-        console2.log("Max Supply:", 10000000, "HOTDOG"); // 10M tokens max supply
-        console2.log("Rewards Pool:", config.initialRewardsPool / 10**18, "HOTDOG");
+        console2.log("Max Supply:", 100000000000, "HOTDOG"); // 100B tokens max supply
+        
+        if (existingHotdogToken != address(0)) {
+            console2.log("Rewards Pool: NOT FUNDED (using existing token)");
+            console2.log("Please fund manually:", config.initialRewardsPool / 10**18, "HOTDOG recommended");
+        } else {
+            console2.log("Rewards Pool:", config.initialRewardsPool / 10**18, "HOTDOG");
+        }
     }
     
     function _saveDeploymentInfo() internal {

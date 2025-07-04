@@ -54,9 +54,9 @@ contract HotdogEcosystemTest is Test {
         coinDeploymentManager.addDeployer(address(logADog)); // LogADog needs deployer role for coin deployment
         
         // Distribute tokens to users
-        hotdogToken.transfer(user1, 1000 * 10**18);
-        hotdogToken.transfer(user2, 1000 * 10**18);
-        hotdogToken.transfer(user3, 1000 * 10**18);
+        hotdogToken.transfer(user1, 1000000 * 10**18);
+        hotdogToken.transfer(user2, 1000000 * 10**18);
+        hotdogToken.transfer(user3, 1000000 * 10**18);
         
         // Setup initial rewards pool
         hotdogToken.approve(address(stakingContract), INITIAL_REWARDS_POOL);
@@ -73,19 +73,19 @@ contract HotdogEcosystemTest is Test {
     function testTokenDeployment() public view {
         assertEq(hotdogToken.name(), "Hotdog Token");
         assertEq(hotdogToken.symbol(), "HOTDOG");
-        assertEq(hotdogToken.totalSupply(), 1_000_000 * 10**18);
+        assertEq(hotdogToken.totalSupply(), 100_000_000_000 * 10**18);
     }
 
     function testStaking() public {
         vm.startPrank(user1);
         
         // Approve and stake tokens
-        hotdogToken.approve(address(stakingContract), 200 * 10**18);
-        stakingContract.stake(200 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         
         // Check stake info
         (uint256 amount, uint256 rewardDebt, uint256 pendingRewards, bool isActive, uint256 stakeTimestamp) = stakingContract.stakes(user1);
-        assertEq(amount, 200 * 10**18);
+        assertEq(amount, 300000 * 10**18);
         assertTrue(isActive);
         assertEq(pendingRewards, 0);
         assertEq(rewardDebt, 0); // Should be 0 since accumulatedRewardPerToken is 0 at start
@@ -101,8 +101,8 @@ contract HotdogEcosystemTest is Test {
         vm.startPrank(user1);
         
         // Stake tokens
-        hotdogToken.approve(address(stakingContract), 200 * 10**18);
-        stakingContract.stake(200 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         
         vm.stopPrank();
         
@@ -113,7 +113,7 @@ contract HotdogEcosystemTest is Test {
         uint256 pendingRewards = stakingContract.getPendingRewards(user1);
         assertTrue(pendingRewards > 0, "Should have earned some rewards after 1 day");
         
-        // The rewards should be proportional: user has 200 tokens out of 200 total (100% of rewards)
+        // The rewards should be proportional: user has 300000 tokens out of 300000 total (100% of rewards)
         // Emission rate = rewardsPool / timeRemaining
         // 1 day of rewards should be (INITIAL_REWARDS_POOL * 1 day) / (REWARD_END_TIME - current_time)
         uint256 timeRemaining = REWARD_END_TIME - block.timestamp;
@@ -126,16 +126,16 @@ contract HotdogEcosystemTest is Test {
         // Set a specific timestamp for predictable testing
         vm.warp(1640995200); // January 1, 2022 00:00:00 UTC
         
-        // User1 stakes 300 tokens
+        // User1 stakes 900000 tokens
         vm.startPrank(user1);
-        hotdogToken.approve(address(stakingContract), 300 * 10**18);
-        stakingContract.stake(300 * 10**18);
+        hotdogToken.approve(address(stakingContract), 900000 * 10**18);
+        stakingContract.stake(900000 * 10**18);
         vm.stopPrank();
         
-        // User2 stakes 100 tokens (user1 has 3x more)
+        // User2 stakes 300000 tokens (user1 has 3x more)
         vm.startPrank(user2);
-        hotdogToken.approve(address(stakingContract), 100 * 10**18);
-        stakingContract.stake(100 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
         
         // Fast forward time
@@ -154,8 +154,8 @@ contract HotdogEcosystemTest is Test {
         vm.warp(REWARD_END_TIME - 1 days); // 1 day before end
         
         vm.startPrank(user1);
-        hotdogToken.approve(address(stakingContract), 200 * 10**18);
-        stakingContract.stake(200 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
         
         // Move to exactly the end time
@@ -174,10 +174,10 @@ contract HotdogEcosystemTest is Test {
         vm.warp(REWARD_END_TIME + 1); // Past the reward end time
         
         vm.startPrank(user1);
-        hotdogToken.approve(address(stakingContract), 200 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
         
         vm.expectRevert("Reward period has ended");
-        stakingContract.stake(200 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
     }
 
@@ -243,7 +243,7 @@ contract HotdogEcosystemTest is Test {
         // Check that attestation period was started
         (uint256 startTime, uint256 endTime, AttestationManager.AttestationStatus status,,,, ) = attestationManager.getAttestationPeriod(logId);
         assertTrue(startTime > 0);
-        assertEq(endTime, startTime + 3 minutes); // Attestation window is 3 minutes
+        assertEq(endTime, startTime + 48 hours); // Attestation window is 48 hours
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
     }
 
@@ -265,23 +265,23 @@ contract HotdogEcosystemTest is Test {
         
         // User2 attests valid
         vm.startPrank(user2);
-        attestationManager.attestToLog(logId, true, 100 * 10**18);
+        attestationManager.attestToLog(logId, true, 100000 * 10**18);
         vm.stopPrank();
         
         // User3 attests invalid
         vm.startPrank(user3);
-        attestationManager.attestToLog(logId, false, 50 * 10**18);
+        attestationManager.attestToLog(logId, false, 50000 * 10**18);
         vm.stopPrank();
         
         // Check attestation period state
         (,, AttestationManager.AttestationStatus status, uint256 totalValidStake, uint256 totalInvalidStake,,) = attestationManager.getAttestationPeriod(logId);
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
-        assertEq(totalValidStake, 100 * 10**18);
-        assertEq(totalInvalidStake, 50 * 10**18);
+        assertEq(totalValidStake, 100000 * 10**18);
+        assertEq(totalInvalidStake, 50000 * 10**18);
         
         // Check that tokens are locked
-        assertEq(stakingContract.lockedForAttestation(user2), 100 * 10**18);
-        assertEq(stakingContract.lockedForAttestation(user3), 50 * 10**18);
+        assertEq(stakingContract.lockedForAttestation(user2), 100000 * 10**18);
+        assertEq(stakingContract.lockedForAttestation(user3), 50000 * 10**18);
     }
 
     function testLockedTokensStillEarnRewards() public {
@@ -292,12 +292,12 @@ contract HotdogEcosystemTest is Test {
         
         // Use the attestation manager to lock tokens (since it has the proper role)
         vm.startPrank(address(attestationManager));
-        stakingContract.lockTokensForAttestation(user2, 100 * 10**18);
+        stakingContract.lockTokensForAttestation(user2, 100000 * 10**18);
         vm.stopPrank();
         
         // Verify tokens are locked
-        assertEq(stakingContract.lockedForAttestation(user2), 100 * 10**18);
-        assertEq(stakingContract.getAvailableStake(user2), 200 * 10**18); // 300 - 100 locked
+        assertEq(stakingContract.lockedForAttestation(user2), 100000 * 10**18);
+        assertEq(stakingContract.getAvailableStake(user2), 200000 * 10**18); // 300000 - 100000 locked
         
         // Fast forward time
         vm.warp(block.timestamp + 1 days);
@@ -306,10 +306,10 @@ contract HotdogEcosystemTest is Test {
         uint256 user2Rewards = stakingContract.getPendingRewards(user2);
         assertTrue(user2Rewards > 0, "Locked tokens should still earn rewards");
         
-        // Rewards should be calculated on the full 300 tokens, not just the 200 available
-        // User2 has 300 out of 900 total tokens (1/3 of rewards)  
+        // Rewards should be calculated on the full 300000 tokens, not just the 200000 available
+        // User2 has 300000 out of 900000 total tokens (1/3 of rewards)  
         uint256 timeRemaining = REWARD_END_TIME - block.timestamp;
-        uint256 expectedRewards = (INITIAL_REWARDS_POOL * 1 days * 300) / (timeRemaining * 900);
+        uint256 expectedRewards = (INITIAL_REWARDS_POOL * 1 days * 300000) / (timeRemaining * 900000);
         assertApproxEqRel(user2Rewards, expectedRewards, 0.01e18);
     }
 
@@ -331,12 +331,12 @@ contract HotdogEcosystemTest is Test {
         
         // User2 attests valid with more stake
         vm.startPrank(user2);
-        attestationManager.attestToLog(logId, true, 100 * 10**18);
+        attestationManager.attestToLog(logId, true, 100000 * 10**18);
         vm.stopPrank();
         
         // User3 attests invalid with less stake
         vm.startPrank(user3);
-        attestationManager.attestToLog(logId, false, 50 * 10**18);
+        attestationManager.attestToLog(logId, false, 50000 * 10**18);
         vm.stopPrank();
         
         // Fast forward past attestation window
@@ -358,7 +358,7 @@ contract HotdogEcosystemTest is Test {
         assertEq(stakingContract.lockedForAttestation(user2), 0);
         
         // Check that loser was slashed
-        uint256 expectedSlash = (50 * 10**18 * 15) / 100; // 15% of 50 tokens
+        uint256 expectedSlash = (50000 * 10**18 * 15) / 100; // 15% of 50000 tokens
         assertEq(stakingContract.lockedForAttestation(user3), 0);
         
         // Check that winner received rewards
@@ -382,11 +382,11 @@ contract HotdogEcosystemTest is Test {
         
         // Test that the old LogADog function now redirects
         vm.expectRevert("Please call attestToLog directly on the AttestationManager contract");
-        logADog.attestHotdogLog(logId, true, 100 * 10**18);
+        logADog.attestHotdogLog(logId, true, 30000 * 10**18);
         
         // Test that users cannot attest to their own logs via AttestationManager
         vm.expectRevert("Cannot attest to your own log");
-        attestationManager.attestToLog(logId, true, 100 * 10**18);
+        attestationManager.attestToLog(logId, true, 30000 * 10**18);
         
         vm.stopPrank();
     }
@@ -407,7 +407,7 @@ contract HotdogEcosystemTest is Test {
         
         vm.startPrank(user2);
         vm.expectRevert("Stake amount too low");
-        attestationManager.attestToLog(logId, true, 10 * 10**18); // Below minimum
+        attestationManager.attestToLog(logId, true, 10000 * 10**18); // Below minimum
         vm.stopPrank();
     }
 
@@ -430,7 +430,7 @@ contract HotdogEcosystemTest is Test {
         
         vm.startPrank(user2);
         vm.expectRevert("Attestation period has ended");
-        attestationManager.attestToLog(logId, true, 100 * 10**18);
+        attestationManager.attestToLog(logId, true, 30000 * 10**18);
         vm.stopPrank();
     }
 
@@ -438,21 +438,24 @@ contract HotdogEcosystemTest is Test {
         vm.startPrank(user1);
         
         // Stake tokens
-        hotdogToken.approve(address(stakingContract), 200 * 10**18);
-        stakingContract.stake(200 * 10**18);
+        hotdogToken.approve(address(stakingContract), 600000 * 10**18);
+        stakingContract.stake(600000 * 10**18);
+        
+        // Fast forward past minimum staking duration
+        vm.warp(block.timestamp + 1 hours + 1);
         
         // Fast forward past minimum staking duration
         vm.warp(block.timestamp + 1 hours + 1);
         
         // Unstake some tokens
-        stakingContract.unstake(50 * 10**18);
+        stakingContract.unstake(100000 * 10**18);
         
         // Check remaining stake
         (uint256 amount,,,,) = stakingContract.stakes(user1);
-        assertEq(amount, 150 * 10**18);
+        assertEq(amount, 500000 * 10**18);
         
         // Check token balance
-        assertEq(hotdogToken.balanceOf(user1), 850 * 10**18); // 1000 - 200 + 50
+        assertEq(hotdogToken.balanceOf(user1), 500000 * 10**18); // 1000000 - 600000 + 100000
         
         vm.stopPrank();
     }
@@ -474,17 +477,20 @@ contract HotdogEcosystemTest is Test {
         
         // User2 attests
         vm.startPrank(user2);
-        attestationManager.attestToLog(logId, true, 100 * 10**18);
+        attestationManager.attestToLog(logId, true, 100000 * 10**18);
+        
+        // Fast forward past minimum staking duration
+        vm.warp(block.timestamp + 1 hours + 1);
         
         // Fast forward past minimum staking duration
         vm.warp(block.timestamp + 1 hours + 1);
         
         // Try to unstake locked tokens
         vm.expectRevert("Tokens locked for attestation");
-        stakingContract.unstake(250 * 10**18); // More than available (300 staked - 100 locked = 200 available)
+        stakingContract.unstake(250000 * 10**18); // More than available (300000 staked - 100000 locked = 200000 available)
         
         // Should be able to unstake available tokens
-        stakingContract.unstake(50 * 10**18); // 200 available - 100 locked = 100 available, unstaking 50
+        stakingContract.unstake(50000 * 10**18); // 200000 available, unstaking 50000
         
         vm.stopPrank();
     }
@@ -492,36 +498,36 @@ contract HotdogEcosystemTest is Test {
     function _setupStaking() internal {
         // Setup staking for test users
         vm.startPrank(user1);
-        hotdogToken.approve(address(stakingContract), 300 * 10**18);
-        stakingContract.stake(300 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
         
         vm.startPrank(user2);
-        hotdogToken.approve(address(stakingContract), 300 * 10**18);
-        stakingContract.stake(300 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
         
         vm.startPrank(user3);
-        hotdogToken.approve(address(stakingContract), 300 * 10**18);
-        stakingContract.stake(300 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
     }
 
     function testOperatorAttestOnBehalf() public {
         // Setup: Deploy token, stake tokens, and log a hotdog
-        hotdogToken.transfer(user1, 1000 * 10**18);
-        hotdogToken.transfer(user2, 1000 * 10**18);
+        hotdogToken.transfer(user1, 1000000 * 10**18);
+        hotdogToken.transfer(user2, 1000000 * 10**18);
 
         // User1 stakes tokens
         vm.startPrank(user1);
-        hotdogToken.approve(address(stakingContract), 300 * 10**18);
-        stakingContract.stake(300 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
 
         // User2 stakes tokens
         vm.startPrank(user2);
-        hotdogToken.approve(address(stakingContract), 300 * 10**18);
-        stakingContract.stake(300 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
 
         // User1 logs a hotdog
@@ -531,33 +537,33 @@ contract HotdogEcosystemTest is Test {
 
         // Operator attests on behalf of user2
         vm.startPrank(operator);
-        attestationManager.attestToLogOnBehalf(logId, user2, true, 50 * 10**18);
+        attestationManager.attestToLogOnBehalf(logId, user2, true, 50000 * 10**18);
         vm.stopPrank();
 
         // Verify attestation was recorded
         assertTrue(attestationManager.hasUserAttested(logId, user2));
-        assertEq(attestationManager.getUserStakeInAttestation(logId, user2), 50 * 10**18);
+        assertEq(attestationManager.getUserStakeInAttestation(logId, user2), 50000 * 10**18);
 
         // Verify tokens were locked
-        assertEq(stakingContract.getAvailableStake(user2), 250 * 10**18); // 300 - 50
+        assertEq(stakingContract.getAvailableStake(user2), 250000 * 10**18); // 300000 - 50000
 
         // Verify attestation period info
         (,, AttestationManager.AttestationStatus status, uint256 totalValidStake, uint256 totalInvalidStake,,) = 
             attestationManager.getAttestationPeriod(logId);
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
-        assertEq(totalValidStake, 50 * 10**18);
+        assertEq(totalValidStake, 50000 * 10**18);
         assertEq(totalInvalidStake, 0);
     }
 
     function testOperatorCannotAttestOnBehalfWithoutRole() public {
         // Setup: Deploy token, stake tokens, and log a hotdog
-        hotdogToken.transfer(user1, 1000 * 10**18);
-        hotdogToken.transfer(user2, 1000 * 10**18);
+        hotdogToken.transfer(user1, 1000000 * 10**18);
+        hotdogToken.transfer(user2, 1000000 * 10**18);
 
         // User2 stakes tokens
         vm.startPrank(user2);
-        hotdogToken.approve(address(stakingContract), 300 * 10**18);
-        stakingContract.stake(300 * 10**18);
+        hotdogToken.approve(address(stakingContract), 300000 * 10**18);
+        stakingContract.stake(300000 * 10**18);
         vm.stopPrank();
 
         // User1 logs a hotdog
@@ -568,7 +574,7 @@ contract HotdogEcosystemTest is Test {
         // Non-operator tries to attest on behalf of user2 - should fail
         vm.startPrank(user3);
         vm.expectRevert("Caller is not an operator");
-        attestationManager.attestToLogOnBehalf(logId, user2, true, 50 * 10**18);
+        attestationManager.attestToLogOnBehalf(logId, user2, true, 50000 * 10**18);
         vm.stopPrank();
     }
 } 

@@ -74,8 +74,8 @@ if [ ! -f .env ]; then
 # Private key for deployment (without 0x prefix)
 PRIVATE_KEY=your_private_key_here
 
-# Platform referrer address (required for mainnet)
-PLATFORM_REFERRER=0x0000000000000000000000000000000000000000
+# Platform referrer address (hardcoded in deployment script)
+# Platform referrer: 0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F
 
 # Etherscan API key for contract verification
 ETHERSCAN_API_KEY=your_etherscan_api_key_here
@@ -98,13 +98,6 @@ if [ "$INTERACTIVE" != "true" ]; then
     if [ -z "$PRIVATE_KEY" ] || [ "$PRIVATE_KEY" = "your_private_key_here" ]; then
         print_error "Please set PRIVATE_KEY in your .env file or use interactive mode"
         print_status "To use interactive mode: ./deploy.sh $NETWORK $VERIFY interactive"
-        exit 1
-    fi
-fi
-
-if [ "$NETWORK" = "base-mainnet" ]; then
-    if [ -z "$PLATFORM_REFERRER" ] || [ "$PLATFORM_REFERRER" = "0x0000000000000000000000000000000000000000" ]; then
-        print_error "Please set PLATFORM_REFERRER in your .env file for mainnet deployment"
         exit 1
     fi
 fi

@@ -9,7 +9,6 @@ import {
 import { client } from "~/providers/Thirdweb";
 import useActiveChain from "~/hooks/useActiveChain";
 import { HOTDOG_TOKEN, STAKING } from "~/constants/addresses";
-import { useSession } from "next-auth/react";
 import {
   stake,
   unstake,
@@ -35,7 +34,6 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
   const { activeChain } = useActiveChain();
   const wallet = useActiveWallet();
   const account = useActiveAccount();
-  const { data: sessionData } = useSession();
 
   const { data: balance, isLoading: isLoadingBalance, refetch } = useWalletBalance({
     client,
@@ -181,7 +179,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         )}
         {amountBelowMinimum && Number(amount) > 0 && (
           <div className="text-center text-sm text-warning">
-            Minimum stake is 100 $HOTDOG tokens
+            Minimum stake is 300,000 $HOTDOG tokens
           </div>
         )}
 

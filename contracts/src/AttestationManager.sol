@@ -30,8 +30,8 @@ contract AttestationManager is AccessControl, ReentrancyGuard {
     ILogADog public logADogContract;
     
     // Attestation parameters
-    uint256 public constant ATTESTATION_WINDOW = 3 minutes;
-    uint256 public constant MINIMUM_ATTESTATION_STAKE = 50 * 10**18; // 50 HOTDOG
+    uint256 public constant ATTESTATION_WINDOW = 48 hours;
+    uint256 public constant MINIMUM_ATTESTATION_STAKE = 30000 * 10**18; // 30,000 HOTDOG
     uint256 public constant SLASH_PERCENTAGE = 15; // 15% of staked amount
     
     enum AttestationStatus {
