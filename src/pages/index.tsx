@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
@@ -33,6 +33,20 @@ export const getStaticProps = async () => {
 
 export default function Home() {
   const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
+  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setUserPrefersDarkMode(
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+    );
+  }, []);
+
+  const bannerSrc =
+    mounted && userPrefersDarkMode
+      ? '/images/banner-dark.png'
+      : '/images/banner.png';
 
   return (
     <>
@@ -47,7 +61,7 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pt-8 pb-8">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <Image
-              src="/images/banner.png"
+              src={bannerSrc}
               alt="Log a Dog"
               width={500}
               height={500}
