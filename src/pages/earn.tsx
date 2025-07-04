@@ -12,6 +12,7 @@ import {
   HandThumbDownIcon,
   HandThumbUpIcon,
   ClipboardIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline";
 import { Buy } from "~/components/utils/Buy";
 import { HOTDOG_TOKEN, DEFAULT_CHAIN } from "~/constants";
@@ -20,6 +21,13 @@ const EarnPage: NextPage = () => {
   const [mode, setMode] = useState<"eat" | "judge">("judge");
   const [stakeTab, setStakeTab] = useState<"stake" | "claim">("stake");
   const hotdogAddress = HOTDOG_TOKEN[DEFAULT_CHAIN.id]!;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(hotdogAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
@@ -281,10 +289,14 @@ const EarnPage: NextPage = () => {
         <span>{hotdogAddress}</span>
         <button
           aria-label="Copy contract address"
-          onClick={() => void navigator.clipboard.writeText(hotdogAddress)}
+          onClick={handleCopy}
           className="btn btn-ghost btn-xs px-1"
         >
-          <ClipboardIcon className="h-4 w-4" />
+          {copied ? (
+            <CheckIcon className="h-4 w-4 text-success" />
+          ) : (
+            <ClipboardIcon className="h-4 w-4" />
+          )}
         </button>
       </div>
     </div>
