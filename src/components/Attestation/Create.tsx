@@ -1,5 +1,5 @@
 import { type FC, useContext, useState, useMemo, useEffect } from 'react';
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
@@ -7,10 +7,15 @@ import Connect from "~/components/utils/Connect";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { TransactionStatus } from '../utils/TransactionStatus';
-import { DEFAULT_UPLOAD_PHRASE } from '~/constants';
+import { DEFAULT_CHAIN, DEFAULT_UPLOAD_PHRASE, LOG_A_DOG } from '~/constants';
 import { FarcasterContext } from "~/providers/Farcaster";
 import { sdk } from "@farcaster/frame-sdk";
 import { usePendingTransactionsStore } from "~/stores/pendingTransactions";
+import { logHotdog as logHotdogBase } from '~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974';
+import { getContract } from 'thirdweb';
+import { client } from '~/providers/Thirdweb';
+import { upload } from 'thirdweb/storage';
+import { encodePoolConfig } from '~/server/utils/poolConfig';
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -32,6 +37,35 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
   const wallet = useActiveWallet();
+  const [coinMetadataUri, setCoinMetadataUri] = useState<string | undefined>();
+
+  // Debounced upload effect
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      if (!imgUri) return;
+      
+      const coinMetadata = {
+        name: "Logged Dog",
+        description: description && description.trim() !== '' ? description : "Logging dogs onchain",
+        image: imgUri,
+        properties: {
+          category: "social",
+        },
+      };
+      
+      try {
+        const uploadedUri = await upload({
+          client,
+          files: [coinMetadata],
+        });
+        setCoinMetadataUri(uploadedUri);
+      } catch (error) {
+        console.error('Failed to upload coin metadata:', error);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [description, imgUri]);
 
   const isDisabled = useMemo(() => {
     return !imgUri || !wallet || isLoading;
@@ -84,9 +118,9 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const ActionButton: FC = () => {
     if (!account) return (
-      <div onClick={() => (document.getElementById('create_attestation_modal') as HTMLDialogElement).close() }>
-        <Connect loginBtnLabel="Login to Log Dogs" />
-      </div>
+      <button className="btn btn-secondary flex-1" disabled>
+        Connect Wallet
+      </button>
     )
 
     const logDog = async () => {
@@ -154,14 +188,14 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
     return (
       <button
-        className="btn btn-primary"
+        className="btn btn-secondary flex-1"
         onClick={logDog}
         disabled={isDisabled}
       >
         {isLoading && (
           <div className="loading loading-spinner" />
         )}
-        Log a Dog
+        Backend
       </button>
     )
   };
@@ -186,6 +220,65 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       (document.getElementById('share_cast_modal') as HTMLDialogElement)?.close();
     }
   };
+
+  const getTx = useMemo(() => {
+    console.log({ coinMetadataUri, imgUri, account });
+    return async () => {
+      if (!imgUri) {
+        toast.error("Please upload an image to log a dog");
+        throw new Error("No image uploaded");
+      }
+      
+      if (!account || !coinMetadataUri) {
+        toast.error("Please connect your wallet");
+        throw new Error("No wallet connected");
+      }
+      
+      const poolConfig = encodePoolConfig();
+
+      return logHotdogBase({
+        contract: getContract({
+          address: LOG_A_DOG[DEFAULT_CHAIN.id]!,
+          chain: DEFAULT_CHAIN,
+          client,
+        }),
+        imageUri: imgUri!,
+        metadataUri: '',
+        eater: account.address,
+        coinUri: coinMetadataUri,
+        poolConfig,
+      });
+    };
+  }, [imgUri, description, account, coinMetadataUri]);
+
+  const handleOnSuccess = () => {
+    // pop confetti immediately for dopamine hit
+    const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+    canvas.style.display = 'block';
+    const jsConfetti = new JSConfetti({ canvas });
+    void jsConfetti.addConfetti({
+      emojis: ['🌭', '🎉', '🌈', '✨']
+    }).then(() => {
+      // Hide the canvas after confetti animation completes
+      setTimeout(() => {
+        canvas.style.display = 'none';
+      }, 3000);
+    });
+
+    setLastLoggedImgUri(imgUri);
+    setLastLoggedDescription(description);
+
+    // Trigger immediate UI update
+    void onAttestationCreated?.({
+      hotdogEater: account!.address,
+      imageUri: imgUri!,
+    });
+
+    // close the modal
+    (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+    setImgUri(undefined);
+    setDescription('');
+  }
 
   return (
     <>
@@ -252,7 +345,20 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
               {/* if there is a button in form, it will close the modal */}
               <button className="btn">Close</button>
             </form>
-            <ActionButton />
+            <div className="flex flex-col gap-2">
+              {!account ? (
+                <ConnectButton client={client} />
+              ) : (
+                <TransactionButton
+                  className="!btn !btn-primary flex-1"
+                  transaction={getTx}
+                  onTransactionConfirmed={handleOnSuccess}
+                >
+                  Log a Dog
+                </TransactionButton>
+              ) }
+              {/* <ActionButton /> */}
+            </div>
           </div>
         </div>
       </dialog>

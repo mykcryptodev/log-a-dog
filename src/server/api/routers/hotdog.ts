@@ -793,7 +793,8 @@ export const hotdogRouter = createTRPCRouter({
 
       const POOL_CONFIG = encodePoolConfig();
 
-      const transaction = logHotdogOnBehalf({
+      // Prepare base transaction
+      let transaction = logHotdogOnBehalf({
         contract: getContract({
           address: LOG_A_DOG[chainId]!,
           client,
@@ -806,6 +807,14 @@ export const hotdogRouter = createTRPCRouter({
         poolConfig: POOL_CONFIG,
       });
 
+             // Create transaction with gas overrides
+       const transactionWithGas = {
+         ...transaction,
+         gas: BigInt(1000000), // 1M gas limit
+         maxFeePerGas: BigInt(50000000000), // 50 gwei
+         maxPriorityFeePerGas: BigInt(2000000000), // 2 gwei
+       } as typeof transaction;
+
       console.log({
         imageUri,
         metadataUri,
@@ -815,7 +824,7 @@ export const hotdogRouter = createTRPCRouter({
       })
       
       try {
-        const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
+        const { transactionId } = await serverWallet.enqueueTransaction({ transaction: transactionWithGas });
   
         // Invalidate Redis cache for all hotdog queries and leaderboard for this chain
         const hotdogPattern = `hotdogs:${chainId}:*`;
