@@ -7,6 +7,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { db } from "~/server/db";
+import { containsProfanity } from "~/utils/profanity";
 
 export const profileRouter = createTRPCRouter({
   getByAddress: publicProcedure
@@ -141,6 +142,10 @@ export const profileRouter = createTRPCRouter({
     }))
     .mutation(async ({ input }) => {
       const { chainId, address, username, imgUrl } = input;
+
+      if (containsProfanity(username)) {
+        throw new Error("Username contains profanity or slurs");
+      }
       
       // Save profile data to database
       // First try to find existing user by address
