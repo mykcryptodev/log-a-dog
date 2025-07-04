@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
+import { containsProfanity } from "~/utils/profanity";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -54,7 +55,11 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
   });
 
   const isValidUsername = useMemo(() => {
-    return username.length >= 3 && username.length <= 20;
+    return (
+      username.length >= 3 &&
+      username.length <= 20 &&
+      !containsProfanity(username)
+    );
   }, [username]);
 
   const withGateway = (url: string) => {
@@ -111,7 +116,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
       />
       {!isValidUsername && (
         <span className="text-xs opacity-50 text-center px-8 sm:px-16">
-          Username must be 3-20 characters and only contain lowercase letters, numbers, and hyphens
+          Username must be 3-20 characters, contain only lowercase letters, numbers, and hyphens, and not include profanity
         </span>
       )}
       <button
