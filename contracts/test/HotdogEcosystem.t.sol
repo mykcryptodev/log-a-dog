@@ -84,11 +84,12 @@ contract HotdogEcosystemTest is Test {
         stakingContract.stake(200 * 10**18);
         
         // Check stake info
-        (uint256 amount, uint256 rewardDebt, uint256 pendingRewards, bool isActive) = stakingContract.stakes(user1);
+        (uint256 amount, uint256 rewardDebt, uint256 pendingRewards, bool isActive, uint256 stakeTimestamp) = stakingContract.stakes(user1);
         assertEq(amount, 200 * 10**18);
         assertTrue(isActive);
         assertEq(pendingRewards, 0);
         assertEq(rewardDebt, 0); // Should be 0 since accumulatedRewardPerToken is 0 at start
+        assertTrue(stakeTimestamp > 0); // Timestamp should be set
         
         vm.stopPrank();
     }
@@ -242,7 +243,7 @@ contract HotdogEcosystemTest is Test {
         // Check that attestation period was started
         (uint256 startTime, uint256 endTime, AttestationManager.AttestationStatus status,,,, ) = attestationManager.getAttestationPeriod(logId);
         assertTrue(startTime > 0);
-        assertEq(endTime, startTime + 48 hours);
+        assertEq(endTime, startTime + 3 minutes); // Attestation window is 3 minutes
         assertEq(uint256(status), uint256(AttestationManager.AttestationStatus.Active));
     }
 
@@ -440,11 +441,14 @@ contract HotdogEcosystemTest is Test {
         hotdogToken.approve(address(stakingContract), 200 * 10**18);
         stakingContract.stake(200 * 10**18);
         
+        // Fast forward past minimum staking duration
+        vm.warp(block.timestamp + 1 hours + 1);
+        
         // Unstake some tokens
         stakingContract.unstake(50 * 10**18);
         
         // Check remaining stake
-        (uint256 amount,,,) = stakingContract.stakes(user1);
+        (uint256 amount,,,,) = stakingContract.stakes(user1);
         assertEq(amount, 150 * 10**18);
         
         // Check token balance
@@ -471,6 +475,9 @@ contract HotdogEcosystemTest is Test {
         // User2 attests
         vm.startPrank(user2);
         attestationManager.attestToLog(logId, true, 100 * 10**18);
+        
+        // Fast forward past minimum staking duration
+        vm.warp(block.timestamp + 1 hours + 1);
         
         // Try to unstake locked tokens
         vm.expectRevert("Tokens locked for attestation");
