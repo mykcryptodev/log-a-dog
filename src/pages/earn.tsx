@@ -11,12 +11,15 @@ import {
   ExclamationTriangleIcon,
   HandThumbDownIcon,
   HandThumbUpIcon,
+  ClipboardIcon,
 } from "@heroicons/react/24/outline";
 import { Buy } from "~/components/utils/Buy";
+import { HOTDOG_TOKEN, DEFAULT_CHAIN } from "~/constants";
 
 const EarnPage: NextPage = () => {
   const [mode, setMode] = useState<"eat" | "judge">("judge");
   const [stakeTab, setStakeTab] = useState<"stake" | "claim">("stake");
+  const hotdogAddress = HOTDOG_TOKEN[DEFAULT_CHAIN.id]!;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
@@ -267,16 +270,26 @@ const EarnPage: NextPage = () => {
           <ExclamationTriangleIcon className="h-6 w-6" />
           <div>
             <h3 className="font-bold">Important Risk Notice</h3>
-            <div className="text-sm">
-              Voting incorrectly will result in losing 15% of your staked tokens
-              to the winning side. Only vote if you&apos;re confident in your
-              judgment. Your staked tokens remain locked during active votes.
-            </div>
+          <div className="text-sm">
+            Voting incorrectly will result in losing 15% of your staked tokens
+            to the winning side. Only vote if you&apos;re confident in your
+            judgment. Your staked tokens remain locked during active votes.
           </div>
         </div>
       </div>
-    </main>
-  );
+      <div className="mt-4 flex items-center justify-center gap-2 text-xs text-base-content/50">
+        <span>{hotdogAddress}</span>
+        <button
+          aria-label="Copy contract address"
+          onClick={() => void navigator.clipboard.writeText(hotdogAddress)}
+          className="btn btn-ghost btn-xs px-1"
+        >
+          <ClipboardIcon className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  </main>
+);
 };
 
 export default EarnPage;
