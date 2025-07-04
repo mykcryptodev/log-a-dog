@@ -152,7 +152,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           ...wallet,
           accountAbstraction: {
             chain: activeChain,
-            gasless: true,
+            sponsorGas: true,
           }
         }))
       ]}
