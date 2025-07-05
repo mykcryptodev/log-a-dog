@@ -250,7 +250,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           eater: account.address,
           coinUri: coinMetadataUri,
           poolConfig,
-          accountAbstraction: { chain: activeChain, sponsorGas: true },
         });
     };
   }, [imgUri, account, coinMetadataUri]);
