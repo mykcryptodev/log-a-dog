@@ -82,7 +82,7 @@ export default function Home() {
               }, 10000);
             }}
           />
-          <ListAttestations refetchTimestamp={refetchTimestamp} key={refetchTimestamp} limit={10} />
+          <ListAttestations refetchTimestamp={refetchTimestamp} limit={10} />
         </div>
       </main>
     </>
