@@ -36,13 +36,20 @@ export const profileRouter = createTRPCRouter({
       chainId: z.number(),
       username: z.string(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { chainId, username } = input;
       const cacheKey = `profile:${chainId}:username:${username}`;
       return getOrSetCache(
         cacheKey,
         async () => {
-          const profile = await getProfile(username);
+          // Look up the address associated with this username if we have it
+          const user = await ctx.db.user.findFirst({
+            where: { username },
+            select: { address: true },
+          });
+
+          const identifier = user?.address ?? username;
+          const profile = await getProfile(identifier);
           return profile;
         },
         CACHE_DURATION.MEDIUM
@@ -217,11 +224,41 @@ async function getZoraProfileData(addressOrUsername: string) {
   }
 }
 
-async function getProfile (address: string) {
-  // First check if we have user data in our database (from sessionData)
+async function getProfile(addressOrUsername: string) {
+  // Always prefer external profiles (Zora or Neynar) over custom data
+
+  // Attempt to fetch Zora profile first
+  const zoraProfile = await getZoraProfileData(addressOrUsername);
+  if (zoraProfile) {
+    console.log('Zora profile found', zoraProfile);
+    return zoraProfile;
+  }
+
+  // Next try to fetch from Neynar
+  try {
+    const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
+      addresses: [addressOrUsername],
+    });
+
+    const addressKey = addressOrUsername.toLowerCase();
+    const user = response[addressKey]?.[0];
+
+    if (user) {
+      return {
+        username: user.display_name ?? user.username,
+        imgUrl: user.pfp_url,
+        metadata: '',
+        address: addressOrUsername,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching from Neynar:", error);
+  }
+
+  // Fall back to custom profile stored in our database
   const dbUser = await db.user.findFirst({
     where: {
-      address: address.toLowerCase(),
+      address: addressOrUsername.toLowerCase(),
     },
     select: {
       username: true,
@@ -231,47 +268,19 @@ async function getProfile (address: string) {
     },
   });
 
-  // If we have database user data with username and image, use that
   if (dbUser?.username && dbUser?.image) {
     return {
       username: dbUser.username,
       imgUrl: dbUser.image,
       metadata: '',
-      address,
+      address: addressOrUsername,
     };
-  }
-
-  // First try to get Zora profile
-  const zoraProfile = await getZoraProfileData(address);
-  if (zoraProfile) {
-    console.log('Zora profile found', zoraProfile);
-    return zoraProfile;
-  }
-
-  try {
-    const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
-      addresses: [address],
-    });
-    
-    const addressKey = address.toLowerCase();
-    const user = response[addressKey]?.[0];
-    
-    if (user) {
-      return {
-        username: user.display_name ?? user.username,
-        imgUrl: user.pfp_url,
-        metadata: '',
-        address,
-      };
-    }
-  } catch (error) {
-    console.error("Error fetching from Neynar:", error);
   }
 
   return {
     username: '',
     imgUrl: '',
     metadata: '',
-    address,
+    address: addressOrUsername,
   };
 }
