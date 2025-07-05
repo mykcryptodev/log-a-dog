@@ -306,7 +306,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 </div>
                 <div className="flex justify-end items-center gap-1">
                   <Comments
-                    logId={hotdog.logId.toString()}
+                    logId={hotdog.logId?.toString() ?? ''}
                     metadataUri={hotdog.metadataUri}
                   />
                   {!isExpired && (
@@ -327,7 +327,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
               <div className="flex items-center gap-2 w-full justify-end pr-2 opacity-50 text-xs">
                 <VotingCountdown
                   timestamp={hotdog.timestamp.toString()}
-                  logId={hotdog.logId.toString()}
+                  logId={hotdog.logId?.toString() ?? ''}
                   validAttestations={attestationData.validAttestations}
                   invalidAttestations={attestationData.invalidAttestations}
                   onResolutionComplete={() => void refetchDogData()}

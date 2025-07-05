@@ -2,7 +2,7 @@
 /* eslint-disable prefer-const */
 import { z } from "zod";
 import { AI_AFFIRMATION, ATTESTATION_MANAGER, LOG_A_DOG, MODERATION, STAKING } from "~/constants/addresses";
-import { getContract } from "thirdweb";
+import { encode, getContract, getGasPrice, prepareTransaction } from "thirdweb";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
 import {
@@ -26,6 +26,8 @@ import { getUserAttestationsWithChoices } from "~/thirdweb/84532/0xfbc7552a4bc2e
 import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
 import { getDogEvents, getDogEventsByEater, getDogEventLeaderboard } from "~/server/api/dog-events";
 import { db } from "~/server/db";
+import { getUserOpGasFees } from "thirdweb/wallets/smart";
+import { abi } from "~/constants/abi/logadog";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
@@ -809,13 +811,27 @@ export const hotdogRouter = createTRPCRouter({
         poolConfig: POOL_CONFIG,
       });
 
-             // Create transaction with gas overrides
-       const transactionWithGas = {
-         ...transaction,
-         gas: BigInt(1000000), // 1M gas limit
-         maxFeePerGas: BigInt(50000000000), // 50 gwei
-         maxPriorityFeePerGas: BigInt(2000000000), // 2 gwei
-       };
+      // get the gas price
+      const gasPrice = await getUserOpGasFees({
+        options: {
+          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+          client,
+        },
+      });
+      const maxFeePerGas = gasPrice.maxFeePerGas.toString();
+      const maxPriorityFeePerGas = gasPrice.maxPriorityFeePerGas.toString();
+      const estimatedGas = await serverWallet.estimateGas?.(transaction);
+      console.log({ estimatedGas, maxFeePerGas, maxPriorityFeePerGas });
+
+      // const preparedTransaction = prepareTransaction({
+      //   to: LOG_A_DOG[chainId]!,
+      //   data,
+      //   chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+      //   client,
+      //   gas: BigInt(5000000), // 5M gas limit
+      //   maxFeePerGas,
+      //   maxPriorityFeePerGas,
+      // });
 
       console.log({
         imageUri,
@@ -826,7 +842,39 @@ export const hotdogRouter = createTRPCRouter({
       })
       
       try {
-        const { transactionId } = await serverWallet.enqueueTransaction({ transaction: transactionWithGas });
+        // const { transactionId } = await serverWallet.enqueueTransaction({ transaction: preparedTransaction });
+        const headers = {
+          // Authorization: `Bearer ${env.THIRDWEB_ENGINE_API_KEY}`,
+          Authorization: `Bearer ${env.THIRDWEB_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+          'X-Backend-Wallet-Address': '0x9622D04739a54313e3B057051Ea42DafBE4fbd4f',
+        }
+        const body = {
+          functionName: 'logHotdogOnBehalf',
+          args: [
+            imageUri,
+            metadataUri,
+            coinMetadataUri,
+            ctx.session.user.address,
+            POOL_CONFIG,
+          ],
+          abi,
+          txOverrides: {
+            gas: "5000000", // 5M gas limit (realistic for this transaction)
+            maxFeePerGas: (BigInt(maxFeePerGas) * 2n).toString(), // 100 gwei (reasonable for Base)
+            maxPriorityFeePerGas: (BigInt(maxPriorityFeePerGas) * 2n).toString(), // 100 gwei (lower priority fee)
+            timeoutSeconds: 10,
+          }
+        }
+        console.log({ body });
+        const req = await fetch(`${env.THIRDWEB_ENGINE_URL}/contract/${chainId}/${LOG_A_DOG[chainId]}/write`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(body),
+        });
+        const res = await req.json() as { result: { queueId: string } };
+        console.log({ res });
+        const transactionId = res.result.queueId;
   
         // Invalidate Redis cache for all hotdog queries and leaderboard for this chain
         const hotdogPattern = `hotdogs:${chainId}:*`;
