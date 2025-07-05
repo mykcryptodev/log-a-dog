@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { type User } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 

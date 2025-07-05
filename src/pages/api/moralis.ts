@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { env } from '~/env';
 import web3 from 'web3';
 import { SUPPORTED_CHAINS } from '~/constants/chains';
-import { createThirdwebClient } from 'thirdweb';
+import { client } from '~/server/utils';
 import { ethers } from "ethers";
 import { resolveScheme } from "thirdweb/storage";
 
@@ -93,10 +93,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw new Error("Chain not supported");
       }
       if (!imgUri) return res.status(200).json({ message: "No image found in attestation" });
-
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
 
       let resolvedImgUrl;
       try {

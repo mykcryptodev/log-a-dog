@@ -1,5 +1,6 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
-import { createThirdwebClient, getContract, sendTransaction } from 'thirdweb';
+import { getContract, sendTransaction } from 'thirdweb';
+import { client } from '~/server/utils';
 import { type Account, privateKeyToAccount } from 'thirdweb/wallets';
 import { z } from 'zod';
 import { LOG_A_DOG } from '~/constants/addresses';
@@ -28,10 +29,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (req.headers['x-secret'] !== env.MAKER_AFFIRM_SECRET) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-
-      const client = createThirdwebClient({
-        secretKey: env.THIRDWEB_SECRET_KEY,
-      });
 
       const account = privateKeyToAccount({
         client,

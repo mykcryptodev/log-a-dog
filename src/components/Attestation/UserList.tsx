@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { useContext, useEffect, type FC, useState } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";

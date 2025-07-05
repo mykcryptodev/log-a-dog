@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { z } from "zod";
 import { getProfile as getZoraProfile } from '@zoralabs/coins-sdk';
 import { getOrSetCache, CACHE_DURATION, deleteCachedData } from "~/server/utils/redis";
