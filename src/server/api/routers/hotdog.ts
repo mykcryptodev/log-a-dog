@@ -430,7 +430,7 @@ export const hotdogRouter = createTRPCRouter({
         userAttested: processedResponse.userHasAttested,
         userAttestations: processedResponse.userAttestations,
         totalPages: Number(totalPages),
-        hasNextPage: start + limit < Number(totalPages),
+        hasNextPage: start + limit < totalEvents,
       };
 
       // TEMPORARILY DISABLE CACHING during development
