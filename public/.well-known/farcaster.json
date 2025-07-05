@@ -1,0 +1,35 @@
+
+{
+    "frame": {
+      "name": "Log a Dog",
+      "version": "1",
+      "iconUrl": "https://logadog.xyz/images/logo.png",
+      "homeUrl": "https://logadog.xyz",
+      "imageUrl": "https://logadog.xyz/images/logo.png",
+      "buttonTitle": "Log a Dog",
+      "splashImageUrl": "https://www.logadog.xyz/images/logo.png",
+      "splashBackgroundColor": "#faf8f7",
+      "webhookUrl": "https://api.neynar.com/f/app/0e9ca0e4-2b23-4927-b049-6698f3615914/event",
+      "subtitle": "The internets hotdog eating competition",
+      "description": "Upload a pic of you eating a hotdog and earn onchain",
+      "primaryCategory": "social",
+      "heroImageUrl": "https://www.logadog.xyz/images/og-image.png",
+      "tags": [
+        "summer",
+        "food",
+        "hotdog",
+        "contest",
+        "eating"
+      ],
+      "tagline": "Log dogs, earn money",
+      "ogTitle": "Log a Dog",
+      "ogDescription": "Earn money competing in the internet's hotdog eating contest",
+      "ogImageUrl": "https://www.logadog.xyz/images/og-image.png",
+      "castShareUrl": "https://farcaster.xyz/~/compose?text=log%20your%20dogs%20this%20summer%20with%20log%20a%20dog%21%20https%3A%2F%2Flogadog.xyz"
+    },
+    "accountAssociation": {
+      "header": "eyJmaWQiOjIxNzI0OCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGViYTc4NzE3YjZmMDU5Q0ZFMGI3NUU3NUMyZWQ0QkI3Y0E2NTE1NEYifQ",
+      "payload": "eyJkb21haW4iOiJsb2dhZG9nLnh5eiJ9",
+      "signature": "MHgyN2JmMjY5OTU2MzI1OWJkNzA3OTgzMmE3MWU5M2RjMjcwZTA1MzUwNjcwZTY3MGZlN2JlNzExNTU5YzM5YmZlMjg4YmIwMmFjNjgwZmQ2ZTQ0ZWM3NTFjYmE5ZWFlOWI3NWViNmM3MDY5ZmMyZDBjYjEzOTFkZjgyODgwMjU4ODFi"
+    }
+  }
