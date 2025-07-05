@@ -7,7 +7,6 @@ import { getSocialProfiles } from 'thirdweb/social';
 import { env } from '~/env';
 import { getHotdogLogsRange } from '~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f';
 import { LOG_A_DOG } from '~/constants/addresses';
-import { getUserValidDogEventCount } from '~/server/api/dog-events';
 
 export const config = {
   runtime: 'edge',
@@ -74,12 +73,21 @@ export default async function handler(req: NextRequest) {
       logger: logs[0]!.logger,
     };
 
-    // Get all valid logs for this user using the same logic as the leaderboard
+    // Get all valid logs for this user via the serverless API
     try {
-      userHotdogCount = await getUserValidDogEventCount(hotdog.eater);
+      const countRes = await fetch(
+        `${base}/api/user/hotdog-count?address=${hotdog.eater}`
+      );
+      if (countRes.ok) {
+        const data = (await countRes.json()) as { count?: number };
+        userHotdogCount = data.count ?? 1;
+      } else {
+        console.error('Error fetching user hotdog count:', await countRes.text());
+        userHotdogCount = 1; // Fallback since they have at least this log
+      }
     } catch (countError) {
       console.error('Error counting user hotdogs:', countError);
-      userHotdogCount = 1; // Fallback to 1 since we know they have at least this log
+      userHotdogCount = 1; // Fallback since they have at least this log
     }
   } catch (error) {
     console.error('Error fetching hotdog log:', error);

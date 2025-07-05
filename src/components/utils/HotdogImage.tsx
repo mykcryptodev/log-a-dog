@@ -137,6 +137,24 @@ type Props = {
   height?: string;
 };
 
+const parseSize = (size: string | undefined, defaultValue: number): number => {
+  if (!size) return defaultValue;
+  
+  // Handle percentage values - convert to reasonable pixel values
+  if (size.includes('%')) {
+    return defaultValue; // fallback to default for percentage values
+  }
+  
+  // Remove 'px' if present
+  const numericString = size.replace('px', '');
+  
+  // Try to parse as number
+  const parsed = Number(numericString);
+  
+  // Return parsed value if valid, otherwise default
+  return isNaN(parsed) ? defaultValue : parsed;
+};
+
 export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height }) => {
   const coin = typeof zoraCoin === "object" && zoraCoin !== null && "mediaContent" in zoraCoin ? zoraCoin as { mediaContent?: { previewImage?: { medium?: string; blurhash?: string } } } : undefined;
   const preview = coin?.mediaContent?.previewImage?.medium;
@@ -156,8 +174,8 @@ export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height
         src={preview}
         alt="Hotdog image"
         className={className}
-        width={Number(width?.replace("px", "") ?? 250)}
-        height={Number(height?.replace("px", "") ?? 300)}
+        width={parseSize(width, 250)}
+        height={parseSize(height, 300)}
         placeholder={blurDataURL ? "blur" : undefined}
         blurDataURL={blurDataURL}
         style={{ height, width }}

@@ -13,6 +13,25 @@ type Props = {
   height?: string;
   style?: React.CSSProperties;
 }
+
+const parseSize = (size: string | undefined, defaultValue: number): number => {
+  if (!size) return defaultValue;
+  
+  // Handle percentage values - convert to reasonable pixel values
+  if (size.includes('%')) {
+    return defaultValue; // fallback to default for percentage values
+  }
+  
+  // Remove 'px' if present
+  const numericString = size.replace('px', '');
+  
+  // Try to parse as number
+  const parsed = Number(numericString);
+  
+  // Return parsed value if valid, otherwise default
+  return isNaN(parsed) ? defaultValue : parsed;
+};
+
 export const CustomMediaRenderer: FC<Props> = ({ 
   src, 
   client, 
@@ -84,8 +103,8 @@ export const CustomMediaRenderer: FC<Props> = ({
           src={imageSrc}
           alt={alt ?? "Image"}
           className={className}
-          width={Number(width?.replace("px", "") ?? 250)}
-          height={Number(height?.replace("px", "") ?? 300)}
+          width={parseSize(width, 250)}
+          height={parseSize(height, 300)}
           style={style}
         />
       </div>
