@@ -38,6 +38,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const [lastLoggedTransactionHash, setLastLoggedTransactionHash] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
+  const [payOwnGas, setPayOwnGas] = useState<boolean>(false);
   const wallet = useActiveWallet();
   const [coinMetadataUri, setCoinMetadataUri] = useState<string | undefined>();
 
@@ -190,14 +191,14 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
     return (
       <button
-        className="btn btn-secondary flex-1"
+        className="btn btn-primary flex-1"
         onClick={logDog}
         disabled={isDisabled}
       >
         {isLoading && (
           <div className="loading loading-spinner" />
         )}
-        Backend
+        Log a Dog
       </button>
     )
   };
@@ -341,6 +342,17 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
                 />
               </div>
             </div>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text text-xs">I will pay my own blockchain fees</span>
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-xs checkbox-primary"
+                  checked={payOwnGas}
+                  onChange={(e) => setPayOwnGas(e.target.checked)}
+                />
+              </label>
+            </div>
           </div>
           <div className="modal-action">
             <form method="dialog">
@@ -350,19 +362,18 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
             <div className="flex flex-col gap-2">
               {!account ? (
                 <ConnectButton client={client} />
+              ) : payOwnGas ? (
+                <TransactionButton
+                  className="!btn !btn-primary flex-1"
+                  transaction={getTx}
+                  onTransactionConfirmed={handleOnSuccess}
+                  disabled={!imgUri}
+                >
+                  Log a Dog
+                </TransactionButton>
               ) : (
-                <div className="flex flex-col gap-2">
-                  <TransactionButton
-                    className="!btn !btn-primary flex-1"
-                    transaction={getTx}
-                    onTransactionConfirmed={handleOnSuccess}
-                  >
-                    Log a Dog
-                  </TransactionButton>
-                  <ActionButton />
-                </div>
+                <ActionButton />
               ) }
-              {/* <ActionButton /> */}
             </div>
           </div>
         </div>
