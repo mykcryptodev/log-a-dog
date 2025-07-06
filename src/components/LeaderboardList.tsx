@@ -49,9 +49,9 @@ export const LeaderboardList: FC<LeaderboardListProps> = ({
     const index = addresses.findIndex((a) => a.toLowerCase() === addrLower);
     if (index >= 0) {
       currentUserRow = {
-        address: addresses[index],
+        address: addresses[index]!,
         rank: index + 1,
-        hotdogs: Number(hotdogs[index]),
+        hotdogs: Number(hotdogs[index]!),
       };
       if (index < limit) {
         displayUsers.splice(index, 1);
