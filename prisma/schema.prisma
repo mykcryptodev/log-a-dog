@@ -93,6 +93,10 @@ model DogEvent {
     attestationTotalInvalidStake  String?
     attestationResolvedAt   DateTime?
     attestationTransactionHash    String?
+
+    // Reverse image search metadata
+    reverseImageMatches     Int?
+    reverseImageCheckedAt   DateTime?
     
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
