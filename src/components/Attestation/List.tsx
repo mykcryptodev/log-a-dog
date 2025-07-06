@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useContext, useEffect, type FC, useState, useMemo } from "react";
+import Link from "next/link";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import HotdogImage from "~/components/utils/HotdogImage";
@@ -283,13 +284,16 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
                 </div>
               )}
-              <HotdogImage
-                src={hotdog.imageUri}
-                zoraCoin={hotdog.zoraCoin}
-                className="rounded-lg"
-                width="400"
-                height="400"
-              />
+              <Link href={`/dog/${hotdog.logId}`}
+                className="w-fit">
+                <HotdogImage
+                  src={hotdog.imageUri}
+                  zoraCoin={hotdog.zoraCoin}
+                  className="rounded-lg"
+                  width="400"
+                  height="400"
+                />
+              </Link>
               <div className="opacity-50 flex flex-row w-full items-center justify-between">
                 <div className="text-xs flex items-center gap-1">
                   {('attestationPeriod' in hotdog && hotdog.attestationPeriod) && (
@@ -305,7 +309,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 </div>
                 <div className="flex justify-end items-center gap-1">
                   <Comments
-                    logId={hotdog.logId.toString()}
+                    logId={hotdog.logId?.toString() ?? ''}
                     metadataUri={hotdog.metadataUri}
                   />
                   {!isExpired && (
@@ -326,7 +330,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
               <div className="flex items-center gap-2 w-full justify-end pr-2 opacity-50 text-xs">
                 <VotingCountdown
                   timestamp={hotdog.timestamp.toString()}
-                  logId={hotdog.logId.toString()}
+                  logId={hotdog.logId?.toString() ?? ''}
                   validAttestations={attestationData.validAttestations}
                   invalidAttestations={attestationData.invalidAttestations}
                   onResolutionComplete={() => void refetchDogData()}
