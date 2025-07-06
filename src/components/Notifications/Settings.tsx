@@ -91,11 +91,27 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
     }
   }, [hasAddedMiniApp, farcaster, toggleNotifications, userAddress, isSessionLoading]);
 
+  const handleAddMiniApp = useCallback(async () => {
+    try {
+      await farcaster?.addMiniApp();
+    } catch (error) {
+      toast.error(`Failed to add mini app: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [farcaster]);
+
   if (!isMiniApp || !userAddress) return null;
 
   // Use server state directly, with loading fallback
   const isEnabled = notificationState ?? false;
   const isDisabled = isLoading || isSessionLoading;
+
+  if (!hasAddedMiniApp) {
+    return (
+      <div className="flex items-center gap-2" onClick={handleAddMiniApp}>
+        <BellIcon className={`w-4 h-4 ${className} ${isDisabled ? 'opacity-50' : ''}`} />
+      </div>
+    );
+  }
 
   return (
     <label className="swap">

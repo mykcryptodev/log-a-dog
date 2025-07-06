@@ -5,10 +5,14 @@ import { EIP1193 } from 'thirdweb/wallets';
 import { env } from '~/env';
 import useActiveChain from '~/hooks/useActiveChain';
 import { client } from '~/providers/Thirdweb';
-import { sdk, type Context } from "@farcaster/frame-sdk";
+import { FrameNotificationDetails, sdk, type Context } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
 import { DEFAULT_CHAIN } from '~/constants';
 import { toast } from 'react-toastify';
+
+type AddMiniAppResult = {
+  notificationDetails?: FrameNotificationDetails;
+};
 
 // Use environment variable or fallback to localhost for development
 const url = env.NEXT_PUBLIC_APP_DOMAIN || 'http://localhost:3000';
@@ -24,7 +28,7 @@ type FarcasterContextType = {
   isMiniApp: boolean;
   viewProfile: (fid: number) => Promise<void>;
   swapToken: (token: string, sellAmount?: string) => Promise<void>;
-  addMiniApp: () => Promise<void>;
+  addMiniApp: () => Promise<AddMiniAppResult | undefined>;
 };
 
 export const FarcasterContext = createContext<FarcasterContextType | null>(null);
@@ -76,7 +80,7 @@ export const FarcasterProvider = ({ children } : {
 
   const addMiniApp = useCallback(async () => {
     try {
-      await sdk.actions.addMiniApp();
+      return await sdk.actions.addMiniApp();
     } catch (err) {
       console.error("Failed to add mini app", err);
       toast.error("Failed to add mini app");
