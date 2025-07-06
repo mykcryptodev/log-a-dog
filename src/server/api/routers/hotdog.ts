@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
 import { z } from "zod";
-import { AI_AFFIRMATION, ATTESTATION_MANAGER, LOG_A_DOG, MODERATION, STAKING } from "~/constants/addresses";
+import { AI_AFFIRMATION, ATTESTATION_MANAGER, LOG_A_DOG, MODERATION, STAKING, MAKER_WALLET } from "~/constants/addresses";
 import { encode, getContract, getGasPrice, prepareTransaction } from "thirdweb";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 
@@ -843,12 +843,12 @@ export const hotdogRouter = createTRPCRouter({
       
       try {
         // const { transactionId } = await serverWallet.enqueueTransaction({ transaction: preparedTransaction });
-        const headers = {
-          // Authorization: `Bearer ${env.THIRDWEB_ENGINE_API_KEY}`,
-          Authorization: `Bearer ${env.THIRDWEB_SECRET_KEY}`,
-          'Content-Type': 'application/json',
-          'X-Backend-Wallet-Address': '0x9622D04739a54313e3B057051Ea42DafBE4fbd4f',
-        }
+          const headers = {
+            // Authorization: `Bearer ${env.THIRDWEB_ENGINE_API_KEY}`,
+            Authorization: `Bearer ${env.THIRDWEB_SECRET_KEY}`,
+            'Content-Type': 'application/json',
+            'X-Backend-Wallet-Address': MAKER_WALLET,
+          }
         const body = {
           functionName: 'logHotdogOnBehalf',
           args: [

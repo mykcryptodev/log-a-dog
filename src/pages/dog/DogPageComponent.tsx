@@ -21,7 +21,7 @@ import { ZERO_ADDRESS } from "thirdweb";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
-import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
+import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
@@ -57,7 +57,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
     );
     const loggerIsNotMakerWallet = !isAddressEqual(
       hotdog.logger,
-      "0x9622D04739a54313e3B057051Ea42DafBE4fbd4f",
+      MAKER_WALLET,
     );
     return loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet;
   };

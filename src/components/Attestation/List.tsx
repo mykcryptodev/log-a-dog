@@ -18,7 +18,7 @@ import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 
-import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
+import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 
 // Types from hotdog router
 type AttestationPeriod = {
@@ -221,7 +221,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     );
     const loggerIsNotMakerWallet = !isAddressEqual(
       hotdog.logger as `0x${string}`,
-      "0x9622D04739a54313e3B057051Ea42DafBE4fbd4f",
+      MAKER_WALLET,
     );
     return loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet;
   };
