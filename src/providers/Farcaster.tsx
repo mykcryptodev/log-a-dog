@@ -21,6 +21,7 @@ type FarcasterContextType = {
   context: Context.FrameContext | undefined;
   isMiniApp: boolean;
   viewProfile: (fid: number) => Promise<void>;
+  swapToken: (token: string) => Promise<void>;
 };
 
 export const FarcasterContext = createContext<FarcasterContextType | null>(null);
@@ -59,6 +60,14 @@ export const FarcasterProvider = ({ children } : {
     }
   }, []);
 
+  const swapToken = useCallback(async (token: string) => {
+    try {
+      await sdk.actions.swapToken({ buyToken: token });
+    } catch (err) {
+      console.error("Failed to swap token", err);
+    }
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -88,7 +97,8 @@ export const FarcasterProvider = ({ children } : {
     context,
     isMiniApp,
     viewProfile,
-  }), [context, isMiniApp, viewProfile]);
+    swapToken,
+  }), [context, isMiniApp, viewProfile, swapToken]);
 
 
   return (

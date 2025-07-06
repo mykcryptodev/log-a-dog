@@ -1,16 +1,34 @@
-import { useEffect, useState, type FC } from "react";
+import { useContext, useEffect, useState, type FC } from "react";
 import { darkTheme, lightTheme, BuyWidget } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { Portal } from "./Portal";
 import useActiveChain from "~/hooks/useActiveChain";
-import { HOTDOG_TOKEN } from "~/constants";
+import { HOTDOG_TOKEN, MINIMUM_STAKE } from "~/constants";
+import { toTokens } from "thirdweb";
+import { FarcasterContext } from "~/providers/Farcaster";
+import sdk from "@farcaster/frame-sdk";
 
 export const Buy: FC = () => {
   const { activeChain } = useActiveChain();
+  const farcaster = useContext(FarcasterContext);
+  const isMiniApp = farcaster?.isMiniApp ?? false;
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   useEffect(() => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
+
+  const handleMiniAppBuy = async () => {
+    if (!farcaster?.context) return;
+    return farcaster.swapToken(HOTDOG_TOKEN[activeChain.id]! as `0x${string}`);
+  }
+
+  if (isMiniApp) {
+    return (
+      <button className="btn btn-primary" onClick={handleMiniAppBuy}>
+        Buy $HOTDOG
+      </button>
+    )
+  }
   
   return (
     <>
@@ -25,7 +43,7 @@ export const Buy: FC = () => {
               client={client}
               chain={activeChain}
               tokenAddress={HOTDOG_TOKEN[activeChain.id]! as `0x${string}`}
-              amount="100"
+              amount={toTokens(MINIMUM_STAKE, 18)}
               title="Buy $HOTDOG"
               theme={userPrefersDarkMode
                 ? darkTheme({
