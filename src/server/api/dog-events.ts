@@ -1,9 +1,8 @@
 import { db } from "~/server/db";
-import type { Prisma } from "@prisma/client";
 
 export async function getDogEvents(options?: {
-  where?: Prisma.DogEventWhereInput;
-  orderBy?: Prisma.DogEventOrderByWithRelationInput;
+  where?: Record<string, unknown>;
+  orderBy?: Record<string, unknown>;
   take?: number;
   skip?: number;
 }) {
@@ -21,10 +20,13 @@ export async function getDogEventByTransactionHash(transactionHash: string) {
   });
 }
 
-export async function getDogEventsByLogger(logger: string, options?: {
-  take?: number;
-  skip?: number;
-}) {
+export async function getDogEventsByLogger(
+  logger: string,
+  options?: {
+    take?: number;
+    skip?: number;
+  },
+) {
   return db.dogEvent.findMany({
     where: { logger },
     orderBy: { createdAt: "desc" },
@@ -33,10 +35,13 @@ export async function getDogEventsByLogger(logger: string, options?: {
   });
 }
 
-export async function getDogEventsByEater(eater: string, options?: {
-  take?: number;
-  skip?: number;
-}) {
+export async function getDogEventsByEater(
+  eater: string,
+  options?: {
+    take?: number;
+    skip?: number;
+  },
+) {
   return db.dogEvent.findMany({
     where: { eater },
     orderBy: { createdAt: "desc" },
@@ -46,25 +51,30 @@ export async function getDogEventsByEater(eater: string, options?: {
 }
 
 export async function getDogEventStats() {
-  const [totalEvents, uniqueLoggers, uniqueEaters, attestationStats] = await Promise.all([
-    db.dogEvent.count(),
-    db.dogEvent.findMany({
-      distinct: ["logger"],
-      select: { logger: true },
-    }),
-    db.dogEvent.findMany({
-      distinct: ["eater"],
-      select: { eater: true },
-    }),
-    db.dogEvent.groupBy({
-      by: ["attestationValid"],
-      _count: true,
-    }),
-  ]);
+  const [totalEvents, uniqueLoggers, uniqueEaters, attestationStats] =
+    await Promise.all([
+      db.dogEvent.count(),
+      db.dogEvent.findMany({
+        distinct: ["logger"],
+        select: { logger: true },
+      }),
+      db.dogEvent.findMany({
+        distinct: ["eater"],
+        select: { eater: true },
+      }),
+      db.dogEvent.groupBy({
+        by: ["attestationValid"],
+        _count: true,
+      }),
+    ]);
 
-  const validCount = attestationStats.find(s => s.attestationValid === true)?._count ?? 0;
-  const invalidCount = attestationStats.find(s => s.attestationValid === false)?._count ?? 0;
-  const pendingCount = attestationStats.find(s => s.attestationValid === null)?._count ?? 0;
+  const validCount =
+    attestationStats.find((s: any) => s.attestationValid === true)?._count ?? 0;
+  const invalidCount =
+    attestationStats.find((s: any) => s.attestationValid === false)?._count ??
+    0;
+  const pendingCount =
+    attestationStats.find((s: any) => s.attestationValid === null)?._count ?? 0;
 
   return {
     totalEvents,
@@ -78,10 +88,13 @@ export async function getDogEventStats() {
   };
 }
 
-export async function getDogEventsByAttestationStatus(isValid: boolean | null, options?: {
-  take?: number;
-  skip?: number;
-}) {
+export async function getDogEventsByAttestationStatus(
+  isValid: boolean | null,
+  options?: {
+    take?: number;
+    skip?: number;
+  },
+) {
   return db.dogEvent.findMany({
     where: {
       attestationValid: isValid,
@@ -99,15 +112,19 @@ export async function getDogEventLeaderboard(options?: {
   take?: number;
   skip?: number;
 }) {
-  const where: Prisma.DogEventWhereInput = {};
+  const where: Record<string, unknown> = {};
 
   if (options?.startDate != null || options?.endDate != null) {
-    where.timestamp = {} as Prisma.BigIntFilter;
+    where.timestamp = {} as Record<string, unknown>;
     if (options?.startDate != null) {
-      (where.timestamp as Prisma.BigIntFilter).gte = BigInt(options.startDate);
+      (where.timestamp as Record<string, unknown>).gte = BigInt(
+        options.startDate,
+      );
     }
     if (options?.endDate != null) {
-      (where.timestamp as Prisma.BigIntFilter).lte = BigInt(options.endDate);
+      (where.timestamp as Record<string, unknown>).lte = BigInt(
+        options.endDate,
+      );
     }
   }
 
@@ -123,7 +140,9 @@ export async function getDogEventLeaderboard(options?: {
   });
 
   // Get unique eater addresses
-  const uniqueEaters = [...new Set(dogEvents.map((e: { eater: string }) => e.eater.toLowerCase()))];
+  const uniqueEaters = [
+    ...new Set(dogEvents.map((e: { eater: string }) => e.eater.toLowerCase())),
+  ];
 
   // Fetch users with FIDs for these addresses
   const users = await db.user.findMany({
@@ -141,7 +160,7 @@ export async function getDogEventLeaderboard(options?: {
   // Create a map of address to FID
   const addressToFid = new Map<string, number>();
   const fidToAddresses = new Map<number, Set<string>>();
-  
+
   users.forEach((user: { address: string | null; fid: number | null }) => {
     if (user.fid) {
       addressToFid.set(user.address!.toLowerCase(), user.fid);
@@ -153,20 +172,23 @@ export async function getDogEventLeaderboard(options?: {
   });
 
   // Group events by FID (or address if no FID)
-  const groupedCounts = new Map<string, { count: number; addresses: string[]; fid?: number }>();
+  const groupedCounts = new Map<
+    string,
+    { count: number; addresses: string[]; fid?: number }
+  >();
 
   dogEvents.forEach((event: { eater: string }) => {
     const eaterLower = event.eater.toLowerCase();
     const fid = addressToFid.get(eaterLower);
-    
+
     if (fid) {
       // Group by FID
       const key = `fid:${fid}`;
       if (!groupedCounts.has(key)) {
-        groupedCounts.set(key, { 
-          count: 0, 
+        groupedCounts.set(key, {
+          count: 0,
           addresses: Array.from(fidToAddresses.get(fid) ?? []),
-          fid 
+          fid,
         });
       }
       groupedCounts.get(key)!.count++;
@@ -184,7 +206,7 @@ export async function getDogEventLeaderboard(options?: {
   const leaderboard = Array.from(groupedCounts.entries())
     .map(([_key, data]) => ({
       // Use the first address associated with the FID (or the single address if no FID)
-      eater: data.addresses[0] ?? '',
+      eater: data.addresses[0] ?? "",
       count: data.count,
       fid: data.fid,
       addresses: data.addresses,
@@ -194,7 +216,7 @@ export async function getDogEventLeaderboard(options?: {
   // Apply pagination
   const paginatedLeaderboard = leaderboard.slice(
     options?.skip ?? 0,
-    (options?.skip ?? 0) + (options?.take ?? leaderboard.length)
+    (options?.skip ?? 0) + (options?.take ?? leaderboard.length),
   );
 
   return paginatedLeaderboard;
@@ -215,7 +237,7 @@ export async function getUserValidDogEventCount(address: string) {
       where: { fid: user.fid },
       select: { id: true },
     });
-    const userIds = usersWithFid.map(u => u.id);
+    const userIds = usersWithFid.map((u: { id: string }) => u.id);
 
     return db.dogEvent.count({
       where: {

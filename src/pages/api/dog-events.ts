@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { getDogEvents, getDogEventStats } from "~/server/api/dog-events";
-import type { Prisma } from "@prisma/client";
 
 const QuerySchema = z.object({
   logger: z.string().optional(),
@@ -9,12 +8,15 @@ const QuerySchema = z.object({
   attestationStatus: z.enum(["valid", "invalid", "pending"]).optional(),
   take: z.string().transform(Number).optional(),
   skip: z.string().transform(Number).optional(),
-  stats: z.string().transform(val => val === "true").optional(),
+  stats: z
+    .string()
+    .transform((val) => val === "true")
+    .optional(),
 });
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   // Only accept GET requests
   if (req.method !== "GET") {
@@ -31,10 +33,10 @@ export default async function handler(
     }
 
     // Build where clause based on query parameters
-    const where: Prisma.DogEventWhereInput = {};
+    const where: Record<string, unknown> = {};
     if (query.logger) where.logger = query.logger;
     if (query.eater) where.eater = query.eater;
-    
+
     // Handle attestation status filtering
     if (query.attestationStatus) {
       if (query.attestationStatus === "valid") {
@@ -56,7 +58,7 @@ export default async function handler(
     });
 
     // Convert BigInt to string for JSON serialization
-    const serializedEvents = events.map(event => ({
+    const serializedEvents = events.map((event: any) => ({
       ...event,
       blockTimestamp: event.blockTimestamp.toString(),
       timestamp: event.timestamp.toString(),
@@ -85,4 +87,4 @@ export default async function handler(
       message: error instanceof Error ? error.message : "Unknown error",
     });
   }
-} 
+}
