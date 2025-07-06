@@ -12,6 +12,7 @@ import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import VotingCountdown from "./VotingCountdown";
 import Comments from "~/components/Attestation/Comments";
+import TradeButton from "~/components/utils/TradeButton";
 import { env } from "~/env";
 import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
@@ -326,6 +327,14 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                     logId={hotdog.logId?.toString() ?? ''}
                     metadataUri={hotdog.metadataUri}
                   />
+                  {typeof hotdog.zoraCoin === 'object' &&
+                    hotdog.zoraCoin?.address && (
+                    <TradeButton
+                      sellToken="ETH"
+                      buyToken={hotdog.zoraCoin.address as `0x${string}`}
+                      sellAmount="0.01"
+                    />
+                  )}
                   {!isExpired && (
                     <JudgeAttestation
                       disabled={isPending}
