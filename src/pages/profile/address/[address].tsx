@@ -37,7 +37,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
     refetchOnMount: false,
   });
   console.log({ data });
-  const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
+  const utils = api.useUtils();
   const [showProfileForm, setShowProfileForm] = useState<boolean>(false);
 
   // Check if this is the user's own profile
@@ -95,10 +95,13 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
             />
           )}
           {isOwnProfile && (
-            <CreateAttestation onAttestationCreated={() => setRefetchTimestamp(new Date().getTime())} />
+            <CreateAttestation onAttestationCreated={() => {
+              setTimeout(() => {
+                void utils.hotdog.getAllForUser.invalidate();
+              }, 10000);
+            }} />
           )}
           <UserListAttestations
-            refetchTimestamp={refetchTimestamp}
             limit={4}
             user={data.address}
           />

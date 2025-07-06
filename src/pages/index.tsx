@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
+import { api } from "~/utils/api";
 import { APP_DESCRIPTION } from "~/constants";
 import Image from "next/image";
 
@@ -32,7 +33,7 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
-  const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
+  const utils = api.useUtils();
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
 
@@ -57,7 +58,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
-        <LeaderboardBanner refetchTimestamp={refetchTimestamp} />
+        <LeaderboardBanner />
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pt-8 pb-8">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <Image
@@ -78,11 +79,12 @@ export default function Home() {
             onAttestationCreated={() => {
               // give the blockchain 10 seconds to confirm
               setTimeout(() => {
-                setRefetchTimestamp(new Date().getTime())
+                void utils.hotdog.getAll.invalidate();
+                void utils.hotdog.getLeaderboard.invalidate();
               }, 10000);
             }}
           />
-          <ListAttestations refetchTimestamp={refetchTimestamp} limit={10} />
+          <ListAttestations limit={10} />
         </div>
       </main>
     </>

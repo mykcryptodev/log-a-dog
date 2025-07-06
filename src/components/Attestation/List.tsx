@@ -85,7 +85,6 @@ type Props = {
   attestors?: string[];
   startDate?: Date;
   endDate?: Date;
-  refetchTimestamp?: number;
   limit: number;
   address?: string;
 };
