@@ -23,15 +23,14 @@ export const userRouter = createTRPCRouter({
     }),
   toggleNotifications: publicProcedure
     .input(z.object({
-      address: z.string(),
       enabled: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { address, enabled } = input;
+      const { enabled } = input;
       // fetch the user and make sure they have an fid
       const user = await ctx.db.user.findFirst({
         where: {
-          address: address.toLowerCase(),
+          address: ctx.session?.user?.address?.toLowerCase(),
         },
         select: {
           fid: true,
