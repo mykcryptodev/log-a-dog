@@ -361,17 +361,6 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
                 </div>
               </div>
             </div>
-            <div className="form-control">
-              <label className="label cursor-pointer">
-                <span className="label-text text-xs">I will pay my own blockchain fees</span>
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-xs checkbox-primary"
-                  checked={payOwnGas}
-                  onChange={(e) => setPayOwnGas(e.target.checked)}
-                />
-              </label>
-            </div>
           </div>
           <div className="modal-action">
             <form method="dialog">
