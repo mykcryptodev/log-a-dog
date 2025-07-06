@@ -202,7 +202,7 @@ export default async function handler(
             const notification = {
               title: "🌭 New Dog Logged!",
               body: `A new hotdog has been logged by ${userInfo}. Check it out!`,
-              target_url: `https://logadog.xyz/dog/${dogEvent.id}`,
+              target_url: `https://logadog.xyz/dog/${decoded.indexed_params.logId}`,
             };
             await sendNotificationToUsers(notification);
           } catch (neynarError) {
