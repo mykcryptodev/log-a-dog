@@ -1,25 +1,32 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-import { type FC, useContext, useState, useMemo, useEffect } from 'react';
-import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { type FC, useContext, useState, useMemo, useEffect } from "react";
+import {
+  ConnectButton,
+  TransactionButton,
+  useActiveAccount,
+  useActiveWallet,
+} from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
-import JSConfetti from 'js-confetti';
-import dynamic from 'next/dynamic';
+import JSConfetti from "js-confetti";
+import dynamic from "next/dynamic";
 import { api } from "~/utils/api";
-import { TransactionStatus } from '../utils/TransactionStatus';
-import { DEFAULT_CHAIN, DEFAULT_UPLOAD_PHRASE, LOG_A_DOG } from '~/constants';
+import { TransactionStatus } from "../utils/TransactionStatus";
+import { DEFAULT_CHAIN, DEFAULT_UPLOAD_PHRASE, LOG_A_DOG } from "~/constants";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { sdk } from "@farcaster/frame-sdk";
 import { usePendingTransactionsStore } from "~/stores/pendingTransactions";
-import { logHotdog as logHotdogBase } from '~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974';
-import { getContract } from 'thirdweb';
-import { client } from '~/providers/Thirdweb';
-import { upload } from 'thirdweb/storage';
-import { encodePoolConfig } from '~/server/utils/poolConfig';
+import { logHotdog as logHotdogBase } from "~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974";
+import { getContract } from "thirdweb";
+import { client } from "~/providers/Thirdweb";
+import { upload } from "~/utils/thirdwebStorage";
+import { encodePoolConfig } from "~/server/utils/poolConfig";
 
-const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
+const Upload = dynamic(() => import("~/components/utils/Upload"), {
+  ssr: false,
+});
 
 type Props = {
   onAttestationCreated?: (attestation: {
@@ -27,17 +34,22 @@ type Props = {
     imageUri: string;
     metadata?: string;
   }) => void;
-}
+};
 export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
   const utils = api.useUtils();
   const { addPendingDog, removePendingDog } = usePendingTransactionsStore();
   const [imgUri, setImgUri] = useState<string | undefined>();
-  const [lastLoggedImgUri, setLastLoggedImgUri] = useState<string | undefined>();
-  const [lastLoggedDescription, setLastLoggedDescription] = useState<string>('');
-  const [lastLoggedTransactionHash, setLastLoggedTransactionHash] = useState<string | undefined>();
+  const [lastLoggedImgUri, setLastLoggedImgUri] = useState<
+    string | undefined
+  >();
+  const [lastLoggedDescription, setLastLoggedDescription] =
+    useState<string>("");
+  const [lastLoggedTransactionHash, setLastLoggedTransactionHash] = useState<
+    string | undefined
+  >();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [description, setDescription] = useState<string>('');
+  const [description, setDescription] = useState<string>("");
   const [payOwnGas, setPayOwnGas] = useState<boolean>(false);
   const wallet = useActiveWallet();
   const [coinMetadataUri, setCoinMetadataUri] = useState<string | undefined>();
@@ -46,16 +58,19 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       if (!imgUri) return;
-      
+
       const coinMetadata = {
         name: "Logged Dog",
-        description: description && description.trim() !== '' ? description : "Logging dogs onchain",
+        description:
+          description && description.trim() !== ""
+            ? description
+            : "Logging dogs onchain",
         image: imgUri,
         properties: {
           category: "social",
         },
       };
-      
+
       try {
         const uploadedUri = await upload({
           client,
@@ -63,7 +78,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         });
         setCoinMetadataUri(uploadedUri);
       } catch (error) {
-        console.error('Failed to upload coin metadata:', error);
+        console.error("Failed to upload coin metadata:", error);
       }
     }, 1000);
 
@@ -80,18 +95,21 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
   const isMiniApp = farcaster?.isMiniApp ?? false;
   const [transactionId, setTransactionId] = useState<string | undefined>();
   const [transactionHash, setTransactionHash] = useState<string | undefined>();
-  const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
+  const [isTransactionIdResolved, setIsTransactionIdResolved] =
+    useState<boolean>(false);
 
   // Query for dog event when we have a transaction hash
   const { data: dogEvent } = api.hotdog.getDogEventByTransactionHash.useQuery(
     { transactionHash: transactionHash! },
-    { enabled: !!transactionHash && isTransactionIdResolved }
+    { enabled: !!transactionHash && isTransactionIdResolved },
   );
 
   // Show share dialog when dog event is loaded
   useEffect(() => {
     if (isMiniApp && dogEvent && isTransactionIdResolved) {
-      const dialog = document.getElementById('share_cast_modal') as HTMLDialogElement;
+      const dialog = document.getElementById(
+        "share_cast_modal",
+      ) as HTMLDialogElement;
       dialog?.showModal();
     }
   }, [isMiniApp, dogEvent, isTransactionIdResolved]);
@@ -109,22 +127,22 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       // Let it be naturally filtered out when real data appears
 
       // Just do a gentle invalidation - no forced refetch
-      console.log('🔄 Transaction resolved, gentle cache invalidation');
+      console.log("🔄 Transaction resolved, gentle cache invalidation");
       void utils.hotdog.getAll.invalidate();
-
     } else if (!success && transactionId) {
       // If transaction failed, remove the optimistic update
       removePendingDog(transactionId);
     }
     setIsTransactionIdResolved(true);
-  }
+  };
 
   const ActionButton: FC = () => {
-    if (!account) return (
-      <button className="btn btn-secondary flex-1" disabled>
-        Connect Wallet
-      </button>
-    )
+    if (!account)
+      return (
+        <button className="btn btn-secondary flex-1" disabled>
+          Connect Wallet
+        </button>
+      );
 
     const logDog = async () => {
       if (!wallet) {
@@ -140,10 +158,10 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         const result = await logHotdog({
           chainId: activeChain.id,
           imageUri: imgUri!,
-          metadataUri: '',
+          metadataUri: "",
           description,
         });
-        
+
         // Add optimistic update to store
         addPendingDog({
           ...result.optimisticData,
@@ -152,17 +170,21 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         });
 
         // pop confetti immediately for dopamine hit
-        const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-        canvas.style.display = 'block';
+        const canvas = document.getElementById(
+          "confetti-canvas",
+        ) as HTMLCanvasElement;
+        canvas.style.display = "block";
         const jsConfetti = new JSConfetti({ canvas });
-        void jsConfetti.addConfetti({
-          emojis: ['🌭', '🎉', '🌈', '✨']
-        }).then(() => {
-          // Hide the canvas after confetti animation completes
-          setTimeout(() => {
-            canvas.style.display = 'none';
-          }, 3000);
-        });
+        void jsConfetti
+          .addConfetti({
+            emojis: ["🌭", "🎉", "🌈", "✨"],
+          })
+          .then(() => {
+            // Hide the canvas after confetti animation completes
+            setTimeout(() => {
+              canvas.style.display = "none";
+            }, 3000);
+          });
 
         setLastLoggedImgUri(imgUri);
         setLastLoggedDescription(description);
@@ -175,9 +197,13 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         });
 
         // close the modal
-        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+        (
+          document.getElementById(
+            "create_attestation_modal",
+          ) as HTMLDialogElement
+        ).close();
         setImgUri(undefined);
-        setDescription('');
+        setDescription("");
       } catch (error) {
         const e = error as Error;
         console.error(error);
@@ -185,7 +211,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       } finally {
         setIsLoading(false);
         // close the modal
-        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+        (
+          document.getElementById(
+            "create_attestation_modal",
+          ) as HTMLDialogElement
+        ).close();
       }
     };
 
@@ -195,12 +225,10 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         onClick={logDog}
         disabled={isDisabled}
       >
-        {isLoading && (
-          <div className="loading loading-spinner" />
-        )}
+        {isLoading && <div className="loading loading-spinner" />}
         Log a Dog
       </button>
-    )
+    );
   };
 
   const shareOnFarcaster = async () => {
@@ -209,18 +237,21 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         toast.error("Dog details not found yet. Please try again.");
         return;
       }
-      
+
       const dogUrl = `https://logadog.xyz/dog/${dogEvent.logId}`;
-      const shareText = lastLoggedDescription.trim() || 'Just logged a dog on Log a Dog!';
-      
+      const shareText =
+        lastLoggedDescription.trim() || "Just logged a dog on Log a Dog!";
+
       await sdk.actions.composeCast({
         text: shareText,
         embeds: [dogUrl],
       });
     } catch (err) {
-      console.error('Failed to compose cast', err);
+      console.error("Failed to compose cast", err);
     } finally {
-      (document.getElementById('share_cast_modal') as HTMLDialogElement)?.close();
+      (
+        document.getElementById("share_cast_modal") as HTMLDialogElement
+      )?.close();
     }
   };
 
@@ -231,12 +262,12 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
         toast.error("Please upload an image to log a dog");
         throw new Error("No image uploaded");
       }
-      
+
       if (!account || !coinMetadataUri) {
         toast.error("Please connect your wallet");
         throw new Error("No wallet connected");
       }
-      
+
       const poolConfig = encodePoolConfig();
 
       return logHotdogBase({
@@ -246,7 +277,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           client,
         }),
         imageUri: imgUri!,
-        metadataUri: '',
+        metadataUri: "",
         eater: account.address,
         coinUri: coinMetadataUri,
         poolConfig,
@@ -256,17 +287,21 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
   const handleOnSuccess = () => {
     // pop confetti immediately for dopamine hit
-    const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-    canvas.style.display = 'block';
+    const canvas = document.getElementById(
+      "confetti-canvas",
+    ) as HTMLCanvasElement;
+    canvas.style.display = "block";
     const jsConfetti = new JSConfetti({ canvas });
-    void jsConfetti.addConfetti({
-      emojis: ['🌭', '🎉', '🌈', '✨']
-    }).then(() => {
-      // Hide the canvas after confetti animation completes
-      setTimeout(() => {
-        canvas.style.display = 'none';
-      }, 3000);
-    });
+    void jsConfetti
+      .addConfetti({
+        emojis: ["🌭", "🎉", "🌈", "✨"],
+      })
+      .then(() => {
+        // Hide the canvas after confetti animation completes
+        setTimeout(() => {
+          canvas.style.display = "none";
+        }, 3000);
+      });
 
     setLastLoggedImgUri(imgUri);
     setLastLoggedDescription(description);
@@ -278,40 +313,57 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     });
 
     // close the modal
-    (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+    (
+      document.getElementById("create_attestation_modal") as HTMLDialogElement
+    ).close();
     setImgUri(undefined);
-    setDescription('');
-  }
+    setDescription("");
+  };
 
   return (
     <>
-      <canvas 
-        className="fixed top-0 left-0 hidden" 
+      <canvas
+        className="fixed left-0 top-0 hidden"
         id="confetti-canvas"
         style={{
-          height: '100vh',
-          width: '100vw',
+          height: "100vh",
+          width: "100vw",
           zIndex: 9999,
-          pointerEvents: 'none'
+          pointerEvents: "none",
         }}
       />
       {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <button 
-        className="btn btn-primary" 
-        onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
+      <button
+        className="btn btn-primary"
+        onClick={() =>
+          (
+            document.getElementById(
+              "create_attestation_modal",
+            ) as HTMLDialogElement
+          ).showModal()
+        }
       >
         Log a Dog
       </button>
-      <button 
-        className="btn btn-primary text-4xl btn-circle btn-lg fixed bottom-24 right-6 z-50 shadow-xl shadow-pink-500/75" 
-        style={{ filter: 'drop-shadow(0 -9px 19px rgba(236, 72, 153, 0.75)) drop-shadow(0 -6px 15px rgba(254, 240, 138, 0.5))' }}
-        onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
+      <button
+        className="btn btn-circle btn-primary btn-lg fixed bottom-24 right-6 z-50 text-4xl shadow-xl shadow-pink-500/75"
+        style={{
+          filter:
+            "drop-shadow(0 -9px 19px rgba(236, 72, 153, 0.75)) drop-shadow(0 -6px 15px rgba(254, 240, 138, 0.5))",
+        }}
+        onClick={() =>
+          (
+            document.getElementById(
+              "create_attestation_modal",
+            ) as HTMLDialogElement
+          ).showModal()
+        }
       >
         🌭
       </button>
       <dialog id="create_attestation_modal" className="modal">
         <div className="modal-box overflow-hidden">
-          <h3 className="font-bold text-2xl mb-4">Log a Dog</h3>
+          <h3 className="mb-4 text-2xl font-bold">Log a Dog</h3>
           <div className="flex flex-col gap-2">
             <Upload
               onUpload={({ uris }) => {
@@ -321,18 +373,21 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
               initialUrls={imgUri ? [imgUri] : undefined}
               onUploadError={() => {
                 // close the modal
-                (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+                (
+                  document.getElementById(
+                    "create_attestation_modal",
+                  ) as HTMLDialogElement
+                ).close();
               }}
               label={DEFAULT_UPLOAD_PHRASE}
             />
             <span className="text-center text-xs opacity-50">
-              Images uploaded here are public and will be displayed on the global leaderboard
+              Images uploaded here are public and will be displayed on the
+              global leaderboard
             </span>
             <div className="collapse collapse-arrow w-full bg-base-200 bg-opacity-30">
               <input type="checkbox" />
-              <div className="collapse-title text-sm font-medium">
-                Advanced
-              </div>
+              <div className="collapse-title text-sm font-medium">Advanced</div>
               <div className="collapse-content">
                 <textarea
                   className="textarea textarea-bordered w-full"
@@ -344,10 +399,12 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
             </div>
             <div className="form-control">
               <label className="label cursor-pointer">
-                <span className="label-text text-xs">I will pay my own blockchain fees</span>
+                <span className="label-text text-xs">
+                  I will pay my own blockchain fees
+                </span>
                 <input
                   type="checkbox"
-                  className="checkbox checkbox-xs checkbox-primary"
+                  className="checkbox-primary checkbox checkbox-xs"
                   checked={payOwnGas}
                   onChange={(e) => setPayOwnGas(e.target.checked)}
                 />
@@ -373,7 +430,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
                 </TransactionButton>
               ) : (
                 <ActionButton />
-              ) }
+              )}
             </div>
           </div>
         </div>
@@ -385,29 +442,36 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
           onTransactionHash={setTransactionHash}
           loadingMessages={[
             { message: "Beaming dog into space..." },
-            { message: "Guzzlin glizzy into the blockchain..."},
+            { message: "Guzzlin glizzy into the blockchain..." },
             { message: "Mining meat into a block..." },
-            { message: "Slathering on the 'sturd..."},
+            { message: "Slathering on the 'sturd..." },
             { message: "Suckin down analytics..." },
-            { message: "Downloading the dinger..."},
+            { message: "Downloading the dinger..." },
             { message: "Logging dog..." },
           ]}
           successMessage="You logged a dog!"
           errorMessage="Failed to log your dog"
         />
       )}
-      <dialog id="share_cast_modal" className="modal modal-bottom sm:modal-middle">
+      <dialog
+        id="share_cast_modal"
+        className="modal modal-bottom sm:modal-middle"
+      >
         <div className="modal-box bg-opacity-50 backdrop-blur-lg">
-          <h3 className="font-bold text-lg">Share on Farcaster?</h3>
-          <p className="py-4">Would you like to share your logged dog on Farcaster?</p>
+          <h3 className="text-lg font-bold">Share on Farcaster?</h3>
+          <p className="py-4">
+            Would you like to share your logged dog on Farcaster?
+          </p>
           <div className="modal-action">
             <form method="dialog">
               <button className="btn">No thanks</button>
             </form>
-            <button className="btn btn-primary" onClick={shareOnFarcaster}>Share</button>
+            <button className="btn btn-primary" onClick={shareOnFarcaster}>
+              Share
+            </button>
           </div>
         </div>
       </dialog>
     </>
-  )
+  );
 };
