@@ -1,6 +1,6 @@
 import { BellIcon, BellSlashIcon } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
-import { useCallback, useContext, useMemo, type FC } from "react";
+import { useCallback, useContext, useMemo, useState, useEffect, type FC } from "react";
 import { toast } from "react-toastify";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { api } from "~/utils/api";
@@ -14,6 +14,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
   const utils = api.useUtils();
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   
   const userAddress = sessionData?.user?.address;
   const isSessionLoading = sessionStatus === "loading";
@@ -57,6 +58,8 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
     },
     onSuccess: (data, variables) => {
       toast(variables.enabled ? "🔔 Notifications on!" : "🔕 Notifications off!");
+      // Close modal after successful notification toggle
+      (document.getElementById('add_mini_app_modal') as HTMLDialogElement)?.close();
     },
     onSettled: () => {
       // Always refetch after mutation to ensure consistency
@@ -67,6 +70,15 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   const hasAddedMiniApp = useMemo(() => {
     return farcaster?.context?.client?.added ?? false;
   }, [farcaster?.context?.client?.added]);
+
+  // Update step based on mini app status
+  useEffect(() => {
+    if (hasAddedMiniApp) {
+      setCurrentStep(2);
+    } else {
+      setCurrentStep(1);
+    }
+  }, [hasAddedMiniApp]);
 
   const handleToggle = useCallback(async (checked: boolean) => {
     if (!userAddress || isSessionLoading) {
@@ -94,10 +106,26 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   const handleAddMiniApp = useCallback(async () => {
     try {
       await farcaster?.addMiniApp();
+      // Move to step 2 after successfully adding the mini app
+      setCurrentStep(2);
     } catch (error) {
       toast.error(`Failed to add mini app: ${error instanceof Error ? error.message : String(error)}`);
     }
   }, [farcaster]);
+
+  const handleEnableNotifications = useCallback(async () => {
+    try {
+      await toggleNotifications({ enabled: true });
+    } catch (error) {
+      console.error('Enable notifications error:', error);
+    }
+  }, [toggleNotifications]);
+
+  const handleShowModal = useCallback(() => {
+    // Set the correct step when opening the modal
+    setCurrentStep(hasAddedMiniApp ? 2 : 1);
+    (document.getElementById('add_mini_app_modal') as HTMLDialogElement)?.showModal();
+  }, [hasAddedMiniApp]);
 
   if (!isMiniApp || !userAddress) return null;
 
@@ -105,11 +133,87 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   const isEnabled = notificationState ?? false;
   const isDisabled = isLoading || isSessionLoading;
 
-  if (!hasAddedMiniApp) {
+  if (!hasAddedMiniApp || !isEnabled) {
     return (
-      <div className="flex items-center gap-2" onClick={handleAddMiniApp}>
-        <BellIcon className={`w-4 h-4 ${className} ${isDisabled ? 'opacity-50' : ''}`} />
-      </div>
+      <>
+        <div className="flex items-center gap-2" onClick={handleShowModal}>
+          <BellIcon className={`w-4 h-4 ${className} ${isDisabled ? 'opacity-50' : ''}`} />
+        </div>
+
+        <dialog id="add_mini_app_modal" className="modal modal-bottom sm:modal-middle">
+          <div className="modal-box relative bg-base-200 bg-opacity-60 backdrop-blur-lg shadow">
+            <button 
+              className="btn btn-circle btn-sm btn-ghost absolute top-4 right-4"
+              onClick={()=>(document.getElementById('add_mini_app_modal') as HTMLDialogElement)?.close()}
+            >
+              &times;
+            </button>
+            
+            <h3 className="font-bold text-2xl mb-4">Get Notified</h3>
+            
+            {/* Stepper */}
+            <ul className="steps steps-horizontal w-full mb-6">
+              <li className={`step ${currentStep >= 1 ? 'step-primary' : ''}`}>
+                Add Mini App
+              </li>
+              <li className={`step ${currentStep >= 2 ? 'step-primary' : ''}`}>
+                Enable Notifications
+              </li>
+            </ul>
+
+            {/* Step 1: Add Mini App */}
+            {currentStep === 1 && (
+              <div className="space-y-4">
+                <p className="text-base-content/80">
+                  First, add the Log a Dog Mini App to your Farcaster client to enable notifications.
+                </p>
+                <div className="flex gap-2 justify-end">
+                  <button 
+                    className="btn btn-ghost"
+                    onClick={()=>(document.getElementById('add_mini_app_modal') as HTMLDialogElement)?.close()}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={handleAddMiniApp}
+                    disabled={isDisabled}
+                  >
+                    Add Mini App
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Enable Notifications */}
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <p className="text-base-content/80">
+                  Great! Now enable notifications to get notified when new dogs are logged.
+                </p>
+                <p className="text-sm text-base-content/60">
+                  Notifications for newly logged dogs help judges stay on top of the contest!
+                </p>
+                <div className="flex gap-2 justify-end">
+                  <button 
+                    className="btn btn-ghost"
+                    onClick={()=>(document.getElementById('add_mini_app_modal') as HTMLDialogElement)?.close()}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={handleEnableNotifications}
+                    disabled={isDisabled}
+                  >
+                    Enable Notifications
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </dialog>
+      </>
     );
   }
 
