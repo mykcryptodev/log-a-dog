@@ -336,7 +336,7 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
               <div className="collapse-content">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text text-xs">Description</span>
+                    <span className="label-text text-xs opacity-75">Description</span>
                   </label>
                   <textarea
                     className="textarea textarea-bordered w-full"
@@ -345,9 +345,9 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
-                <div className="form-control">
+                <div className="form-control mt-2">
                   <label className="label">
-                    <span className="label-text text-xs">Gas Fees</span>
+                    <span className="label-text text-xs opacity-75">Gas Fees</span>
                   </label>
                   <div className="flex items-center gap-2 pl-2">
                     <input
