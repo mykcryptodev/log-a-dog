@@ -16,8 +16,8 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   const hasAddedMiniApp = useMemo(() => {
-    return farcaster?.context?.client?.added;
-  }, [farcaster]);
+    return farcaster?.context?.client?.added ?? false;
+  }, [farcaster?.context?.client?.added]);
 
   const handleToggle = useCallback(async (checked: boolean) => {
     setNotificationsEnabled(checked);
