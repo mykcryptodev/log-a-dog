@@ -67,7 +67,9 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   if (!account && !sessionData?.user?.id) return (
     <div className="mr-4 flex items-center gap-2">
       <Connect loginBtnLabel={loginBtnLabel} />
-      <SignInWithFarcaster />
+      <div className="hidden md:block">
+        <SignInWithFarcaster />
+      </div>
     </div>
   )
 
