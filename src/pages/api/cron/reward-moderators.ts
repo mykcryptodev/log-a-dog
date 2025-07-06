@@ -6,6 +6,7 @@ import { ATTESTATION_MANAGER, ATTESTATION_WINDOW_SECONDS } from "~/constants";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { sendTelegramMessage, formatCronJobMessage } from "~/lib/telegram";
+import { deleteCachedData } from "~/server/utils/redis";
 
 export default async function handler(
   req: NextApiRequest,
@@ -76,6 +77,9 @@ export default async function handler(
         transactionId?: string;
       }>
     };
+
+    // Track which chains had rewards processed to clear their caches
+    const chainsWithProcessedRewards = new Set<number>();
 
     // Process each eligible event
     for (const event of eligibleEvents) {
@@ -156,6 +160,9 @@ export default async function handler(
           transactionId
         });
 
+        // Track this chain for cache clearing
+        chainsWithProcessedRewards.add(chainId);
+
         console.log(`Successfully queued transaction for logId ${logId}, transaction: ${transactionId}`);
         console.log(`Database will be updated automatically via webhook when transaction is mined`);
 
@@ -174,6 +181,27 @@ export default async function handler(
     }
 
     console.log(`Moderator reward process completed: ${results.processed} processed, ${results.skipped} skipped, ${results.errors} errors`);
+
+    // Clear leaderboard cache for chains that had rewards processed
+    if (chainsWithProcessedRewards.size > 0) {
+      try {
+        console.log(`Clearing leaderboard cache for chains: ${Array.from(chainsWithProcessedRewards).join(', ')}`);
+        
+        for (const chainId of chainsWithProcessedRewards) {
+          // Clear both hotdog and leaderboard caches for this chain
+          const hotdogPattern = `hotdogs:${chainId}:*`;
+          const leaderboardPattern = `leaderboard:${chainId}:*`;
+          
+          await deleteCachedData(hotdogPattern);
+          await deleteCachedData(leaderboardPattern);
+        }
+        
+        console.log('Leaderboard cache cleared successfully');
+      } catch (cacheError) {
+        console.error('Failed to clear leaderboard cache:', cacheError);
+        // Don't fail the cron job if cache clearing fails
+      }
+    }
 
     // Send Telegram notification for cron job completion
     try {
