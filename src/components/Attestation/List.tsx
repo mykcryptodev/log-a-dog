@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useContext, useEffect, type FC, useState, useMemo } from "react";
+import { useContext, useEffect, type FC, useState, useMemo, memo } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import HotdogImage from "~/components/utils/HotdogImage";
@@ -84,12 +84,11 @@ type Props = {
   attestors?: string[];
   startDate?: Date;
   endDate?: Date;
-  refetchTimestamp?: number;
   limit: number;
   address?: string;
 };
 
-export const ListAttestations: FC<Props> = ({ limit }) => {
+const ListAttestationsComponent: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
@@ -374,4 +373,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     </div>
     </>
   );
-}
+};
+
+export const ListAttestations = memo(ListAttestationsComponent);

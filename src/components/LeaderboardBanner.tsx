@@ -1,4 +1,4 @@
-import { useContext, type FC, useEffect } from "react";
+import { useContext, type FC, memo } from "react";
 import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import Link from "next/link";
@@ -9,19 +9,17 @@ import styles from "./LeaderboardBanner.module.css";
 type Props = {
   startDate?: Date;
   endDate?: Date;
-  refetchTimestamp: number;
   scrollSpeed?: number; // pixels per second
 }
 
-export const LeaderboardBanner: FC<Props> = ({ 
-  startDate, 
-  endDate, 
-  refetchTimestamp, 
-  scrollSpeed = 50 
+const LeaderboardBannerComponent: FC<Props> = ({
+  startDate,
+  endDate,
+  scrollSpeed = 50
 }) => {
   const { activeChain } = useContext(ActiveChainContext);
 
-  const { data: leaderboard, refetch } = api.hotdog.getLeaderboard.useQuery({
+  const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery({
     chainId: activeChain.id,
     ...startDate && { startDate: Math.floor(startDate.getTime() / 1000) },
     ...endDate && { endDate: Math.floor(endDate.getTime() / 1000) },
@@ -30,11 +28,7 @@ export const LeaderboardBanner: FC<Props> = ({
     refetchOnMount: false,
   });
 
-  useEffect(() => {
-    if (refetchTimestamp) {
-      void refetch();
-    }
-  }, [refetch, refetchTimestamp]);
+  // React Query automatically updates when caches are invalidated
 
   const { data: profiles } = api.profile.getManyByAddress.useQuery({
     chainId: activeChain.id,
@@ -115,4 +109,6 @@ export const LeaderboardBanner: FC<Props> = ({
       </div>
     </div>
   );
-}; 
+};
+
+export const LeaderboardBanner = memo(LeaderboardBannerComponent);

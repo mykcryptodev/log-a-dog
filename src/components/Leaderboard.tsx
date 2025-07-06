@@ -10,10 +10,9 @@ type Props = {
   startDate?: Date;
   endDate?: Date;
   limit?: number;
-  refetchTimestamp: number;
 }
 
-export const Leaderboard: FC<Props> = ({ limit, startDate, endDate, refetchTimestamp }) => {
+export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
   const limitOrDefault = limit ?? 10;
   const { activeChain } = useContext(ActiveChainContext);
   const [page, setPage] = useState(0);
@@ -30,11 +29,7 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate, refetchTimes
     refetchOnMount: false,
   });
 
-  useEffect(() => {
-    if (refetchTimestamp) {
-      void refetch();
-    }
-  }, [refetch, refetchTimestamp]);
+  // React Query will automatically refetch when its cache is invalidated
 
   const { data: profiles } = api.profile.getManyByAddress.useQuery({
     chainId: activeChain.id,
