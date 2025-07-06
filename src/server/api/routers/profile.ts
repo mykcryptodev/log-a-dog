@@ -162,6 +162,10 @@ export const profileRouter = createTRPCRouter({
         },
       });
 
+      if (user?.fid) {
+        throw new Error("Verified users cannot change their username");
+      }
+
       if (user) {
         // Update existing user
         user = await db.user.update({

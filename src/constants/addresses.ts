@@ -61,3 +61,5 @@ export const PROTOCOL_REWARDS: ContractAddress = {
   [baseSepolia.id]: "0x7777777F279eba3d3Ad8F4E708545291A6fDBA8B",
 }
 
+export const MAKER_WALLET = "0x9622D04739a54313e3B057051Ea42DafBE4fbd4f" as `0x${string}`
+
