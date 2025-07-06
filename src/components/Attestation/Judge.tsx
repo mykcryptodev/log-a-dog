@@ -107,7 +107,7 @@ export const JudgeAttestation: FC<Props> = ({
     },
   });
 
-  const isDisabled = disabled || optimisticUserAttested;
+  const isDisabled = Boolean(disabled) || Boolean(optimisticUserAttested);
 
   const attest = async (isValid: boolean) => {
     if (isDisabled) return;

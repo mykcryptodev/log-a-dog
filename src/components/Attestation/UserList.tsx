@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useContext, useEffect, type FC, useState } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
@@ -75,7 +76,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
           </div>
         ))
       }
-      {dogData?.hotdogs.map((hotdog, index) => {
+      {dogData?.hotdogs.map((hotdog: any, index: number) => {
         const validAttestations = dogData?.validAttestations[index];
         const invalidAttestations = dogData?.invalidAttestations[index];
 
