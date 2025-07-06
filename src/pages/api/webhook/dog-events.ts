@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import { sendTelegramMessage, formatDogLogMessage } from "~/lib/telegram";
 import { sendNotificationToUsers } from "~/lib/neynar";
+import { reverseImageSearch } from "~/lib/reverseImageSearch";
 import { env } from "~/env";
 
 // Type for the result of processing each event
@@ -182,7 +183,20 @@ export default async function handler(
           });
 
           console.log(`Successfully processed event: ${dogEvent.id}`);
-          
+
+          try {
+            const { matches } = await reverseImageSearch(dogEvent.imageUri);
+            await db.dogEvent.update({
+              where: { id: dogEvent.id },
+              data: {
+                reverseImageMatches: matches.length,
+                reverseImageCheckedAt: new Date(),
+              },
+            });
+          } catch (reverseError) {
+            console.error('Reverse image search failed:', reverseError);
+          }
+
           // Send Telegram notification for new dog event
           try {
             const message = formatDogLogMessage({
