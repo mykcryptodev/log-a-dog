@@ -162,7 +162,7 @@ export const profileRouter = createTRPCRouter({
         },
       });
 
-      if (user && user.fid) {
+      if (user?.fid) {
         throw new Error("Verified users cannot change their username");
       }
 
