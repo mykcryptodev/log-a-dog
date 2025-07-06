@@ -7,6 +7,7 @@ import useActiveChain from '~/hooks/useActiveChain';
 import { client } from '~/providers/Thirdweb';
 import { sdk, type Context } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
+import { DEFAULT_CHAIN } from '~/constants';
 
 // Use environment variable or fallback to localhost for development
 const url = env.NEXT_PUBLIC_APP_DOMAIN || 'http://localhost:3000';
@@ -21,6 +22,7 @@ type FarcasterContextType = {
   context: Context.FrameContext | undefined;
   isMiniApp: boolean;
   viewProfile: (fid: number) => Promise<void>;
+  swapToken: (token: string, sellAmount?: string) => Promise<void>;
 };
 
 export const FarcasterContext = createContext<FarcasterContextType | null>(null);
@@ -59,6 +61,15 @@ export const FarcasterProvider = ({ children } : {
     }
   }, []);
 
+  const swapToken = useCallback(async (token: string, sellAmount?: string) => {
+    try {
+      const CAIP19 = `eip155:${DEFAULT_CHAIN.id}/erc20:${token}`;
+      await sdk.actions.swapToken({ buyToken: CAIP19, sellAmount });
+    } catch (err) {
+      console.error("Failed to swap token", err);
+    }
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -88,7 +99,8 @@ export const FarcasterProvider = ({ children } : {
     context,
     isMiniApp,
     viewProfile,
-  }), [context, isMiniApp, viewProfile]);
+    swapToken,
+  }), [context, isMiniApp, viewProfile, swapToken]);
 
 
   return (
