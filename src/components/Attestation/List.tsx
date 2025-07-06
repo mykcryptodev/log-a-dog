@@ -211,10 +211,20 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   }
 
   const showLoggedVia = (hotdog: { eater: string, logger: string }) => {
-    const loggerIsNotEater = !isAddressEqual(hotdog.eater as `0x${string}`, hotdog.logger as `0x${string}`);
-    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger as `0x${string}`, env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`);
-    return loggerIsNotEater && loggerIsNotBackendWallet;
-  }
+    const loggerIsNotEater = !isAddressEqual(
+      hotdog.eater as `0x${string}`,
+      hotdog.logger as `0x${string}`,
+    );
+    const loggerIsNotBackendWallet = !isAddressEqual(
+      hotdog.logger as `0x${string}`,
+      env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`,
+    );
+    const loggerIsNotMakerWallet = !isAddressEqual(
+      hotdog.logger as `0x${string}`,
+      "0x9622D04739a54313e3B057051Ea42DafBE4fbd4f",
+    );
+    return loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet;
+  };
 
   // Create maps to ensure correct attestation data is passed by logId
   const validMap = dogData?.hotdogs && dogData.validAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.validAttestations[i]])) : {};

@@ -51,8 +51,15 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
 
   const showLoggedVia = (hotdog: { eater: `0x${string}`; logger: `0x${string}` }) => {
     const loggerIsNotEater = !isAddressEqual(hotdog.eater, hotdog.logger);
-    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger, env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`);
-    return loggerIsNotEater && loggerIsNotBackendWallet;
+    const loggerIsNotBackendWallet = !isAddressEqual(
+      hotdog.logger,
+      env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`,
+    );
+    const loggerIsNotMakerWallet = !isAddressEqual(
+      hotdog.logger,
+      "0x9622D04739a54313e3B057051Ea42DafBE4fbd4f",
+    );
+    return loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet;
   };
 
   if (isLoading || !data) {
