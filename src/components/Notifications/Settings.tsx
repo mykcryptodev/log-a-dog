@@ -1,17 +1,16 @@
 import { BellIcon, BellSlashIcon } from "@heroicons/react/24/outline";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { FC, useCallback, useContext, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { api } from "~/utils/api";
-import SignInWithEthereum from "../utils/SignIn";
 
 type Props = {
   className?: string;
 }
 export const NotificationsSettings: FC<Props> = ({ className }) => {
   const { data: sessionData } = useSession();
-  const { mutate: toggleNotifications } = api.user.toggleNotifications.useMutation();
+  const { mutateAsync: toggleNotifications } = api.user.toggleNotifications.useMutation();
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
