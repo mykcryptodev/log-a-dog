@@ -107,9 +107,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
       // Keep the optimistic data - don't remove it here
       // Let it be naturally filtered out when real data appears
 
-      // Just do a gentle invalidation - no forced refetch
-      console.log('🔄 Transaction resolved, gentle cache invalidation');
+      // Invalidate cached queries so lists update when the new dog appears
+      console.log('🔄 Transaction resolved, invalidating caches');
       void utils.hotdog.getAll.invalidate();
+      void utils.hotdog.getAllForUser.invalidate();
+      void utils.hotdog.getLeaderboard.invalidate();
 
     } else if (!success && transactionId) {
       // If transaction failed, remove the optimistic update

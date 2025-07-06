@@ -84,12 +84,11 @@ type Props = {
   attestors?: string[];
   startDate?: Date;
   endDate?: Date;
-  refetchTimestamp?: number;
   limit: number;
   address?: string;
 };
 
-export const ListAttestations: FC<Props> = ({ limit, refetchTimestamp }) => {
+export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
@@ -111,12 +110,6 @@ export const ListAttestations: FC<Props> = ({ limit, refetchTimestamp }) => {
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
     enabled: !!activeChain.id && isClient, // Only run query on client side
   });
-
-  useEffect(() => {
-    if (refetchTimestamp) {
-      void refetchDogData();
-    }
-  }, [refetchTimestamp, refetchDogData]);
 
   // Get pending dogs for current chain
   const pendingDogs = getPendingDogsForChain(activeChain.id.toString());
