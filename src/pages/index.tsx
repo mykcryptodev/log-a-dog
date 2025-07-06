@@ -7,7 +7,6 @@ import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { APP_DESCRIPTION } from "~/constants";
 import Image from "next/image";
-import { NotificationsSettings } from "~/components/Notifications/Settings";
 
 const miniAppMetadata = {
   version: "next",
