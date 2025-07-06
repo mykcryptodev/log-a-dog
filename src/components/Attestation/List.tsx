@@ -110,6 +110,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
     enabled: !!activeChain.id && isClient, // Only run query on client side
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   // Get pending dogs for current chain
