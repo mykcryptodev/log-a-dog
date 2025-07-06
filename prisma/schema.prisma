@@ -57,6 +57,7 @@ model User {
     address       String?
     fid           Int?
     dogEvents     DogEvent[]
+    notificationsEnabled Boolean? @default(false)
 }
 
 model VerificationToken {

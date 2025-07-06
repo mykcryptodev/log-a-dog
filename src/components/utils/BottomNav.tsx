@@ -1,7 +1,9 @@
-import { type FC } from "react"
+import { useContext, type FC } from "react"
 import { CurrencyDollarIcon, NewspaperIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { useRouter } from "next/router"
 import dynamic from "next/dynamic"
+import { FarcasterContext } from "~/providers/Farcaster";
+import { NotificationsSettings } from "../Notifications/Settings";
 
 // Dynamically import ProfileButton with no SSR to prevent hydration issues
 const ProfileButton = dynamic(() => import("../Profile/Button").then(mod => ({ default: mod.ProfileButton })), {
@@ -11,6 +13,8 @@ const ProfileButton = dynamic(() => import("../Profile/Button").then(mod => ({ d
 
 export const BottomNav: FC = () => {
   const router = useRouter();
+  const farcaster = useContext(FarcasterContext);
+  const isMiniApp = farcaster?.isMiniApp ?? false;
   const isActive = (path: string) => router.pathname === path;
 
   return (
@@ -36,9 +40,15 @@ export const BottomNav: FC = () => {
         <QuestionMarkCircleIcon className="h-6 w-6" />
         FAQ
       </button>
+      {isMiniApp && (
         <button>
-          <ProfileButton hideNameAndBadge label="Profile" />
+          <NotificationsSettings className="h-6 w-6" />
+          Notify
         </button>
-      </div>
-    )
-  }
+      )}
+      <button>
+        <ProfileButton hideNameAndBadge label="Profile" />
+      </button>
+    </div>
+  )
+}
