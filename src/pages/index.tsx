@@ -7,6 +7,7 @@ import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { APP_DESCRIPTION } from "~/constants";
 import Image from "next/image";
+import LeaderboardList from "~/components/LeaderboardList";
 
 const miniAppMetadata = {
   version: "next",
@@ -72,8 +73,6 @@ export default function Home() {
             <p className="sm:text-lg text-sm text-center max-w-xs">{APP_DESCRIPTION}</p>
             <Link href="/faq" className="text-xs underline">wtf?</Link>
           </div>
-
-
           <CreateAttestation
             onAttestationCreated={() => {
               // give the blockchain 10 seconds to confirm
@@ -82,7 +81,14 @@ export default function Home() {
               }, 10000);
             }}
           />
-          <ListAttestations refetchTimestamp={refetchTimestamp} limit={10} />
+          <div className="w-full max-w-md">
+            <h2 className="text-2xl font-bold text-center">Leaderboard</h2>
+            <LeaderboardList refetchTimestamp={refetchTimestamp} limit={10} />
+          </div>
+          <div className="w-full max-w-md">
+            <h2 className="text-2xl font-bold text-center">Logs</h2>
+            <ListAttestations refetchTimestamp={refetchTimestamp} limit={10} />
+          </div>
         </div>
       </main>
     </>

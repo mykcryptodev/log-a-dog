@@ -81,7 +81,7 @@ export const LeaderboardList: FC<LeaderboardListProps> = ({
           </Link>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold">{currentUserRow.hotdogs}</span>
-            <span className="text-sm text-base-content/70">hotdogs</span>
+            <span className="text-sm text-base-content/70">🌭</span>
           </div>
         </div>
       )}
@@ -105,7 +105,7 @@ export const LeaderboardList: FC<LeaderboardListProps> = ({
             </Link>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold">{hotdogCount}</span>
-              <span className="text-sm text-base-content/70">hotdogs</span>
+              <span className="text-sm text-base-content/70">🌭</span>
             </div>
           </div>
         );
