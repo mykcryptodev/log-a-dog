@@ -22,15 +22,19 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
 
   const handleToggle = useCallback(async (checked: boolean) => {
     setNotificationsEnabled(checked);
-    if (!hasAddedMiniApp) {
+    if (!hasAddedMiniApp && checked) {
       await farcaster?.addMiniApp();
     }
-    // save the fact that the user has turned on notifications
-    toggleNotifications({
-      address: sessionData?.user?.address ?? "",
-      enabled: checked,
-    });
-    toast(checked ? "🔔 Notifications on!" : "🔕 Notifications off!");
+    try {
+      // save the fact that the user has turned on notifications
+      await toggleNotifications({
+        address: sessionData?.user?.address ?? "",
+        enabled: checked,
+      });
+      toast(checked ? "🔔 Notifications on!" : "🔕 Notifications off!");
+    } catch (error) {
+      toast.error("Failed to toggle notifications");
+    }
   }, [hasAddedMiniApp, farcaster]);
 
   if (!isMiniApp || !sessionData?.user?.address) return null;
