@@ -17,7 +17,7 @@ const miniAppMetadata = {
     action: {
       type: "launch_frame",
       name: "Log a Dog",
-      url: `https://logadog.xyz`,
+      url: `https://log-a-dog-git-noti-mykcryptodevs-projects.vercel.app`,
       splashImageUrl: "https://logadog.xyz/images/logo.png",
       splashBackgroundColor: "#faf8f7",
     },

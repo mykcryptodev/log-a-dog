@@ -47,7 +47,6 @@ export const BottomNav: FC = () => {
         </button>
       )}
       <button>
-        {`isMiniApp: ${isMiniApp}`}
         <ProfileButton hideNameAndBadge label="Profile" />
       </button>
     </div>
