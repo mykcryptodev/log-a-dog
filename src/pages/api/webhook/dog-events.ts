@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { sendTelegramMessage, formatDogLogMessage } from "~/lib/telegram";
+import { sendNotificationToUsers } from "~/lib/neynar";
+import { env } from "~/env";
 
 // Type for the result of processing each event
 type EventProcessingResult = {
@@ -126,6 +128,7 @@ export default async function handler(
               id: true,
               address: true,
               fid: true,
+              username: true,
             },
           });
           
@@ -191,6 +194,20 @@ export default async function handler(
           } catch (telegramError) {
             console.error('Failed to send Telegram notification:', telegramError);
             // Don't fail the webhook if Telegram fails
+          }
+          
+          // Send Neynar notification to users with notifications enabled
+          try {
+            const userInfo = user?.username ? `@${user.username}` : 'Unknown user';
+            const notification = {
+              title: "🌭 New Dog Logged!",
+              body: `A new hotdog has been logged by ${userInfo}. Check it out!`,
+              target_url: `https://logadog.xyz/dog/${decoded.indexed_params.logId}`,
+            };
+            await sendNotificationToUsers(notification);
+          } catch (neynarError) {
+            console.error('Failed to send Neynar notification:', neynarError);
+            // Don't fail the webhook if Neynar fails
           }
           
           return { success: true, id: dogEvent.id, transactionHash: eventData.transaction_hash };

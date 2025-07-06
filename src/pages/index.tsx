@@ -16,7 +16,7 @@ const miniAppMetadata = {
     action: {
       type: "launch_frame",
       name: "Log a Dog",
-      url: `https://logadog.xyz`,
+      url: `https://e6d7-2600-4808-8c33-c00-e50d-5d10-b44-1d25.ngrok-free.app`,
       splashImageUrl: "https://logadog.xyz/images/logo.png",
       splashBackgroundColor: "#faf8f7",
     },

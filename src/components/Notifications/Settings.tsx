@@ -1,6 +1,6 @@
 import { BellIcon, BellSlashIcon } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
-import { FC, useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo, useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { api } from "~/utils/api";
@@ -16,25 +16,26 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   const hasAddedMiniApp = useMemo(() => {
-    return farcaster?.context?.client?.added;
-  }, [farcaster]);
+    return farcaster?.context?.client?.added ?? false;
+  }, [farcaster?.context?.client?.added]);
 
   const handleToggle = useCallback(async (checked: boolean) => {
     setNotificationsEnabled(checked);
     if (!hasAddedMiniApp && checked) {
-      await farcaster?.addMiniApp();
+      try {
+        await farcaster?.addMiniApp();
+      } catch (error) {
+        toast.error(`Failed to add mini app: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
     try {
       // save the fact that the user has turned on notifications
-      await toggleNotifications({
-        address: sessionData?.user?.address ?? "",
-        enabled: checked,
-      });
+      await toggleNotifications({ enabled: checked });
       toast(checked ? "🔔 Notifications on!" : "🔕 Notifications off!");
     } catch (error) {
-      toast.error("Failed to toggle notifications");
+      toast.error(`Failed to toggle notifications: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [hasAddedMiniApp, farcaster]);
+  }, [hasAddedMiniApp, farcaster, toggleNotifications]);
 
   if (!isMiniApp || !sessionData?.user?.address) return null;
 
