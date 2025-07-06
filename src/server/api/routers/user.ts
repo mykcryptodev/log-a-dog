@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
 
 export const userRouter = createTRPCRouter({
   getByAddress: publicProcedure
@@ -21,30 +21,68 @@ export const userRouter = createTRPCRouter({
       });
       return user;
     }),
-  toggleNotifications: publicProcedure
+  toggleNotifications: protectedProcedure
     .input(z.object({
       enabled: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { enabled } = input;
+      const userAddress = ctx.session.user.address;
+      
+      if (!userAddress) {
+        throw new Error("User address not found in session");
+      }
+      
       // fetch the user and make sure they have an fid
       const user = await ctx.db.user.findFirst({
         where: {
-          address: ctx.session?.user?.address?.toLowerCase(),
+          address: userAddress.toLowerCase(),
         },
         select: {
           fid: true,
           id: true,
         },
       });
-      if (!user?.fid) {
-        throw new Error("User not found or does not have a fid");
+      
+      if (!user) {
+        throw new Error("User not found");
       }
+      
+      if (!user.fid) {
+        throw new Error("User does not have a Farcaster ID");
+      }
+      
       // update the user's notificationsEnabled field
       const updatedUser = await ctx.db.user.update({
         where: { id: user.id },
         data: { notificationsEnabled: enabled },
       });
-      return updatedUser;
+      
+      return {
+        ...updatedUser,
+        notificationsEnabled: enabled,
+      };
+    }),
+  getNotificationState: publicProcedure
+    .input(z.object({
+      address: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { address } = input;
+      
+      if (!address) {
+        return null;
+      }
+      
+      const user = await ctx.db.user.findFirst({
+        where: {
+          address: address.toLowerCase(),
+        },
+        select: {
+          notificationsEnabled: true,
+        },
+      });
+      
+      return user?.notificationsEnabled ?? false;
     }),
 }); 
