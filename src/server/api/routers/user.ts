@@ -21,4 +21,31 @@ export const userRouter = createTRPCRouter({
       });
       return user;
     }),
+  toggleNotifications: publicProcedure
+    .input(z.object({
+      address: z.string(),
+      enabled: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { address, enabled } = input;
+      // fetch the user and make sure they have an fid
+      const user = await ctx.db.user.findFirst({
+        where: {
+          address: address.toLowerCase(),
+        },
+        select: {
+          fid: true,
+          id: true,
+        },
+      });
+      if (!user?.fid) {
+        throw new Error("User not found or does not have a fid");
+      }
+      // update the user's notificationsEnabled field
+      const updatedUser = await ctx.db.user.update({
+        where: { id: user.id },
+        data: { notificationsEnabled: enabled },
+      });
+      return updatedUser;
+    }),
 }); 

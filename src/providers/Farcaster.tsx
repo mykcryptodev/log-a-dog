@@ -8,6 +8,7 @@ import { client } from '~/providers/Thirdweb';
 import { sdk, type Context } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
 import { DEFAULT_CHAIN } from '~/constants';
+import { toast } from 'react-toastify';
 
 // Use environment variable or fallback to localhost for development
 const url = env.NEXT_PUBLIC_APP_DOMAIN || 'http://localhost:3000';
@@ -23,6 +24,7 @@ type FarcasterContextType = {
   isMiniApp: boolean;
   viewProfile: (fid: number) => Promise<void>;
   swapToken: (token: string, sellAmount?: string) => Promise<void>;
+  addMiniApp: () => Promise<void>;
 };
 
 export const FarcasterContext = createContext<FarcasterContextType | null>(null);
@@ -58,6 +60,7 @@ export const FarcasterProvider = ({ children } : {
       await sdk.actions.viewProfile({ fid });
     } catch (err) {
       console.error("Failed to open Farcaster profile", err);
+      toast.error("Failed to open Farcaster profile");
     }
   }, []);
 
@@ -67,6 +70,16 @@ export const FarcasterProvider = ({ children } : {
       await sdk.actions.swapToken({ buyToken: CAIP19, sellAmount });
     } catch (err) {
       console.error("Failed to swap token", err);
+      toast.error("Failed to open token swap");
+    }
+  }, []);
+
+  const addMiniApp = useCallback(async () => {
+    try {
+      await sdk.actions.addMiniApp();
+    } catch (err) {
+      console.error("Failed to add mini app", err);
+      toast.error("Failed to add mini app");
     }
   }, []);
 
@@ -100,7 +113,8 @@ export const FarcasterProvider = ({ children } : {
     isMiniApp,
     viewProfile,
     swapToken,
-  }), [context, isMiniApp, viewProfile, swapToken]);
+    addMiniApp,
+  }), [context, isMiniApp, viewProfile, swapToken, addMiniApp]);
 
 
   return (
