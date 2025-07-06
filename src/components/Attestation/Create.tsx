@@ -334,12 +334,31 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
                 Advanced
               </div>
               <div className="collapse-content">
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  placeholder="Add a message to your dog"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text text-xs opacity-75">Description</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered w-full"
+                    placeholder="Add a message to your dog"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
+                <div className="form-control mt-2">
+                  <label className="label">
+                    <span className="label-text text-xs opacity-75">Gas Fees</span>
+                  </label>
+                  <div className="flex items-center gap-2 pl-2">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-xs checkbox-primary"
+                      checked={payOwnGas}
+                      onChange={(e) => setPayOwnGas(e.target.checked)}
+                    />
+                    <span className="text-xs opacity-75">I will pay my own blockchain fees</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="form-control">

@@ -843,12 +843,12 @@ export const hotdogRouter = createTRPCRouter({
       
       try {
         // const { transactionId } = await serverWallet.enqueueTransaction({ transaction: preparedTransaction });
-          const headers = {
-            // Authorization: `Bearer ${env.THIRDWEB_ENGINE_API_KEY}`,
-            Authorization: `Bearer ${env.THIRDWEB_SECRET_KEY}`,
-            'Content-Type': 'application/json',
-            'X-Backend-Wallet-Address': MAKER_WALLET,
-          }
+        const headers = {
+          // Authorization: `Bearer ${env.THIRDWEB_ENGINE_API_KEY}`,
+          Authorization: `Bearer ${env.THIRDWEB_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+          'X-Backend-Wallet-Address': MAKER_WALLET,
+        }
         const body = {
           functionName: 'logHotdogOnBehalf',
           args: [
