@@ -21,13 +21,6 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   }, [farcaster]);
 
   const handleToggle = useCallback(async (checked: boolean) => {
-    // if the user is not signed in, sign them in
-    if (!sessionData?.user?.address) {
-      await signIn("ethereum", {
-        callbackUrl: "/notifications",
-      });
-      return;
-    }
     setNotificationsEnabled(checked);
     if (!hasAddedMiniApp) {
       await farcaster?.addMiniApp();
@@ -40,7 +33,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
     toast(checked ? "🔔 Notifications on!" : "🔕 Notifications off!");
   }, [hasAddedMiniApp, farcaster]);
 
-  if (!isMiniApp) return null;
+  if (!isMiniApp || !sessionData?.user?.address) return null;
 
   return (
     <label className="swap">
