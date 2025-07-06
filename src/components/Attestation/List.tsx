@@ -18,7 +18,7 @@ import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 
-import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
+import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 
 // Types from hotdog router
 type AttestationPeriod = {
@@ -211,10 +211,20 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   }
 
   const showLoggedVia = (hotdog: { eater: string, logger: string }) => {
-    const loggerIsNotEater = !isAddressEqual(hotdog.eater as `0x${string}`, hotdog.logger as `0x${string}`);
-    const loggerIsNotBackendWallet = !isAddressEqual(hotdog.logger as `0x${string}`, env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`);
-    return loggerIsNotEater && loggerIsNotBackendWallet;
-  }
+    const loggerIsNotEater = !isAddressEqual(
+      hotdog.eater as `0x${string}`,
+      hotdog.logger as `0x${string}`,
+    );
+    const loggerIsNotBackendWallet = !isAddressEqual(
+      hotdog.logger as `0x${string}`,
+      env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS as `0x${string}`,
+    );
+    const loggerIsNotMakerWallet = !isAddressEqual(
+      hotdog.logger as `0x${string}`,
+      MAKER_WALLET,
+    );
+    return loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet;
+  };
 
   // Create maps to ensure correct attestation data is passed by logId
   const validMap = dogData?.hotdogs && dogData.validAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.validAttestations[i]])) : {};
