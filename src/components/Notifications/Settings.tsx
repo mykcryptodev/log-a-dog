@@ -4,6 +4,7 @@ import { useCallback, useContext, useMemo, useState, useEffect, type FC } from "
 import { toast } from "react-toastify";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { api } from "~/utils/api";
+import { sdk } from "@farcaster/frame-sdk";
 
 type Props = {
   className?: string;
@@ -88,7 +89,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
     
     if (!hasAddedMiniApp && checked) {
       try {
-        await farcaster?.addMiniApp();
+        await sdk.actions.addFrame();
       } catch (error) {
         toast.error(`Failed to add mini app: ${error instanceof Error ? error.message : String(error)}`);
         return; // Don't proceed if mini app addition fails
@@ -101,17 +102,17 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
       // Error handling is done in the mutation's onError callback
       console.error('Toggle notifications error:', error);
     }
-  }, [hasAddedMiniApp, farcaster, toggleNotifications, userAddress, isSessionLoading]);
+  }, [hasAddedMiniApp, toggleNotifications, userAddress, isSessionLoading]);
 
   const handleAddMiniApp = useCallback(async () => {
     try {
-      await farcaster?.addMiniApp();
+      await sdk.actions.addFrame();
       // Move to step 2 after successfully adding the mini app
       setCurrentStep(2);
     } catch (error) {
       toast.error(`Failed to add mini app: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [farcaster]);
+  }, []);
 
   const handleEnableNotifications = useCallback(async () => {
     try {
