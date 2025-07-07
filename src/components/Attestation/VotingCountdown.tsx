@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { type FC, useContext, useEffect, useState, useCallback } from "react";
+import { type FC, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { QuestionMarkCircleIcon, XMarkIcon, GiftIcon } from "@heroicons/react/24/outline";
@@ -7,7 +7,48 @@ import { Portal } from "~/components/utils/Portal";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
 import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
-        
+
+// Shared interval manager to prevent multiple intervals
+class IntervalManager {
+  private static instance: IntervalManager;
+  private subscribers = new Map<string, () => void>();
+  private intervalId: NodeJS.Timeout | null = null;
+
+  static getInstance(): IntervalManager {
+    if (!IntervalManager.instance) {
+      IntervalManager.instance = new IntervalManager();
+    }
+    return IntervalManager.instance;
+  }
+
+  subscribe(id: string, callback: () => void) {
+    this.subscribers.set(id, callback);
+    this.startInterval();
+  }
+
+  unsubscribe(id: string) {
+    this.subscribers.delete(id);
+    if (this.subscribers.size === 0) {
+      this.stopInterval();
+    }
+  }
+
+  private startInterval() {
+    if (!this.intervalId && this.subscribers.size > 0) {
+      this.intervalId = setInterval(() => {
+        this.subscribers.forEach(callback => callback());
+      }, 1000);
+    }
+  }
+
+  private stopInterval() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+  }
+}
+
 interface Props {
   timestamp: string; // unix timestamp in seconds
   logId?: string;
@@ -23,7 +64,6 @@ interface Props {
     isValid: boolean;
   };
 }
-
 
 export const VotingCountdown: FC<Props> = ({
   timestamp,
@@ -50,6 +90,7 @@ export const VotingCountdown: FC<Props> = ({
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
   const [isRewardingModerators, setIsRewardingModerators] = useState(false);
+  const componentId = useRef(`countdown-${logId ?? timestamp}-${Math.random()}`);
   
   const { data: session } = useSession();
   const { activeChain } = useContext(ActiveChainContext);
@@ -67,11 +108,21 @@ export const VotingCountdown: FC<Props> = ({
   });
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const manager = IntervalManager.getInstance();
+    const updateTime = () => {
       setTimeLeft(calculateTimeLeft());
-    }, 1000);
+    };
 
-    return () => clearInterval(timer);
+    // Store the ID in a variable to avoid the React hooks warning
+    const id = componentId.current;
+    
+    // Subscribe to shared interval
+    manager.subscribe(id, updateTime);
+
+    // Cleanup on unmount
+    return () => {
+      manager.unsubscribe(id);
+    };
   }, [calculateTimeLeft]);
 
   const isExpired = timeLeft === "Expired";
