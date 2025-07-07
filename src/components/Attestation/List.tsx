@@ -95,8 +95,10 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
+  const [isPaginating, setIsPaginating] = useState(false);
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fix hydration mismatch by only rendering dynamic content on client
   useEffect(() => {
@@ -147,6 +149,15 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     };
   }, [clearExpiredPending, pendingDogs.length]);
 
+  // Handle pagination loading state
+  useEffect(() => {
+    if (isLoadingHotdogs && start > 0) {
+      setIsPaginating(true);
+    } else {
+      setIsPaginating(false);
+    }
+  }, [isLoadingHotdogs, start]);
+
   // Smart deduplication: only filter out optimistic data when real data with same logId exists
   const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);
   const filteredPendingDogs = pendingDogs.filter(pending => {
@@ -161,8 +172,57 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     [dogData?.hotdogs, filteredPendingDogs, pendingDogs]
   );
 
+  // Mobile-safe scroll function
+  const scrollToTop = () => {
+    // Clear any pending scroll timeout
+    if (paginationTimeoutRef.current) {
+      clearTimeout(paginationTimeoutRef.current);
+    }
+    
+    // Use a longer delay on mobile and requestAnimationFrame for smoother scrolling
+    const isMobile = window.innerWidth <= 768;
+    const delay = isMobile ? 300 : 100;
+    
+    paginationTimeoutRef.current = setTimeout(() => {
+      requestAnimationFrame(() => {
+        const element = document.getElementById('top-of-list');
+        if (element) {
+          // Use smooth scrolling on desktop, instant on mobile to prevent conflicts
+          element.scrollIntoView({ 
+            behavior: isMobile ? "auto" : "smooth",
+            block: "start"
+          });
+        }
+      });
+    }, delay);
+  };
+
+  // Handle pagination with loading state
+  const handlePagination = (direction: 'prev' | 'next') => {
+    if (isPaginating) return; // Prevent rapid pagination clicks
+    
+    setIsPaginating(true);
+    
+    if (direction === 'prev') {
+      setStart((prev) => Math.max(0, prev - limitOrDefault));
+    } else {
+      setStart((prev) => prev + limitOrDefault);
+    }
+    
+    scrollToTop();
+  };
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (paginationTimeoutRef.current) {
+        clearTimeout(paginationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Show loading state while client-side query is fetching
-  if (isLoadingHotdogs || !dogData) {
+  if (isLoadingHotdogs && !isPaginating) {
     return (
       <>
         <div id="top-of-list" className="invisible" />
@@ -199,6 +259,27 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
             <button className="join-item btn" disabled>«</button>
             <button className="join-item btn">Page 1 of ...</button>
             <button className="join-item btn" disabled>»</button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Show error state if no data after loading
+  if (!dogData && !isLoadingHotdogs && isClient) {
+    return (
+      <>
+        <div id="top-of-list" className="invisible" />
+        <div className="flex flex-col gap-4 items-center justify-center py-8">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2">Unable to load hotdogs</h3>
+            <p className="text-sm text-base-content/70 mb-4">Please try refreshing the page</p>
+            <button 
+              className="btn btn-primary"
+              onClick={() => void refetchDogData()}
+            >
+              Retry
+            </button>
           </div>
         </div>
       </>
@@ -254,6 +335,18 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     <>
     <div id="top-of-list" className="invisible" />
     <div className="flex flex-col gap-4">
+      {/* Show pagination loading overlay */}
+      {isPaginating && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-base-100 p-4 rounded-lg shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="loading loading-spinner loading-sm"></div>
+              <span>Loading page...</span>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {allHotdogs.map((hotdog) => {
         const isExpired =
           Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <= Date.now();
@@ -349,34 +442,20 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       <div className="join md:col-span-2 place-content-center">
         <button
           className="join-item btn"
-          onClick={() => {
-            setStart((prev) => prev - limitOrDefault);
-            // scroll to top of list
-            setTimeout(
-              () => document.getElementById('top-of-list')?.scrollIntoView({ behavior: "instant" }),
-              100
-            );
-          }}
-          disabled={start === 0}
+          onClick={() => handlePagination('prev')}
+          disabled={start === 0 || isPaginating}
         >
-          «
+          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "«"}
         </button>
-        <button className="join-item btn">
+        <button className="join-item btn" disabled>
           Page {(Math.floor(start / limitOrDefault) + 1)} of {dogData?.totalPages.toString() ?? '...'}
         </button>
         <button
           className="join-item btn"
-          onClick={() => {
-            setStart((prev) => prev + limitOrDefault);
-            // scroll to top of list
-            setTimeout(
-              () => document.getElementById('top-of-list')?.scrollIntoView({ behavior: "instant" }),
-              100
-            );
-          }}
-          disabled={!dogData?.hasNextPage}
+          onClick={() => handlePagination('next')}
+          disabled={!dogData?.hasNextPage || isPaginating}
         >
-          »
+          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "»"}
         </button>
       </div>
     </div>

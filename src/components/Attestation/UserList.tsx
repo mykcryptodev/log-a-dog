@@ -1,4 +1,4 @@
-import { useContext, useEffect, type FC, useState } from "react";
+import { useContext, useEffect, type FC, useState, useRef } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { useActiveAccount } from "thirdweb/react";
@@ -25,6 +25,8 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
+  const [isPaginating, setIsPaginating] = useState(false);
+  const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAllForUser.useQuery({
     chainId: activeChain.id,
@@ -43,9 +45,76 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
     void refetchDogData();
   }, [account, refetchDogData]);
 
+  // Handle pagination loading state
+  useEffect(() => {
+    if (isLoadingHotdogs && start > 0) {
+      setIsPaginating(true);
+    } else {
+      setIsPaginating(false);
+    }
+  }, [isLoadingHotdogs, start]);
+
+  // Mobile-safe scroll function
+  const scrollToTop = () => {
+    // Clear any pending scroll timeout
+    if (paginationTimeoutRef.current) {
+      clearTimeout(paginationTimeoutRef.current);
+    }
+    
+    // Use a longer delay on mobile and requestAnimationFrame for smoother scrolling
+    const isMobile = window.innerWidth <= 768;
+    const delay = isMobile ? 300 : 100;
+    
+    paginationTimeoutRef.current = setTimeout(() => {
+      requestAnimationFrame(() => {
+        // Scroll to top of the user list
+        window.scrollTo({ 
+          top: 0, 
+          behavior: isMobile ? "auto" : "smooth" 
+        });
+      });
+    }, delay);
+  };
+
+  // Handle pagination with loading state
+  const handlePagination = (direction: 'prev' | 'next') => {
+    if (isPaginating) return; // Prevent rapid pagination clicks
+    
+    setIsPaginating(true);
+    
+    if (direction === 'prev') {
+      setStart((prev) => Math.max(0, prev - limitOrDefault));
+    } else {
+      setStart((prev) => prev + limitOrDefault);
+    }
+    
+    scrollToTop();
+  };
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (paginationTimeoutRef.current) {
+        clearTimeout(paginationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-      {isLoadingHotdogs && 
+    <div className="grid md:grid-cols-2 grid-cols-1 gap-4 relative">
+      {/* Show pagination loading overlay */}
+      {isPaginating && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-base-100 p-4 rounded-lg shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="loading loading-spinner loading-sm"></div>
+              <span>Loading page...</span>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {isLoadingHotdogs && !isPaginating && 
         Array.from({ length: limitOrDefault }).map((_, index) => (
           <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
             <div className="flex gap-2 items-center">
@@ -142,20 +211,20 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
       <div className="join md:col-span-2 place-content-center">
         <button
           className="join-item btn"
-          onClick={() => setStart((prev) => prev - limitOrDefault)}
-          disabled={start === 0}
+          onClick={() => handlePagination('prev')}
+          disabled={start === 0 || isPaginating}
         >
-          «
+          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "«"}
         </button>
-        <button className="join-item btn">
+        <button className="join-item btn" disabled>
           Page {(Math.floor(start / limitOrDefault) + 1)} of {dogData?.totalPages.toString() ?? '...'}
         </button>
         <button
           className="join-item btn"
-          onClick={() => setStart((prev) => prev + limitOrDefault)}
-          disabled={!dogData?.hasNextPage}
+          onClick={() => handlePagination('next')}
+          disabled={!dogData?.hasNextPage || isPaginating}
         >
-          »
+          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "»"}
         </button>
       </div>
     </div>
