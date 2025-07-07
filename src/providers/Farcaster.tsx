@@ -5,7 +5,7 @@ import { EIP1193 } from 'thirdweb/wallets';
 import { env } from '~/env';
 import useActiveChain from '~/hooks/useActiveChain';
 import { client } from '~/providers/Thirdweb';
-import { FrameNotificationDetails, sdk, type Context } from "@farcaster/frame-sdk";
+import { type FrameNotificationDetails, sdk, type Context } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
 import { DEFAULT_CHAIN } from '~/constants';
 import { toast } from 'react-toastify';

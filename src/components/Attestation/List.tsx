@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useContext, useEffect, type FC, useState, useMemo } from "react";
+import { useContext, useEffect, type FC, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
@@ -96,6 +96,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const [start, setStart] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fix hydration mismatch by only rendering dynamic content on client
   useEffect(() => {
@@ -121,15 +122,30 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
   // Clear expired pending transactions more frequently
   useEffect(() => {
+    // Clear immediately on mount
     clearExpiredPending();
     
-    // Set up interval to clear expired pending dogs every 30 seconds
-    const interval = setInterval(() => {
-      clearExpiredPending();
-    }, 30000); // 30 seconds
+    // Only set up interval if we have pending dogs
+    if (pendingDogs.length > 0) {
+      // Clear any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      
+      // Set up interval to clear expired pending dogs every 30 seconds
+      intervalRef.current = setInterval(() => {
+        clearExpiredPending();
+      }, 30000); // 30 seconds
+    }
     
-    return () => clearInterval(interval);
-  }, [clearExpiredPending]);
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [clearExpiredPending, pendingDogs.length]);
 
   // Smart deduplication: only filter out optimistic data when real data with same logId exists
   const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);

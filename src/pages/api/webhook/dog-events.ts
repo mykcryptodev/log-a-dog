@@ -3,7 +3,6 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import { sendTelegramMessage, formatDogLogMessage } from "~/lib/telegram";
 import { sendNotificationToUsers } from "~/lib/neynar";
-import { env } from "~/env";
 
 // Type for the result of processing each event
 type EventProcessingResult = {
