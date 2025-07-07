@@ -14,7 +14,10 @@
     "script:fix-addresses": "tsx src/scripts/fix-address-case.ts",
     "script:migrate-events": "tsx src/scripts/migrate-dog-events.ts",
     "script:diagnose": "tsx src/scripts/diagnose-linking.ts",
-    "script:link-specific": "tsx src/scripts/link-specific-events.ts"
+    "script:link-specific": "tsx src/scripts/link-specific-events.ts",
+    "script:generate-merkle": "npx tsx airdrop/generate-merkle-root.ts",
+    "script:generate-merkle:base": "npx tsx airdrop/generate-merkle-root.ts --chain=base",
+    "script:generate-merkle:testnet": "npx tsx airdrop/generate-merkle-root.ts --chain=baseSepolia"
   },
   "dependencies": {
     "@apollo/client": "^3.9.5",
@@ -39,6 +42,8 @@
     "@zoralabs/coins-sdk": "^0.2.1",
     "apexcharts": "^3.46.0",
     "cross-fetch": "^4.0.0",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^16.4.5",
     "graphql": "^16.8.1",
     "heic2any": "^0.0.4",
     "js-confetti": "^0.12.0",
