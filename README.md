@@ -12,7 +12,7 @@ Stake your $HOTDOG tokens to help judge whether logs are legit. Honest votes ear
 Buy and sell dog coins on the open market. Eaters pocket a piece of every trade, and bigger stakes mean bigger rewards.
 
 ## 🎉 Join the Contest
-Fire up your grill, log those dogs, and show the world your appetite. It’s all fun, memes, and tasty gains.
+Fire up your grill, log those dogs, and show the world your appetite. It’s all fun, memes, and tasty dogs.
 
 ---
 
