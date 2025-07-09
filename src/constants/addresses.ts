@@ -22,6 +22,11 @@ export const HOTDOG_TOKEN: ContractAddress = {
   [baseSepolia.id]: "0x113F2c74d66A5eFc1F114547cA97f6a1b62b0Bd8",
 }
 
+export const AIRDROP: ContractAddress = {
+  [base.id]: "0x1124Ca9D1c1B2DaFC26dE2Ba8Dbf7DdB340043aC",
+  [baseSepolia.id]: "0x1124Ca9D1c1B2DaFC26dE2Ba8Dbf7DdB340043aC",
+}
+
 export const AI_AFFIRMATION: ContractAddress = {
   [base.id]: "0xA473533c54D105C6334fE06c8624f7dfbb09ba25",
   [baseSepolia.id]: "0xA473533c54D105C6334fE06c8624f7dfbb09ba25",

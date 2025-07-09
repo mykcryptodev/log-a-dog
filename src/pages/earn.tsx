@@ -16,6 +16,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Buy } from "~/components/utils/Buy";
 import { HOTDOG_TOKEN, DEFAULT_CHAIN } from "~/constants";
+import { AirdropChannel } from "~/components/Airdrop/Channel";
 
 const EarnPage: NextPage = () => {
   const [mode, setMode] = useState<"eat" | "judge">("judge");
@@ -201,6 +202,24 @@ const EarnPage: NextPage = () => {
           <ClaimProtocolRewards />
         </div>
       </div>
+
+      {/* Airdrop */}
+      <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
+        <div className="card-body">
+          <h2 className="card-title flex items-center gap-2 text-2xl">
+            <CurrencyDollarIcon className="h-6 w-6" />
+            Airdrop
+          </h2>
+          <p className="text-sm text-base-content/70 mb-2">
+            Airdrop of 3M $HOTDOG for Glizzy Zone and Log a Dog Channel Followers
+          </p>
+          <div className="flex w-full items-center justify-center flex-col gap-2">
+            <AirdropChannel />
+          </div>
+        </div>
+      </div>
+
+      {/* Airdrop */}
 
       {/* Voting Process */}
       <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">

@@ -2,7 +2,7 @@ import { createThirdwebClient, getContract, toTokens } from "thirdweb";
 import { generateMerkleTreeInfoERC20 } from "thirdweb/extensions/airdrop";
 import { base, baseSepolia } from "thirdweb/chains";
 import { toUnits } from "thirdweb/utils";
-import { HOTDOG_TOKEN } from "../src/constants/addresses";
+import { AIRDROP, HOTDOG_TOKEN } from "../src/constants/addresses";
 
 // Load environment variables
 import dotenv from 'dotenv';
@@ -10,7 +10,6 @@ dotenv.config();
 
 // Configuration
 const THIRDWEB_SECRET_KEY = process.env.THIRDWEB_SECRET_KEY;
-const AIRDROP_CONTRACT_ADDRESS = "0xC75149cB63DeC9E3883E49B0788025fADC03Fa1D"; // Replace with your airdrop contract address
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -34,6 +33,7 @@ const getChain = (chainName?: string) => {
 
 const CHAIN = getChain(chainArg);
 const tokenAddress = HOTDOG_TOKEN[CHAIN.id];
+const AIRDROP_CONTRACT_ADDRESS = AIRDROP[CHAIN.id];
 
 // Validate token address exists
 if (!tokenAddress) {
@@ -86,12 +86,12 @@ async function generateMerkleRoot() {
   const contract = getContract({
     client,
     chain: CHAIN,
-    address: AIRDROP_CONTRACT_ADDRESS,
+    address: AIRDROP_CONTRACT_ADDRESS as `0x${string}`,
   });
 
   // Load snapshot from CSV file
   console.log("Loading recipient data from CSV file...");
-  const snapshot = await loadSnapshotFromCSV('airdrop/example-airdrop-data.csv');
+  const snapshot = await loadSnapshotFromCSV('airdrop/airdrop.csv');
 
   console.log("Generating merkle tree for HOTDOG token airdrop...");
   console.log(`Total recipients: ${snapshot.length}`);

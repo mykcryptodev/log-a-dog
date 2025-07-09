@@ -1,0 +1,739 @@
+{
+  "merkleRoot": "0x6dec9347170a5aa22d6f938a4cbcc8fb5975f2273c31e78dc71b5a56231e304f",
+  "snapshotUri": "ipfs://QmexnABLj1aoA915vaEtHUFYXEJjQo4W1Jw2nSrS9CaRpy/0",
+  "snapshot": [
+    {
+      "recipient": "0x445664D66C294F49bb55A90d3c30BCAB0F9502A9",
+      "amount": "30000000000000000000"
+    },
+    {
+      "recipient": "0xb875badbd67c7d5fa2c845ddce8fe112fe383309",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x5dcbc73493a55024d951e887b4e3c7dd79c1e457",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x7a4dd8b7f17a65c1d7929bb3c23f2610fe1dddf7",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x0c05af9d2343663a9c3327d09ce5e33d675fffcb",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x23018edbfa176bde3dffd5037b206d147f3e3c9f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc9ed679962e0d4e82d6ebc12ee3f0561f44f23c6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xaa7ed91fc90b9d92b39fa16e1f2016cdb0497b4c",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x545fc90c55d2ec7826d2831c00246cbc05bbbf18",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x53aea1ec0a7ca04eb4463984a7da085f35697f05",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x2feb373f4f3ffc42c4b917188e1b50a3ffe8a487",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x394cc474a44ce66a30b5bf79a755f4372942caa8",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x8868ade444f7333b1543c71413c69c7ca6362a04",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x9009b5a14c3b1a21fb79cfd747f00e76ba6600f0",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xce3aff2e781acb95eacf46df75323f9e171595fe",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xb4b09b0bc959c4d9d03396273241e69f0593dc5e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x71cbbe6ecf1a9c4d8b9115757ebcc5ff45902177",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x9ecd4ceda75d840af1caba4203a0add61e94f63c",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x2b3fe8014d3c6c74419c8f6aa4cbd307a701e4ac",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xced0068898f5886e422fb60eb987bc82311d1ce1",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x774a375858f34573f482148cec198e280ee31bc1",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xaa3aabd16ac378ff1428b2715217a6b7ec870846",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xe5574554d6a4be5ca39f22990492d756ebc4d6c3",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xa8746b5711590b3168b44943c806f33f2fbc5d84",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3f356a894ff5f599e023864a6393d1e1c7d56c31",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x9b49067240f1191834efc9a139dd0187d63923e5",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x67f696d04ca0c4c1fc650df8cb2366399dc81f46",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x6d9ffd68bc9c495068490101180327b9991553b0",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x4c329de465b7bb6010d55aa05daa06232dc94a18",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xcde9f00116bffe9852b2cd4295446ae5fc51ad0a",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x9beadc1297f97fff916a487e49dea1004510c59e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xe36d2f95a9b69df60dbf029bf7c4fa7d1ff56b90",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xca1269d161647bd461546a7e7c19a16df5179446",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xe5cc93d4f410451ae3e75bdc3132ed5ee6722573",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x1ac4515a926a5dcb805e9db81f5cef56151aee89",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x4c3b573643a32a419c516c666be1095d58817a7e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xac97615633d658975b450d2335ac30d0840f8f17",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x6ecff899b7a981687f2107831af90aa466082245",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf6e02bf15e8cb2f24fba413f3f80e17fd2227c77",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc282b81cb721729b03a3b408086538e0c9d659d8",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf531752a010effc0c82edf1dd5866c557e17f7b0",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x2618d99ee89557a4c44a0e923645fd142e3f6a00",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3d4af8e2b548d02240dfbc0be95a3b62d37fe9c6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x97e302e2638eb8ac6572598c559e56c7a9b39cdf",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x395dd1a607a7b809eecf0fd0dd58c2157b0f5fa0",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x2899df818fd3b5afc74df50ed061e3d66d651d2e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf477d0dfbff12d47f79321851818da146ed8d2c0",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x6f1dbe4869276c923cb975440a5cacffe63c4c4f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xda272fdf646a1ebcba337a9d5fca848ea6a138f8",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xcaca3cddadd16888971d116510fb745327e44925",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x146fb9707d58ce048cf9cb1845c8c4e54890d0d9",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc6d5031d51c3b376131a79260c6daf53c0a39382",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xbd09ce90b8c956fdf77599ea29071f921769a96a",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x5380bec359070af2ed03cb0af1f091da4197d516",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x848dd32098489e02b836ba40d1441f3a8a9ae65f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xebebf69bc8ce2092e3b765583b1a94ac29728610",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xb982903b1f366b13b829f2fcd8fdd3e000e7ce14",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3349f432dadc327d8b8a6234d8ed43bc0109c01b",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf51dbf86565e16d56c7abcda299da1466507a29a",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x48198ee94ec2788296a23de916971ae374f88a15",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x6783ed4c3a95d0efd51e5c6467921a2620480aed",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x0bb99c58d6c5393148f768c9bdbca5989d6c4f57",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x21d578fc404c331c3ff910c4f7ffb4a8ee8c18c1",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x6da420e398138808833af7b9455255b1bc6c032d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x340029656677bbc0e9a3cb28d2359060d7664c5f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xeed226a920cde34ed7ba7cb15c7c63c4f0db2737",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xad11f07a6dc45d8797de158550bc8eb1a9eed9a6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x89cd778ed1f781d465128ee8a3de0c8d7bfee8b4",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x76909fd5590c150199acb98383875bdb7cf6136b",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xe120adfc210eccd020f553ea4328b3fbf89c0e17",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xafe7b7d2190aefa38ee79385c72f4c3e4878973e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xb9e37652a76249a8779845e8517db68873d5f1a6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3b2c9413136d84951e94e6d6a92acda36d27f44e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x26fb5aec6c63c227dd2dd3756c643e329faf0d71",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xb1b3763fdc1afe78351d7a1556470ae9a80c673d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x58cb89c8bbab3ff6b025fc140979cae5da7a53dd",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3b1496a5d0775eac56464d8d092f4b9a7a1a8374",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x409538216575caefe49af5af9b12ef4b4496041b",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x517548298684b4c6910f08b9195399e20ad9dac9",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x816fb4374cb8dd29d565f6a65086c7988bfd1152",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3e7b00da9c3df1db2ac18f5d9f675cfc0376473d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x179d8b364561ffdf5b8adcb8adee359b82c9e5f4",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x36abb520ec21444e7bc785dbe0acdc1d64c87128",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xdb859662323621a50f27dd125e810a9b80966398",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x6286b9dbc84230e782eaf03a581706b218d5ec5d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x79d4045276af8025ac957f8bb34a5737bf90a2eb",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf0741a0b9f8a7c6ee3740bd223a8457e17392223",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xb333a2c1a3a7b074e94bf8d0d5bf0021bf0d8f89",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x665f47deb367704cbf280a530a551c1c4a6731fd",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x379fe47375a45c6c54a9a10dd800a5b09523e551",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x941c917b1a3d371fb63b5604808a9152e6bef2c6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x98f047fce42c8689f6ea231e24fe2d394cce7958",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xceab0087c5fbc22fb19293bd0be5fa9b23789da9",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x78ebad0138b089caecf62438ea4d0a6246a213dc",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x422cf9b9d7f3f87df676ab016711c6c138382653",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc41ba732369ac17d1372542520247518c726ef0e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x65756c887590924966fa11d5117abaa11a017c65",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xa1d307b7522b7479aab82517dcb4dad43939907d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x039cf4c291a6e007912fc72c5290a9f91292c706",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x448738be2fbfa2b61e82d1121bd65c7c3e8a12eb",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x766281cc5608fb89deab30e1524b9ab9ccba67ce",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x08eef1415335ec79e70cdb94010729194986d928",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x6d15f2c2649f437137958013261fbf6349798eb0",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xdafcfb204d7c1a48550cc61e6d3a4a3178849899",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xd33a13e48484177524e8cd7aa8ffc5bf5035f340",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x2f05371f6b614ca142133c5ab4a8d6631a279fa7",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xd9c0e850a086aa5febd40f2668c5d7e15d7d74a2",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x71ac524ba662376eaa87ff9ff41a26ebfdf7ed06",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xd1330fad51719d04936efb71517537f1d6d084fe",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x848f7bc5ffa426992843e1fc3add3c1792589286",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc7813adb049ec1b0705cb0146cacbf8f95337d86",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xba376d73920ba7fa8f320ae91c0349b0fcaa08dc",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x8c734f694184ddb6f17f97c753c8df13a7af7ae2",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xefb5ad33f2d6accaab3a6786c4d24fff59ba7190",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x7052057cf9f947dd7470fb95afb95d4229fc8ef4",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf083562a8d37a0e3573c2d1378b2aad601be1257",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3914142bef098357494c849098594f9cd5602b72",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x9a9227e53d33af2c1029cd04bd2133bf4359af70",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf079c1611c3ae0774b8aeedd8f5044bfe2c93f41",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x5895b08115e512ef37f46c6d65717c8cc0253b22",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x7071c73635c85f13032ad5beceb81902ca02372f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xd12a95814be9ede8f41cdc96a25fd61649b74803",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x799ab88a64d33f4da37dfc958dc41277c6969f18",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf8096d0e46652770c611f1297dc966fe584aa06a",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x49051b7907aaa70cd08e61fa648074788e23dc08",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc0d772a99777abdc53d7ffdb4658a0b174a8f05f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf63b759000a91731c2c910641fc80a7c4256dddf",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xda704a20e8e6a8a69026fcbc829da30b2babf27b",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x35dfd84a153be204db6bde5628ca4e2c8545e93c",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x936eb26f4a2a7ec0726f1a85f0dfdc0b68cce4cf",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x2201a545a6862f7a41d8bf90a30c7de6a9624a27",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x7e1823f83d44cd0c570b45d54d2daffc85c0ab5d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf4901a3de0415c4d5608708def4c8e5b8e41f45d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xfe1572b82b45c561b9011043f9ba4ed6aef7569f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x14074a4dc440230523a9fb7a0ce6934a6118e7c6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x668710e690dff771bae92a868649f3948525638a",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xbc9b50d89af9cbeff1652f8e4b2052e12efe9915",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x379296b76150ec624b69165c3d339bdb2b7d6020",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x2cc450177337d3e07f806af1367fea841b2a72b5",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xea7fdf0c82227c8bcce8323a0dbf80c8887d60f5",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x64c3eecc8b27c5c342706ca327e5a54235610683",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xa33cc67e1dd105512de3b94e86724c8876c72de6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3411caf97491708e33ff188c26bb27dad55548a0",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xa0568f0d1b79e8dc9860b3ed763a96dc6152de25",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x9d5471cfcbadd4700f5287125169dfcf6091068b",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x796355630aacb83ea13b39cfdd4c1a850a101690",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xfaa8cfcf7a706c64e752d4b48426c2a21fb34eda",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x04cc449d711bf9612f423f01d567c69c5c7a843b",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x0f84f5893165d192a1511a06ac4409bdecc0e94e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x62a84ea194247a6e6de1d11597077b1876d30e07",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x29c3311ee19531c3d226d45771212bba91eb2339",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x4cc0fb78914b630c8c2da7089c6680e8ebebec1d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc34183ccaadc3b9566a16155c769e814ede01bb1",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf4a678425af4eeb65d5c188577460c449068e7fe",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xe2abc6372dc32fd8bf588e30b8d7d789bde5ba70",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x7b2e30669fccb7de8e1044b8795cc2e9e4a3e5b3",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xfad68f9210265bad62d28fa5393d6723b30f6da2",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc54604b9e0a1449644ea0d978fa099291f09935f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x8d888326e1e2b6a399b751105339f82476208d5d",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xfa3ce274f05bb01b8dc85a9dff96cae8c5c869e6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x3d4df4e483401479d4ee38f3478574c82e322529",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x408badae4181acd5aa5d275e8bf010b1b33a15b2",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x9d5ae907701f641cca742257ec0a49aa1b9804a4",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x01fcc75649f66616fab77e7bee26e86069b707b3",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xf03ca69ca56ff82f586f84ab2e6cafd2ccea08e3",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xfb3037c412ee6a27aa8d4345b4f38751416afe4f",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xb950d3d40b92d186b9c26f2dfdd68a5d88502cc6",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x2725cce9e2442e7941d6667d42dbcb9fe01e88f4",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x27f85e7b1858616eeb6ea8592f36bcb6d03a3164",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x20fd3753c71bf36e12526e24c0e1444549ac2266",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x5c03c308b2ee6635b8aaf49f0e024ab2ac48299e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x687ff68c447d9455444341e110cc2bd19bfaae28",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x002ddfd72fc343853b672494eb765b267ee680e5",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xd07a58f7c896f758386355b4b61b9eaae56c9cb7",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x0cf5d99e13ec2354ceab49cfd54b8f2d5373e381",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x9c22042e15683d34944971d229b58e66ed24582b",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xc7efa766ba2b70a156d001e4e43513db5b3096e2",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x6040cdbb6a1f636ae91f8268d7a6afd8676fcf6e",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x65e3419e633833df1d602e7905cb9c7e541f0849",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0xdf1ec359a543005d14c412acce13f18fb4d409fd",
+      "amount": "3000000000000000000000000"
+    },
+    {
+      "recipient": "0x1525a9b7c1c6266ae7b8d6d95a44887dc3009714",
+      "amount": "3000000000000000000000000"
+    }
+  ],
+  "metadata": {
+    "chainId": 84532,
+    "chainName": "Base Sepolia",
+    "contractAddress": "0xC75149cB63DeC9E3883E49B0788025fADC03Fa1D",
+    "tokenAddress": "0x113F2c74d66A5eFc1F114547cA97f6a1b62b0Bd8",
+    "totalRecipients": 181,
+    "totalAmount": "540000030",
+    "generatedAt": "2025-07-09T04:07:46.040Z"
+  }
+}

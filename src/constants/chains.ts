@@ -9,6 +9,6 @@ import { base, baseSepolia } from "thirdweb/chains";
 //   // rpc: "https://api.developer.coinbase.com/rpc/v1/base-sepolia/A10WpgQTkaHJltNKqtNhT2RQ-E-KgEjs",
 // };
 
-export const DEFAULT_CHAIN = base;
+export const DEFAULT_CHAIN = baseSepolia;
 
 export const SUPPORTED_CHAINS = [base, baseSepolia];
