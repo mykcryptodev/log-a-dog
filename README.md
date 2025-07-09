@@ -1,5 +1,7 @@
 # 🌭 Log a Dog
 
+![Hotdog eating contest](public/images/IMG_7081.jpeg)
+
 Welcome to the internet's hotdog eating contest! Log every dog you devour and climb the leaderboard while the crowd cheers you on.
 
 ## 🪙 Every Dog Is a Zora Coin
