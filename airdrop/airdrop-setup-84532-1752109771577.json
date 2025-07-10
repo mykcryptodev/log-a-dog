@@ -1,0 +1,12 @@
+{
+  "chainId": 84532,
+  "chainName": "Base Sepolia",
+  "contractAddress": "0x1124Ca9D1c1B2DaFC26dE2Ba8Dbf7DdB340043aC",
+  "tokenAddress": "0x113F2c74d66A5eFc1F114547cA97f6a1b62b0Bd8",
+  "merkleRoot": "0x9f5941e88e5697a858bcea6ff0a78bd17bb482c408fc5cf652c813ec6c4ebf58",
+  "snapshotUri": "ipfs://QmXgzDarJye1MZvWobkwzjuqJUkrirXRcpcftJFU72uJoh/0",
+  "totalRecipients": 181,
+  "saveSnapshotTx": "0x492dfdbaa0eb2755e7c26419c5a580479ee3f32cb21433b9f9163bf503e2cfbb",
+  "setMerkleRootTx": "0x9714315d16b4f47fba6418866feb3c6280e72274e6cdb9bc1194eb13fe49b0ce",
+  "setupAt": "2025-07-10T01:09:31.577Z"
+}

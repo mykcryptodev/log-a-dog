@@ -160,6 +160,7 @@ async function loadSnapshotFromCSV(csvPath: string): Promise<Array<{ recipient: 
         });
       })
       .on('end', () => {
+        console.log('results', results)
         resolve(results);
       })
       .on('error', reject);

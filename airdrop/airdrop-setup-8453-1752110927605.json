@@ -1,0 +1,12 @@
+{
+  "chainId": 8453,
+  "chainName": "Base",
+  "contractAddress": "0x1C291cd9Be35A70B23fafE261BFAdb93770c2967",
+  "tokenAddress": "0x61f47EC6D1d0ef9b095574D7b76cF0467d13fB07",
+  "merkleRoot": "0x9f5941e88e5697a858bcea6ff0a78bd17bb482c408fc5cf652c813ec6c4ebf58",
+  "snapshotUri": "ipfs://QmXgzDarJye1MZvWobkwzjuqJUkrirXRcpcftJFU72uJoh/0",
+  "totalRecipients": 181,
+  "saveSnapshotTx": "0x2750f853ea2f69272d134106e1d0d883aa644c040aad0126944de65743a58230",
+  "setMerkleRootTx": "0x0357f19d261f40bedb2b6a7f4c4d7d754798e61cd575d21b7e9b3b5e96458b7e",
+  "setupAt": "2025-07-10T01:28:47.605Z"
+}
