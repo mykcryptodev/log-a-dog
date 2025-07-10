@@ -1,8 +1,7 @@
 import { createThirdwebClient, getContract, toTokens } from "thirdweb";
 import { generateMerkleTreeInfoERC20 } from "thirdweb/extensions/airdrop";
 import { base, baseSepolia } from "thirdweb/chains";
-import { toUnits } from "thirdweb/utils";
-import { HOTDOG_TOKEN } from "../src/constants/addresses";
+import { AIRDROP, HOTDOG_TOKEN } from "../src/constants/addresses";
 
 // Load environment variables
 import dotenv from 'dotenv';
@@ -10,7 +9,6 @@ dotenv.config();
 
 // Configuration
 const THIRDWEB_SECRET_KEY = process.env.THIRDWEB_SECRET_KEY;
-const AIRDROP_CONTRACT_ADDRESS = "0xC75149cB63DeC9E3883E49B0788025fADC03Fa1D"; // Replace with your airdrop contract address
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -34,6 +32,7 @@ const getChain = (chainName?: string) => {
 
 const CHAIN = getChain(chainArg);
 const tokenAddress = HOTDOG_TOKEN[CHAIN.id];
+const AIRDROP_CONTRACT_ADDRESS = AIRDROP[CHAIN.id];
 
 // Validate token address exists
 if (!tokenAddress) {
@@ -86,12 +85,12 @@ async function generateMerkleRoot() {
   const contract = getContract({
     client,
     chain: CHAIN,
-    address: AIRDROP_CONTRACT_ADDRESS,
+    address: AIRDROP_CONTRACT_ADDRESS as `0x${string}`,
   });
 
   // Load snapshot from CSV file
   console.log("Loading recipient data from CSV file...");
-  const snapshot = await loadSnapshotFromCSV('airdrop/example-airdrop-data.csv');
+  const snapshot = await loadSnapshotFromCSV('airdrop/airdrop.csv');
 
   console.log("Generating merkle tree for HOTDOG token airdrop...");
   console.log(`Total recipients: ${snapshot.length}`);
@@ -110,7 +109,7 @@ async function generateMerkleRoot() {
     console.log(`Merkle Root: ${merkleRoot}`);
     console.log(`Snapshot URI: ${snapshotUri}`);
 
-    const total = snapshot.reduce((sum, item) => sum + BigInt(item.amount), 0n);
+    const total = snapshot.reduce((sum, item) => sum + item.amount, 0);
 
     // Save results to file
     const results = {
@@ -123,7 +122,7 @@ async function generateMerkleRoot() {
         contractAddress: AIRDROP_CONTRACT_ADDRESS,
         tokenAddress: TOKEN_ADDRESS,
         totalRecipients: snapshot.length,
-        totalAmount: toTokens(total, 18).toString(),
+        totalAmount: total.toString() + " tokens",
         generatedAt: new Date().toISOString(),
       },
     };
@@ -141,26 +140,27 @@ async function generateMerkleRoot() {
   }
 }
 
-// Function to load snapshot from CSV file
-async function loadSnapshotFromCSV(csvPath: string): Promise<Array<{ recipient: string; amount: string }>> {
+// Function to load snapshot from CSV file (thirdweb format)
+async function loadSnapshotFromCSV(csvPath: string): Promise<Array<{ recipient: string; amount: number }>> {
   const fs = await import('fs');
   const csvParser = await import('csv-parser' as any);
   
-  const results: Array<{ recipient: string; amount: string }> = [];
+  const results: Array<{ recipient: string; amount: number }> = [];
   
   return new Promise((resolve, reject) => {
     fs.createReadStream(csvPath)
       .pipe(csvParser.default())
       .on('data', (data: any) => {
         const humanReadableAmount = data.amount || "0";
-        // Clean the amount string and convert to BigInt-compatible format
-        const cleanAmount = humanReadableAmount.toString().trim(); // Remove any spaces and ensure it's a string
+        // Clean the amount string and keep as token amount (not wei)
+        const cleanAmount = humanReadableAmount.toString().trim();
         results.push({
           recipient: data.address, // Use 'address' column from CSV
-          amount: toUnits(cleanAmount, 18).toString(), // Convert to wei with 18 decimals
+          amount: parseFloat(cleanAmount), // Keep as token amount, thirdweb handles wei conversion
         });
       })
       .on('end', () => {
+        console.log('results', results)
         resolve(results);
       })
       .on('error', reject);
