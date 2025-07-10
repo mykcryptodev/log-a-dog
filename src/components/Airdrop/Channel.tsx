@@ -69,8 +69,12 @@ export const AirdropChannel = () => {
   }, [account?.address]);
 
   useEffect(() => {
-    checkIfClaimed();
-    checkUserEligibility();
+    checkIfClaimed().catch((error) => {
+      console.error("Error checking if claimed:", error);
+    });
+    checkUserEligibility().catch((error) => {
+      console.error("Error checking user eligibility:", error);
+    });
   }, [checkIfClaimed, checkUserEligibility]);
 
   if (!account) {

@@ -102,7 +102,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
       // Error handling is done in the mutation's onError callback
       console.error('Toggle notifications error:', error);
     }
-  }, [hasAddedMiniApp, toggleNotifications, userAddress, isSessionLoading, sdk.actions]);
+  }, [hasAddedMiniApp, toggleNotifications, userAddress, isSessionLoading]);
 
   const handleAddMiniApp = useCallback(async () => {
     try {
@@ -112,7 +112,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
     } catch (error) {
       toast.error(`Failed to add mini app: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [sdk.actions]);
+  }, []);
 
   const handleEnableNotifications = useCallback(async () => {
     try {

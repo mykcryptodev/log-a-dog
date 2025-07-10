@@ -1,5 +1,4 @@
-import { toUnits } from "thirdweb/utils";
-import { createThirdwebClient, getContract } from "thirdweb";
+import { getContract } from "thirdweb";
 import { generateMerkleTreeInfoERC20 } from "thirdweb/extensions/airdrop";
 import { getContractMetadata, setContractURI } from "thirdweb/extensions/common";
 import { upload } from "thirdweb/storage";
@@ -11,11 +10,6 @@ import { client } from "~/providers/Thirdweb";
 interface SnapshotEntry {
   recipient: string;
   amount: number; // Amount in tokens (not wei)
-}
-
-interface SaveSnapshotParams {
-  merkleRoot: string;
-  snapshotUri: string;
 }
 
 // Parse CSV data to thirdweb's snapshot format
@@ -64,8 +58,11 @@ export async function saveSnapshot(merkleRoot: string, snapshotUri: string) {
     merkleInfos[merkleRoot] = snapshotUri;
     
     // Keep old merkle roots from other tokenIds
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (metadata.merkle) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
       for (const key of Object.keys(metadata.merkle)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
         merkleInfos[key] = metadata.merkle[key];
       }
     }
@@ -176,7 +173,7 @@ export function getAmountForAddress(csvData: string, address: string): number {
   const entry = snapshot.find(entry => 
     entry.recipient.toLowerCase() === address.toLowerCase()
   );
-  return entry?.amount || 0;
+  return entry?.amount ?? 0;
 }
 
 // Debug function for testing
