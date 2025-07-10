@@ -98,8 +98,8 @@ export const AirdropChannel = () => {
   }
 
   return (
-    <div>
-      <div className="mb-2 text-sm text-gray-600">
+    <div className="flex flex-col items-center">
+      <div className="mb-2 text-sm text-center text-gray-600">
         Eligible for: {userAmount} $HOTDOG tokens
       </div>
       <TransactionButton
