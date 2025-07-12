@@ -187,25 +187,24 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
           if (coin?.address) {
             const normalizedAddress = coin.address.toLowerCase();
 
-            // Zora API returns numeric values scaled by 1e11. Adjust to human readable dollars.
-            if (coin.marketCap) {
-              coin.marketCap = (Number(coin.marketCap) / 1e11).toString();
-            }
-            if (coin.volume24h) {
-              coin.volume24h = (Number(coin.volume24h) / 1e11).toString();
-            }
-
-            // Add link to coin on Zora
+            // Prepare coin details object with adjusted values
             const slug = ZORA_CHAIN_SLUGS[coin.chainId ?? chainId];
-            if (slug) {
-              coin.link = `https://zora.co/coin/${slug}:${coin.address}`;
-            }
+            const processedCoin: ZoraCoinDetails = {
+              ...coin,
+              marketCap: coin.marketCap
+                ? (Number(coin.marketCap) / 1e11).toString()
+                : undefined,
+              volume24h: coin.volume24h
+                ? (Number(coin.volume24h) / 1e11).toString()
+                : undefined,
+              link: slug ? `https://zora.co/coin/${slug}:${coin.address}` : undefined,
+            };
 
-            coinDetailsMap.set(normalizedAddress, coin);
+            coinDetailsMap.set(normalizedAddress, processedCoin);
 
             // Cache this coin individually
             const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
-            await setCachedData(cacheKey, coin, CACHE_DURATION.MEDIUM);
+            await setCachedData(cacheKey, processedCoin, CACHE_DURATION.MEDIUM);
           } else {
             console.log('Skipping coin with no address:', coin);
           }
