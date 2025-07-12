@@ -58,6 +58,7 @@ model User {
     fid           Int?
     dogEvents     DogEvent[]
     notificationsEnabled Boolean? @default(false)
+    neynarScore     Float?
 }
 
 model VerificationToken {

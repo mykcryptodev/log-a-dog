@@ -12,6 +12,11 @@ export async function getDogEvents(options?: {
     orderBy: options?.orderBy ?? { createdAt: "desc" },
     take: options?.take,
     skip: options?.skip,
+    include: {
+      user: {
+        select: { neynarScore: true }
+      }
+    },
   });
 }
 
@@ -30,6 +35,9 @@ export async function getDogEventsByLogger(logger: string, options?: {
     orderBy: { createdAt: "desc" },
     take: options?.take,
     skip: options?.skip,
+    include: {
+      user: { select: { neynarScore: true } }
+    },
   });
 }
 
@@ -42,6 +50,9 @@ export async function getDogEventsByEater(eater: string, options?: {
     orderBy: { createdAt: "desc" },
     take: options?.take,
     skip: options?.skip,
+    include: {
+      user: { select: { neynarScore: true } }
+    },
   });
 }
 

@@ -75,6 +75,7 @@ type RealDogEvent = {
   eater: string;
   logger: string;
   zoraCoin: ZoraCoinDetails | null;
+  neynarScore: number | null;
   attestationPeriod?: AttestationPeriod;
   metadata?: HotdogMetadata | null;
 };
@@ -358,19 +359,24 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col items-start">
                   <div className="flex items-center gap-2 w-fit">
-                    <Avatar address={hotdog.eater} fallbackSize={24} />
-                    <Name address={hotdog.eater} />
-                  </div>
-                  <div className="flex flex-col">
-                    {showLoggedVia({ eater: hotdog.eater, logger: hotdog.logger }) && (
-                      <div className="flex items-center gap-1 text-xs opacity-75">
-                        <span>via</span>
-                        <Avatar address={hotdog.logger} size="16px" />
-                        <Name address={hotdog.logger} />
-                      </div>
-                    )}
-                  </div>
+                  <Avatar address={hotdog.eater} fallbackSize={24} />
+                  <Name address={hotdog.eater} />
                 </div>
+                <div className="flex flex-col">
+                  {showLoggedVia({ eater: hotdog.eater, logger: hotdog.logger }) && (
+                    <div className="flex items-center gap-1 text-xs opacity-75">
+                      <span>via</span>
+                      <Avatar address={hotdog.logger} size="16px" />
+                      <Name address={hotdog.logger} />
+                    </div>
+                  )}
+                  {('neynarScore' in hotdog && hotdog.neynarScore !== null && hotdog.neynarScore <= 0.5) && (
+                    <span className="text-warning text-xs">
+                      there is a {Math.round((1 - hotdog.neynarScore) * 100)}% chance that this is not a human
+                    </span>
+                  )}
+                </div>
+              </div>
                 <Revoke 
                   hotdog={hotdog} 
                   onRevocation={refetchDogData}

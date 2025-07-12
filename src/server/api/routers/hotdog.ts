@@ -79,6 +79,7 @@ interface HotdogResponse {
     eater: string;
     logger: string;
     zoraCoin: string;
+    neynarScore: number | null;
   }>;
   validCounts: string[];
   invalidCounts: string[];
@@ -95,6 +96,7 @@ interface ProcessedHotdog {
   logger: string;
   zoraCoin: ZoraCoinDetails | null;
   metadata: HotdogMetadata | null;
+  neynarScore: number | null;
   attestationPeriod?: {
     startTime: string;
     endTime: string;
@@ -377,6 +379,7 @@ export const hotdogRouter = createTRPCRouter({
           eater: event.eater,
           logger: event.logger,
           zoraCoin: event.zoraCoin ?? '',
+          neynarScore: event.user?.neynarScore ?? null,
         })),
         // Get valid/invalid counts from attestationCounts response
         validCounts: attestationCounts[0].map(count => count.toString()),
