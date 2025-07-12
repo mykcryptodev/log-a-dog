@@ -109,6 +109,13 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
                 <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
               </div>
             )}
+            {hotdog.zoraCoin?.link && (
+              <div className="text-xs opacity-50 mt-1">
+                <Link href={hotdog.zoraCoin.link} target="_blank" rel="noopener noreferrer" className="underline">
+                  View coin on Zora
+                </Link>
+              </div>
+            )}
             <HotdogImage
               src={hotdog.imageUri}
               zoraCoin={hotdog.zoraCoin}

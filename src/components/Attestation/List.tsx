@@ -64,6 +64,7 @@ type ZoraCoinDetails = {
       blurhash?: string;
     };
   };
+  link?: string;
 };
 
 // Type for hotdog from tRPC
@@ -380,6 +381,13 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                 <div className="flex items-center text-xs opacity-50 w-full justify-between">
                   <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}</div>
                   <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
+                </div>
+              )}
+              {hotdog.zoraCoin && typeof hotdog.zoraCoin === 'object' && hotdog.zoraCoin.link && (
+                <div className="text-xs opacity-50 mt-1">
+                  <Link href={hotdog.zoraCoin.link} target="_blank" rel="noopener noreferrer" className="underline">
+                    View coin on Zora
+                  </Link>
                 </div>
               )}
               <Link href={`/dog/${hotdog.logId}`}
