@@ -1,5 +1,7 @@
 import { encodeAbiParameters } from "viem";
-import { DEFAULT_CHAIN, HOTDOG_TOKEN } from "~/constants";
+
+// Address of WETH on supported chains
+const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
 
 // Pool configuration types and constants
 const POOL_CONFIG_VERSION = 4; // Uniswap v4
@@ -24,7 +26,7 @@ export function encodePoolConfig() {
     ],
     [
       POOL_CONFIG_VERSION,
-      HOTDOG_TOKEN[DEFAULT_CHAIN.id]!,
+      WETH_ADDRESS,
       [BigInt(-TICK_RANGE * TICK_SPACING)], // tickLower
       [BigInt(TICK_RANGE * TICK_SPACING)],  // tickUpper
       [NUM_DISCOVERY_POSITIONS],
