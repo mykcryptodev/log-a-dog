@@ -52,7 +52,7 @@ interface ZoraCoinDetails {
   symbol: string;
   totalSupply: string;
   totalVolume: string;
-  volume24h: string;
+  volume24h?: string;
   createdAt?: string;
   creatorAddress?: string;
   marketCap?: string;

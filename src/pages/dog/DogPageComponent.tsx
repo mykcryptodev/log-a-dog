@@ -107,7 +107,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
             {hotdog.zoraCoin && (
               <div className="flex items-center text-xs opacity-50 w-full justify-between">
                 <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}</div>
-                <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
+                <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h ?? 0))}</div>
               </div>
             )}
             {hotdog.zoraCoin?.link && (
