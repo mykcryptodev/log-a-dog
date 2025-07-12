@@ -1,7 +1,7 @@
 import { encodeAbiParameters } from "viem";
 
 // Address of WETH on supported chains
-const WETH_ADDRESS = "0x4200000000000000000000000000000000000006" as const;
+const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
 
 // Pool configuration types and constants
 const POOL_CONFIG_VERSION = 4; // Uniswap v4
