@@ -15,6 +15,7 @@
     "script:migrate-events": "tsx src/scripts/migrate-dog-events.ts",
     "script:diagnose": "tsx src/scripts/diagnose-linking.ts",
     "script:link-specific": "tsx src/scripts/link-specific-events.ts",
+    "script:backfill-scores": "tsx src/scripts/backfill-neynar-scores.ts",
     "script:generate-merkle": "npx tsx airdrop/generate-merkle-root.ts",
     "script:generate-merkle:base": "npx tsx airdrop/generate-merkle-root.ts --chain=base",
     "script:generate-merkle:testnet": "npx tsx airdrop/generate-merkle-root.ts --chain=baseSepolia"

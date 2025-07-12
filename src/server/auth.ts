@@ -27,6 +27,7 @@ declare module "next-auth" {
       username?: string;
       image?: string;
       name?: string;
+      neynarScore?: number;
     };
   }
 
@@ -37,6 +38,7 @@ declare module "next-auth" {
     username?: string;
     image?: string;
     name?: string;
+    neynarScore?: number;
   }
 }
 
@@ -55,17 +57,21 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.address = user.address;
         token.fid = user.fid;
+        token.neynarScore = (user as { neynarScore?: number }).neynarScore;
       } else if (token.address && !token.fid) {
         // Only fetch FID from database if it's missing from the token
         try {
           const dbUser = await db.user.findFirst({
-            where: { 
+            where: {
               address: (token.address as string).toLowerCase()
             },
-            select: { fid: true }
+            select: { fid: true, neynarScore: true }
           });
           if (dbUser?.fid) {
             token.fid = dbUser.fid;
+          }
+          if (dbUser?.neynarScore !== undefined && dbUser.neynarScore !== null) {
+            token.neynarScore = dbUser.neynarScore;
           }
         } catch (dbError: unknown) {
           console.error('Database query failed in JWT callback:', dbError);
@@ -79,6 +85,9 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.address = token.address as string;
         session.user.fid = token.fid as number;
+        if (token.neynarScore !== undefined) {
+          session.user.neynarScore = token.neynarScore as number;
+        }
       }
       return session;
     },
@@ -91,6 +100,7 @@ export const authOptions: NextAuthOptions = {
         let username: string | undefined;
         let name: string | undefined;
         let image: string | undefined;
+        let neynarScore: number | undefined;
         try {
           // Fetch user's FID from Neynar using their Ethereum address
           const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
@@ -103,6 +113,7 @@ export const authOptions: NextAuthOptions = {
           username = response[addressKey]?.[0]?.username;
           name = response[addressKey]?.[0]?.display_name;
           image = response[addressKey]?.[0]?.pfp_url;
+          neynarScore = response[addressKey]?.[0]?.score;
         } catch (error) {
           console.error("Error fetching FID from Neynar:", error);
         }
@@ -144,16 +155,17 @@ export const authOptions: NextAuthOptions = {
               where: {
                 id: userId,
               },
-              data: {
-                fid,
-                username,
-                image,
-                name,
-              },
-            }),
-            'update user'
-          );
-        } else {
+                data: {
+                  fid,
+                  username,
+                  image,
+                  name,
+                  neynarScore,
+                },
+              }),
+              'update user'
+            );
+          } else {
           // Create new user
           user = await withRetry(
             () => db.user.create({
@@ -163,6 +175,7 @@ export const authOptions: NextAuthOptions = {
                 username,
                 image,
                 name,
+                neynarScore,
               },
             }),
             'create user'
