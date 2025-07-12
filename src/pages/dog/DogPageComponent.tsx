@@ -5,6 +5,7 @@
 import { type NextPage } from "next";
 import { useContext } from "react";
 import Head from "next/head";
+import Link from "next/link";
 import { useActiveAccount } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { api } from "~/utils/api";
@@ -107,6 +108,13 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
               <div className="flex items-center text-xs opacity-50 w-full justify-between">
                 <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}</div>
                 <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
+              </div>
+            )}
+            {hotdog.zoraCoin?.link && (
+              <div className="text-xs opacity-50 mt-1">
+                <Link href={hotdog.zoraCoin.link} target="_blank" rel="noopener noreferrer" className="underline">
+                  View coin on Zora
+                </Link>
               </div>
             )}
             <HotdogImage

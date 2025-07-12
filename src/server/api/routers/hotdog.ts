@@ -31,6 +31,12 @@ import { abi } from "~/constants/abi/logadog";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
+// Mapping from chain id to slug used by Zora to construct coin URLs
+const ZORA_CHAIN_SLUGS: Record<number, string> = {
+  8453: "base",
+  84532: "base-sepolia",
+};
+
 // Types for metadata
 interface ZoraCoin {
   address: string;
@@ -62,6 +68,7 @@ interface ZoraCoinDetails {
       blurhash?: string;
     };
   };
+  link?: string;
 }
 
 interface HotdogMetadata {
@@ -179,8 +186,23 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
         for (const coin of response.data.zora20Tokens) {
           if (coin?.address) {
             const normalizedAddress = coin.address.toLowerCase();
+
+            // Zora API returns numeric values scaled by 1e11. Adjust to human readable dollars.
+            if (coin.marketCap) {
+              coin.marketCap = (Number(coin.marketCap) / 1e11).toString();
+            }
+            if (coin.volume24h) {
+              coin.volume24h = (Number(coin.volume24h) / 1e11).toString();
+            }
+
+            // Add link to coin on Zora
+            const slug = ZORA_CHAIN_SLUGS[coin.chainId ?? chainId];
+            if (slug) {
+              coin.link = `https://zora.co/coin/${slug}:${coin.address}`;
+            }
+
             coinDetailsMap.set(normalizedAddress, coin);
-            
+
             // Cache this coin individually
             const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
             await setCachedData(cacheKey, coin, CACHE_DURATION.MEDIUM);
