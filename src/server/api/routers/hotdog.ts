@@ -540,6 +540,9 @@ export const hotdogRouter = createTRPCRouter({
           logId,
           chainId: chainId.toString(),
         },
+        include: {
+          user: { select: { neynarScore: true } },
+        },
       });
 
       if (!dogEvent) {
@@ -584,6 +587,7 @@ export const hotdogRouter = createTRPCRouter({
             eater: dogEvent.eater,
             logger: dogEvent.logger,
             zoraCoin: dogEvent.zoraCoin ?? '',
+            neynarScore: dogEvent.user?.neynarScore ?? null,
           },
         ],
         validCounts: [attestationCounts[0]?.[0]?.toString() ?? '0'],
