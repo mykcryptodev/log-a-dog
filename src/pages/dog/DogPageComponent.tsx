@@ -5,6 +5,7 @@
 import { type NextPage } from "next";
 import { useContext } from "react";
 import Head from "next/head";
+import Link from "next/link";
 import { useActiveAccount } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { api } from "~/utils/api";
@@ -23,6 +24,7 @@ import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
+import Image from "next/image";
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
@@ -106,7 +108,14 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
             {hotdog.zoraCoin && (
               <div className="flex items-center text-xs opacity-50 w-full justify-between">
                 <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}</div>
-                <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
+                <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h ?? 0))}</div>
+              </div>
+            )}
+            {hotdog.zoraCoin?.link && (
+              <div className="text-xs opacity-50 mt-1">
+                <Link href={hotdog.zoraCoin.link} target="_blank" rel="noopener noreferrer" className="underline">
+                  <Image src="/images/zorb.svg" alt="Zora" width={16} height={16} />
+                </Link>
               </div>
             )}
             <HotdogImage

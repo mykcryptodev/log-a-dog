@@ -19,6 +19,7 @@ import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBa
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 
 import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
+import ZoraCoinTrading from "./ZoraCoinTrading";
 
 // Types from hotdog router
 type AttestationPeriod = {
@@ -48,7 +49,7 @@ type ZoraCoinDetails = {
   symbol: string;
   totalSupply: string;
   totalVolume: string;
-  volume24h: string;
+  volume24h?: string;
   createdAt?: string;
   creatorAddress?: string;
   marketCap?: string;
@@ -64,6 +65,7 @@ type ZoraCoinDetails = {
       blurhash?: string;
     };
   };
+  link?: string;
 };
 
 // Type for hotdog from tRPC
@@ -376,14 +378,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   onRevocation={refetchDogData}
                 />
               </div>
-              {('zoraCoin' in hotdog && hotdog.zoraCoin && typeof hotdog.zoraCoin === 'object' && hotdog.zoraCoin.marketCap) && (
-                <div className="flex items-center text-xs opacity-50 w-full justify-between">
-                  <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}</div>
-                  <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}</div>
-                </div>
-              )}
-              <Link href={`/dog/${hotdog.logId}`}
-                className="w-fit">
+              <Link href={`/dog/${hotdog.logId}`} className="w-full flex items-center justify-center">
                 <HotdogImage
                   src={hotdog.imageUri}
                   zoraCoin={hotdog.zoraCoin}
@@ -404,6 +399,14 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                     logId={hotdog.logId.toString()}
                     timestamp={hotdog.timestamp.toString()}
                   /> */}
+                  <VotingCountdown
+                    timestamp={hotdog.timestamp.toString()}
+                    logId={hotdog.logId?.toString() ?? ''}
+                    validAttestations={attestationData.validAttestations}
+                    invalidAttestations={attestationData.invalidAttestations}
+                    onResolutionComplete={() => void refetchDogData()}
+                    attestationPeriod={'attestationPeriod' in hotdog ? hotdog.attestationPeriod : undefined}
+                  />
                 </div>
                 <div className="flex justify-end items-center gap-1">
                   <Comments
@@ -425,16 +428,21 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 w-full justify-end pr-2 opacity-50 text-xs">
-                <VotingCountdown
-                  timestamp={hotdog.timestamp.toString()}
-                  logId={hotdog.logId?.toString() ?? ''}
-                  validAttestations={attestationData.validAttestations}
-                  invalidAttestations={attestationData.invalidAttestations}
-                  onResolutionComplete={() => void refetchDogData()}
-                  attestationPeriod={'attestationPeriod' in hotdog ? hotdog.attestationPeriod : undefined}
-                />
-              </div>
+              {('zoraCoin' in hotdog && hotdog.zoraCoin && typeof hotdog.zoraCoin === 'object' && hotdog.zoraCoin.marketCap && hotdog.zoraCoin.link) && (
+                <div className="flex items-center text-xs w-full justify-between opacity-50">
+                  <div className="flex items-center gap-2">
+                    <ZoraCoinTrading 
+                      referrer={hotdog.eater}
+                      coinAddress={hotdog.zoraCoin.address}
+                      logId={hotdog.logId}
+                    />
+                  </div>
+                  <Link href={hotdog.zoraCoin.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                    <div className="flex items-center gap-0.5"><CurrencyDollarIcon className="w-4 h-4" /> MCAP ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}</div>
+                    <div className="flex items-center gap-0.5"><FireIcon className="w-4 h-4" /> 24H VOL ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h ?? 0))}</div>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )

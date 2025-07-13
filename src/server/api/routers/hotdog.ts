@@ -31,6 +31,12 @@ import { abi } from "~/constants/abi/logadog";
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
+// Mapping from chain id to slug used by Zora to construct coin URLs
+const ZORA_CHAIN_SLUGS: Record<number, string> = {
+  8453: "base",
+  84532: "base-sepolia",
+};
+
 // Types for metadata
 interface ZoraCoin {
   address: string;
@@ -46,7 +52,7 @@ interface ZoraCoinDetails {
   symbol: string;
   totalSupply: string;
   totalVolume: string;
-  volume24h: string;
+  volume24h?: string;
   createdAt?: string;
   creatorAddress?: string;
   marketCap?: string;
@@ -62,6 +68,7 @@ interface ZoraCoinDetails {
       blurhash?: string;
     };
   };
+  link?: string;
 }
 
 interface HotdogMetadata {
@@ -179,11 +186,25 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
         for (const coin of response.data.zora20Tokens) {
           if (coin?.address) {
             const normalizedAddress = coin.address.toLowerCase();
-            coinDetailsMap.set(normalizedAddress, coin);
-            
+
+            // Prepare coin details object with adjusted values
+            const slug = ZORA_CHAIN_SLUGS[coin.chainId ?? chainId];
+            const processedCoin: ZoraCoinDetails = {
+              ...coin,
+              marketCap: coin.marketCap
+                ? (Number(coin.marketCap) / 1e11).toString()
+                : undefined,
+              volume24h: coin.volume24h
+                ? (Number(coin.volume24h) / 1e11).toString()
+                : undefined,
+              link: slug ? `https://zora.co/coin/${slug}:${coin.address}` : undefined,
+            };
+
+            coinDetailsMap.set(normalizedAddress, processedCoin);
+
             // Cache this coin individually
             const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
-            await setCachedData(cacheKey, coin, CACHE_DURATION.MEDIUM);
+            await setCachedData(cacheKey, processedCoin, CACHE_DURATION.MEDIUM);
           } else {
             console.log('Skipping coin with no address:', coin);
           }
