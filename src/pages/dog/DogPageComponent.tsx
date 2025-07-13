@@ -24,6 +24,7 @@ import { isAddressEqual } from "viem";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
+import Image from "next/image";
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
@@ -113,7 +114,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
             {hotdog.zoraCoin?.link && (
               <div className="text-xs opacity-50 mt-1">
                 <Link href={hotdog.zoraCoin.link} target="_blank" rel="noopener noreferrer" className="underline">
-                  View coin on Zora
+                  <Image src="/images/zorb.svg" alt="Zora" width={16} height={16} />
                 </Link>
               </div>
             )}
