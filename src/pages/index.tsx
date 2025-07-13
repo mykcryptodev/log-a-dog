@@ -28,7 +28,8 @@ const miniAppMetadata = {
 export const getStaticProps = async () => {
   return {
     props: {},
-    revalidate: 60, // Revalidate every 60 seconds
+    // The homepage fetches dynamic data client-side so the
+    // static HTML can be cached indefinitely without revalidation
   };
 };
 

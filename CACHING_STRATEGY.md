@@ -74,14 +74,14 @@ Implemented via Next.js middleware (`src/middleware.ts`):
 - **Auth/User-specific**: No cache (`private, no-cache`)
 
 ### Pages
-- **Static Pages** (/, /about): 5 minutes
+- **Static Pages** (/, /about): Cached indefinitely
 - **User-specific Pages**: No cache (`private, no-cache`)
 
 ## ISR (Incremental Static Regeneration)
 
 ### Homepage
-- **Revalidation**: 5 minutes (extended from 1 minute for better performance)
-- **Implementation**: `getStaticProps` with `revalidate: 300`
+- **Revalidation**: None - page is built at deploy time and not revalidated
+- **Implementation**: `getStaticProps` without a `revalidate` value
 
 ## Cache Invalidation Strategy
 
