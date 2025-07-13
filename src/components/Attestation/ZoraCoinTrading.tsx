@@ -127,8 +127,6 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
           chainId: activeChain.id,
           coinAddress: _coinAddress,
         });
-        // Note: This causes a full data refetch which can feel like a page refresh
-        // Consider adding a delay or more targeted updates in the future
         onTradeComplete?.();
       } catch (cacheError) {
         // Don't let cache invalidation failure affect the trade success
@@ -247,7 +245,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
       >
         {isLoading && <span className="loading loading-spinner loading-xs"></span>}
         <ArrowsRightLeftIcon className="w-4 h-4" />
-        {farcasterContext?.isMiniApp ? "Swap" : "Trade"}
+        Trade
       </button>
 
       {/* Trade Modal */}
