@@ -3,13 +3,14 @@ import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { createPublicClient, createWalletClient, custom, http } from "viem";
 import { tradeCoin, type TradeParameters } from "@zoralabs/coins-sdk";
-import { parseEther } from "viem";
+import { parseEther, formatEther } from "viem";
 import { base, baseSepolia } from "viem/chains";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { EIP1193, type Wallet } from "thirdweb/wallets";
 import { Portal } from "../utils/Portal";
 import { client } from "~/providers/Thirdweb";
 import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
+import { useWalletBalance } from "thirdweb/react";
 
 type Props = {
   referrer: string;
@@ -28,6 +29,33 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   const [sellSlippage, setSellSlippage] = useState("0.5"); // Default 0.5%
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
+
+  // Get ETH balance
+  const { data: ethBalance } = useWalletBalance({
+    client,
+    chain: activeChain,
+    address: account?.address,
+  });
+
+  const { data: tokenBalance } = useWalletBalance({
+    client,
+    chain: activeChain,
+    address: account?.address,
+    tokenAddress: _coinAddress,
+  });
+
+  const formatToMaxDecimals = (value?: string, decimals: number = 6) => {
+    if (!value) return "0";
+    const num = Number(value);
+    if (isNaN(num)) return "0";
+    return num.toLocaleString("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: decimals,
+      useGrouping: false,
+    });
+  };
+  const ethBalanceFormatted = formatToMaxDecimals(ethBalance?.displayValue, 6);
+  const tokenBalanceFormatted = formatToMaxDecimals(tokenBalance?.displayValue, 6);
 
   const convertWalletToViem = (wallet: Wallet, accountAddress: string) => {
     const currentChain = activeChain.id === base.id ? base : baseSepolia;
@@ -195,8 +223,35 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
             {/* Buy Tab Content */}
             {activeTab === "buy" && (
               <div className="py-4">
+                {/* Balance Display */}
+                <div className="bg-base-200 rounded-lg p-3 mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Your Balance:</span>
+                    <div className="text-right">
+                      <div className="text-sm">{ethBalanceFormatted} ETH</div>
+                      <div className="text-xs opacity-70">{tokenBalanceFormatted} Coins</div>
+                    </div>
+                  </div>
+                </div>
+
                 <label className="label">
                   <span className="label-text">Amount (ETH)</span>
+                  <span className="label-text-alt">
+                    <button 
+                      className="btn btn-xs btn-ghost mr-4"
+                      onClick={() => setBuyAmount((Number(ethBalance?.displayValue ?? "0") * 0.5).toString())}
+                      disabled={!ethBalance || Number(ethBalance?.displayValue ?? "0") <= 0}
+                    >
+                      50%
+                    </button>
+                    <button 
+                      className="btn btn-xs btn-ghost"
+                      onClick={() => setBuyAmount(ethBalance?.displayValue ?? "0")}
+                      disabled={!ethBalance || parseFloat(ethBalance?.displayValue ?? "0") <= 0}
+                    >
+                      Max
+                    </button>
+                  </span>
                 </label>
                 <input 
                   type="number" 
@@ -206,6 +261,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
                   onChange={(e) => void setBuyAmount(e.target.value)}
                   step="0.0001"
                   min="0"
+                  max={ethBalanceFormatted}
                 />
                 
                 <label className="label mt-4">
@@ -227,8 +283,35 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
             {/* Sell Tab Content */}
             {activeTab === "sell" && (
               <div className="py-4">
+                {/* Balance Display */}
+                <div className="bg-base-200 rounded-lg p-3 mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Your Balance:</span>
+                    <div className="text-right">
+                      <div className="text-sm">{tokenBalanceFormatted} Coins</div>
+                      <div className="text-xs opacity-70">{ethBalanceFormatted} ETH</div>
+                    </div>
+                  </div>
+                </div>
+
                 <label className="label">
                   <span className="label-text">Amount (Coins)</span>
+                  <span className="label-text-alt">
+                    <button 
+                      className="btn btn-xs btn-ghost mr-4"
+                      onClick={() => setSellAmount((Number(tokenBalance?.displayValue ?? "0") * 0.5).toString())}
+                      disabled={!tokenBalance || Number(tokenBalance?.displayValue ?? "0") <= 0}
+                    >
+                      50%
+                    </button>
+                    <button 
+                      className="btn btn-xs btn-ghost"
+                      onClick={() => setSellAmount(tokenBalance?.displayValue ?? "0")}
+                      disabled={!tokenBalance || parseFloat(tokenBalance?.displayValue ?? "0") <= 0}
+                    >
+                      Max
+                    </button>
+                  </span>
                 </label>
                 <input 
                   type="number" 
@@ -238,6 +321,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
                   onChange={(e) => void setSellAmount(e.target.value)}
                   step="0.0001"
                   min="0"
+                  max={tokenBalanceFormatted}
                 />
                 
                 <label className="label mt-4">
