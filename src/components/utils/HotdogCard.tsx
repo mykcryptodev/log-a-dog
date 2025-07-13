@@ -218,7 +218,7 @@ export const HotdogCard: FC<Props> = ({
             </div>
             {(zoraCoinData.marketCap || zoraCoinData.volume24h) && (
               <Link 
-                href={zoraCoinData.link || `https://zora.co/coin/base:${zoraCoinData.address}`} 
+                href={zoraCoinData.link || `https://zora.co/coin/base:${zoraCoinData.address}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="flex items-center gap-2"
