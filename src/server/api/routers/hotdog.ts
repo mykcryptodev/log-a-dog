@@ -744,7 +744,26 @@ export const hotdogRouter = createTRPCRouter({
         throw error;
       }
     }),
-  checkForSafety: publicProcedure
+  invalidateZoraCoinCache: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      coinAddress: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const { chainId, coinAddress } = input;
+      const normalizedAddress = coinAddress.toLowerCase();
+      const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
+      
+      try {
+        await deleteCachedData(cacheKey);
+        console.log(`Invalidated cache for Zora coin: ${coinAddress} on chain ${chainId}`);
+        return { success: true };
+      } catch (error) {
+        console.error(`Failed to invalidate cache for Zora coin: ${coinAddress}`, error);
+        return { success: false, error: String(error) };
+      }
+    }),
+  checkForSafety: protectedProcedure
     .input(z.object({ base64ImageString: z.string() }))
     .mutation(async ({ input }) => {
       const { base64ImageString } = input;

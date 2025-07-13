@@ -13,14 +13,16 @@ import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import { useWalletBalance } from "thirdweb/react";
 import Link from "next/link";
 import Image from "next/image";
+import { api } from "~/utils/api";
 
 type Props = {
   referrer: string;
   coinAddress: string;
   logId: string;
+  onTradeComplete?: () => void; // Optional callback after successful trade
 }
 
-export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, referrer: _referrer }) => {
+export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, referrer: _referrer, onTradeComplete }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
   const { activeChain } = useContext(ActiveChainContext);
@@ -31,6 +33,9 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   // const [sellSlippage, setSellSlippage] = useState("0.5"); // Default 0.5%
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
+
+  // Get cache invalidation mutation
+  const invalidateZoraCoinCache = api.hotdog.invalidateZoraCoinCache.useMutation();
 
   // Get ETH balance
   const { data: ethBalance } = useWalletBalance({
@@ -113,6 +118,19 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
         publicClient,
       }) as { transactionHash: string, hash: string };
 
+      // Invalidate cache after successful buy
+      try {
+        await invalidateZoraCoinCache.mutateAsync({
+          chainId: activeChain.id,
+          coinAddress: _coinAddress,
+        });
+        // Trigger parent component to refetch data if callback provided
+        onTradeComplete?.();
+      } catch (cacheError) {
+        // Don't let cache invalidation failure affect the trade success
+        console.warn('Failed to invalidate Zora coin cache:', cacheError);
+      }
+
       // Determine block explorer URL based on chain
       let explorerBaseUrl = "https://basescan.org/tx/";
       if (activeChain.id === baseSepolia.id) {
@@ -122,7 +140,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
       const explorerUrl = txHash ? `${explorerBaseUrl}${txHash}` : null;
       toast.success(
         explorerUrl
-          ? <>You just bought {buyAmount}! <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="underline">View onchain</a></>
+          ? <>You just bought this post! <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="underline text-xs">View onchain</a></>
           : `You just bought ${buyAmount}!`
       );
       setShowTradeModal(false);

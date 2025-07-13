@@ -214,6 +214,7 @@ export const HotdogCard: FC<Props> = ({
                 referrer={hotdog.eater}
                 coinAddress={zoraCoinData.address}
                 logId={hotdog.logId}
+                onTradeComplete={onRefetch}
               />
             </div>
             {(zoraCoinData.marketCap || zoraCoinData.volume24h) && (
@@ -252,6 +253,7 @@ export const HotdogCard: FC<Props> = ({
                 referrer={hotdog.eater}
                 coinAddress={hotdog.zoraCoin}
                 logId={hotdog.logId}
+                onTradeComplete={onRefetch}
               />
             </div>
             <div className="flex items-center gap-1">
