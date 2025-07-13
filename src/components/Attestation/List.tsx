@@ -15,6 +15,16 @@ type AttestationPeriod = {
   isValid: boolean;
 };
 
+type HotdogMetadata = {
+  imageUri: string;
+  eater: string;
+  zoraCoin?: {
+    address: string;
+    name: string;
+    symbol: string;
+  };
+};
+
 type ZoraCoinDetails = {
   id: string;
   name: string;
@@ -52,7 +62,7 @@ type RealDogEvent = {
   logger: string;
   zoraCoin: ZoraCoinDetails | null;
   attestationPeriod?: AttestationPeriod;
-  metadata?: any | null;
+  metadata?: HotdogMetadata | null;
 };
 
 type HotdogItem = RealDogEvent | PendingDogEvent;

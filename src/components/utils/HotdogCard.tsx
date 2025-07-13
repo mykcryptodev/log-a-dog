@@ -207,7 +207,7 @@ export const HotdogCard: FC<Props> = ({
         </div>
 
         {/* Zora coin trading and market info */}
-        {zoraCoinData && zoraCoinData.address && (
+        {zoraCoinData?.address && (
           <div className="flex items-center text-xs w-full justify-between opacity-50">
             <div className="flex items-center gap-2">
               <ZoraCoinTrading 
@@ -217,9 +217,9 @@ export const HotdogCard: FC<Props> = ({
                 onTradeComplete={onRefetch}
               />
             </div>
-            {(zoraCoinData.marketCap || zoraCoinData.volume24h) && (
+            {(Boolean(zoraCoinData.marketCap) || Boolean(zoraCoinData.volume24h)) && (
               <Link 
-                href={zoraCoinData.link || `https://zora.co/coin/base:${zoraCoinData.address}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`} 
+                href={zoraCoinData.link ?? `https://zora.co/coin/base:${zoraCoinData.address}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="flex items-center gap-2"
