@@ -99,35 +99,6 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
     setIsLoading(true);
     
     try {
-      // If user is in a Farcaster mini app, use the Farcaster swap
-      if (farcasterContext?.isMiniApp && farcasterContext?.swapToken) {
-        try {
-          await farcasterContext.swapToken(_coinAddress, buyAmount);
-          toast.success("Swap opened in Farcaster!");
-          setShowTradeModal(false);
-          
-          // Invalidate cache after opening swap
-          try {
-            await invalidateZoraCoinCache.mutateAsync({
-              chainId: activeChain.id,
-              coinAddress: _coinAddress,
-            });
-            // Note: This causes a full data refetch which can feel like a page refresh
-            // Consider adding a delay or more targeted updates in the future
-            onTradeComplete?.();
-          } catch (cacheError) {
-            console.warn('Failed to invalidate Zora coin cache:', cacheError);
-          }
-          
-          return;
-        } catch (error) {
-          console.error("Farcaster swap error:", error);
-          toast.error("Failed to open swap in Farcaster, falling back to direct trade");
-          // Fall through to direct trading logic
-        }
-      }
-
-      // Regular trading logic for non-mini app users or if Farcaster swap fails
       const { walletClient, publicClient } = convertWalletToViem(wallet, account.address);
 
       // Define buy parameters using new SDK API
@@ -180,6 +151,36 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
       toast.error(`Failed to buy coin: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTradeButtonClick = async () => {
+    // If user is in a Farcaster mini app, directly call swapToken
+    if (farcasterContext?.isMiniApp && farcasterContext?.swapToken) {
+      setIsLoading(true);
+      try {
+        await farcasterContext.swapToken(_coinAddress);
+        toast.success("Swap opened in Farcaster!");
+        
+        // Invalidate cache after opening swap
+        try {
+          await invalidateZoraCoinCache.mutateAsync({
+            chainId: activeChain.id,
+            coinAddress: _coinAddress,
+          });
+          onTradeComplete?.();
+        } catch (cacheError) {
+          console.warn('Failed to invalidate Zora coin cache:', cacheError);
+        }
+      } catch (error) {
+        console.error("Farcaster swap error:", error);
+        toast.error("Failed to open swap in Farcaster");
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // Regular users open the modal
+      setShowTradeModal(true);
     }
   };
 
@@ -239,8 +240,10 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
     <div className="flex items-center gap-2">
       <button 
         className="btn btn-ghost btn-xs"
-        onClick={() => setShowTradeModal(true)}
+        onClick={handleTradeButtonClick}
+        disabled={isLoading}
       >
+        {isLoading && <span className="loading loading-spinner loading-xs"></span>}
         <ArrowsRightLeftIcon className="w-4 h-4" />
         Trade
       </button>
