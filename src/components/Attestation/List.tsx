@@ -20,7 +20,6 @@ import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pend
 
 import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import ZoraCoinTrading from "./ZoraCoinTrading";
-import Image from "next/image";
 
 // Types from hotdog router
 type AttestationPeriod = {

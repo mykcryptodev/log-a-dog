@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { createPublicClient, createWalletClient, custom, http } from "viem";
 import { tradeCoin, type TradeParameters } from "@zoralabs/coins-sdk";
-import { parseEther, formatEther } from "viem";
+import { parseEther } from "viem";
 import { base, baseSepolia } from "viem/chains";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { EIP1193, type Wallet } from "thirdweb/wallets";
@@ -26,9 +26,9 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   const { activeChain } = useContext(ActiveChainContext);
   const [isLoading, setIsLoading] = useState(false);
   const [buyAmount, setBuyAmount] = useState("0.0001");
-  const [sellAmount, setSellAmount] = useState("0.0001");
+  // const [sellAmount, setSellAmount] = useState("0.0001");
   const [buySlippage, setBuySlippage] = useState("0.5"); // Default 0.5%
-  const [sellSlippage, setSellSlippage] = useState("0.5"); // Default 0.5%
+  // const [sellSlippage, setSellSlippage] = useState("0.5"); // Default 0.5%
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
 
@@ -46,7 +46,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
     tokenAddress: _coinAddress,
   });
 
-  const formatToMaxDecimals = (value?: string, decimals: number = 6) => {
+  const formatToMaxDecimals = (value?: string, decimals = 6) => {
     if (!value) return "0";
     const num = Number(value);
     if (isNaN(num)) return "0";
@@ -111,7 +111,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
         walletClient,
         account: walletClient.account,
         publicClient,
-      });
+      }) as { transactionHash: string, hash: string };
 
       // Determine block explorer URL based on chain
       let explorerBaseUrl = "https://basescan.org/tx/";
@@ -134,57 +134,57 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
     }
   };
 
-  const handleSell = async () => {
-    if (!account || !wallet) {
-      toast.error("Please connect your wallet");
-      return;
-    }
+  // const handleSell = async () => {
+  //   if (!account || !wallet) {
+  //     toast.error("Please connect your wallet");
+  //     return;
+  //   }
 
-    setIsLoading(true);
-    try {
-      const { walletClient, publicClient } = convertWalletToViem(wallet, account.address);
+  //   setIsLoading(true);
+  //   try {
+  //     const { walletClient, publicClient } = convertWalletToViem(wallet, account.address);
 
-      // Define sell parameters using new SDK API
-      const tradeParameters: TradeParameters = {
-        sell: {
-          type: "erc20",
-          address: _coinAddress as `0x${string}`,
-        },
-        buy: { type: "erc20", address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
-        amountIn: parseEther(sellAmount),
-        slippage: parseFloat(sellSlippage) / 100, // Convert percentage to decimal
-        sender: account.address as `0x${string}`,
-      };
+  //     // Define sell parameters using new SDK API
+  //     const tradeParameters: TradeParameters = {
+  //       sell: {
+  //         type: "erc20",
+  //         address: _coinAddress as `0x${string}`,
+  //       },
+  //       buy: { type: "erc20", address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+  //       amountIn: parseEther(sellAmount),
+  //       slippage: parseFloat(sellSlippage) / 100, // Convert percentage to decimal
+  //       sender: account.address as `0x${string}`,
+  //     };
 
-      // Execute the sell using new SDK API
-      const receipt = await tradeCoin({
-        tradeParameters,
-        walletClient,
-        account: walletClient.account,
-        publicClient,
-      });
+  //     // Execute the sell using new SDK API
+  //     const receipt = await tradeCoin({
+  //       tradeParameters,
+  //       walletClient,
+  //       account: walletClient.account,
+  //       publicClient,
+  //     });
 
-      // Determine block explorer URL based on chain
-      let explorerBaseUrl = "https://basescan.org/tx/";
-      if (activeChain.id === baseSepolia.id) {
-        explorerBaseUrl = "https://sepolia.basescan.org/tx/";
-      }
-      const txHash = receipt?.transactionHash ?? receipt?.hash;
-      const explorerUrl = txHash ? `${explorerBaseUrl}${txHash}` : null;
+  //     // Determine block explorer URL based on chain
+  //     let explorerBaseUrl = "https://basescan.org/tx/";
+  //     if (activeChain.id === baseSepolia.id) {
+  //       explorerBaseUrl = "https://sepolia.basescan.org/tx/";
+  //     }
+  //     const txHash = receipt?.transactionHash ?? receipt?.hash;
+  //     const explorerUrl = txHash ? `${explorerBaseUrl}${txHash}` : null;
 
-      toast.success(
-        explorerUrl
-          ? <>You just sold {sellAmount}! <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="underline">View onchain</a></>
-          : `You just sold ${sellAmount}!`
-      );
-      setShowTradeModal(false);
-    } catch (error) {
-      console.error("Sell error:", error);
-      toast.error(`Failed to sell coin: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     toast.success(
+  //       explorerUrl
+  //         ? <>You just sold {sellAmount}! <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="underline">View onchain</a></>
+  //         : `You just sold ${sellAmount}!`
+  //     );
+  //     setShowTradeModal(false);
+  //   } catch (error) {
+  //     console.error("Sell error:", error);
+  //     toast.error(`Failed to sell coin: ${error instanceof Error ? error.message : String(error)}`);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <div className="flex items-center gap-2">
