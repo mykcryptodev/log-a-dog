@@ -6,6 +6,7 @@ import { tradeCoin, type TradeParameters } from "@zoralabs/coins-sdk";
 import { parseEther } from "viem";
 import { base, baseSepolia } from "viem/chains";
 import ActiveChainContext from "~/contexts/ActiveChain";
+import { FarcasterContext } from "~/providers/Farcaster";
 import { EIP1193, type Wallet } from "thirdweb/wallets";
 import { Portal } from "../utils/Portal";
 import { client } from "~/providers/Thirdweb";
@@ -26,6 +27,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   const account = useActiveAccount();
   const wallet = useActiveWallet();
   const { activeChain } = useContext(ActiveChainContext);
+  const farcasterContext = useContext(FarcasterContext);
   const [isLoading, setIsLoading] = useState(false);
   const [buyAmount, setBuyAmount] = useState("0.0001");
   // const [sellAmount, setSellAmount] = useState("0.0001");
@@ -95,7 +97,37 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
     }
 
     setIsLoading(true);
+    
     try {
+      // If user is in a Farcaster mini app, use the Farcaster swap
+      if (farcasterContext?.isMiniApp && farcasterContext?.swapToken) {
+        try {
+          await farcasterContext.swapToken(_coinAddress, buyAmount);
+          toast.success("Swap opened in Farcaster!");
+          setShowTradeModal(false);
+          
+          // Invalidate cache after opening swap
+          try {
+            await invalidateZoraCoinCache.mutateAsync({
+              chainId: activeChain.id,
+              coinAddress: _coinAddress,
+            });
+            // Note: This causes a full data refetch which can feel like a page refresh
+            // Consider adding a delay or more targeted updates in the future
+            onTradeComplete?.();
+          } catch (cacheError) {
+            console.warn('Failed to invalidate Zora coin cache:', cacheError);
+          }
+          
+          return;
+        } catch (error) {
+          console.error("Farcaster swap error:", error);
+          toast.error("Failed to open swap in Farcaster, falling back to direct trade");
+          // Fall through to direct trading logic
+        }
+      }
+
+      // Regular trading logic for non-mini app users or if Farcaster swap fails
       const { walletClient, publicClient } = convertWalletToViem(wallet, account.address);
 
       // Define buy parameters using new SDK API
@@ -124,7 +156,6 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
           chainId: activeChain.id,
           coinAddress: _coinAddress,
         });
-        // Trigger parent component to refetch data if callback provided
         onTradeComplete?.();
       } catch (cacheError) {
         // Don't let cache invalidation failure affect the trade success
