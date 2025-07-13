@@ -1,21 +1,31 @@
-import { AuthKitProvider } from '@farcaster/auth-kit';
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-import { optimism } from 'thirdweb/chains';
-import { EIP1193 } from 'thirdweb/wallets';
-import { env } from '~/env';
-import useActiveChain from '~/hooks/useActiveChain';
-import { client } from '~/providers/Thirdweb';
-import { type FrameNotificationDetails, sdk, type Context } from "@farcaster/frame-sdk";
+import { AuthKitProvider } from "@farcaster/auth-kit";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { optimism } from "thirdweb/chains";
+import { EIP1193 } from "thirdweb/wallets";
+import { env } from "~/env";
+import useActiveChain from "~/hooks/useActiveChain";
+import { client } from "~/providers/Thirdweb";
+import {
+  type FrameNotificationDetails,
+  sdk,
+  type Context,
+} from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
-import { DEFAULT_CHAIN } from '~/constants';
-import { toast } from 'react-toastify';
+import { DEFAULT_CHAIN } from "~/constants";
+import { toast } from "react-toastify";
 
 type AddMiniAppResult = {
   notificationDetails?: FrameNotificationDetails;
 };
 
 // Use environment variable or fallback to localhost for development
-const url = env.NEXT_PUBLIC_APP_DOMAIN || 'http://localhost:3000';
+const url = env.NEXT_PUBLIC_APP_DOMAIN || "http://localhost:3000";
 
 const config = {
   rpcUrl: `https://${optimism.id}.rpc.thirdweb.com/${env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID}`,
@@ -31,22 +41,29 @@ type FarcasterContextType = {
   addMiniApp: () => Promise<AddMiniAppResult | undefined>;
 };
 
-export const FarcasterContext = createContext<FarcasterContextType | null>(null);
+export const FarcasterContext = createContext<FarcasterContextType | null>(
+  null,
+);
 
-export const FarcasterProvider = ({ children } : { 
-  children: React.ReactNode
- }) => {
+export const FarcasterProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const { activeChain } = useActiveChain();
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<Context.FrameContext>();
   const [isMiniApp, setIsMiniApp] = useState(false);
+  const [hasConnectedWallet, setHasConnectedWallet] = useState(false);
   const { connect } = useConnect();
 
   const connectWallet = useCallback(async () => {
     try {
       await connect(async () => {
         // create a wallet instance from the Warpcast provider
-        const wallet = EIP1193.fromProvider({ provider: sdk.wallet.ethProvider });
+        const wallet = EIP1193.fromProvider({
+          provider: sdk.wallet.ethProvider,
+        });
 
         // trigger the connection
         await wallet.connect({ client, chain: activeChain });
@@ -107,25 +124,25 @@ export const FarcasterProvider = ({ children } : {
 
   // Separate effect for wallet connection after context is loaded
   useEffect(() => {
-    if (context && sdk.wallet && isSDKLoaded) {
-      void connectWallet();
+    if (context && sdk.wallet && isSDKLoaded && !hasConnectedWallet) {
+      void connectWallet().then(() => setHasConnectedWallet(true));
     }
-  }, [context, isSDKLoaded, connectWallet]);
+  }, [context, isSDKLoaded, connectWallet, hasConnectedWallet]);
 
-  const value = useMemo(() => ({
-    context,
-    isMiniApp,
-    viewProfile,
-    swapToken,
-    addMiniApp,
-  }), [context, isMiniApp, viewProfile, swapToken, addMiniApp]);
-
+  const value = useMemo(
+    () => ({
+      context,
+      isMiniApp,
+      viewProfile,
+      swapToken,
+      addMiniApp,
+    }),
+    [context, isMiniApp, viewProfile, swapToken, addMiniApp],
+  );
 
   return (
     <FarcasterContext.Provider value={value}>
-      <AuthKitProvider config={config}>
-        {children}
-      </AuthKitProvider>
+      <AuthKitProvider config={config}>{children}</AuthKitProvider>
     </FarcasterContext.Provider>
-  )
+  );
 };
