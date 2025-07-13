@@ -144,7 +144,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
           </div>
         ))
       }
-      {dogData?.hotdogs.map((hotdog, index) => {
+      {dogData?.hotdogs.map((hotdog: any, index: number) => {
         const validAttestations = dogData?.validAttestations[index];
         const invalidAttestations = dogData?.invalidAttestations[index];
 
