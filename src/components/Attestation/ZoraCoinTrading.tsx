@@ -124,6 +124,8 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
           chainId: activeChain.id,
           coinAddress: _coinAddress,
         });
+        // Trigger parent component to refetch data if callback provided
+        onTradeComplete?.();
       } catch (cacheError) {
         // Don't let cache invalidation failure affect the trade success
         console.warn('Failed to invalidate Zora coin cache:', cacheError);
