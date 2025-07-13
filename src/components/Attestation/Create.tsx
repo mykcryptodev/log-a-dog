@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { type FC, useState, useMemo, useEffect } from 'react';
 import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
-import { DEFAULT_CHAIN } from "~/constants";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import dynamic from 'next/dynamic';
