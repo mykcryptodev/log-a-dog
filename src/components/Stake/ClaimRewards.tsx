@@ -1,9 +1,9 @@
-import { type FC, useContext } from "react";
+import { type FC } from "react";
 import { useSession } from "next-auth/react";
 import { TransactionButton, useActiveWallet, useReadContract } from "thirdweb/react";
 import { getContract } from "thirdweb";
 import { formatEther } from "viem";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { STAKING } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { claimRewards } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 export const ClaimRewards: FC = () => {
   const { data: sessionData } = useSession();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
 
   const { data: pendingRewards } = useReadContract({
     contract: getContract({

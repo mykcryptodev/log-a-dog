@@ -1,11 +1,11 @@
-import { useState, useContext, type FC } from "react";
+import { useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { createPublicClient, createWalletClient, custom, http } from "viem";
 import { tradeCoin, type TradeParameters } from "@zoralabs/coins-sdk";
 import { parseEther } from "viem";
 import { base, baseSepolia } from "viem/chains";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { EIP1193, type Wallet } from "thirdweb/wallets";
 import { Portal } from "../utils/Portal";
@@ -26,7 +26,7 @@ type Props = {
 export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, referrer: _referrer, onTradeComplete }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const farcasterContext = useContext(FarcasterContext);
   const [isLoading, setIsLoading] = useState(false);
   const [buyAmount, setBuyAmount] = useState("0.0001");

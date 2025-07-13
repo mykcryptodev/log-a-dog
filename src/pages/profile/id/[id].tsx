@@ -1,8 +1,8 @@
 import { type NextPage } from "next";
 import { type GetServerSideProps } from "next";
-import { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ProfileForm } from "~/components/Profile/Form";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
 import dynamic from "next/dynamic";
 import { client } from "~/providers/Thirdweb";
@@ -27,7 +27,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 export const Profile: NextPage<{ id: string }> = ({ id }) => {
   const acccount = useActiveAccount();
   const { data: sessionData } = useSession();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const { data, isLoading, refetch } = api.profile.getById.useQuery({
     id,
     chainId: activeChain.id,

@@ -1,15 +1,15 @@
 import { type NextPage } from "next";
-import { useContext } from "react";
+
 import Head from "next/head";
 import { useActiveAccount } from "thirdweb/react";
 import { api } from "~/utils/api";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { ZERO_ADDRESS } from "thirdweb";
 import HotdogCard from "~/components/utils/HotdogCard";
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
 
   const miniAppMetadata = {
     version: "next",

@@ -1,11 +1,11 @@
 import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useState, type FC, useContext } from "react";
+import { useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { getContract, sendTransaction } from "thirdweb";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { LOG_A_DOG } from "~/constants/addresses";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { client } from "~/providers/Thirdweb";
 import { revokeHotdogLog } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c";
 
@@ -20,7 +20,7 @@ type Props = {
 export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
   const wallet = useActiveWallet();
   const account = useActiveAccount();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
   const revoke = async () => {

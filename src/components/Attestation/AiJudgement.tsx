@@ -1,6 +1,6 @@
 import { ShieldCheckIcon, ShieldExclamationIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useContext, type FC } from "react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { type FC } from "react";
+import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
 import { Portal } from "~/components/utils/Portal";
 
@@ -9,7 +9,7 @@ type Props = {
   timestamp: string;
 }
 export const AiJudgement: FC<Props> = ({ logId, timestamp }) => {
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
 
   const { data, isLoading } = api.hotdog.getAiVerificationStatus.useQuery({
     chainId: activeChain.id,

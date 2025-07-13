@@ -7,7 +7,7 @@ import {
   useActiveAccount,
 } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
-import useActiveChain from "~/hooks/useActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { HOTDOG_TOKEN, STAKING } from "~/constants/addresses";
 import {
   stake,
@@ -34,7 +34,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
   const [unstakeAmount, setUnstakeAmount] = useState<string>("");
   const [unstakePercentage, setUnstakePercentage] = useState<number>(0);
   const [hasApproval, setHasApproval] = useState(false);
-  const { activeChain } = useActiveChain();
+  const activeChain = DEFAULT_CHAIN;
   const wallet = useActiveWallet();
   const account = useActiveAccount();
 

@@ -1,6 +1,6 @@
-import { useState, type FC, useContext, useMemo } from "react";
+import { useState, type FC, useMemo } from "react";
 import { useActiveWallet } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
@@ -21,7 +21,7 @@ type Props = {
 }
 
 export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, existingImgUrl }) => {
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const { data: sessionData } = useSession();
   const wallet = useActiveWallet();
   
