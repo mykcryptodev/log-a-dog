@@ -78,6 +78,9 @@ type Props = {
   disabled?: boolean; // Whether judgement is disabled (for pending)
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {};
+
 export const HotdogCard: FC<Props> = ({
   hotdog,
   validAttestations,
@@ -214,7 +217,7 @@ export const HotdogCard: FC<Props> = ({
                 referrer={hotdog.eater}
                 coinAddress={zoraCoinData.address}
                 logId={hotdog.logId}
-                onTradeComplete={() => {}}
+                onTradeComplete={noop}
               />
             </div>
             {(Boolean(zoraCoinData.marketCap) || Boolean(zoraCoinData.volume24h)) && (
@@ -253,7 +256,7 @@ export const HotdogCard: FC<Props> = ({
                 referrer={hotdog.eater}
                 coinAddress={hotdog.zoraCoin}
                 logId={hotdog.logId}
-                onTradeComplete={() => {}}
+                onTradeComplete={noop}
               />
             </div>
             <div className="flex items-center gap-1">
