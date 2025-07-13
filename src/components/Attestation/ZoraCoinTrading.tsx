@@ -97,8 +97,8 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
     }
 
     setIsLoading(true);
+    
     try {
-      // Regular trading logic for web users
       const { walletClient, publicClient } = convertWalletToViem(wallet, account.address);
 
       // Define buy parameters using new SDK API
