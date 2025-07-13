@@ -11,6 +11,8 @@ import { Portal } from "../utils/Portal";
 import { client } from "~/providers/Thirdweb";
 import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import { useWalletBalance } from "thirdweb/react";
+import Link from "next/link";
+import Image from "next/image";
 
 type Props = {
   referrer: string;
@@ -148,7 +150,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
           type: "erc20",
           address: _coinAddress as `0x${string}`,
         },
-        buy: { type: "eth" },
+        buy: { type: "erc20", address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
         amountIn: parseEther(sellAmount),
         slippage: parseFloat(sellSlippage) / 100, // Convert percentage to decimal
         sender: account.address as `0x${string}`,
@@ -294,7 +296,10 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
                   </div>
                 </div>
 
-                <label className="label">
+                <p className="text-sm">Selling is currently only available on the Zora site</p>
+                <p className="text-xs opacity-50">Zora is the blockchain protocol that powers the trading of logged dogs</p>
+
+                {/* <label className="label">
                   <span className="label-text">Amount (Coins)</span>
                   <span className="label-text-alt">
                     <button 
@@ -336,7 +341,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
                   step="0.1"
                   min="0.1"
                   max="50"
-                />
+                /> */}
               </div>
             )}
 
@@ -358,14 +363,31 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
                   Buy
                 </button>
               ) : (
-                <button 
-                  className="btn btn-error"
-                  disabled={isLoading || !sellAmount || parseFloat(sellAmount) <= 0}
-                  onClick={handleSell}
+                // <button 
+                //   className="btn btn-error"
+                //   disabled={isLoading || !sellAmount || parseFloat(sellAmount) <= 0}
+                //   onClick={handleSell}
+                // >
+                //   {isLoading && <span className="loading loading-spinner"></span>}
+                //   Sell
+                // </button>
+                <Link 
+                  className="btn btn-secondary"
+                  href={`https://zora.co/coin/base:${_coinAddress}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   {isLoading && <span className="loading loading-spinner"></span>}
-                  Sell
-                </button>
+                  Sell on
+                  <Image
+                    src="/images/zorb.svg"
+                    alt="Zora"
+                    width={12}
+                    height={12}
+                    className="-mr-1"
+                  />
+                  Zora
+                </Link>
               )}
             </div>
           </div>
