@@ -9,6 +9,7 @@ import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
 import Comments from "~/components/Attestation/Comments";
 import JudgeAttestation from "~/components/Attestation/Judge";
+import Share from "~/components/Attestation/Share";
 import VotingCountdown from "~/components/Attestation/VotingCountdown";
 import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
 import ZoraCoinTrading from "~/components/Attestation/ZoraCoinTrading";
@@ -193,6 +194,7 @@ export const HotdogCard: FC<Props> = ({
               logId={hotdog.logId?.toString() ?? ''}
               metadataUri={hotdog.metadataUri}
             />
+            <Share logId={hotdog.logId.toString()} />
             {!isExpired && (
               <JudgeAttestation
                 disabled={disabled}
