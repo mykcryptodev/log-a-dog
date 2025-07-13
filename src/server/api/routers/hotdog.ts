@@ -197,7 +197,10 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
               volume24h: coin.volume24h
                 ? (Number(coin.volume24h) / 1e11).toString()
                 : undefined,
-              link: slug ? `https://zora.co/coin/${slug}:${coin.address}` : undefined,
+              // Always provide a link, fallback to base chain if slug missing
+              link: slug 
+                ? `https://zora.co/coin/${slug}:${coin.address}` 
+                : `https://zora.co/coin/base:${coin.address}`,
             };
 
             coinDetailsMap.set(normalizedAddress, processedCoin);
@@ -214,7 +217,30 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
       }
     } catch (error) {
       console.error(`Error fetching Zora coin details for batch:`, error);
-      // Continue with next chunk even if this one fails
+      
+      // For failed API calls, create minimal coin objects with just address and link
+      chunk.forEach(address => {
+        if (!coinDetailsMap.has(address.toLowerCase())) {
+          const normalizedAddress = address.toLowerCase();
+          const fallbackCoin: ZoraCoinDetails = {
+            id: address,
+            name: `Coin ${address.slice(0, 6)}...`,
+            description: '',
+            address,
+            symbol: 'COIN',
+            totalSupply: '0',
+            totalVolume: '0',
+            chainId,
+            link: `https://zora.co/coin/base:${address}`, // Always provide a link
+          };
+          
+          coinDetailsMap.set(normalizedAddress, fallbackCoin);
+          
+          // Cache the fallback for shorter duration
+          const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
+          setCachedData(cacheKey, fallbackCoin, CACHE_DURATION.SHORT).catch(console.error);
+        }
+      });
     }
   }
   
@@ -718,7 +744,26 @@ export const hotdogRouter = createTRPCRouter({
         throw error;
       }
     }),
-  checkForSafety: publicProcedure
+  invalidateZoraCoinCache: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      coinAddress: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const { chainId, coinAddress } = input;
+      const normalizedAddress = coinAddress.toLowerCase();
+      const cacheKey = `zora-coin:${chainId}:${normalizedAddress}`;
+      
+      try {
+        await deleteCachedData(cacheKey);
+        console.log(`Invalidated cache for Zora coin: ${coinAddress} on chain ${chainId}`);
+        return { success: true };
+      } catch (error) {
+        console.error(`Failed to invalidate cache for Zora coin: ${coinAddress}`, error);
+        return { success: false, error: String(error) };
+      }
+    }),
+  checkForSafety: protectedProcedure
     .input(z.object({ base64ImageString: z.string() }))
     .mutation(async ({ input }) => {
       const { base64ImageString } = input;
