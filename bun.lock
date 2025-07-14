@@ -24,7 +24,6 @@
         "@vercel/og": "^0.6.8",
         "@wagmi/core": "^2.17.1",
         "@zoralabs/coins-sdk": "^0.2.8",
-        "apexcharts": "^3.46.0",
         "cross-fetch": "^4.0.0",
         "csv-parser": "^3.2.0",
         "dotenv": "^16.4.5",
