@@ -60,7 +60,7 @@ const JudgesPage: NextPage = () => {
       const logs: DogLog[] = [];
 
       while (true) {
-        const res = await fetch("/api/ghostgraph", {
+        const res: Response = await fetch("/api/ghostgraph", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
