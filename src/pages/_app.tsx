@@ -3,7 +3,7 @@ import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
 import { api } from "~/utils/api";
 import "~/styles/globals.css";
-import { ThirdwebProviderWithActiveChain } from "~/providers/Thirdweb";
+import { ThirdwebProviderWithDefaultChain } from "~/providers/Thirdweb";
 import { Layout } from "~/components/utils/Layout";
 import '@farcaster/auth-kit/styles.css';
 import { FarcasterProvider } from "~/providers/Farcaster";
@@ -14,14 +14,14 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   return (
     <SessionProvider session={session}>
-      <ThirdwebProviderWithActiveChain>
+      <ThirdwebProviderWithDefaultChain>
         <FarcasterProvider>
           <Layout>
             <Component {...pageProps} />
             <div id="portal" />
           </Layout>
         </FarcasterProvider>
-      </ThirdwebProviderWithActiveChain>
+      </ThirdwebProviderWithDefaultChain>
     </SessionProvider>
   );
 };
