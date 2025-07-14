@@ -37,8 +37,8 @@ export async function sendNotificationToUsers(notification: {
 
     // Extract FIDs from the users
     const targetFids = usersWithNotifications
-      .map(user => user.fid)
-      .filter((fid): fid is number => fid !== null);
+      .map((user: { fid: number | null }) => user.fid)
+      .filter((fid: number | null): fid is number => fid !== null);
 
     if (targetFids.length === 0) {
       console.log("No valid FIDs found for notification");
