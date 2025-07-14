@@ -1,6 +1,7 @@
 import { ThirdwebProvider } from "thirdweb/react";
 import { createThirdwebClient } from "thirdweb";
 import { env } from "~/env";
+import { DEFAULT_CHAIN } from "~/constants";
 
 export const client = createThirdwebClient({
   clientId: env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
@@ -11,5 +12,9 @@ export const ThirdwebProviderWithDefaultChain = ({
 }: {
   children: React.ReactNode;
 }) => {
-  return <ThirdwebProvider>{children}</ThirdwebProvider>;
+  return (
+    <ThirdwebProvider clientId={env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID} activeChain={DEFAULT_CHAIN}>
+      {children}
+    </ThirdwebProvider>
+  );
 };

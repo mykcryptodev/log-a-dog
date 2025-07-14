@@ -58,6 +58,14 @@ export const FarcasterProvider = ({
   const attemptedConnectionRef = useRef(false);
   const { connect } = useConnect();
 
+  // Check if we've already attempted a wallet connection across reloads
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      attemptedConnectionRef.current =
+        window.localStorage.getItem("walletConnectAttempted") === "true";
+    }
+  }, []);
+
   const connectWallet = useCallback(async () => {
     try {
       await connect(async () => {
@@ -134,6 +142,9 @@ export const FarcasterProvider = ({
       !attemptedConnectionRef.current
     ) {
       attemptedConnectionRef.current = true;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("walletConnectAttempted", "true");
+      }
       void connectWallet()
         .catch((err) => {
           console.error("Failed to connect wallet", err);
