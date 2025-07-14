@@ -5,6 +5,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from "react";
 import { optimism } from "thirdweb/chains";
 import { EIP1193 } from "thirdweb/wallets";
@@ -54,6 +55,7 @@ export const FarcasterProvider = ({
   const [context, setContext] = useState<Context.FrameContext>();
   const [isMiniApp, setIsMiniApp] = useState(false);
   const [hasConnectedWallet, setHasConnectedWallet] = useState(false);
+  const attemptedConnectionRef = useRef(false);
   const { connect } = useConnect();
 
   const connectWallet = useCallback(async () => {
@@ -123,7 +125,14 @@ export const FarcasterProvider = ({
 
   // Separate effect for wallet connection after context is loaded
   useEffect(() => {
-    if (context && sdk.wallet && isSDKLoaded && !hasConnectedWallet) {
+    if (
+      context &&
+      sdk.wallet &&
+      isSDKLoaded &&
+      !hasConnectedWallet &&
+      !attemptedConnectionRef.current
+    ) {
+      attemptedConnectionRef.current = true;
       void connectWallet()
         .catch((err) => {
           console.error("Failed to connect wallet", err);
