@@ -126,6 +126,7 @@ export const FarcasterProvider = ({
   // Separate effect for wallet connection after context is loaded
   useEffect(() => {
     if (
+      isMiniApp &&
       context &&
       sdk.wallet &&
       isSDKLoaded &&
@@ -139,7 +140,7 @@ export const FarcasterProvider = ({
         })
         .finally(() => setHasConnectedWallet(true));
     }
-  }, [context, isSDKLoaded, connectWallet, hasConnectedWallet]);
+  }, [context, isMiniApp, isSDKLoaded, connectWallet, hasConnectedWallet]);
 
   const value = useMemo(
     () => ({
