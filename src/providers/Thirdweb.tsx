@@ -13,7 +13,7 @@ export const ThirdwebProviderWithDefaultChain = ({
   children: React.ReactNode;
 }) => {
   return (
-    <ThirdwebProvider clientId={env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID} activeChain={DEFAULT_CHAIN}>
+    <ThirdwebProvider client={client} activeChain={DEFAULT_CHAIN}>
       {children}
     </ThirdwebProvider>
   );
