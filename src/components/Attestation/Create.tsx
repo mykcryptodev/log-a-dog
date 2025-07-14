@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-import { type FC, useState, useMemo, useEffect } from 'react';
+import { type FC, useState, useMemo, useEffect, useContext } from 'react';
 import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
