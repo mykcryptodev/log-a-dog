@@ -17,6 +17,7 @@ import {
 import { Buy } from "~/components/utils/Buy";
 import { HOTDOG_TOKEN, DEFAULT_CHAIN } from "~/constants";
 import { AirdropChannel } from "~/components/Airdrop/Channel";
+import Link from "next/link";
 
 const EarnPage: NextPage = () => {
   const [mode, setMode] = useState<"eat" | "judge">("judge");
@@ -163,13 +164,13 @@ const EarnPage: NextPage = () => {
                     <ShieldCheckIcon className="h-6 w-6" />
                     Voting Guidelines
                   </h2>
-                  <a
+                  <Link
                     href="/judges"
                     className="btn btn-outline btn-sm"
                   >
                     <TrophyIcon className="h-4 w-4" />
                     View Judges
-                  </a>
+                  </Link>
                 </div>
                 <div className="space-y-3">
                   <div className="alert alert-error bg-error/10 text-base-content">
