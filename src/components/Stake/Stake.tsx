@@ -1,4 +1,4 @@
-import { type FC, useState, useEffect, useMemo } from "react";
+import { type FC, useState, useEffect, useMemo, memo } from "react";
 import {
   TransactionButton,
   useActiveWallet,
@@ -27,7 +27,7 @@ type Props = {
   hideTitle?: boolean;
 };
 
-export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
+const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
   const [activeTab, setActiveTab] = useState<"stake" | "unstake">("stake");
   const [amount, setAmount] = useState<string>("");
   const [percentage, setPercentage] = useState<number>(0);
@@ -523,3 +523,5 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     </div>
   );
 };
+
+export const Stake = memo(StakeComponent);

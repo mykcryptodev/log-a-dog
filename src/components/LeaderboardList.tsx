@@ -1,4 +1,4 @@
-import { type FC } from "react";
+import { type FC, memo } from "react";
 import Link from "next/link";
 import { Avatar } from "./Profile/Avatar";
 import { Name } from "./Profile/Name";
@@ -13,7 +13,7 @@ export type LeaderboardListProps = {
   height?: string;
 };
 
-export const LeaderboardList: FC<LeaderboardListProps> = ({
+const LeaderboardListComponent: FC<LeaderboardListProps> = ({
   limit = 10,
   startDate,
   endDate,
@@ -111,4 +111,5 @@ export const LeaderboardList: FC<LeaderboardListProps> = ({
   );
 };
 
+export const LeaderboardList = memo(LeaderboardListComponent);
 export default LeaderboardList;

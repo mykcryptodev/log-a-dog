@@ -1,4 +1,12 @@
-import { useContext, type FC, useState, useRef, useCallback } from "react";
+import {
+  memo,
+  useContext,
+  type FC,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import Link from "next/link";
@@ -10,9 +18,9 @@ type Props = {
   startDate?: Date;
   endDate?: Date;
   limit?: number;
-}
+};
 
-export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
+const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
   const limitOrDefault = limit ?? 10;
   const { activeChain } = useContext(ActiveChainContext);
   const [page, setPage] = useState(0);
@@ -20,45 +28,60 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
   const [showSearch, setShowSearch] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const { data: leaderboard, refetch } = api.hotdog.getLeaderboard.useQuery({
-    chainId: activeChain.id,
-    ...startDate && { startDate: Math.floor(startDate.getTime() / 1000) },
-    ...endDate && { endDate: Math.floor(endDate.getTime() / 1000) },
-  }, {
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-
-
-  const { data: profiles } = api.profile.getManyByAddress.useQuery({
-    chainId: activeChain.id,
-    addresses: [...(leaderboard?.users ?? [])],
-  }, {
-    enabled: !!leaderboard?.users,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-
-  const hasNextPage = leaderboard?.users ? leaderboard.users.length > (page + 1) * limitOrDefault : false;
-  const displayedUsers = leaderboard?.users?.slice(0, (page + 1) * limitOrDefault) ?? [];
-  const displayedHotdogs = leaderboard?.hotdogs?.slice(0, (page + 1) * limitOrDefault) ?? [];
-
-  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0]?.isIntersecting && hasNextPage) {
-        setPage(prev => prev + 1);
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [hasNextPage]);
-
-  if (!leaderboard || !profiles) return (
-    <div className="bg-base-200 rounded-lg w-[640px] h-72" />
+  const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery(
+    {
+      chainId: activeChain.id,
+      ...(startDate && { startDate: Math.floor(startDate.getTime() / 1000) }),
+      ...(endDate && { endDate: Math.floor(endDate.getTime() / 1000) }),
+    },
+    {
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+    },
   );
 
+  const { data: profiles } = api.profile.getManyByAddress.useQuery(
+    {
+      chainId: activeChain.id,
+      addresses: [...(leaderboard?.users ?? [])],
+    },
+    {
+      enabled: !!leaderboard?.users,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+    },
+  );
+
+  const hasNextPage = leaderboard?.users
+    ? leaderboard.users.length > (page + 1) * limitOrDefault
+    : false;
+  const displayedUsers = useMemo(
+    () => leaderboard?.users?.slice(0, (page + 1) * limitOrDefault) ?? [],
+    [leaderboard?.users, page, limitOrDefault],
+  );
+  const displayedHotdogs = useMemo(
+    () => leaderboard?.hotdogs?.slice(0, (page + 1) * limitOrDefault) ?? [],
+    [leaderboard?.hotdogs, page, limitOrDefault],
+  );
+
+  const lastElementRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage) {
+          setPage((prev) => prev + 1);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [hasNextPage],
+  );
+
+  if (!leaderboard || !profiles)
+    return <div className="h-72 w-[640px] rounded-lg bg-base-200" />;
+
   const filteredUsers = displayedUsers.filter((address) => {
-    const profile = profiles.find(p => p.address === address);
+    const profile = profiles.find((p) => p.address === address);
     const searchLower = searchQuery.toLowerCase();
     return (
       (profile?.username?.toLowerCase().includes(searchLower) ?? false) ||
@@ -67,32 +90,43 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
   });
 
   return (
-    <div className="w-full max-w-2xl card bg-base-200 bg-opacity-25 backdrop-blur-sm p-4">
-      <div className="flex items-center mb-4 relative">
+    <div className="card w-full max-w-2xl bg-base-200 bg-opacity-25 p-4 backdrop-blur-sm">
+      <div className="relative mb-4 flex items-center">
         <div className="absolute right-0">
-          <button 
+          <button
             className="btn btn-ghost btn-sm"
             onClick={() => setShowSearch(!showSearch)}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </button>
         </div>
-        <div className="text-2xl font-bold mx-auto">🌭 Leaderboard</div>
+        <div className="mx-auto text-2xl font-bold">🌭 Leaderboard</div>
       </div>
       {showSearch && (
         <div className="mb-4">
           <input
             type="text"
             placeholder="Search by username or address..."
-            className="w-full input input-bordered"
+            className="input input-bordered w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       )}
-      <div className="space-y-2 max-h-[500px] w-lg overflow-y-auto pr-2">
+      <div className="w-lg max-h-[500px] space-y-2 overflow-y-auto pr-2">
         {filteredUsers.map((address, index) => {
           const originalIndex = displayedUsers.indexOf(address);
           const hotdogCount = Number(displayedHotdogs[originalIndex]);
@@ -102,10 +136,15 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
             <div
               key={address}
               ref={isLastElement ? lastElementRef : null}
-              className="flex items-center justify-between p-3 bg-base-200 bg-opacity-50 rounded-lg hover:bg-base-300 transition-colors gap-2"
+              className="flex items-center justify-between gap-2 rounded-lg bg-base-200 bg-opacity-50 p-3 transition-colors hover:bg-base-300"
             >
-              <Link href={`/profile/address/${address}`} className="flex items-center gap-3">
-                <div className="text-lg font-bold text-secondary">{originalIndex + 1}</div>
+              <Link
+                href={`/profile/address/${address}`}
+                className="flex items-center gap-3"
+              >
+                <div className="text-lg font-bold text-secondary">
+                  {originalIndex + 1}
+                </div>
                 <Avatar size="32px" address={address} />
                 <div className="font-medium">
                   <Name address={address} noLink />
@@ -119,7 +158,7 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
           );
         })}
         {filteredUsers.length === 0 && (
-          <div className="text-center py-4 text-base-content/70">
+          <div className="py-4 text-center text-base-content/70">
             No results found
           </div>
         )}
@@ -127,3 +166,4 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
     </div>
   );
 };
+export const Leaderboard = memo(LeaderboardComponent);
