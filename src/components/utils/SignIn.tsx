@@ -4,7 +4,7 @@ import React, { type FC, useState, useEffect } from 'react';
 import { SiweMessage } from 'siwe';
 import { useActiveAccount } from 'thirdweb/react';
 import { signMessage } from "thirdweb/utils";
-import useActiveChain from '~/hooks/useActiveChain';
+import { DEFAULT_CHAIN } from '~/constants';
 
 type Props = {
   btnLabel?: string;
@@ -13,7 +13,7 @@ type Props = {
 const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
   const { data: sessionData, status } = useSession();
   const account = useActiveAccount();
-  const { activeChain } = useActiveChain();
+  const activeChain = DEFAULT_CHAIN;
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
   console.log({ sessionData });
 

@@ -1,6 +1,6 @@
-import { useContext, useEffect, type FC, useState, useRef } from "react";
-import ActiveChainContext from "~/contexts/ActiveChain";
-import { api } from "~/utils/api";
+import { useEffect, type FC, useState, useRef } from "react";
+import { DEFAULT_CHAIN } from "~/constants";
+import { api, type RouterOutputs } from "~/utils/api";
 import { useActiveAccount } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { TagIcon } from "@heroicons/react/24/outline";
@@ -10,6 +10,8 @@ import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
 import VotingCountdown from "./VotingCountdown";
+
+type UserHotdog = RouterOutputs["hotdog"]["getAllForUser"]["hotdogs"][number];
 
 type Props = {
   attestors?: string[];
@@ -23,7 +25,7 @@ type Props = {
 export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   const limitOrDefault = limit ?? 4;
   const account = useActiveAccount();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const [start, setStart] = useState<number>(0);
   const [isPaginating, setIsPaginating] = useState(false);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -144,7 +146,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
           </div>
         ))
       }
-      {dogData?.hotdogs.map((hotdog, index) => {
+      {dogData?.hotdogs.map((hotdog: UserHotdog, index: number) => {
         const validAttestations = dogData?.validAttestations[index];
         const invalidAttestations = dogData?.invalidAttestations[index];
 

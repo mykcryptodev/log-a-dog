@@ -1,8 +1,8 @@
-import { type FC, useContext, useState, useEffect, useCallback } from "react";
+import { type FC, useState, useEffect, useCallback } from "react";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { createWallet, inAppWallet, type Wallet, walletConnect } from "thirdweb/wallets";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { useSession, signIn, getCsrfToken, signOut } from "next-auth/react";
 import { env } from "~/env";
 import { signMessage } from "thirdweb/utils";
@@ -13,7 +13,7 @@ type Props = {
 
 export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const { data: sessionData, status } = useSession();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
   const account = useActiveAccount();

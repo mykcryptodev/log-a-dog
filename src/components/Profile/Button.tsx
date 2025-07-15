@@ -1,6 +1,6 @@
-import { useContext, type FC, useState, useMemo } from "react";
+import { type FC, useState, useMemo } from "react";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
 import { ProfileForm } from "~/components/Profile/Form";
 import Connect from "~/components/utils/Connect";
@@ -30,7 +30,7 @@ type Props = {
   label?: string;
 }
 export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout, hideNameAndBadge, label }) => {
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const { data: sessionData } = useSession();
   const account = useActiveAccount();
   const wallet = useActiveWallet();

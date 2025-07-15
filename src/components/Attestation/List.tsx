@@ -1,5 +1,5 @@
-import { useContext, useEffect, type FC, useState, useMemo, useRef } from "react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { useEffect, type FC, useState, useMemo, useRef } from "react";
+import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
@@ -78,7 +78,7 @@ type Props = {
 
 export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const [start, setStart] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
   const [isPaginating, setIsPaginating] = useState(false);

@@ -1,5 +1,5 @@
-import { useContext, useEffect } from "react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { useEffect } from "react";
+import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
 
 export type UseLeaderboardOptions = {
@@ -13,7 +13,7 @@ export const useLeaderboardData = ({
   endDate,
   refetchTimestamp = 0,
 }: UseLeaderboardOptions) => {
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
 
   const { data: leaderboard, refetch } = api.hotdog.getLeaderboard.useQuery(
     {

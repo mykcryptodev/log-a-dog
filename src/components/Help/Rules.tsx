@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { type FC } from "react";
-import { LOG_A_DOG } from "~/constants";
-import useActiveChain from "~/hooks/useActiveChain";
+import { LOG_A_DOG, DEFAULT_CHAIN } from "~/constants";
 
 export const Rules: FC = () => {
-  const { activeChain } = useActiveChain();
+  const activeChain = DEFAULT_CHAIN;
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-xl">

@@ -1,8 +1,8 @@
-import { type FC, useContext } from "react";
+import { type FC } from "react";
 import { useSession } from "next-auth/react";
 import { TransactionButton, useActiveWallet, useReadContract } from "thirdweb/react";
 import { getContract, prepareContractCall } from "thirdweb";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { PROTOCOL_REWARDS } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { formatEther } from "viem";
@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 export const ClaimProtocolRewards: FC = () => {
   const { data: sessionData } = useSession();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
 
   const { data: balance } = useReadContract({
     contract: getContract({

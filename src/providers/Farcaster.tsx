@@ -5,11 +5,11 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from "react";
 import { optimism } from "thirdweb/chains";
 import { EIP1193 } from "thirdweb/wallets";
 import { env } from "~/env";
-import useActiveChain from "~/hooks/useActiveChain";
 import { client } from "~/providers/Thirdweb";
 import {
   type FrameNotificationDetails,
@@ -50,12 +50,21 @@ export const FarcasterProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { activeChain } = useActiveChain();
+  const activeChain = DEFAULT_CHAIN;
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<Context.FrameContext>();
   const [isMiniApp, setIsMiniApp] = useState(false);
   const [hasConnectedWallet, setHasConnectedWallet] = useState(false);
+  const attemptedConnectionRef = useRef(false);
   const { connect } = useConnect();
+
+  // Check if we've already attempted a wallet connection across reloads
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      attemptedConnectionRef.current =
+        window.localStorage.getItem("walletConnectAttempted") === "true";
+    }
+  }, []);
 
   const connectWallet = useCallback(async () => {
     try {
@@ -124,10 +133,25 @@ export const FarcasterProvider = ({
 
   // Separate effect for wallet connection after context is loaded
   useEffect(() => {
-    if (context && sdk.wallet && isSDKLoaded && !hasConnectedWallet) {
-      void connectWallet().then(() => setHasConnectedWallet(true));
+    if (
+      isMiniApp &&
+      context &&
+      sdk.wallet &&
+      isSDKLoaded &&
+      !hasConnectedWallet &&
+      !attemptedConnectionRef.current
+    ) {
+      attemptedConnectionRef.current = true;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("walletConnectAttempted", "true");
+      }
+      void connectWallet()
+        .catch((err) => {
+          console.error("Failed to connect wallet", err);
+        })
+        .finally(() => setHasConnectedWallet(true));
     }
-  }, [context, isSDKLoaded, connectWallet, hasConnectedWallet]);
+  }, [context, isMiniApp, isSDKLoaded, connectWallet, hasConnectedWallet]);
 
   const value = useMemo(
     () => ({
