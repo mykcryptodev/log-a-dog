@@ -17,29 +17,32 @@ const LeaderboardBannerComponent: FC<Props> = ({
   scrollSpeed = 50,
 }) => {
   const [reduceMotion, setReduceMotion] = useState(false);
-  
+
   useEffect(() => {
     // Check if user prefers reduced motion
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduceMotion(mediaQuery.matches);
   }, []);
-  
+
   const { leaderboard, profiles } = useLeaderboardData({
     startDate,
     endDate,
   });
 
+  const users = useMemo(() => leaderboard?.users ?? [], [leaderboard?.users]);
+  const hotdogs = useMemo(
+    () => leaderboard?.hotdogs ?? [],
+    [leaderboard?.hotdogs],
+  );
+
   if (!leaderboard || !profiles)
     return <div className="h-20 w-full rounded-lg bg-base-200" />;
-
-  const users = useMemo(() => leaderboard.users ?? [], [leaderboard.users]);
-  const hotdogs = useMemo(() => leaderboard.hotdogs ?? [], [leaderboard.hotdogs]);
 
   // On mobile or with reduced motion, show a static banner with top 5
   if (reduceMotion) {
     const topUsers = users.slice(0, 5);
     const topHotdogs = hotdogs.slice(0, 5);
-    
+
     return (
       <div className="w-full overflow-x-auto bg-base-200 bg-opacity-25 backdrop-blur-sm">
         <div className="flex items-center gap-4 whitespace-nowrap p-2">

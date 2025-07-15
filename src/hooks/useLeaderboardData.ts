@@ -13,7 +13,7 @@ export const useLeaderboardData = ({
 }: UseLeaderboardOptions) => {
   const { activeChain } = useContext(ActiveChainContext);
 
-  const { data: leaderboard, refetch } = api.hotdog.getLeaderboard.useQuery(
+  const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery(
     {
       chainId: activeChain.id,
       ...(startDate
@@ -26,7 +26,6 @@ export const useLeaderboardData = ({
       refetchOnMount: false,
     },
   );
-
 
   const { data: profiles } = api.profile.getManyByAddress.useQuery(
     {
