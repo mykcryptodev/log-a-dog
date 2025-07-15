@@ -1,4 +1,4 @@
-import { type FC, useContext } from "react";
+import { type FC, useContext, memo } from "react";
 import { MediaRenderer } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
@@ -6,7 +6,7 @@ import { api } from "~/utils/api";
 import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 import { ADDRESS_ZERO } from "thirdweb";
 
-export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string }> = ({ address, fallbackSize, size }) => {
+const AvatarComponent: FC<{ address: string; fallbackSize?: number; size?: string }> = ({ address, fallbackSize, size }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
@@ -61,4 +61,5 @@ export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string 
   );
 };
 
+export const Avatar = memo(AvatarComponent);
 export default Avatar;

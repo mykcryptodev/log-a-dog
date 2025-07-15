@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-import { type FC, useContext, useState, useMemo, useEffect } from 'react';
+import { type FC, useContext, useState, useMemo, useEffect, memo } from 'react';
 import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
@@ -28,7 +28,7 @@ type Props = {
     metadata?: string;
   }) => void;
 }
-export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
+const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
   const utils = api.useUtils();
   const { addPendingDog, removePendingDog } = usePendingTransactionsStore();
@@ -423,3 +423,4 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
     </>
   )
 };
+export const CreateAttestation = memo(CreateAttestationComponent);

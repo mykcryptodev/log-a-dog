@@ -1,4 +1,4 @@
-import { useContext, type FC, useState, useRef, useCallback } from "react";
+import { memo, useContext, type FC, useState, useRef, useCallback, useMemo } from "react";
 import { api } from "~/utils/api";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import Link from "next/link";
@@ -12,7 +12,7 @@ type Props = {
   limit?: number;
 }
 
-export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
+const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
   const limitOrDefault = limit ?? 10;
   const { activeChain } = useContext(ActiveChainContext);
   const [page, setPage] = useState(0);
@@ -40,8 +40,14 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
   });
 
   const hasNextPage = leaderboard?.users ? leaderboard.users.length > (page + 1) * limitOrDefault : false;
-  const displayedUsers = leaderboard?.users?.slice(0, (page + 1) * limitOrDefault) ?? [];
-  const displayedHotdogs = leaderboard?.hotdogs?.slice(0, (page + 1) * limitOrDefault) ?? [];
+  const displayedUsers = useMemo(
+    () => leaderboard?.users?.slice(0, (page + 1) * limitOrDefault) ?? [],
+    [leaderboard?.users, page, limitOrDefault]
+  );
+  const displayedHotdogs = useMemo(
+    () => leaderboard?.hotdogs?.slice(0, (page + 1) * limitOrDefault) ?? [],
+    [leaderboard?.hotdogs, page, limitOrDefault]
+  );
 
   const lastElementRef = useCallback((node: HTMLDivElement | null) => {
     if (observer.current) observer.current.disconnect();
@@ -127,3 +133,4 @@ export const Leaderboard: FC<Props> = ({ limit, startDate, endDate }) => {
     </div>
   );
 };
+export const Leaderboard = memo(LeaderboardComponent);
