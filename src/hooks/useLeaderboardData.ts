@@ -1,17 +1,15 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 
 export type UseLeaderboardOptions = {
   startDate?: Date;
   endDate?: Date;
-  refetchTimestamp?: number;
 };
 
 export const useLeaderboardData = ({
   startDate,
   endDate,
-  refetchTimestamp = 0,
 }: UseLeaderboardOptions) => {
   const { activeChain } = useContext(ActiveChainContext);
 
@@ -29,11 +27,6 @@ export const useLeaderboardData = ({
     },
   );
 
-  useEffect(() => {
-    if (refetchTimestamp) {
-      void refetch();
-    }
-  }, [refetch, refetchTimestamp]);
 
   const { data: profiles } = api.profile.getManyByAddress.useQuery(
     {

@@ -6,10 +6,8 @@ import LeaderboardList from "~/components/LeaderboardList";
 const LeaderboardPage: NextPage = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [refetchTimestamp, setRefetchTimestamp] = useState(0);
-
   const applyDates = () => {
-    setRefetchTimestamp(Date.now());
+    /* Date filters simply trigger React state update */
   };
 
   const startDateObj = startDate ? new Date(startDate) : undefined;
@@ -51,7 +49,6 @@ const LeaderboardPage: NextPage = () => {
             height="500px"
             startDate={startDateObj}
             endDate={endDateObj}
-            refetchTimestamp={refetchTimestamp}
           />
         </div>
       </main>
