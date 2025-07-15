@@ -9,7 +9,6 @@ export type LeaderboardListProps = {
   limit?: number;
   startDate?: Date;
   endDate?: Date;
-  refetchTimestamp?: number;
   showCurrentUser?: boolean;
   height?: string;
 };
@@ -18,7 +17,6 @@ export const LeaderboardList: FC<LeaderboardListProps> = ({
   limit = 10,
   startDate,
   endDate,
-  refetchTimestamp = 0,
   showCurrentUser = false,
   height = "400px",
 }) => {
@@ -26,7 +24,6 @@ export const LeaderboardList: FC<LeaderboardListProps> = ({
   const { leaderboard, profiles } = useLeaderboardData({
     startDate,
     endDate,
-    refetchTimestamp,
   });
 
   if (!leaderboard || !profiles)

@@ -8,14 +8,12 @@ import useLeaderboardData from "~/hooks/useLeaderboardData";
 type Props = {
   startDate?: Date;
   endDate?: Date;
-  refetchTimestamp: number;
   scrollSpeed?: number; // pixels per second
 };
 
 export const LeaderboardBanner: FC<Props> = ({
   startDate,
   endDate,
-  refetchTimestamp,
   scrollSpeed = 50,
 }) => {
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -29,7 +27,6 @@ export const LeaderboardBanner: FC<Props> = ({
   const { leaderboard, profiles } = useLeaderboardData({
     startDate,
     endDate,
-    refetchTimestamp,
   });
 
   if (!leaderboard || !profiles)

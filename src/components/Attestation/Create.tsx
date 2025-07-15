@@ -110,7 +110,11 @@ export const CreateAttestation: FC<Props> = ({ onAttestationCreated }) => {
 
       // Just do a gentle invalidation - no forced refetch
       console.log('🔄 Transaction resolved, gentle cache invalidation');
-      void utils.hotdog.getAll.invalidate();
+      void Promise.all([
+        utils.hotdog.getAll.invalidate(),
+        utils.hotdog.getAllForUser.invalidate(),
+        utils.hotdog.getLeaderboard.invalidate(),
+      ]);
 
     } else if (!success && transactionId) {
       // If transaction failed, remove the optimistic update

@@ -34,7 +34,6 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
-  const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
 
@@ -59,7 +58,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
-        <LeaderboardBanner refetchTimestamp={refetchTimestamp} />
+        <LeaderboardBanner />
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pt-8 pb-8">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
             <Image
@@ -74,21 +73,14 @@ export default function Home() {
             <p className="sm:text-lg text-sm text-center max-w-xs">{APP_DESCRIPTION}</p>
             <Link href="/faq" className="text-xs underline">wtf?</Link>
           </div>
-          <CreateAttestation
-            onAttestationCreated={() => {
-              // give the blockchain 10 seconds to confirm
-              setTimeout(() => {
-                setRefetchTimestamp(new Date().getTime())
-              }, 10000);
-            }}
-          />
+          <CreateAttestation />
           <div className="w-full max-w-md">
             <h2 className="text-2xl font-bold text-center">Leaderboard</h2>
-            <LeaderboardList refetchTimestamp={refetchTimestamp} limit={10} />
+            <LeaderboardList limit={10} />
           </div>
           <div className="w-full max-w-md">
             <h2 className="text-2xl font-bold text-center">Logs</h2>
-            <ListAttestations refetchTimestamp={refetchTimestamp} limit={10} />
+            <ListAttestations limit={10} />
           </div>
         </div>
       </main>

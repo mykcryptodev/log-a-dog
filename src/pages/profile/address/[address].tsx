@@ -37,7 +37,6 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
     refetchOnMount: false,
   });
   console.log({ data });
-  const [refetchTimestamp, setRefetchTimestamp] = useState<number>(0);
   const [showProfileForm, setShowProfileForm] = useState<boolean>(false);
 
   // Check if this is the user's own profile
@@ -95,10 +94,9 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
             />
           )}
           {isOwnProfile && (
-            <CreateAttestation onAttestationCreated={() => setRefetchTimestamp(new Date().getTime())} />
+            <CreateAttestation />
           )}
           <UserListAttestations
-            refetchTimestamp={refetchTimestamp}
             limit={4}
             user={data.address}
           />
