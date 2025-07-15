@@ -18,43 +18,72 @@ const JudgesPage: NextPage = () => {
           {isLoading ? (
             <div className="loading loading-spinner" />
           ) : (
-            <div className="w-full max-w-xl space-y-2">
-              {judges.map((j, idx) => (
-                <div
-                  key={j.voter}
-                  className="flex items-center justify-between rounded-lg bg-base-200 bg-opacity-50 p-3"
-                >
-                  <span className="font-bold">#{idx + 1}</span>
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {j.profile.imgUrl ? (
-                      <img
-                        src={j.profile.imgUrl}
-                        alt={j.profile.username || 'Judge'}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-600">
-                          {j.voter.slice(0, 2).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex flex-col min-w-0">
-                      {j.profile.username ? (
-                        <>
-                          <span className="font-medium truncate">{j.profile.username}</span>
-                          <span className="text-xs text-gray-500 truncate">
-                            {j.voter.slice(0, 6)}...{j.voter.slice(-4)}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="font-medium truncate">{j.voter}</span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="font-bold text-lg">{j.correct}</span>
-                </div>
-              ))}
+            <div className="w-full max-w-6xl">
+              <div className="overflow-x-auto">
+                <table className="table w-full">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Judge</th>
+                      <th>Total Votes</th>
+                      <th>Correct</th>
+                      <th>Incorrect</th>
+                      <th>Accuracy</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {judges.map((j, idx) => (
+                      <tr key={j.voter} className="hover">
+                        <td>
+                          <div className="font-bold text-lg">#{idx + 1}</div>
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <div className="avatar">
+                              <div className="mask mask-squircle w-12 h-12">
+                                {j.profile.imgUrl ? (
+                                  <img
+                                    src={j.profile.imgUrl}
+                                    alt={j.profile.username || 'Judge'}
+                                  />
+                                ) : (
+                                  <div className="bg-gray-300 opacity w-full h-full flex items-center justify-center">
+                                    <span className="text-xs font-bold text-gray-600">
+                                      {j.voter.slice(0, 2).toUpperCase()}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-bold">
+                                {j.profile.username || j.voter}
+                              </div>
+                              {j.profile.username && (
+                                <div className="text-sm opacity-50">
+                                  {j.voter.slice(0, 6)}...{j.voter.slice(-4)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="font-bold text-lg">{j.total}</div>
+                        </td>
+                        <td>
+                          <div className="font-bold text-lg text-success">{j.correct}</div>
+                        </td>
+                        <td>
+                          <div className="font-bold text-lg text-error">{j.incorrect}</div>
+                        </td>
+                        <td>
+                          <div className="font-bold text-lg">{j.accuracy.toFixed(1)}%</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

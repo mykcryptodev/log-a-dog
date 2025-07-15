@@ -158,10 +158,19 @@ const EarnPage: NextPage = () => {
             {/* Voting Guidelines */}
             <div className="card bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
               <div className="card-body">
-                <h2 className="card-title mb-4 flex items-center gap-2 text-2xl">
-                  <ShieldCheckIcon className="h-6 w-6" />
-                  Voting Guidelines
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="card-title flex items-center gap-2 text-2xl">
+                    <ShieldCheckIcon className="h-6 w-6" />
+                    Voting Guidelines
+                  </h2>
+                  <a
+                    href="/judges"
+                    className="btn btn-outline btn-sm"
+                  >
+                    <TrophyIcon className="h-4 w-4" />
+                    View Judges
+                  </a>
+                </div>
                 <div className="space-y-3">
                   <div className="alert alert-error bg-error/10 text-base-content">
                     <HandThumbDownIcon className="h-5 w-5" />

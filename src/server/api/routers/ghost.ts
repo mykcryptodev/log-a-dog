@@ -28,6 +28,9 @@ interface DogLog {
 interface JudgeResult {
   voter: string;
   correct: number;
+  incorrect: number;
+  total: number;
+  accuracy: number;
   profile: UserProfile;
 }
 
@@ -160,35 +163,55 @@ export const ghostRouter = createTRPCRouter({
           logMap.set(log.id, log);
         }
 
-        const counts: Record<string, number> = {};
+        const judgeStats: Record<string, { correct: number; total: number }> = {};
         for (const vote of votes) {
           const log = logMap.get(vote.logId);
           if (!log) continue;
           if (log.status === 0) continue; // still pending
+          
+          // Initialize judge stats if not exists
+          if (!judgeStats[vote.voter]) {
+            judgeStats[vote.voter] = { correct: 0, total: 0 };
+          }
+          
+          // Increment total votes
+          judgeStats[vote.voter]!.total += 1;
+          
+          // Check if vote was correct
           const correct =
             (vote.isValid && log.isValid) || (!vote.isValid && !log.isValid);
           if (correct) {
-            counts[vote.voter] = (counts[vote.voter] ?? 0) + 1;
+            judgeStats[vote.voter]!.correct += 1;
           }
         }
 
         // Get unique voter addresses
-        const voterAddresses = Object.keys(counts);
+        const voterAddresses = Object.keys(judgeStats);
         
         // Fetch user profiles for all voters
         const profileMap = await fetchUserProfiles(voterAddresses);
         
-        const ranking: JudgeResult[] = Object.entries(counts)
-          .map(([voter, correct]) => ({ 
-            voter, 
-            correct, 
-            profile: profileMap.get(voter) ?? {
-              username: '',
-              imgUrl: '',
-              metadata: '',
-              address: voter,
-            }
-          }))
+        const ranking: JudgeResult[] = Object.entries(judgeStats)
+          .map(([voter, stats]) => {
+            const correct = stats.correct;
+            const total = stats.total;
+            const incorrect = total - correct;
+            const accuracy = total > 0 ? (correct / total) * 100 : 0;
+            
+            return {
+              voter,
+              correct,
+              incorrect,
+              total,
+              accuracy,
+              profile: profileMap.get(voter) ?? {
+                username: '',
+                imgUrl: '',
+                metadata: '',
+                address: voter,
+              }
+            };
+          })
           .sort((a, b) => b.correct - a.correct);
 
         return ranking;
