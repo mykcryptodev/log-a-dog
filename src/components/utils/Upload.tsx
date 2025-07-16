@@ -50,19 +50,22 @@ export const Upload: FC<UploadProps> = ({
   }, [initialUrls ? initialUrls.join("|") : ""]);
 
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
-    // convert the file to base64 image
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    const base64Image = await new Promise<string>((resolve) => {
-      reader.onload = () => {
-        console.log({ image: reader.result });
-        resolve(reader.result as string);
-      };
+    const base64Image = await new Promise<string>((resolve, reject) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Failed to read file"));
     });
-    const isSafe = await safetyCheck.mutateAsync({
-      base64ImageString: base64Image,
-    });
-    return isSafe;
+
+    try {
+      const isSafe = await safetyCheck.mutateAsync({
+        base64ImageString: base64Image,
+      });
+      return isSafe;
+    } catch (err) {
+      console.error("Safety check failed", err);
+      throw err;
+    }
   }, [safetyCheck]);
 
   const resizeImageFile = useCallback(async (file: File): Promise<File> => {
@@ -128,11 +131,16 @@ export const Upload: FC<UploadProps> = ({
     setUrls([]);
     setDropzoneLabel("🖼️ Preparing upload...");
 
-    const resizedFilesPromises = acceptedFiles.map(async (file) => {
-      return await resizeImageFile(file);
-    });
+    const file = acceptedFiles[0];
+    if (!file) {
+      toast.error("No files to upload");
+      onUploadError?.(new Error("No files to upload"));
+      setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
+      return;
+    }
 
-    const resizedFiles = await Promise.all(resizedFilesPromises);
+    const resizedFile = await resizeImageFile(file);
+    const resizedFiles = [resizedFile];
 
     if (resizedFiles.length === 0) {
       toast.error("No files to upload");
@@ -192,7 +200,7 @@ export const Upload: FC<UploadProps> = ({
   }, [conductImageSafetyCheck, label, onUpload, onUploadError, resizeImageFile]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }, multiple: false });
 
   useEffect(() => {
     if (isDragActive) {
