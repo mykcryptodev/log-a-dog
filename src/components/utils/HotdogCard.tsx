@@ -21,6 +21,7 @@ import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import { env } from "~/env";
 import Image from "next/image";
 import { sdk } from "@farcaster/frame-sdk";
+import { api } from "~/utils/api";
 
 // Types
 type AttestationPeriod = {
@@ -117,27 +118,46 @@ export const HotdogCard: FC<Props> = ({
     );
   };
 
+  const { data: eaterProfile } = api.profile.getByAddress.useQuery(
+    {
+      chainId,
+      address: hotdog.eater,
+    },
+    {
+      enabled: !!hotdog.eater && !!chainId,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+    },
+  );
+
+  const displayName =
+    eaterProfile?.username ??
+    `${hotdog.eater.slice(0, 6)}...${hotdog.eater.slice(-4)}`;
+
   const isExpired =
     Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <=
     Date.now();
 
   const shareUrl = `${env.NEXT_PUBLIC_APP_URL}/dog/${hotdog.logId}`;
+  const shareText = `be like ${displayName}, log your dogs! 🌭`;
 
   const shareOnX = useCallback(() => {
-    const url = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`;
+    const url =
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}` +
+      `&text=${encodeURIComponent(shareText)}`;
     window.open(url, "_blank");
-  }, [shareUrl]);
+  }, [shareUrl, shareText]);
 
   const shareOnFarcaster = useCallback(async () => {
     try {
       await sdk.actions.composeCast({
-        text: "",
+        text: shareText,
         embeds: [shareUrl],
       });
     } catch (err) {
       console.error("Failed to compose cast", err);
     }
-  }, [shareUrl]);
+  }, [shareUrl, shareText]);
 
   // Handle zoraCoin being either an object or string
   const zoraCoinData =
@@ -199,6 +219,14 @@ export const HotdogCard: FC<Props> = ({
                 alt="Share on X"
                 width={16}
                 height={16}
+                className="dark:hidden"
+              />
+              <Image
+                src="/images/x-white.svg"
+                alt="Share on X"
+                width={16}
+                height={16}
+                className="hidden dark:block"
               />
             </button>
             <button
