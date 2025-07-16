@@ -1,5 +1,5 @@
 import { upload, resolveScheme } from "thirdweb/storage";
-import { type FC, useCallback ,useEffect, useState } from "react";
+import { type FC, useCallback, useEffect, useState } from "react";
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'react-toastify';
 import Image from "next/image";
@@ -49,13 +49,18 @@ export const Upload: FC<UploadProps> = ({
     }
   }, [initialUrls ? initialUrls.join("|") : ""]);
 
+  const fileToBase64 = useCallback(async (file: File): Promise<string> => {
+    const buffer = await file.arrayBuffer();
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]!);
+    }
+    return `data:${file.type};base64,${btoa(binary)}`;
+  }, []);
+
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    const base64Image = await new Promise<string>((resolve, reject) => {
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("Failed to read file"));
-    });
+    const base64Image = await fileToBase64(file);
 
     try {
       const isSafe = await safetyCheck.mutateAsync({
@@ -66,7 +71,7 @@ export const Upload: FC<UploadProps> = ({
       console.error("Safety check failed", err);
       throw err;
     }
-  }, [safetyCheck]);
+  }, [fileToBase64, safetyCheck]);
 
   const resizeImageFile = useCallback(async (file: File): Promise<File> => {
     if (typeof window === 'undefined') {
