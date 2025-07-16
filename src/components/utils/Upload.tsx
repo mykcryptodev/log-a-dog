@@ -49,18 +49,18 @@ export const Upload: FC<UploadProps> = ({
     }
   }, [initialUrls ? initialUrls.join("|") : ""]);
 
-  const fileToBase64 = useCallback(async (file: File): Promise<string> => {
-    const buffer = await file.arrayBuffer();
-    let binary = "";
-    const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]!);
-    }
-    return `data:${file.type};base64,${btoa(binary)}`;
-  }, []);
-
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
-    const base64Image = await fileToBase64(file);
+    // convert the file to base64 image using FileReader
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    const base64Image = await new Promise<string>((resolve, reject) => {
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = (err) => {
+        reject(err);
+      };
+    });
 
     try {
       const isSafe = await safetyCheck.mutateAsync({
@@ -71,7 +71,7 @@ export const Upload: FC<UploadProps> = ({
       console.error("Safety check failed", err);
       throw err;
     }
-  }, [fileToBase64, safetyCheck]);
+  }, [safetyCheck]);
 
   const resizeImageFile = useCallback(async (file: File): Promise<File> => {
     if (typeof window === 'undefined') {
