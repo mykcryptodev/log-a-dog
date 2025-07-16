@@ -1,4 +1,4 @@
-import { type FC, useCallback } from "react";
+import { type FC, useCallback, useContext } from "react";
 import Link from "next/link";
 import {
   CurrencyDollarIcon,
@@ -22,6 +22,7 @@ import { env } from "~/env";
 import Image from "next/image";
 import { sdk } from "@farcaster/frame-sdk";
 import { api } from "~/utils/api";
+import { FarcasterContext } from "~/providers/Farcaster";
 
 // Types
 type AttestationPeriod = {
@@ -148,16 +149,24 @@ export const HotdogCard: FC<Props> = ({
     window.open(url, "_blank");
   }, [shareUrl, shareText]);
 
+  const farcaster = useContext(FarcasterContext);
   const shareOnFarcaster = useCallback(async () => {
     try {
-      await sdk.actions.composeCast({
-        text: shareText,
-        embeds: [shareUrl],
-      });
+      if (farcaster?.isMiniApp) {
+        await sdk.actions.composeCast({
+          text: shareText,
+          embeds: [shareUrl],
+        });
+      } else {
+        const url =
+          `https://farcaster.xyz/~/compose?text=${encodeURIComponent(shareText)}` +
+          `&embeds[]=${encodeURIComponent(shareUrl)}`;
+        window.open(url, "_blank");
+      }
     } catch (err) {
       console.error("Failed to compose cast", err);
     }
-  }, [shareUrl, shareText]);
+  }, [shareUrl, shareText, farcaster]);
 
   // Handle zoraCoin being either an object or string
   const zoraCoinData =
