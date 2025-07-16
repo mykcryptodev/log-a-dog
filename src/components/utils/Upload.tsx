@@ -47,7 +47,7 @@ export const Upload: FC<UploadProps> = ({
     } else {
       setUrls([]);
     }
-  }, [initialUrls]);
+  }, [initialUrls ? initialUrls.join("|") : ""]);
 
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
     // convert the file to base64 image
