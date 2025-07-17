@@ -1,6 +1,6 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { HandThumbDownIcon as HandThumDownIconFilled, HandThumbUpIcon as HandThumbUpIconFilled } from "@heroicons/react/24/solid";
-import { useState, type FC, useEffect } from "react";
+import { useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
@@ -44,11 +44,9 @@ export const JudgeAttestation: FC<Props> = ({
 
   const ghostVote = useGhostVote(logId, sessionData?.user?.address);
 
-  useEffect(() => {
-    if (ghostVote === null) return;
-    setOptimisticUserAttested(true);
-    setOptimisticUserAttestation(ghostVote);
-  }, [ghostVote]);
+  // Derive the effective values during render instead of using useEffect
+  const effectiveUserAttested = ghostVote !== null ? true : optimisticUserAttested;
+  const effectiveUserAttestation = ghostVote !== null ? ghostVote : optimisticUserAttestation;
 
   const judgeMutation = api.hotdog.judge.useMutation({
     onMutate: async ({ isValid }) => {
@@ -93,7 +91,7 @@ export const JudgeAttestation: FC<Props> = ({
     isValid ? setIsLoadingValidAttestation(true) : setIsLoadingInvalidValidAttestation(true);
     
     // undo attestations if the user has already attested
-    if (optimisticUserAttested && optimisticUserAttestation === isValid) {
+    if (effectiveUserAttested && effectiveUserAttestation === isValid) {
       return void revoke(isValid);
     }
 
@@ -178,7 +176,7 @@ export const JudgeAttestation: FC<Props> = ({
           ) : (
             (optimisticValidCount ?? 0).toString()
           )}
-          {optimisticUserAttested && optimisticUserAttestation === true ? (
+          {effectiveUserAttested && effectiveUserAttestation === true ? (
             <HandThumbUpIconFilled className="w-4 h-4" />
           ) : (
             <HandThumbUpIcon className="w-4 h-4" />
@@ -188,7 +186,7 @@ export const JudgeAttestation: FC<Props> = ({
           className="btn btn-xs btn-circle btn-ghost w-fit px-2"
           onClick={() => attest(false)}
         >
-          {optimisticUserAttested && optimisticUserAttestation === false ? (
+          {effectiveUserAttested && effectiveUserAttestation === false ? (
             <HandThumDownIconFilled className="w-4 h-4" />
           ) : (
             <HandThumbDownIcon className="w-4 h-4" />
