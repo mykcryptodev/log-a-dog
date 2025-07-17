@@ -1,6 +1,6 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { HandThumbDownIcon as HandThumDownIconFilled, HandThumbUpIcon as HandThumbUpIconFilled } from "@heroicons/react/24/solid";
-import { useState, type FC } from "react";
+import { useState, type FC, memo } from "react";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
@@ -21,7 +21,7 @@ type Props = {
   onAttestationAffirmationRevoked?: () => void;
 }
 
-export const JudgeAttestation: FC<Props> = ({ 
+const JudgeAttestationComponent: FC<Props> = ({ 
   disabled,
   logId,
   chainId,
@@ -202,4 +202,5 @@ export const JudgeAttestation: FC<Props> = ({
   )
 };
 
+export const JudgeAttestation = memo(JudgeAttestationComponent);
 export default JudgeAttestation;

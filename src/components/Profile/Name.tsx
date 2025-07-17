@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { type FC, useContext } from "react";
+import { type FC, useContext, memo } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { ProfileButton } from "./Button";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
-export const Name: FC<{ address: string; noLink?: boolean }> = ({ address, noLink }) => {
+const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noLink }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
@@ -72,5 +72,5 @@ export const Name: FC<{ address: string; noLink?: boolean }> = ({ address, noLin
   );
 };
 
-export default Name;
+export const Name = memo(NameComponent);
 

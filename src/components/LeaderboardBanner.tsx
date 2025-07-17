@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Name } from "./Profile/Name";
 import { Avatar } from "./Profile/Avatar";
@@ -78,17 +78,18 @@ export const LeaderboardBanner: FC<Props> = ({
   const totalWidth = users.length * itemWidth;
   const animationDuration = totalWidth / scrollSpeed;
 
+  // Memoize the style object to prevent re-creation on every render
+  const scrollContainerStyle = useMemo(() => ({
+    "--duration": `${animationDuration}s`,
+    width: `${totalWidth * 2}px`, // Double width for seamless loop
+  } as React.CSSProperties), [animationDuration, totalWidth]);
+
   return (
     <div className="w-full overflow-hidden bg-base-200 bg-opacity-25 backdrop-blur-sm">
       <div className="relative h-14 overflow-hidden py-2">
         <div
           className={`absolute flex items-center gap-6 whitespace-nowrap ${styles.scrollContainer}`}
-          style={
-            {
-              "--duration": `${animationDuration}s`,
-              width: `${totalWidth * 2}px`, // Double width for seamless loop
-            } as React.CSSProperties
-          }
+          style={scrollContainerStyle}
         >
           {/* First set of items */}
           {users.map((address, index) => {

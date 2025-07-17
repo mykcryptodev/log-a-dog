@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useState, useMemo, type FC } from "react";
 import Image from "next/image";
 import { MediaRenderer } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
@@ -161,6 +161,9 @@ export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height
   const blurhash = coin?.mediaContent?.previewImage?.blurhash;
   const [blurDataURL, setBlurDataURL] = useState<string>();
 
+  // Memoize style object to prevent re-creation on every render
+  const imageStyle = useMemo(() => ({ height, width }), [height, width]);
+
   useEffect(() => {
     if (blurhash) {
       const url = blurhashToDataURL(blurhash);
@@ -178,7 +181,7 @@ export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height
         height={parseSize(height, 300)}
         placeholder={blurDataURL ? "blur" : undefined}
         blurDataURL={blurDataURL}
-        style={{ height, width }}
+        style={imageStyle}
       />
     );
   }

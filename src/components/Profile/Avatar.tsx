@@ -1,4 +1,4 @@
-import { type FC, useContext } from "react";
+import { type FC, useContext, useMemo, memo } from "react";
 import { MediaRenderer } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
@@ -6,7 +6,7 @@ import { api } from "~/utils/api";
 import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 import { ADDRESS_ZERO } from "thirdweb";
 
-export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string }> = ({ address, fallbackSize, size }) => {
+const AvatarComponent: FC<{ address: string, fallbackSize?: number, size?: string }> = ({ address, fallbackSize, size }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
     chainId: activeChain.id,
@@ -19,10 +19,22 @@ export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string 
 
   const dimension = size ?? "32px";
 
+  // Memoize style objects to prevent re-creation on every render
+  const loadingStyle = useMemo(() => ({ 
+    width: dimension, 
+    height: dimension 
+  }), [dimension]);
+
+  const mediaStyle = useMemo(() => ({ 
+    width: dimension, 
+    height: dimension, 
+    objectFit: "cover" as const 
+  }), [dimension]);
+
   if (isLoading) {
     return (
       <div
-        style={{ width: dimension, height: dimension }}
+        style={loadingStyle}
         className="bg-base-200 rounded-full animate-pulse"
       />
     );
@@ -56,9 +68,9 @@ export const Avatar: FC<{ address: string, fallbackSize?: number, size?: string 
       client={client}
       src={profile.imgUrl}
       className="rounded-full"
-      style={{ width: dimension, height: dimension, objectFit: "cover" }}
+      style={mediaStyle}
     />
   );
 };
 
-export default Avatar;
+export const Avatar = memo(AvatarComponent);
