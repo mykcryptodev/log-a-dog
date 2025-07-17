@@ -5,7 +5,7 @@ import { useActiveAccount } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
-import Name from "~/components/Profile/Name";
+import { Name } from "~/components/Profile/Name";
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
@@ -25,7 +25,6 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   const account = useActiveAccount();
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
-  const [isPaginating, setIsPaginating] = useState(false);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAllForUser.useQuery({
@@ -106,7 +105,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
         </div>
       )}
       
-      {isLoadingHotdogs && !isPaginating && 
+      {isLoadingHotdogs && !isPaginatingDerived && 
         Array.from({ length: limitOrDefault }).map((_, index) => (
           <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
             <div className="flex gap-2 items-center">
@@ -204,9 +203,9 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
         <button
           className="join-item btn"
           onClick={() => handlePagination('prev')}
-          disabled={start === 0 || isPaginating}
+          disabled={start === 0 || isPaginatingDerived}
         >
-          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "«"}
+          {isPaginatingDerived ? <span className="loading loading-spinner loading-xs"></span> : "«"}
         </button>
         <button className="join-item btn" disabled>
           Page {(Math.floor(start / limitOrDefault) + 1)} of {dogData?.totalPages.toString() ?? '...'}
@@ -214,9 +213,9 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
         <button
           className="join-item btn"
           onClick={() => handlePagination('next')}
-          disabled={!dogData?.hasNextPage || isPaginating}
+          disabled={!dogData?.hasNextPage || isPaginatingDerived}
         >
-          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "»"}
+          {isPaginatingDerived ? <span className="loading loading-spinner loading-xs"></span> : "»"}
         </button>
       </div>
     </div>
