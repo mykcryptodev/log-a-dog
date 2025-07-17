@@ -125,6 +125,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
             message,
             signature: params.signature,
             address: params.payload.address,
+            redirect: false,
           });
         },
         getLoginPayload: async ({ address }) =>
