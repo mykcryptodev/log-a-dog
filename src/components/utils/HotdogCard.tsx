@@ -71,6 +71,7 @@ type HotdogData = {
   zoraCoin: ZoraCoinDetails | string | null; // Can be object, string, or null
   attestationPeriod?: AttestationPeriod;
   isPending?: boolean;
+  duplicateOfLogId?: string | null;
 };
 
 type Props = {
@@ -268,6 +269,14 @@ export const HotdogCard: FC<Props> = ({
                 <TagIcon className="h-4 w-4" />
                 {hotdog.logId.toString()}
               </>
+            )}
+            {hotdog.duplicateOfLogId && (
+              <Link
+                href={`/dog/${hotdog.duplicateOfLogId}`}
+                className="badge badge-warning ml-2"
+              >
+                Duplicate Image
+              </Link>
             )}
           </div>
           <div className="flex items-center justify-end gap-2 text-xs">
