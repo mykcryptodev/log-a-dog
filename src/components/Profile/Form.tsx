@@ -89,11 +89,12 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
     }
   }
 
-  if (!wallet) return null;
+  const memoInitialUrls = useMemo(
+    () => (imgUrl ? [withGateway(imgUrl)] : []),
+    [imgUrl]
+  );
 
-  const memoInitialUrls = useMemo(() =>
-    imgUrl ? [withGateway(imgUrl)] : []
-  , [imgUrl]);
+  if (!wallet) return null;
 
   return (
     <div className="flex flex-col items-center gap-2">
