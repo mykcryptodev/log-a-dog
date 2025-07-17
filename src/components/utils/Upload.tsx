@@ -162,9 +162,9 @@ export const Upload: FC<UploadProps> = ({
     try {
       setDropzoneLabel("☁️ Uploading...");
       // Rename files to "image" before uploading
-      const renamedFiles = resizedFiles.map((file, index) => {
+      const renamedFiles = resizedFiles.map((file) => {
         const extension = file.name.split('.').pop() ?? 'jpg';
-        const newName = resizedFiles.length > 1 ? `image_${index + 1}.${extension}` : `image.${extension}`;
+        const newName = `image.${extension}`;
         return new File([file], newName, { type: file.type });
       });
       
@@ -191,8 +191,14 @@ export const Upload: FC<UploadProps> = ({
     }
   }, [conductImageSafetyCheck, label, onUpload, onUploadError, resizeImageFile]);
   
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: (files) => {
+      void onDrop(files);
+    },
+    accept: { image: ["image/*"] },
+    multiple: false,
+    maxFiles: 1,
+  });
 
   useEffect(() => {
     if (isDragActive) {
