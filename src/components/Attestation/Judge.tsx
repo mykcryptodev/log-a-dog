@@ -45,8 +45,8 @@ export const JudgeAttestation: FC<Props> = ({
   const ghostVote = useGhostVote(logId, sessionData?.user?.address);
 
   // Derive the effective values during render instead of using useEffect
-  const effectiveUserAttested = ghostVote !== null ? true : optimisticUserAttested;
-  const effectiveUserAttestation = ghostVote !== null ? ghostVote : optimisticUserAttestation;
+  const effectiveUserAttested = ghostVote ?? optimisticUserAttested;
+  const effectiveUserAttestation = ghostVote ?? optimisticUserAttestation;
 
   const judgeMutation = api.hotdog.judge.useMutation({
     onMutate: async ({ isValid }) => {
