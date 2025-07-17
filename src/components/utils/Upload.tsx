@@ -41,13 +41,14 @@ export const Upload: FC<UploadProps> = ({
   const [dropzoneLabel, setDropzoneLabel] = useState<string>(label ?? DEFAULT_UPLOAD_PHRASE);
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
+  // Prevent re-renders when parent passes a new array reference
   useEffect(() => {
     if (initialUrls && initialUrls.length > 0) {
       setUrls(initialUrls);
     } else {
       setUrls([]);
     }
-  }, [initialUrls]);
+  }, [initialUrls?.join("|")]);
 
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
     // convert the file to base64 image

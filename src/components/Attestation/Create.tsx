@@ -82,6 +82,10 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   const [transactionHash, setTransactionHash] = useState<string | undefined>();
   const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
 
+  const memoInitialUpload = useMemo(() =>
+    imgUri ? [imgUri] : undefined
+  , [imgUri]);
+
   // Query for dog event when we have a transaction hash
   const { data: dogEvent } = api.hotdog.getDogEventByTransactionHash.useQuery(
     { transactionHash: transactionHash! },
@@ -322,7 +326,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
                 if (!uris) return;
                 setImgUri(uris[0]);
               }}
-              initialUrls={imgUri ? [imgUri] : undefined}
+              initialUrls={memoInitialUpload}
               onUploadError={() => {
                 // close the modal
                 (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();

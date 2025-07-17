@@ -91,6 +91,10 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
 
   if (!wallet) return null;
 
+  const memoInitialUrls = useMemo(() =>
+    imgUrl ? [withGateway(imgUrl)] : []
+  , [imgUrl]);
+
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="flex items-center h-24 w-24 rounded-full">
@@ -99,7 +103,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
           label="📷 avatar"
           additionalClasses="rounded-full"
           imageClassName="rounded-full"
-          initialUrls={imgUrl ? [withGateway(imgUrl)] : []}
+          initialUrls={memoInitialUrls}
           onUpload={({ uris }) => {
             setImgUrl(uris[0]!);
           }}
