@@ -45,14 +45,8 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
     void refetchDogData();
   }, [account, refetchDogData]);
 
-  // Handle pagination loading state
-  useEffect(() => {
-    if (isLoadingHotdogs && start > 0) {
-      setIsPaginating(true);
-    } else {
-      setIsPaginating(false);
-    }
-  }, [isLoadingHotdogs, start]);
+  // Derive pagination loading state instead of using useEffect
+  const isPaginatingDerived = isLoadingHotdogs && start > 0;
 
   // Mobile-safe scroll function
   const scrollToTop = () => {
@@ -78,9 +72,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
 
   // Handle pagination with loading state
   const handlePagination = (direction: 'prev' | 'next') => {
-    if (isPaginating) return; // Prevent rapid pagination clicks
-    
-    setIsPaginating(true);
+    if (isPaginatingDerived) return; // Prevent pagination during loading
     
     if (direction === 'prev') {
       setStart((prev) => Math.max(0, prev - limitOrDefault));
@@ -103,7 +95,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   return (
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4 relative">
       {/* Show pagination loading overlay */}
-      {isPaginating && (
+      {isPaginatingDerived && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-base-100 p-4 rounded-lg shadow-xl">
             <div className="flex items-center gap-3">

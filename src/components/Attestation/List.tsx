@@ -81,7 +81,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
-  const [isPaginating, setIsPaginating] = useState(false);
+
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -135,14 +135,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     };
   }, [clearExpiredPending, pendingDogs.length]);
 
-  // Handle pagination loading state
-  useEffect(() => {
-    if (isLoadingHotdogs && start > 0) {
-      setIsPaginating(true);
-    } else {
-      setIsPaginating(false);
-    }
-  }, [isLoadingHotdogs, start]);
+  // Derive pagination loading state instead of using useEffect
+  const isPaginatingDerived = isLoadingHotdogs && start > 0;
 
   // Smart deduplication: only filter out optimistic data when real data with same logId exists
   const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);
@@ -185,9 +179,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
   // Handle pagination with loading state
   const handlePagination = (direction: 'prev' | 'next') => {
-    if (isPaginating) return; // Prevent rapid pagination clicks
-    
-    setIsPaginating(true);
+    if (isPaginatingDerived) return; // Prevent pagination during loading
     
     if (direction === 'prev') {
       setStart((prev) => Math.max(0, prev - limitOrDefault));
@@ -208,7 +200,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   }, []);
 
   // Show loading state while client-side query is fetching
-  if (isLoadingHotdogs && !isPaginating) {
+  if (isLoadingHotdogs && !isPaginatingDerived) {
     return (
       <>
         <div id="top-of-list" className="invisible" />
@@ -306,7 +298,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     <div id="top-of-list" className="invisible" />
     <div className="flex flex-col gap-4">
       {/* Show pagination loading overlay */}
-      {isPaginating && (
+      {isPaginatingDerived && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-base-100 p-4 rounded-lg shadow-xl">
             <div className="flex items-center gap-3">
@@ -341,9 +333,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         <button
           className="join-item btn"
           onClick={() => handlePagination('prev')}
-          disabled={start === 0 || isPaginating}
-        >
-          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "«"}
+                      disabled={start === 0 || isPaginatingDerived}
+          >
+            {isPaginatingDerived ? <span className="loading loading-spinner loading-xs"></span> : "«"}
         </button>
         <button className="join-item btn" disabled>
           Page {(Math.floor(start / limitOrDefault) + 1)} of {dogData?.totalPages.toString() ?? '...'}
@@ -351,9 +343,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         <button
           className="join-item btn"
           onClick={() => handlePagination('next')}
-          disabled={!dogData?.hasNextPage || isPaginating}
-        >
-          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "»"}
+                      disabled={!dogData?.hasNextPage || isPaginatingDerived}
+          >
+            {isPaginatingDerived ? <span className="loading loading-spinner loading-xs"></span> : "»"}
         </button>
       </div>
     </div>

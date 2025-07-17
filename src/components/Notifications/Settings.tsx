@@ -15,7 +15,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
   const utils = api.useUtils();
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+
   
   const userAddress = sessionData?.user?.address;
   const isSessionLoading = sessionStatus === "loading";
@@ -72,14 +72,8 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
     return farcaster?.context?.client?.added ?? false;
   }, [farcaster?.context?.client?.added]);
 
-  // Update step based on mini app status
-  useEffect(() => {
-    if (hasAddedMiniApp) {
-      setCurrentStep(2);
-    } else {
-      setCurrentStep(1);
-    }
-  }, [hasAddedMiniApp]);
+  // Derive current step from mini app status instead of using useEffect
+  const effectiveCurrentStep = hasAddedMiniApp ? 2 : 1;
 
   const handleToggle = useCallback(async (checked: boolean) => {
     if (!userAddress || isSessionLoading) {
@@ -107,8 +101,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   const handleAddMiniApp = useCallback(async () => {
     try {
       await sdk.actions.addFrame();
-      // Move to step 2 after successfully adding the mini app
-      setCurrentStep(2);
+      // Step will automatically update when hasAddedMiniApp changes
     } catch (error) {
       toast.error(`Failed to add mini app: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -123,10 +116,9 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
   }, [toggleNotifications]);
 
   const handleShowModal = useCallback(() => {
-    // Set the correct step when opening the modal
-    setCurrentStep(hasAddedMiniApp ? 2 : 1);
+    // Step is automatically derived from hasAddedMiniApp
     (document.getElementById('add_mini_app_modal') as HTMLDialogElement)?.showModal();
-  }, [hasAddedMiniApp]);
+  }, []);
 
   if (!isMiniApp || !userAddress) return null;
 
@@ -154,16 +146,16 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
             
             {/* Stepper */}
             <ul className="steps steps-horizontal w-full mb-6">
-              <li className={`step ${currentStep >= 1 ? 'step-primary' : ''}`}>
-                Add Mini App
-              </li>
-              <li className={`step ${currentStep >= 2 ? 'step-primary' : ''}`}>
-                Enable Notifications
-              </li>
+                      <li className={`step ${effectiveCurrentStep >= 1 ? 'step-primary' : ''}`}>
+          Add Mini App
+        </li>
+        <li className={`step ${effectiveCurrentStep >= 2 ? 'step-primary' : ''}`}>
+          Enable Notifications
+        </li>
             </ul>
 
             {/* Step 1: Add Mini App */}
-            {currentStep === 1 && (
+            {effectiveCurrentStep === 1 && (
               <div className="space-y-4">
                 <p className="text-base-content/80">
                   First, add the Log a Dog Mini App to your Farcaster client to enable notifications.
@@ -187,7 +179,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
             )}
 
             {/* Step 2: Enable Notifications */}
-            {currentStep === 2 && (
+            {effectiveCurrentStep === 2 && (
               <div className="space-y-4">
                 <p className="text-base-content/80">
                   Great! Now enable notifications to get notified when new dogs are logged.

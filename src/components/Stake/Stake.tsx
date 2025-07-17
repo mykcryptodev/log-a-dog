@@ -69,9 +69,27 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
     { staleTime: 30_000 }
   );
 
+  // Derive amounts from percentages instead of using useEffect
+  const calculatedAmount = useMemo(() => {
+    if (!balance?.displayValue || percentage === 0) return amount;
+    const newAmount = Number(balance.displayValue) * (percentage / 100);
+    return newAmount.toString();
+  }, [percentage, balance?.displayValue, amount]);
+
+  const calculatedUnstakeAmount = useMemo(() => {
+    if (!stakedAmount || unstakePercentage === 0) return unstakeAmount;
+    const stakedDisplayValue = Number(formatEther(stakedAmount));
+    const newUnstakeAmount = stakedDisplayValue * (unstakePercentage / 100);
+    return newUnstakeAmount.toString();
+  }, [unstakePercentage, stakedAmount, unstakeAmount]);
+
+  // Use calculated amounts when percentage is set, otherwise use manual amounts
+  const effectiveAmount = percentage > 0 ? calculatedAmount : amount;
+  const effectiveUnstakeAmount = unstakePercentage > 0 ? calculatedUnstakeAmount : unstakeAmount;
+
   useEffect(() => {
     const checkAllowance = async () => {
-      if (!wallet || !amount) return;
+      if (!wallet || !effectiveAmount) return;
 
       const tokenContract = getContract({
         address: HOTDOG_TOKEN[activeChain.id]!,
@@ -85,64 +103,51 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
         spender: STAKING[activeChain.id]!,
       });
 
-      setHasApproval(allowanceAmt >= parseEther(amount));
+      setHasApproval(allowanceAmt >= parseEther(effectiveAmount));
     };
 
     void checkAllowance();
-  }, [wallet, amount, activeChain]);
-
-  useEffect(() => {
-    if (!balance?.displayValue) return;
-    const newAmount = Number(balance.displayValue) * (percentage / 100);
-    setAmount(newAmount.toString());
-  }, [percentage, balance]);
-
-  useEffect(() => {
-    if (!stakedAmount) return;
-    const stakedDisplayValue = Number(formatEther(stakedAmount));
-    const newUnstakeAmount = stakedDisplayValue * (unstakePercentage / 100);
-    setUnstakeAmount(newUnstakeAmount.toString());
-  }, [unstakePercentage, stakedAmount]);
+  }, [wallet, effectiveAmount, activeChain]);
 
   const balanceIsInsufficient = useMemo(() => {
     return BigInt(balance?.value ?? 0) < BigInt(MINIMUM_STAKE);
   }, [balance]);
 
   const amountExceedsBalance = useMemo(() => {
-    if (!amount || !balance?.value) return false;
+    if (!effectiveAmount || !balance?.value) return false;
     try {
-      const amountInWei = parseEther(amount);
+      const amountInWei = parseEther(effectiveAmount);
       return amountInWei > BigInt(balance.value);
     } catch {
       // If parsing fails, fall back to displayValue comparison
       const bal = Number(balance?.displayValue ?? 0);
-      return Number(amount) > bal;
+      return Number(effectiveAmount) > bal;
     }
-  }, [amount, balance]);
+  }, [effectiveAmount, balance]);
 
   const amountBelowMinimum = useMemo(() => {
-    if (!amount) return false;
+    if (!effectiveAmount) return false;
     try {
-      const amountInWei = parseEther(amount);
+      const amountInWei = parseEther(effectiveAmount);
       return amountInWei < BigInt(MINIMUM_STAKE);
     } catch {
-      return Number(amount) < 100; // Fallback to 100 tokens
+      return Number(effectiveAmount) < 100; // Fallback to 100 tokens
     }
-  }, [amount]);
+  }, [effectiveAmount]);
 
   const unstakeAmountExceedsStaked = useMemo(() => {
-    if (!unstakeAmount || !stakedAmount) return false;
+    if (!effectiveUnstakeAmount || !stakedAmount) return false;
     try {
-      const unstakeAmountInWei = parseEther(unstakeAmount);
+      const unstakeAmountInWei = parseEther(effectiveUnstakeAmount);
       return unstakeAmountInWei > stakedAmount;
     } catch {
       const stakedDisplayValue = Number(formatEther(stakedAmount ?? 0n));
-      return Number(unstakeAmount) > stakedDisplayValue;
+      return Number(effectiveUnstakeAmount) > stakedDisplayValue;
     }
-  }, [unstakeAmount, stakedAmount]);
+  }, [effectiveUnstakeAmount, stakedAmount]);
 
-  const invalidAmount = Number(amount) <= 0;
-  const invalidUnstakeAmount = Number(unstakeAmount) <= 0;
+  const invalidAmount = Number(effectiveAmount) <= 0;
+  const invalidUnstakeAmount = Number(effectiveUnstakeAmount) <= 0;
   const showInsufficientBalance = balanceIsInsufficient && !invalidAmount;
   const hasStakedTokens = stakedAmount !== undefined && Number(formatEther(stakedAmount)) > 0;
 
@@ -192,15 +197,17 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                 <input
                   type="number"
                   className="stat-value w-full max-w-[12ch] bg-transparent text-center text-primary focus:outline-none"
-                  value={amount}
+                  value={effectiveAmount}
                   onChange={(e) => {
                     let value = e.target.value;
                     if (value === "") {
                       setAmount("");
+                      setPercentage(0); // Reset percentage when manually entering
                       return;
                     }
                     value = value.replace(/^0+(?=\d)/, "");
                     setAmount(value);
+                    setPercentage(0); // Reset percentage when manually entering
                   }}
                 />
                 <div className="stat-desc flex items-center justify-between">
@@ -227,7 +234,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                 Amount exceeds balance
               </div>
             )}
-            {amountBelowMinimum && Number(amount) > 0 && (
+                            {amountBelowMinimum && Number(effectiveAmount) > 0 && (
               <div className="text-center text-sm text-warning">
                 Minimum stake is 300,000 $HOTDOG tokens
               </div>
@@ -304,14 +311,14 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                       client,
                       chain: activeChain,
                     }),
-                    amount: parseEther(amount),
+                    amount: parseEther(effectiveAmount),
                   })
                 }
                 onTransactionSent={() => toast.loading("Staking...")}
                 onTransactionConfirmed={() => {
                   toast.dismiss();
                   toast.success("Staked!");
-                  onStake?.(amount);
+                  onStake?.(effectiveAmount);
                 }}
                 onError={(err) => {
                   toast.dismiss();
@@ -346,7 +353,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                       client,
                       chain: activeChain,
                     }),
-                    amount,
+                                          amount: effectiveAmount,
                     spender: STAKING[activeChain.id]!,
                   })
                 }
@@ -397,15 +404,17 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                 <input
                   type="number"
                   className="stat-value w-full max-w-[12ch] bg-transparent text-center text-secondary focus:outline-none"
-                  value={unstakeAmount}
+                  value={effectiveUnstakeAmount}
                   onChange={(e) => {
                     let value = e.target.value;
                     if (value === "") {
                       setUnstakeAmount("");
+                      setUnstakePercentage(0); // Reset percentage when manually entering
                       return;
                     }
                     value = value.replace(/^0+(?=\d)/, "");
                     setUnstakeAmount(value);
+                    setUnstakePercentage(0); // Reset percentage when manually entering
                   }}
                 />
                 <div className="stat-desc">
@@ -485,7 +494,7 @@ export const Stake: FC<Props> = ({ onStake, hideTitle = false }) => {
                     client,
                     chain: activeChain,
                   }),
-                  amount: parseEther(unstakeAmount),
+                  amount: parseEther(effectiveUnstakeAmount),
                 })
               }
               onTransactionSent={() => toast.loading("Unstaking...")}

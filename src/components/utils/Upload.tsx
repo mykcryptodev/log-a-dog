@@ -37,17 +37,12 @@ export const Upload: FC<UploadProps> = ({
   imageClassName,
   label,
 }) => {
-  const [urls, setUrls] = useState<string[]>([]);
+  const [internalUrls, setInternalUrls] = useState<string[]>([]);
   const [dropzoneLabel, setDropzoneLabel] = useState<string>(label ?? DEFAULT_UPLOAD_PHRASE);
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
-  useEffect(() => {
-    if (initialUrls && initialUrls.length > 0) {
-      setUrls(initialUrls);
-    } else {
-      setUrls([]);
-    }
-  }, [initialUrls]);
+  // Derive the effective URLs during render instead of using useEffect
+  const urls = initialUrls && initialUrls.length > 0 ? initialUrls : internalUrls;
 
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
     // convert the file to base64 image
@@ -125,7 +120,7 @@ export const Upload: FC<UploadProps> = ({
   }, []);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    setUrls([]);
+          setInternalUrls([]);
     setDropzoneLabel("🖼️ Preparing upload...");
 
     const resizedFilesPromises = acceptedFiles.map(async (file) => {
@@ -181,7 +176,7 @@ export const Upload: FC<UploadProps> = ({
           client,
         })
       )));
-      setUrls(resolvedUrls);
+      setInternalUrls(resolvedUrls);
       onUpload?.({ resolvedUrls, uris: typeof uris === 'string' ? [uris] : uris });
     } catch (e) {
       toast("Error uploading file", { type: "error" });
