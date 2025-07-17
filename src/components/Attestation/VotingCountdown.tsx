@@ -88,7 +88,7 @@ export const VotingCountdown: FC<Props> = ({
     return "Expired";
   }, [timestamp]);
 
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
+  const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft());
   const [isRewardingModerators, setIsRewardingModerators] = useState(false);
   const componentId = useRef(`countdown-${logId ?? timestamp}-${Math.random()}`);
   
