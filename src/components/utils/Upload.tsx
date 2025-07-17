@@ -1,5 +1,5 @@
 import { upload, resolveScheme } from "thirdweb/storage";
-import { type FC, useCallback, useEffect, useState } from "react";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'react-toastify';
 import Image from "next/image";
@@ -41,13 +41,15 @@ export const Upload: FC<UploadProps> = ({
   const [dropzoneLabel, setDropzoneLabel] = useState<string>(label ?? DEFAULT_UPLOAD_PHRASE);
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
+  const prevInitialUrls = useRef<string>("");
+
   useEffect(() => {
-    if (initialUrls && initialUrls.length > 0) {
-      setUrls(initialUrls);
-    } else {
-      setUrls([]);
+    const joined = initialUrls && initialUrls.length > 0 ? initialUrls.join("|") : "";
+    if (joined !== prevInitialUrls.current) {
+      prevInitialUrls.current = joined;
+      setUrls(initialUrls ?? []);
     }
-  }, [initialUrls ? initialUrls.join("|") : ""]);
+  }, [initialUrls]);
 
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
     // convert the file to base64 image using FileReader
@@ -80,7 +82,6 @@ export const Upload: FC<UploadProps> = ({
   
     const maxSize = 0.5 * 1024 * 1024; // .5MB in bytes
     const isHeic = file.type === 'image/heic' || file.type === 'image/heif';
-    console.log({ isHeic, file });
   
     let imageFile = file;
   
@@ -95,7 +96,6 @@ export const Upload: FC<UploadProps> = ({
     const img = document.createElement('img');
     const canvas = document.createElement('canvas');
     const src = URL.createObjectURL(imageFile);
-    console.log({ src });
     img.src = src;
   
     await new Promise((resolve) => {
@@ -106,7 +106,6 @@ export const Upload: FC<UploadProps> = ({
     let resizedFile = imageFile;
   
     do {
-      console.log('resizing at quality: ', quality);
       const ctx = canvas.getContext('2d');
       const width = img.width * quality;
       const height = img.height * quality;
