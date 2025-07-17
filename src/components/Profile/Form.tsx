@@ -1,4 +1,4 @@
-import { useState, type FC, useContext, useMemo } from "react";
+import { useState, type FC, useContext, useMemo, useRef } from "react";
 import { useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
@@ -89,10 +89,18 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
     }
   }
 
-  const memoInitialUrls = useMemo(
-    () => (imgUrl ? [withGateway(imgUrl)] : []),
-    [imgUrl]
-  );
+  const initialUrlsRef = useRef<string[] | undefined>();
+  const memoInitialUrls = useMemo(() => {
+    if (!imgUrl) {
+      initialUrlsRef.current = undefined;
+      return [] as string[];
+    }
+    const withGatewayUrl = withGateway(imgUrl);
+    if (!initialUrlsRef.current || initialUrlsRef.current[0] !== withGatewayUrl) {
+      initialUrlsRef.current = [withGatewayUrl];
+    }
+    return initialUrlsRef.current;
+  }, [imgUrl]);
 
   if (!wallet) return null;
 
