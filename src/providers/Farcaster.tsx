@@ -127,7 +127,7 @@ export const FarcasterProvider = ({
     if (context && sdk.wallet && isSDKLoaded && !hasConnectedWallet) {
       void connectWallet().then(() => setHasConnectedWallet(true));
     }
-  }, [context, isSDKLoaded, connectWallet, hasConnectedWallet]);
+  }, [context, isSDKLoaded, hasConnectedWallet]);
 
   const value = useMemo(
     () => ({
