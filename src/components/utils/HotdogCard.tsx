@@ -1,6 +1,10 @@
-import { type FC } from "react";
+import { type FC, useCallback, useContext } from "react";
 import Link from "next/link";
-import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outline";
+import {
+  CurrencyDollarIcon,
+  FireIcon,
+  TagIcon,
+} from "@heroicons/react/24/outline";
 import { isAddressEqual } from "viem";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { Avatar } from "~/components/Profile/Avatar";
@@ -15,6 +19,10 @@ import ZoraCoinTrading from "~/components/Attestation/ZoraCoinTrading";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import { env } from "~/env";
+import Image from "next/image";
+import { sdk } from "@farcaster/frame-sdk";
+import { api } from "~/utils/api";
+import { FarcasterContext } from "~/providers/Farcaster";
 
 // Types
 type AttestationPeriod = {
@@ -106,16 +114,69 @@ export const HotdogCard: FC<Props> = ({
       hotdog.logger as `0x${string}`,
       MAKER_WALLET,
     );
-    return loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet;
+    return (
+      loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet
+    );
   };
 
-  const isExpired = Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <= Date.now();
+  const { data: eaterProfile } = api.profile.getByAddress.useQuery(
+    {
+      chainId,
+      address: hotdog.eater,
+    },
+    {
+      enabled: !!hotdog.eater && !!chainId,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+    },
+  );
+
+  const displayName =
+    eaterProfile?.username ??
+    `${hotdog.eater.slice(0, 6)}...${hotdog.eater.slice(-4)}`;
+
+  const isExpired =
+    Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <=
+    Date.now();
+
+  const shareUrl = `${env.NEXT_PUBLIC_APP_URL}/dog/${hotdog.logId}`;
+  const shareText = `be like ${displayName}, log your dogs! 🌭`;
+
+  const shareOnX = useCallback(() => {
+    const url =
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}` +
+      `&text=${encodeURIComponent(shareText)}`;
+    window.open(url, "_blank");
+  }, [shareUrl, shareText]);
+
+  const farcaster = useContext(FarcasterContext);
+  const shareOnFarcaster = useCallback(async () => {
+    try {
+      if (farcaster?.isMiniApp) {
+        await sdk.actions.composeCast({
+          text: shareText,
+          embeds: [shareUrl],
+        });
+      } else {
+        const url =
+          `https://farcaster.xyz/~/compose?text=${encodeURIComponent(shareText)}` +
+          `&embeds[]=${encodeURIComponent(shareUrl)}`;
+        window.open(url, "_blank");
+      }
+    } catch (err) {
+      console.error("Failed to compose cast", err);
+    }
+  }, [shareUrl, shareText, farcaster]);
 
   // Handle zoraCoin being either an object or string
-  const zoraCoinData = typeof hotdog.zoraCoin === 'object' ? hotdog.zoraCoin : null;
+  const zoraCoinData =
+    typeof hotdog.zoraCoin === "object" ? hotdog.zoraCoin : null;
 
   const ImageComponent = linkToDetail ? (
-    <Link href={`/dog/${hotdog.logId}`} className="w-full flex items-center justify-center">
+    <Link
+      href={`/dog/${hotdog.logId}`}
+      className="flex w-full items-center justify-center"
+    >
       <HotdogImage
         src={hotdog.imageUri}
         zoraCoin={zoraCoinData}
@@ -135,17 +196,20 @@ export const HotdogCard: FC<Props> = ({
   );
 
   return (
-    <div className="card bg-base-200 bg-opacity-25 backdrop-blur-sm shadow">
-      <div className="card-body p-4 max-w-lg">
+    <div className="card bg-base-200 bg-opacity-25 shadow backdrop-blur-sm">
+      <div className="card-body max-w-lg p-4">
         {/* Header with user info and revoke button */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col items-start">
-            <div className="flex items-center gap-2 w-fit">
+            <div className="flex w-fit items-center gap-2">
               <Avatar address={hotdog.eater} fallbackSize={24} />
               <Name address={hotdog.eater} />
             </div>
             <div className="flex flex-col">
-              {showLoggedVia({ eater: hotdog.eater, logger: hotdog.logger }) && (
+              {showLoggedVia({
+                eater: hotdog.eater,
+                logger: hotdog.logger,
+              }) && (
                 <div className="flex items-center gap-1 text-xs opacity-75">
                   <span>via</span>
                   <Avatar address={hotdog.logger} size="16px" />
@@ -154,25 +218,59 @@ export const HotdogCard: FC<Props> = ({
               )}
             </div>
           </div>
-          <Revoke hotdog={hotdog} onRevocation={onRefetch} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={shareOnX}
+              className="btn btn-circle btn-ghost btn-xs w-fit px-2"
+            >
+              <Image
+                src="/images/x.svg"
+                alt="Share on X"
+                width={16}
+                height={16}
+                className="dark:hidden"
+              />
+              <Image
+                src="/images/x-white.svg"
+                alt="Share on X"
+                width={16}
+                height={16}
+                className="hidden dark:block"
+              />
+            </button>
+            <button
+              onClick={shareOnFarcaster}
+              className="btn btn-circle btn-ghost btn-xs w-fit px-2"
+            >
+              <Image
+                src="/images/farcaster.svg"
+                alt="Share on Farcaster"
+                width={16}
+                height={16}
+              />
+            </button>
+            <Revoke hotdog={hotdog} onRevocation={onRefetch} />
+          </div>
         </div>
 
         {/* Image */}
         {ImageComponent}
 
         {/* Bottom section with attestation info and actions */}
-        <div className="opacity-50 flex flex-row w-full items-center justify-between">
-          <div className="text-xs flex items-center gap-1">
+        <div className="flex w-full flex-row items-center justify-between opacity-50">
+          <div className="flex items-center gap-1 text-xs">
             {hotdog.attestationPeriod ? (
-              <AttestationStatusBadge attestationPeriod={hotdog.attestationPeriod} />
+              <AttestationStatusBadge
+                attestationPeriod={hotdog.attestationPeriod}
+              />
             ) : (
               <>
-                <TagIcon className="w-4 h-4" />
+                <TagIcon className="h-4 w-4" />
                 {hotdog.logId.toString()}
               </>
             )}
           </div>
-          <div className="flex justify-end items-center gap-2 text-xs">
+          <div className="flex items-center justify-end gap-2 text-xs">
             {showAiJudgement && (
               <AiJudgement
                 logId={hotdog.logId.toString()}
@@ -181,16 +279,16 @@ export const HotdogCard: FC<Props> = ({
             )}
             <VotingCountdown
               timestamp={hotdog.timestamp.toString()}
-              logId={hotdog.logId?.toString() ?? ''}
+              logId={hotdog.logId?.toString() ?? ""}
               validAttestations={validAttestations}
               invalidAttestations={invalidAttestations}
               onResolutionComplete={onRefetch}
               attestationPeriod={hotdog.attestationPeriod}
             />
           </div>
-          <div className="flex justify-end items-center gap-1">
+          <div className="flex items-center justify-end gap-1">
             <Comments
-              logId={hotdog.logId?.toString() ?? ''}
+              logId={hotdog.logId?.toString() ?? ""}
               metadataUri={hotdog.metadataUri}
             />
             {!isExpired && (
@@ -211,32 +309,38 @@ export const HotdogCard: FC<Props> = ({
 
         {/* Zora coin trading and market info */}
         {zoraCoinData?.address && (
-          <div className="flex items-center text-xs w-full justify-between opacity-50">
+          <div className="flex w-full items-center justify-between text-xs opacity-50">
             <div className="flex items-center gap-2">
-              <ZoraCoinTrading 
+              <ZoraCoinTrading
                 referrer={hotdog.eater}
                 coinAddress={zoraCoinData.address}
                 logId={hotdog.logId}
                 onTradeComplete={noop}
               />
             </div>
-            {(Boolean(zoraCoinData.marketCap) || Boolean(zoraCoinData.volume24h)) && (
-              <Link 
-                href={zoraCoinData.link ?? `https://zora.co/coin/base:${zoraCoinData.address}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+            {(Boolean(zoraCoinData.marketCap) ||
+              Boolean(zoraCoinData.volume24h)) && (
+              <Link
+                href={
+                  zoraCoinData.link ??
+                  `https://zora.co/coin/base:${zoraCoinData.address}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2"
               >
                 {zoraCoinData.marketCap && (
                   <div className="flex items-center gap-0.5">
-                    <CurrencyDollarIcon className="w-4 h-4" /> 
-                    MCAP ${formatAbbreviatedFiat(Number(zoraCoinData.marketCap))}
+                    <CurrencyDollarIcon className="h-4 w-4" />
+                    MCAP $
+                    {formatAbbreviatedFiat(Number(zoraCoinData.marketCap))}
                   </div>
                 )}
                 {zoraCoinData.volume24h && (
                   <div className="flex items-center gap-0.5">
-                    <FireIcon className="w-4 h-4" /> 
-                    24H VOL ${formatAbbreviatedFiat(Number(zoraCoinData.volume24h))}
+                    <FireIcon className="h-4 w-4" />
+                    24H VOL $
+                    {formatAbbreviatedFiat(Number(zoraCoinData.volume24h))}
                   </div>
                 )}
                 {!zoraCoinData.marketCap && !zoraCoinData.volume24h && (
@@ -249,25 +353,27 @@ export const HotdogCard: FC<Props> = ({
           </div>
         )}
         {/* Show loading indicator if we have an address but no detailed data yet */}
-        {typeof hotdog.zoraCoin === 'string' && hotdog.zoraCoin && !zoraCoinData && (
-          <div className="flex items-center text-xs w-full justify-between opacity-50">
-            <div className="flex items-center gap-2">
-              <ZoraCoinTrading 
-                referrer={hotdog.eater}
-                coinAddress={hotdog.zoraCoin}
-                logId={hotdog.logId}
-                onTradeComplete={noop}
-              />
+        {typeof hotdog.zoraCoin === "string" &&
+          hotdog.zoraCoin &&
+          !zoraCoinData && (
+            <div className="flex w-full items-center justify-between text-xs opacity-50">
+              <div className="flex items-center gap-2">
+                <ZoraCoinTrading
+                  referrer={hotdog.eater}
+                  coinAddress={hotdog.zoraCoin}
+                  logId={hotdog.logId}
+                  onTradeComplete={noop}
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="loading loading-spinner loading-xs"></div>
+                <span>Loading market data...</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="loading loading-spinner loading-xs"></div>
-              <span>Loading market data...</span>
-            </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );
 };
 
-export default HotdogCard; 
+export default HotdogCard;
