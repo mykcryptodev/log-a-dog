@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-import { type FC, useContext, useState, useMemo, useEffect, memo } from 'react';
+import { type FC, useState, useMemo, useEffect, memo } from 'react';
 import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import dynamic from 'next/dynamic';
@@ -75,7 +74,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   }, [imgUri, isLoading, wallet]);
 
   const account = useActiveAccount();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
   const [transactionId, setTransactionId] = useState<string | undefined>();

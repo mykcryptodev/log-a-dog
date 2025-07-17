@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { type FC, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { type FC, useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import { QuestionMarkCircleIcon, XMarkIcon, GiftIcon } from "@heroicons/react/24/outline";
 import { Portal } from "~/components/utils/Portal";
 import { api } from "~/utils/api";
@@ -93,7 +93,7 @@ export const VotingCountdown: FC<Props> = ({
   const componentId = useRef(`countdown-${logId ?? timestamp}-${Math.random()}`);
   
   const { data: session } = useSession();
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
 
   const rewardModeratorsMutation = api.hotdog.rewardModerators.useMutation({
     onSuccess: () => {
@@ -131,7 +131,7 @@ export const VotingCountdown: FC<Props> = ({
   const isResolved = attestationPeriod?.status === 1;
   
   const handleRewardModerators = () => {
-    if (!logId || !session?.user?.address || !activeChain) return;
+    if (!logId || !session?.user?.address) return;
     
     setIsRewardingModerators(true);
     rewardModeratorsMutation.mutate({

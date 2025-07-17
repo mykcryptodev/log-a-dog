@@ -1,6 +1,5 @@
 import {
   memo,
-  useContext,
   type FC,
   useState,
   useRef,
@@ -8,7 +7,7 @@ import {
   useMemo,
 } from "react";
 import { api } from "~/utils/api";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { DEFAULT_CHAIN } from "~/constants";
 import Link from "next/link";
 import { Name } from "./Profile/Name";
 import { Avatar } from "./Profile/Avatar";
@@ -22,7 +21,7 @@ type Props = {
 
 const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
   const limitOrDefault = limit ?? 10;
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);

@@ -1,5 +1,5 @@
-import { useContext, useEffect, type FC, useState, useMemo, useRef } from "react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { useEffect, type FC, useState, useMemo, useRef } from "react";
+import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
@@ -77,7 +77,7 @@ type Props = {
 
 export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
-  const { activeChain } = useContext(ActiveChainContext);
+  const activeChain = DEFAULT_CHAIN;
   const [start, setStart] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
   const [isPaginating, setIsPaginating] = useState(false);
@@ -90,15 +90,18 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     setIsClient(true);
   }, []);
 
-  const queryParams = {
-    chainId: activeChain.id,
-    user: ZERO_ADDRESS, // Always use zero address to get ALL hotdogs for the homepage feed
-    start,
-    limit: limitOrDefault,
-  };
+  const queryParams = useMemo(
+    () => ({
+      chainId: activeChain.id,
+      user: ZERO_ADDRESS, // Always use zero address to get ALL hotdogs for the homepage feed
+      start,
+      limit: limitOrDefault,
+    }),
+    [start, limitOrDefault]
+  );
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
-    enabled: !!activeChain.id && isClient, // Only run query on client side
+    enabled: isClient, // Only run query on client side
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
