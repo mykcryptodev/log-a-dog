@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-import { type FC, useContext, useState, useMemo, useEffect, memo } from 'react';
+import { type FC, useContext, useState, useMemo, useEffect, memo, useRef } from 'react';
 import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
@@ -82,9 +82,18 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   const [transactionHash, setTransactionHash] = useState<string | undefined>();
   const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
 
-  const memoInitialUpload = useMemo(() =>
-    imgUri ? [imgUri] : undefined
-  , [imgUri]);
+  const initialUrlsRef = useRef<string[] | undefined>();
+  const memoInitialUpload = useMemo(() => {
+    if (!imgUri) {
+      initialUrlsRef.current = undefined;
+      return undefined;
+    }
+    // Only create new array if the content has actually changed
+    if (!initialUrlsRef.current || initialUrlsRef.current[0] !== imgUri) {
+      initialUrlsRef.current = [imgUri];
+    }
+    return initialUrlsRef.current;
+  }, [imgUri]);
 
   // Query for dog event when we have a transaction hash
   const { data: dogEvent } = api.hotdog.getDogEventByTransactionHash.useQuery(
