@@ -1,5 +1,5 @@
 import { upload, resolveScheme } from "thirdweb/storage";
-import { type FC, useCallback ,useEffect, useState } from "react";
+import { type FC, useCallback ,useEffect, useState, useRef } from "react";
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'react-toastify';
 import Image from "next/image";
@@ -41,11 +41,17 @@ export const Upload: FC<UploadProps> = ({
   const [dropzoneLabel, setDropzoneLabel] = useState<string>(label ?? DEFAULT_UPLOAD_PHRASE);
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
+  // Prevent re-renders when parent passes a new array reference
+  const prevInitialUrlsRef = useRef<string>();
   useEffect(() => {
-    if (initialUrls && initialUrls.length > 0) {
-      setUrls(initialUrls);
-    } else {
-      setUrls([]);
+    const joined = initialUrls?.join('|');
+    if (prevInitialUrlsRef.current !== joined) {
+      prevInitialUrlsRef.current = joined;
+      if (initialUrls && initialUrls.length > 0) {
+        setUrls(initialUrls);
+      } else {
+        setUrls([]);
+      }
     }
   }, [initialUrls]);
 

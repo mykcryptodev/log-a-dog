@@ -89,6 +89,11 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
     }
   }
 
+  const memoInitialUrls = useMemo(
+    () => (imgUrl ? [withGateway(imgUrl)] : []),
+    [imgUrl]
+  );
+
   if (!wallet) return null;
 
   return (
@@ -99,7 +104,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
           label="📷 avatar"
           additionalClasses="rounded-full"
           imageClassName="rounded-full"
-          initialUrls={imgUrl ? [withGateway(imgUrl)] : []}
+          initialUrls={memoInitialUrls}
           onUpload={({ uris }) => {
             setImgUrl(uris[0]!);
           }}
