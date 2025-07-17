@@ -81,7 +81,10 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const [start, setStart] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
   const [isPaginating, setIsPaginating] = useState(false);
-  const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
+  const clearExpiredPending = usePendingTransactionsStore(state => state.clearExpiredPending);
+  const pendingDogs = usePendingTransactionsStore(state =>
+    state.getPendingDogsForChain(activeChain.id.toString())
+  );
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -104,8 +107,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     refetchOnReconnect: false,
   });
 
-  // Get pending dogs for current chain
-  const pendingDogs = getPendingDogsForChain(activeChain.id.toString());
 
   // Clear expired pending transactions more frequently
   useEffect(() => {
