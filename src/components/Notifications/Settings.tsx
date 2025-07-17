@@ -1,6 +1,6 @@
 import { BellIcon, BellSlashIcon } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
-import { useCallback, useContext, useMemo, useState, useEffect, type FC } from "react";
+import { useCallback, useContext, useMemo, type FC } from "react";
 import { toast } from "react-toastify";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { api } from "~/utils/api";

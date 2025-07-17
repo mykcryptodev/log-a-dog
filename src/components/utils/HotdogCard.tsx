@@ -4,7 +4,7 @@ import { CurrencyDollarIcon, FireIcon, TagIcon } from "@heroicons/react/24/outli
 import { isAddressEqual } from "viem";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { Avatar } from "~/components/Profile/Avatar";
-import Name from "~/components/Profile/Name";
+import { Name } from "~/components/Profile/Name";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
 import Comments from "~/components/Attestation/Comments";

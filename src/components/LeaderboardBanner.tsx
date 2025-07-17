@@ -32,11 +32,21 @@ export const LeaderboardBanner: FC<Props> = ({
     refetchTimestamp,
   });
 
+  const users = leaderboard?.users ?? [];
+  const hotdogs = leaderboard?.hotdogs ?? [];
+
+  const itemWidth = 200; // approximate width per item
+  const totalWidth = users.length * itemWidth;
+  const animationDuration = totalWidth / scrollSpeed;
+
+  // Memoize the style object to prevent re-creation on every render
+  const scrollContainerStyle = useMemo(() => ({
+    "--duration": `${animationDuration}s`,
+    width: `${totalWidth * 2}px`, // Double width for seamless loop
+  } as React.CSSProperties), [animationDuration, totalWidth]);
+
   if (!leaderboard || !profiles)
     return <div className="h-20 w-full rounded-lg bg-base-200" />;
-
-  const users = leaderboard.users ?? [];
-  const hotdogs = leaderboard.hotdogs ?? [];
 
   // On mobile or with reduced motion, show a static banner with top 5
   if (reduceMotion) {
@@ -72,17 +82,6 @@ export const LeaderboardBanner: FC<Props> = ({
       </div>
     );
   }
-
-  // Calculate animation duration based on content width and scroll speed
-  const itemWidth = 200; // approximate width per item
-  const totalWidth = users.length * itemWidth;
-  const animationDuration = totalWidth / scrollSpeed;
-
-  // Memoize the style object to prevent re-creation on every render
-  const scrollContainerStyle = useMemo(() => ({
-    "--duration": `${animationDuration}s`,
-    width: `${totalWidth * 2}px`, // Double width for seamless loop
-  } as React.CSSProperties), [animationDuration, totalWidth]);
 
   return (
     <div className="w-full overflow-hidden bg-base-200 bg-opacity-25 backdrop-blur-sm">
