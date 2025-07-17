@@ -8,6 +8,7 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { env } from "~/env";
 import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 import { type UserProfile, fetchUserProfiles } from "~/server/utils/profile";
+import { z } from "zod";
 
 interface Vote {
   isValid: boolean;
@@ -53,6 +54,19 @@ const QUERY = `query Judges($votesCursor: String, $logsCursor: String) {
       invalidVotes
       validVotes
       status
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}`;
+
+const USER_VOTES_QUERY = `query Votes($voter: String!, $cursor: String) {
+  votes(where: {voter: $voter}, after: $cursor, limit: 100) {
+    items {
+      logId
+      isValid
     }
     pageInfo {
       endCursor
@@ -219,4 +233,52 @@ export const ghostRouter = createTRPCRouter({
       CACHE_DURATION.MEDIUM
     );
   }),
+  getUserVotes: publicProcedure
+    .input(z.object({ voter: z.string() }))
+    .query(async ({ input }) => {
+      const voter = input.voter.toLowerCase();
+      const cacheKey = `ghost:votes:${voter}`;
+
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          let cursor: string | null = null;
+          const votes: Record<string, boolean> = {};
+
+          while (true) {
+            const response = await fetchWithExponentialBackoff(
+              "https://api.ghostlogs.xyz/gg/pub/7a444b24-49f2-4960-8e2b-18eedc34ea4b/ghostgraph",
+              {
+                method: "POST",
+                headers: {
+                  "X-GHOST-KEY": env.GHOST_PROTOCOL_API_KEY,
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                  query: USER_VOTES_QUERY,
+                  variables: { voter, cursor },
+                }),
+              }
+            );
+
+            const json = (await response.json()) as any;
+            const voteData = json.data?.votes;
+
+            if (voteData) {
+              for (const item of voteData.items as { logId: string; isValid: boolean }[]) {
+                votes[item.logId] = item.isValid;
+              }
+              cursor = voteData.pageInfo.hasNextPage ? (voteData.pageInfo.endCursor as string) : null;
+            } else {
+              break;
+            }
+
+            if (!cursor) break;
+          }
+
+          return votes;
+        },
+        CACHE_DURATION.MEDIUM
+      );
+    }),
 });

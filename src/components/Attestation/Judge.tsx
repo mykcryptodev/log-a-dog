@@ -1,12 +1,13 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from "@heroicons/react/24/outline";
 import { HandThumbDownIcon as HandThumDownIconFilled, HandThumbUpIcon as HandThumbUpIconFilled } from "@heroicons/react/24/solid";
-import { useState, type FC } from "react";
+import { useState, type FC, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
 import { InsufficientStake } from "../Stake/InsufficientStake";
 import { Portal } from "../utils/Portal";
 import { TransactionStatus } from "../utils/TransactionStatus";
+import { useGhostVote } from "~/hooks/useGhostVote";
 
 type Props = {
   disabled?: boolean;
@@ -40,6 +41,14 @@ export const JudgeAttestation: FC<Props> = ({
   const [optimisticUserAttestation, setOptimisticUserAttestation] = useState<boolean | undefined>(userAttestation);
   const [isInsufficientStake, setIsInsufficientStake] = useState<boolean>(false);
   const [pendingTransactionId, setPendingTransactionId] = useState<string | null>(null);
+
+  const ghostVote = useGhostVote(logId, sessionData?.user?.address);
+
+  useEffect(() => {
+    if (ghostVote === null) return;
+    setOptimisticUserAttested(true);
+    setOptimisticUserAttestation(ghostVote);
+  }, [ghostVote]);
 
   const judgeMutation = api.hotdog.judge.useMutation({
     onMutate: async ({ isValid }) => {
