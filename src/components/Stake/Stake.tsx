@@ -49,7 +49,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
     if (account?.address) {
       void refetch();
     }
-  }, [account?.address, refetch]);
+  }, [account?.address]);
 
   const { data: stakedAmount, isLoading: isLoadingStaked } = useReadContract({
     contract: getContract({

@@ -42,7 +42,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   useEffect(() => {
     if (!account) return;
     void refetchDogData();
-  }, [account, refetchDogData]);
+  }, [account]);
 
   // Handle pagination loading state
   useEffect(() => {
