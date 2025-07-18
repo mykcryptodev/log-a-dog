@@ -6,6 +6,7 @@ import Link from "next/link";
 import { download } from "thirdweb/storage";
 import { client } from "~/providers/Thirdweb";
 import { type WarpcastResponse } from "~/types/warpcast";
+import { getProxiedUrl } from "~/utils/imageProxy";
 
 type Props = {
   logId: string;
@@ -108,7 +109,7 @@ export const Comments: FC<Props> = ({ logId, metadataUri }) => {
             <div className="flex flex-col">
               <div className="flex items-start gap-2">
                 <Image
-                  src={data?.conversation?.cast?.author.pfp_url ?? ""}
+                  src={getProxiedUrl(data?.conversation?.cast?.author.pfp_url ?? "")}
                   alt="Profile Picture"
                   width={60}
                   height={60}
@@ -124,7 +125,7 @@ export const Comments: FC<Props> = ({ logId, metadataUri }) => {
                 {data?.conversation?.cast?.direct_replies.map((reply, index) => (
                   <div key={index} className="flex items-start gap-2">
                     <Image
-                      src={reply.author.pfp_url ?? ""}
+                      src={getProxiedUrl(reply.author.pfp_url ?? "")}
                       alt="Profile Picture"
                       width={60}
                       height={60}

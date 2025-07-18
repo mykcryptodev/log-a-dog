@@ -3,6 +3,7 @@ import { type ThirdwebClient } from "thirdweb";
 import { MediaRenderer } from "thirdweb/react";
 import heic2any from "heic2any";
 import Image from "next/image";
+import { getProxiedUrl } from "~/utils/imageProxy";
 
 type Props = {
   src: string;
@@ -113,7 +114,7 @@ export const CustomMediaRenderer: FC<Props> = ({
   
   return (
     <MediaRenderer
-      src={imageSrc}
+      src={getProxiedUrl(imageSrc)}
       alt={alt}
       className={className}
       width={width}

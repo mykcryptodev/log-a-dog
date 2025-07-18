@@ -155,11 +155,14 @@ const parseSize = (size: string | undefined, defaultValue: number): number => {
   return isNaN(parsed) ? defaultValue : parsed;
 };
 
+import { getProxiedUrl } from "~/utils/imageProxy";
+
 export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height }) => {
   const coin = typeof zoraCoin === "object" && zoraCoin !== null && "mediaContent" in zoraCoin ? zoraCoin as { mediaContent?: { previewImage?: { medium?: string; blurhash?: string } } } : undefined;
   const preview = coin?.mediaContent?.previewImage?.medium;
   const blurhash = coin?.mediaContent?.previewImage?.blurhash;
   const [blurDataURL, setBlurDataURL] = useState<string>();
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (blurhash) {
@@ -171,7 +174,7 @@ export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height
   if (preview) {
     return (
       <Image
-        src={preview}
+        src={getProxiedUrl(preview)}
         alt="Hotdog image"
         className={className}
         width={parseSize(width, 250)}
@@ -179,13 +182,26 @@ export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height
         placeholder={blurDataURL ? "blur" : undefined}
         blurDataURL={blurDataURL}
         style={{ height, width }}
+        onError={() => setImageError(true)}
       />
+    );
+  }
+
+  // Show fallback if there's an error
+  if (imageError) {
+    return (
+      <div 
+        className={`flex items-center justify-center bg-gray-200 ${className}`}
+        style={{ height, width }}
+      >
+        <span className="text-gray-500 text-sm">Image unavailable</span>
+      </div>
     );
   }
 
   return (
     <MediaRenderer
-      src={src}
+      src={getProxiedUrl(src)}
       client={client}
       className={className}
       width={width}

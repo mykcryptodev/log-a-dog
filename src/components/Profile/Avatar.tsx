@@ -5,6 +5,7 @@ import { api } from "~/utils/api";
 import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 import { ZERO_ADDRESS } from "thirdweb";
 import { DEFAULT_CHAIN } from "~/constants";
+import { getProxiedUrl } from "~/utils/imageProxy";
 
 const AvatarComponent: FC<{ address: string; fallbackSize?: number; size?: string }> = ({ address, fallbackSize, size }) => {
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
@@ -53,7 +54,7 @@ const AvatarComponent: FC<{ address: string; fallbackSize?: number; size?: strin
   return (
     <MediaRenderer
       client={client}
-      src={profile.imgUrl}
+      src={getProxiedUrl(profile.imgUrl)}
       className="rounded-full"
       style={{ width: dimension, height: dimension, objectFit: "cover" }}
     />

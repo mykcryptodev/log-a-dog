@@ -2,6 +2,7 @@ import { type NextPage } from "next";
 import Head from "next/head";
 import { api } from "~/utils/api";
 import Image from "next/image";
+import { getProxiedUrl } from "~/utils/imageProxy";
 
 const JudgesPage: NextPage = () => {
   const { data: judges = [], isLoading } = api.ghost.getJudges.useQuery();
@@ -44,7 +45,7 @@ const JudgesPage: NextPage = () => {
                               <div className="mask mask-squircle w-12 h-12">
                                 {j.profile.imgUrl ? (
                                   <Image
-                                    src={j.profile.imgUrl}
+                                    src={getProxiedUrl(j.profile.imgUrl)}
                                     alt={j.profile.username ?? 'Judge'}
                                     width={48}
                                     height={48}
