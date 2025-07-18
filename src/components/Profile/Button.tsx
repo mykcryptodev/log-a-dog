@@ -1,4 +1,4 @@
-import { type FC, useState, useMemo } from "react";
+import { type FC, useState, useMemo, useCallback } from "react";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { api } from "~/utils/api";
 import { ProfileForm } from "~/components/Profile/Form";
@@ -36,11 +36,16 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   const { disconnect } = useDisconnect();
   const [createdProfileImgUrl, setCreatedProfileImgUrl] = useState<string>();
 
+  // Memoize the address to prevent unnecessary query reruns
+  const queryAddress = useMemo(() => {
+    return account?.address ?? sessionData?.user?.address ?? null;
+  }, [account?.address, sessionData?.user?.address]);
+
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
     chainId: DEFAULT_CHAIN.id,
-    address: account?.address ?? sessionData?.user?.address ?? "",
+    address: queryAddress ?? "", // Use empty string only when queryAddress is null
   }, {
-    enabled: !!account?.address || !!sessionData?.user?.address,
+    enabled: !!queryAddress, // Only enable when we have a valid address
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
@@ -56,12 +61,27 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     return true;
   }, [createdProfileImgUrl, imageUrl]);
 
-  const logout = async () => {
+  // Memoize the img function to prevent unnecessary re-renders
+  const imgSrc = useMemo(() => {
+    if (createdProfileImgUrl && createdProfileImgUrl !== '') return createdProfileImgUrl;
+    if (imageUrl && imageUrl !== '') return imageUrl;
+    return '/images/logo.png';
+  }, [createdProfileImgUrl, imageUrl]);
+
+  const logout = useCallback(async () => {
     if (wallet) {
       void disconnect(wallet);
     }
     await signOut({ redirect: false });
-  }
+  }, [wallet, disconnect]);
+
+  // Memoize the profile saved callback to prevent unnecessary re-renders
+  const handleProfileSaved = useCallback((profile: { username: string; imgUrl: string; metadata?: string }) => {
+    void refetch();
+    console.log("refetching profile", profile);
+    onProfileCreated?.(profile);
+    setCreatedProfileImgUrl(profile.imgUrl);
+  }, [refetch, onProfileCreated]);
 
   if (!account && !sessionData?.user?.id) return (
     <div className="mr-4 flex items-center gap-2">
@@ -71,6 +91,19 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
       </div>
     </div>
   )
+
+  // Handle case where user has session but no wallet connected
+  // This prevents infinite refresh loops
+  if (!account && sessionData?.user?.id) {
+    return (
+      <div className="mr-4 flex items-center gap-2">
+        <Connect loginBtnLabel="Reconnect" />
+        <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={logout}>
+          <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+        </button>
+      </div>
+    )
+  }
 
   if (account && wallet?.id !== 'inApp' && !sessionData?.user?.id) {
     return (
@@ -88,7 +121,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
         <button className="btn" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
           {createProfileBtnLabel ?? 'Profile'}
         </button>
-        <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={() => void logout()}>
+        <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={logout}>
           <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
         </button>
       </div>
@@ -103,23 +136,12 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           </button>
           <h3 className="font-bold text-2xl mb-4">Create Profile</h3>
           <ProfileForm
-            onProfileSaved={(profile) => {
-              void refetch();
-              console.log("refetching profile", profile);
-              onProfileCreated?.(profile);
-              setCreatedProfileImgUrl(profile.imgUrl);
-            }}
+            onProfileSaved={handleProfileSaved}
           />
         </div>
       </dialog>
     </>
   );
-
-  const img = () => {
-    if (createdProfileImgUrl && createdProfileImgUrl !== '') return createdProfileImgUrl;
-    if (imageUrl && imageUrl !== '') return imageUrl;
-    return '/images/logo.png';
-  }
 
   return (
     <div className="mr-4">
@@ -137,7 +159,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
                 {hasNoAvatar && <span className="indicator-item badge badge-accent"></span>}
                 <div className="flex flex-col gap-1 items-center">
                   <CustomMediaRenderer
-                    src={img()}
+                    src={imgSrc}
                     alt="Profile Pic"
                     width={"24px"}
                     height={"24px"}
@@ -162,11 +184,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
         </div>
         <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li>
-            <Link href={`/profile/address/${data?.address ?? sessionData?.user?.address ?? ''}`}>
+            <Link href={`/profile/address/${queryAddress ?? ''}`}>
               Profile {hasNoAvatar && <div className="badge badge-accent">add avatar</div>}
             </Link>
           </li>
-          <li><button onClick={() => void logout()}>Logout</button></li>
+          <li><button onClick={logout}>Logout</button></li>
         </ul>
       </div>
     </div>

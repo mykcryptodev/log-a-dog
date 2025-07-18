@@ -25,6 +25,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   const [start, setStart] = useState<number>(0);
   const [isPaginating, setIsPaginating] = useState(false);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastAccountRef = useRef<string | undefined>(undefined);
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAllForUser.useQuery({
     chainId: DEFAULT_CHAIN.id,
@@ -39,9 +40,12 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   console.log({ dogData })
 
   useEffect(() => {
-    if (!account) return;
-    void refetchDogData();
-  }, [account, refetchDogData]);
+    // Only refetch if account actually changed and we haven't already refetched for this account
+    if (account?.address && account.address !== lastAccountRef.current) {
+      lastAccountRef.current = account.address;
+      void refetchDogData();
+    }
+  }, [account?.address, refetchDogData]);
 
   // Handle pagination loading state
   useEffect(() => {
