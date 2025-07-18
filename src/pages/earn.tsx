@@ -18,6 +18,7 @@ import { Buy } from "~/components/utils/Buy";
 import { HOTDOG_TOKEN, DEFAULT_CHAIN } from "~/constants";
 import { AirdropChannel } from "~/components/Airdrop/Channel";
 import Link from "next/link";
+import RelevantHolders from "~/components/RelevantHolders";
 
 const EarnPage: NextPage = () => {
   const [mode, setMode] = useState<"eat" | "judge">("judge");
@@ -44,6 +45,23 @@ const EarnPage: NextPage = () => {
           </p>
           <p className="mb-2 mt-4 text-base-content/70">Need some $HOTDOG?</p>
           <Buy />
+          <div className="mt-4">
+            <RelevantHolders />
+          </div>
+          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-base-content/50">
+            <span>{hotdogAddress}</span>
+            <button
+              aria-label="Copy contract address"
+              onClick={handleCopy}
+              className="btn btn-ghost btn-xs px-1"
+            >
+              {copied ? (
+                <CheckIcon className="h-4 w-4 text-success" />
+              ) : (
+                <ClipboardIcon className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="grid w-full max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">

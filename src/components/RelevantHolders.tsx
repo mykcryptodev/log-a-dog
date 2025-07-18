@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { type FC } from "react";
-import { Avatar } from "~/components/Profile/Avatar";
-import { Name } from "~/components/Profile/Name";
+import Image from "next/image";
 import { HOTDOG_TOKEN, DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
 
@@ -34,25 +33,35 @@ const RelevantHolders: FC = () => {
 
   if (holders.length === 0) return null;
 
+  const maxAvatars = 6;
+  const visibleHolders = holders.slice(0, maxAvatars);
+  const remainingCount = holders.length - maxAvatars;
+
   return (
     <div className="w-full max-w-md">
-      <h2 className="mb-2 text-center text-2xl font-bold">
-        Friends holding $HOTDOG
-      </h2>
-      <div className="space-y-2">
-        {holders.map((holder) => (
+      <div className="avatar-group -space-x-6 rtl:space-x-reverse justify-center">
+        {visibleHolders.map((holder) => (
           <Link
             key={holder.fid}
             href={`/profile/address/${holder.custody_address}`}
-            className="flex items-center gap-3 rounded-lg bg-base-200 bg-opacity-50 p-3 transition-colors hover:bg-base-300"
+            className="avatar hover:z-10 transition-transform hover:scale-110"
           >
-            <Avatar size="32px" address={holder.custody_address} />
-            <div className="font-medium">
-              <Name address={holder.custody_address} noLink />
+            <div className="w-10">
+              <Image src={holder.pfp_url} alt={holder.username} width={48} height={48} />
             </div>
           </Link>
         ))}
+        {remainingCount > 0 && (
+          <div className="avatar placeholder">
+            <div className="bg-neutral text-neutral-content w-10">
+              <span className="text-xs">+{remainingCount}</span>
+            </div>
+          </div>
+        )}
       </div>
+      <h2 className="mt-2 text-center text-xs opacity-75">
+        your friends have $HOTDOG!
+      </h2>
     </div>
   );
 };

@@ -57,7 +57,7 @@ export const warpcastRouter = createTRPCRouter({
       const { contractAddress, network, viewerFid } = input;
       const params = new URLSearchParams({
         contract_address: contractAddress,
-        networks: network,
+        network: network,
         viewer_fid: viewerFid.toString(),
       });
       const url = `https://api.neynar.com/v2/farcaster/fungible/owner/relevant?${params.toString()}`;
@@ -66,7 +66,7 @@ export const warpcastRouter = createTRPCRouter({
         method: "GET",
         headers: {
           accept: "application/json",
-          api_key: env.NEYNAR_API_KEY,
+          'x-api-key': env.NEYNAR_API_KEY,
         },
       });
 
