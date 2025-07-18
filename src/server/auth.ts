@@ -69,7 +69,7 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUser = await db.user.findFirst({
             where: { 
-              address: (token.address as string).toLowerCase()
+              address: token.address.toLowerCase()
             },
             select: { fid: true }
           });
@@ -88,9 +88,9 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.address = token.address as string;
-        session.user.fid = token.fid as number;
+        session.user.id = token.id!;
+        session.user.address = token.address!;
+        session.user.fid = token.fid!;
       }
       return session;
     },

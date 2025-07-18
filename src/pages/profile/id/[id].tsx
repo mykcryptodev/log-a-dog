@@ -1,6 +1,6 @@
 import { type NextPage } from "next";
 import { type GetServerSideProps } from "next";
-import { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ProfileForm } from "~/components/Profile/Form";
 import { api } from "~/utils/api";
 import dynamic from "next/dynamic";

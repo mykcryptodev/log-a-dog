@@ -1,4 +1,4 @@
-import { type FC, useState, useEffect, useCallback } from "react";
+import { type FC, useState, useEffect, useCallback, useRef } from "react";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { createWallet, inAppWallet, type Wallet, walletConnect } from "thirdweb/wallets";
@@ -16,6 +16,14 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
   const account = useActiveAccount();
+  const sessionDataRef = useRef<typeof sessionData>(null);
+  const statusRef = useRef<typeof status>('loading');
+
+  // Update refs when session data changes
+  useEffect(() => {
+    sessionDataRef.current = sessionData;
+    statusRef.current = status;
+  }, [sessionData, status]);
 
   useEffect(() => {
     setMounted(true);
@@ -62,9 +70,9 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   }, [message]);
 
   const silentlySignIn = useCallback(async (wallet: Wallet) => {
-    console.log('silentlySignIn', wallet, sessionData?.user?.id);
-    // Check session state inside the function rather than in dependencies
-    if (sessionData?.user?.id || status === 'loading') {
+    console.log('silentlySignIn', wallet, sessionDataRef.current?.user?.id);
+    // Check session state using refs to avoid dependency issues
+    if ((sessionDataRef.current?.user?.id ?? false) || statusRef.current === 'loading') {
       console.log('signed in or is signing in...')
       return;
     }
@@ -88,7 +96,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
     } catch (error) {
       console.error("Error signing in with wallet:", error);
     }
-  }, [createPayload, message]); // Remove sessionData and status from dependencies
+  }, [createPayload, message]); // Stable dependencies only
 
   // Prevent hydration mismatch by not rendering ConnectButton until mounted
   if (!mounted) {
