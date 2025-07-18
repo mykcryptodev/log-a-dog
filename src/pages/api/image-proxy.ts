@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Set appropriate headers
-    res.setHeader('Content-Type', contentType || 'image/jpeg');
+    res.setHeader('Content-Type', contentType ?? 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800'); // Cache for 1 day, serve stale for 1 week
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
