@@ -1,8 +1,7 @@
 import { type NextPage } from "next";
 import { type GetServerSideProps } from "next";
-import { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ProfileForm } from "~/components/Profile/Form";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import dynamic from "next/dynamic";
 import { client } from "~/providers/Thirdweb";
@@ -10,6 +9,7 @@ import { CreateAttestation } from "~/components/Attestation/Create";
 import { useActiveAccount } from "thirdweb/react";
 import { UserListAttestations } from "~/components/Attestation/UserList";
 import { useSession } from "next-auth/react";
+import { DEFAULT_CHAIN } from "~/constants";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -27,10 +27,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const acccount = useActiveAccount();
   const { data: sessionData } = useSession();
-  const { activeChain } = useContext(ActiveChainContext);
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
     address,
-    chainId: activeChain.id,
+    chainId: DEFAULT_CHAIN.id,
   }, {
     enabled: !!address,
     refetchOnWindowFocus: false,

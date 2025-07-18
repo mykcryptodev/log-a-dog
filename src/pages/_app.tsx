@@ -12,9 +12,6 @@ const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
-  // ThirdwebProvider can be configured with a chain when needed. For now we
-  // always use the default chain and no longer track it via context.
-  
   return (
     <SessionProvider session={session}>
       <ThirdwebProviderWithActiveChain>

@@ -1,12 +1,12 @@
 import { useState, type FC, useContext, useMemo } from "react";
 import { useActiveWallet } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { containsProfanity } from "~/utils/profanity";
+import { DEFAULT_CHAIN } from "~/constants";
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -21,7 +21,6 @@ type Props = {
 }
 
 export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, existingImgUrl }) => {
-  const { activeChain } = useContext(ActiveChainContext);
   const { data: sessionData } = useSession();
   const wallet = useActiveWallet();
   
@@ -74,7 +73,7 @@ export const ProfileForm: FC<Props> = ({ onProfileSaved, existingUsername, exist
     setIsLoading(true);
     try {
       createProfile.mutate({
-        chainId: activeChain.id,
+        chainId: DEFAULT_CHAIN.id,
         address: wallet.getAccount()!.address,
         username,
         imgUrl,

@@ -1,15 +1,14 @@
 import { type FC, useContext, memo } from "react";
 import { MediaRenderer } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { client } from "~/providers/Thirdweb";
 import { api } from "~/utils/api";
 import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
-import { ADDRESS_ZERO } from "thirdweb";
+import { ZERO_ADDRESS } from "thirdweb";
+import { DEFAULT_CHAIN } from "~/constants";
 
 const AvatarComponent: FC<{ address: string; fallbackSize?: number; size?: string }> = ({ address, fallbackSize, size }) => {
-  const { activeChain } = useContext(ActiveChainContext);
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
-    chainId: activeChain.id,
+    chainId: DEFAULT_CHAIN.id,
     address,
     }, {
     enabled: !!address,
@@ -45,7 +44,7 @@ const AvatarComponent: FC<{ address: string; fallbackSize?: number; size?: strin
         <Jazzicon
           diameter={fallbackSize ?? 16}
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-          seed={jsNumberForAddress(ADDRESS_ZERO)}
+          seed={jsNumberForAddress(ZERO_ADDRESS)}
         />
       </div>
     )

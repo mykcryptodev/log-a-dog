@@ -1,9 +1,9 @@
-import { useContext, useEffect, type FC, useState, useMemo, useRef } from "react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { useEffect, type FC, useState, useMemo, useRef } from "react";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 import HotdogCard from "~/components/utils/HotdogCard";
+import { DEFAULT_CHAIN } from "~/constants";
 
 // Types from hotdog router
 type AttestationPeriod = {
@@ -76,8 +76,9 @@ type Props = {
 };
 
 export const ListAttestations: FC<Props> = ({ limit }) => {
+  console.log("📋 ListAttestations render", { limit });
+  
   const limitOrDefault = limit ?? 4;
-  const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
   const [isClient, setIsClient] = useState(false);
   const [isPaginating, setIsPaginating] = useState(false);
@@ -85,30 +86,49 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  console.log("📋 ListAttestations state:", { 
+    limitOrDefault, 
+    start, 
+    isClient, 
+    isPaginating 
+  });
+
   // Fix hydration mismatch by only rendering dynamic content on client
   useEffect(() => {
+    console.log("📋 ListAttestations useEffect - setting isClient to true");
     setIsClient(true);
   }, []);
 
   const queryParams = {
-    chainId: activeChain.id,
+    chainId: DEFAULT_CHAIN.id,
     user: ZERO_ADDRESS, // Always use zero address to get ALL hotdogs for the homepage feed
     start,
     limit: limitOrDefault,
   };
 
+  console.log("📋 ListAttestations queryParams:", queryParams);
+
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
-    enabled: !!activeChain.id && isClient, // Only run query on client side
+    enabled: !!DEFAULT_CHAIN.id && isClient, // Only run query on client side
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
+    onSuccess: (data) => {
+      console.log("📋 ListAttestations query success", data);
+    },
+    onError: (error) => {
+      console.log("📋 ListAttestations query error", error);
+    },
   });
 
   // Get pending dogs for current chain
-  const pendingDogs = getPendingDogsForChain(activeChain.id.toString());
+  const pendingDogs = getPendingDogsForChain(DEFAULT_CHAIN.id.toString());
+  
+  console.log("📋 ListAttestations pendingDogs:", pendingDogs);
 
   // Clear expired pending transactions more frequently
   useEffect(() => {
+    console.log("📋 ListAttestations useEffect - clearing expired pending", { pendingDogsLength: pendingDogs.length });
     // Clear immediately on mount
     clearExpiredPending();
     
@@ -121,6 +141,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       
       // Set up interval to clear expired pending dogs every 30 seconds
       intervalRef.current = setInterval(() => {
+        console.log("📋 ListAttestations interval - clearing expired pending");
         clearExpiredPending();
       }, 30000); // 30 seconds
     }
@@ -128,6 +149,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     // Cleanup function
     return () => {
       if (intervalRef.current) {
+        console.log("📋 ListAttestations cleanup - clearing interval");
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
@@ -136,6 +158,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
   // Handle pagination loading state
   useEffect(() => {
+    console.log("📋 ListAttestations useEffect - pagination state", { isLoadingHotdogs, start });
     if (isLoadingHotdogs && start > 0) {
       setIsPaginating(true);
     } else {
@@ -328,7 +351,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
             invalidAttestations={attestationData.invalidAttestations}
             userAttested={attestationData.userAttested}
             userAttestation={attestationData.userAttestation}
-            chainId={activeChain.id}
+            chainId={DEFAULT_CHAIN.id}
             onRefetch={() => void refetchDogData()}
             linkToDetail={true}
             showAiJudgement={false}
