@@ -34,8 +34,6 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
-  console.log("🏠 Homepage render");
-  
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
 
@@ -43,14 +41,14 @@ export default function Home() {
     console.log("🏠 Homepage useEffect - mounting");
     setMounted(true);
     setUserPrefersDarkMode(
-      window.matchMedia('(prefers-color-scheme: dark)').matches
+      window.matchMedia("(prefers-color-scheme: dark)").matches,
     );
   }, []);
 
   const bannerSrc =
     mounted && userPrefersDarkMode
-      ? '/images/banner-dark.png'
-      : '/images/banner.png';
+      ? "/images/banner-dark.png"
+      : "/images/banner.png";
 
   console.log("🏠 Homepage state:", { mounted, userPrefersDarkMode, bannerSrc });
 
@@ -58,14 +56,17 @@ export default function Home() {
     <>
       <Head>
         <title>Log a Dog</title>
-        <meta name="description" content="Track how many hotdogs you eat and compete against your friends!" />
+        <meta
+          name="description"
+          content="Track how many hotdogs you eat and compete against your friends!"
+        />
         <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
         <LeaderboardBanner />
-        <div className="container flex flex-col items-center justify-center gap-4 px-4 pt-8 pb-8">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] flex items-center">
+        <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
+          <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             <Image
               src={bannerSrc}
               alt="Log a Dog"
@@ -74,17 +75,21 @@ export default function Home() {
               priority
             />
           </h1>
-          <div className="flex items-center gap-2 -mt-8">
-            <p className="sm:text-lg text-sm text-center max-w-xs">{APP_DESCRIPTION}</p>
-            <Link href="/faq" className="text-xs underline">wtf?</Link>
+          <div className="-mt-8 flex items-center gap-2">
+            <p className="max-w-xs text-center text-sm sm:text-lg">
+              {APP_DESCRIPTION}
+            </p>
+            <Link href="/faq" className="text-xs underline">
+              wtf?
+            </Link>
           </div>
           <CreateAttestation />
           <div className="w-full max-w-md">
-            <h2 className="text-2xl font-bold text-center">Leaderboard</h2>
+            <h2 className="text-center text-2xl font-bold">Leaderboard</h2>
             <LeaderboardList limit={10} />
           </div>
           <div className="w-full max-w-md">
-            <h2 className="text-2xl font-bold text-center">Logs</h2>
+            <h2 className="text-center text-2xl font-bold">Logs</h2>
             <ListAttestations limit={10} />
           </div>
         </div>

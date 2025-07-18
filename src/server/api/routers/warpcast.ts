@@ -1,49 +1,92 @@
 import { z } from "zod";
 import { env } from "~/env";
+import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 
-import {
-  createTRPCRouter,
-  publicProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const warpcastRouter = createTRPCRouter({
   getCommentsByHotdog: publicProcedure
-    .input(z.object({ 
-      farcasterHash: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        farcasterHash: z.string().optional(),
+      }),
+    )
     .query(async ({ input }) => {
       const { farcasterHash } = input;
       console.log({ farcasterHash });
       if (!farcasterHash) {
-        throw new Error('farcasterHash is required');
+        throw new Error("farcasterHash is required");
       }
 
-      const neynarBaseUrl = 'https://api.neynar.com/v2/farcaster/cast/conversation';
+      const neynarBaseUrl =
+        "https://api.neynar.com/v2/farcaster/cast/conversation";
       const params = new URLSearchParams({
         identifier: `https://warpcast.com/${farcasterHash}`,
-        type: 'url',
-        reply_depth: '2',
-        include_chronological_parent_casts: 'false',
-        viewer_fid: '3',
-        limit: '20',
+        type: "url",
+        reply_depth: "2",
+        include_chronological_parent_casts: "false",
+        viewer_fid: "3",
+        limit: "20",
       });
       const url = `${neynarBaseUrl}?${params.toString()}`;
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'accept': 'application/json',
-          'api_key': env.NEYNAR_API_KEY,
-        }
+          accept: "application/json",
+          api_key: env.NEYNAR_API_KEY,
+        },
       });
 
       if (!response.ok) {
         throw new Error(`Error fetching data: ${response.statusText}`);
       }
 
-      const data = await response.json() as WarpcastResponse;
+      const data = (await response.json()) as WarpcastResponse;
 
       return data;
+    }),
+  getRelevantHolders: publicProcedure
+    .input(
+      z.object({
+        contractAddress: z.string(),
+        network: z.string(),
+        viewerFid: z.number(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { contractAddress, network, viewerFid } = input;
+      
+      // Create cache key with all parameters to ensure uniqueness
+      const cacheKey = `relevant-holders:${contractAddress.toLowerCase()}:${network}:${viewerFid}`;
+      
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const params = new URLSearchParams({
+            contract_address: contractAddress,
+            network: network,
+            viewer_fid: viewerFid.toString(),
+          });
+          const url = `https://api.neynar.com/v2/farcaster/fungible/owner/relevant?${params.toString()}`;
+
+          const response = await fetch(url, {
+            method: "GET",
+            headers: {
+              accept: "application/json",
+              'x-api-key': env.NEYNAR_API_KEY,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error fetching data: ${response.statusText}`);
+          }
+
+          const data = (await response.json()) as RelevantOwnersResponse;
+          return data;
+        },
+        CACHE_DURATION.LONG // Cache for 1 hour
+      );
     }),
 });
 
@@ -182,4 +225,21 @@ type WarpcastResponse = {
   next: {
     cursor: string | null;
   };
+};
+
+type RelevantOwnersResponse = {
+  top_relevant_fungible_owners_hydrated: Array<{
+    fid: number;
+    username: string;
+    display_name: string;
+    pfp_url: string;
+    custody_address: string;
+  }>;
+  all_relevant_fungible_owners_dehydrated: Array<{
+    fid: number;
+    username: string;
+    display_name: string;
+    pfp_url: string;
+    custody_address: string;
+  }>;
 };
