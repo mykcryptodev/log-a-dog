@@ -63,6 +63,7 @@ type RealDogEvent = {
   zoraCoin: ZoraCoinDetails | null;
   attestationPeriod?: AttestationPeriod;
   metadata?: HotdogMetadata | null;
+  duplicateOfLogId?: string | null;
 };
 
 type HotdogItem = RealDogEvent | PendingDogEvent;

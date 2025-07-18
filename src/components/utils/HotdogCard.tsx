@@ -71,6 +71,7 @@ type HotdogData = {
   zoraCoin: ZoraCoinDetails | string | null; // Can be object, string, or null
   attestationPeriod?: AttestationPeriod;
   isPending?: boolean;
+  duplicateOfLogId?: string | null;
 };
 
 type Props = {
@@ -175,7 +176,7 @@ export const HotdogCard: FC<Props> = ({
   const ImageComponent = linkToDetail ? (
     <Link
       href={`/dog/${hotdog.logId}`}
-      className="flex w-full items-center justify-center"
+      className={`flex w-full items-center justify-center ${hotdog.duplicateOfLogId ? "opacity-50" : ""}`}
     >
       <HotdogImage
         src={hotdog.imageUri}
@@ -253,8 +254,18 @@ export const HotdogCard: FC<Props> = ({
           </div>
         </div>
 
-        {/* Image */}
-        {ImageComponent}
+        {/* Image with duplicate badge overlay */}
+        <div className="relative">
+          {ImageComponent}
+          {hotdog.duplicateOfLogId && (
+            <Link
+              href={`/dog/${hotdog.duplicateOfLogId}`}
+              className="badge badge-warning absolute right-4 top-4"
+            >
+              Duplicate Image
+            </Link>
+          )}
+        </div>
 
         {/* Bottom section with attestation info and actions */}
         <div className="flex w-full flex-row items-center justify-between opacity-50">
