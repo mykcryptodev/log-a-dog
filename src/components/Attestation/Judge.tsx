@@ -7,6 +7,7 @@ import { api } from "~/utils/api";
 import { InsufficientStake } from "../Stake/InsufficientStake";
 import { Portal } from "../utils/Portal";
 import { TransactionStatus } from "../utils/TransactionStatus";
+import { useGhostVote } from "~/hooks/useGhostVote";
 
 type Props = {
   disabled?: boolean;
@@ -40,6 +41,12 @@ export const JudgeAttestation: FC<Props> = ({
   const [optimisticUserAttestation, setOptimisticUserAttestation] = useState<boolean | undefined>(userAttestation);
   const [isInsufficientStake, setIsInsufficientStake] = useState<boolean>(false);
   const [pendingTransactionId, setPendingTransactionId] = useState<string | null>(null);
+
+  const ghostVote = useGhostVote(logId, sessionData?.user?.address);
+
+  // Derive the effective values during render instead of using useEffect
+  const effectiveUserAttested = ghostVote ?? optimisticUserAttested;
+  const effectiveUserAttestation = ghostVote ?? optimisticUserAttestation;
 
   const judgeMutation = api.hotdog.judge.useMutation({
     onMutate: async ({ isValid }) => {
@@ -84,7 +91,7 @@ export const JudgeAttestation: FC<Props> = ({
     isValid ? setIsLoadingValidAttestation(true) : setIsLoadingInvalidValidAttestation(true);
     
     // undo attestations if the user has already attested
-    if (optimisticUserAttested && optimisticUserAttestation === isValid) {
+    if (effectiveUserAttested && effectiveUserAttestation === isValid) {
       return void revoke(isValid);
     }
 
@@ -169,7 +176,7 @@ export const JudgeAttestation: FC<Props> = ({
           ) : (
             (optimisticValidCount ?? 0).toString()
           )}
-          {optimisticUserAttested && optimisticUserAttestation === true ? (
+          {effectiveUserAttested && effectiveUserAttestation === true ? (
             <HandThumbUpIconFilled className="w-4 h-4" />
           ) : (
             <HandThumbUpIcon className="w-4 h-4" />
@@ -179,7 +186,7 @@ export const JudgeAttestation: FC<Props> = ({
           className="btn btn-xs btn-circle btn-ghost w-fit px-2"
           onClick={() => attest(false)}
         >
-          {optimisticUserAttested && optimisticUserAttestation === false ? (
+          {effectiveUserAttested && effectiveUserAttestation === false ? (
             <HandThumDownIconFilled className="w-4 h-4" />
           ) : (
             <HandThumbDownIcon className="w-4 h-4" />
