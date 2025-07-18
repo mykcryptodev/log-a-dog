@@ -193,7 +193,6 @@ export const authOptions: NextAuthOptions = {
           // Don't fail auth if this fails
         }
 
-        console.log({ user });
         // Create a new account for the user
         const accountUserId = user.id; // Capture user ID to avoid null reference issues
         await withRetry(

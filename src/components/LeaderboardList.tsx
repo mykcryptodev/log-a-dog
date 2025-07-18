@@ -20,18 +20,11 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
   showCurrentUser = false,
   height = "400px",
 }) => {
-  console.log("🏅 LeaderboardList render", { limit, startDate, endDate, showCurrentUser, height });
-  
   const { data: session } = useSession();
+
   const { leaderboard, profiles } = useLeaderboardData({
     startDate,
     endDate,
-  });
-
-  console.log("🏅 LeaderboardList data", { 
-    leaderboard: !!leaderboard, 
-    profiles: !!profiles,
-    session: !!session
   });
 
   if (!leaderboard || !profiles)
@@ -39,11 +32,6 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
 
   const addresses = leaderboard.users ?? [];
   const hotdogs = leaderboard.hotdogs ?? [];
-
-  console.log("🏅 LeaderboardList addresses and hotdogs", { 
-    addressesLength: addresses.length,
-    hotdogsLength: hotdogs.length
-  });
 
   const displayUsers = addresses.slice(0, limit);
   const displayHotdogs = hotdogs.slice(0, limit);
@@ -55,7 +43,6 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
   } | null = null;
 
   if (showCurrentUser && session?.user?.address) {
-    console.log("🏅 LeaderboardList checking current user", { sessionAddress: session.user.address });
     const addrLower = session.user.address.toLowerCase();
     const index = addresses.findIndex((a) => a.toLowerCase() === addrLower);
     if (index >= 0) {
@@ -70,12 +57,6 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
       }
     }
   }
-
-  console.log("🏅 LeaderboardList final render data", {
-    displayUsersLength: displayUsers.length,
-    displayHotdogsLength: displayHotdogs.length,
-    currentUserRow: !!currentUserRow
-  });
 
   return (
     <div
