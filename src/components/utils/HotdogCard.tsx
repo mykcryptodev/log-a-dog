@@ -176,7 +176,7 @@ export const HotdogCard: FC<Props> = ({
   const ImageComponent = linkToDetail ? (
     <Link
       href={`/dog/${hotdog.logId}`}
-      className="flex w-full items-center justify-center"
+      className={`flex w-full items-center justify-center ${hotdog.duplicateOfLogId ? "opacity-50" : ""}`}
     >
       <HotdogImage
         src={hotdog.imageUri}
@@ -260,7 +260,7 @@ export const HotdogCard: FC<Props> = ({
           {hotdog.duplicateOfLogId && (
             <Link
               href={`/dog/${hotdog.duplicateOfLogId}`}
-              className="badge badge-warning absolute right-2 top-2"
+              className="badge badge-warning absolute right-4 top-4"
             >
               Duplicate Image
             </Link>
