@@ -92,8 +92,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     </div>
   )
 
-  // Handle case where user has session but no wallet connected
-  // This prevents infinite refresh loops
+  // Session without wallet will be automatically destroyed by Connect component
   if (!account && sessionData?.user?.id) {
     return (
       <div className="mr-4 flex items-center gap-2">

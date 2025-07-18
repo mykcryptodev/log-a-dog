@@ -30,6 +30,18 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
 
+  // Aggressively destroy session if no wallet is connected
+  useEffect(() => {
+    // Only run this cleanup after initial mount and when not loading
+    if (!mounted || status === 'loading') return;
+    
+    // If there's a session but no connected wallet, destroy the session
+    if (sessionData?.user?.id && !account?.address) {
+      console.log('🧹 Session exists but no wallet connected - destroying session to prevent refresh loops');
+      void signOut({ redirect: false });
+    }
+  }, [mounted, sessionData?.user?.id, account?.address, status]);
+
   const cryptoWallets = [
     createWallet("io.metamask"),
     createWallet("com.coinbase.wallet"),
