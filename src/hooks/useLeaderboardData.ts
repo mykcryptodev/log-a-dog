@@ -1,4 +1,3 @@
-import { useContext } from "react";
 import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
 
@@ -54,7 +53,7 @@ export const useLeaderboardData = ({
   console.log("🎯 useLeaderboardData returning", { 
     leaderboard: !!leaderboard, 
     profiles: !!profiles,
-    usersCount: leaderboard?.users?.length || 0
+    usersCount: leaderboard?.users?.length ?? 0
   });
 
   return { leaderboard, profiles };

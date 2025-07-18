@@ -87,7 +87,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
     };
 
     void checkAllowance();
-  }, [wallet, amount, DEFAULT_CHAIN.id]);
+  }, [wallet, amount]);
 
   useEffect(() => {
     if (!balance?.displayValue) return;

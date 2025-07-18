@@ -1,4 +1,4 @@
-import { type FC, useContext, memo } from "react";
+import { type FC, memo } from "react";
 import { MediaRenderer } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { api } from "~/utils/api";

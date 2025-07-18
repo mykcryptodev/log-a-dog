@@ -1,4 +1,4 @@
-import { useState, type FC, useContext, useMemo } from "react";
+import { useState, type FC, useMemo } from "react";
 import { useActiveWallet } from "thirdweb/react";
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
