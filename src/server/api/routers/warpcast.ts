@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { env } from "~/env";
+import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
@@ -55,27 +56,37 @@ export const warpcastRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       const { contractAddress, network, viewerFid } = input;
-      const params = new URLSearchParams({
-        contract_address: contractAddress,
-        network: network,
-        viewer_fid: viewerFid.toString(),
-      });
-      const url = `https://api.neynar.com/v2/farcaster/fungible/owner/relevant?${params.toString()}`;
+      
+      // Create cache key with all parameters to ensure uniqueness
+      const cacheKey = `relevant-holders:${contractAddress.toLowerCase()}:${network}:${viewerFid}`;
+      
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const params = new URLSearchParams({
+            contract_address: contractAddress,
+            network: network,
+            viewer_fid: viewerFid.toString(),
+          });
+          const url = `https://api.neynar.com/v2/farcaster/fungible/owner/relevant?${params.toString()}`;
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          accept: "application/json",
-          'x-api-key': env.NEYNAR_API_KEY,
+          const response = await fetch(url, {
+            method: "GET",
+            headers: {
+              accept: "application/json",
+              'x-api-key': env.NEYNAR_API_KEY,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error fetching data: ${response.statusText}`);
+          }
+
+          const data = (await response.json()) as RelevantOwnersResponse;
+          return data;
         },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error fetching data: ${response.statusText}`);
-      }
-
-      const data = (await response.json()) as RelevantOwnersResponse;
-      return data;
+        CACHE_DURATION.LONG // Cache for 1 hour
+      );
     }),
 });
 
