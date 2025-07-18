@@ -1,5 +1,6 @@
 import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
+import { useMemo } from "react";
 
 export type UseLeaderboardOptions = {
   startDate?: Date;
@@ -9,7 +10,7 @@ export type UseLeaderboardOptions = {
 export const useLeaderboardData = ({
   startDate,
   endDate,
-}: UseLeaderboardOptions) => {  
+}: UseLeaderboardOptions) => {
   const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery(
     {
       chainId: DEFAULT_CHAIN.id,
@@ -24,13 +25,18 @@ export const useLeaderboardData = ({
     },
   );
 
+  // Memoize the profile addresses to prevent infinite re-renders
+  const profileAddresses = useMemo(() => {
+    return leaderboard?.users ?? [];
+  }, [leaderboard?.users]);
+
   const { data: profiles } = api.profile.getManyByAddress.useQuery(
     {
       chainId: DEFAULT_CHAIN.id,
-      addresses: [...(leaderboard?.users ?? [])],
+      addresses: profileAddresses,
     },
     {
-      enabled: !!leaderboard?.users,
+      enabled: !!leaderboard?.users && profileAddresses.length > 0,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
     },

@@ -875,18 +875,12 @@ export const hotdogRouter = createTRPCRouter({
       description: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      console.log({ user: ctx.session?.user });
       const { chainId, imageUri, metadataUri, description } = input;
 
       if (!ctx.session?.user.address) {
         throw new Error("User address not found");
       }
 
-      console.log({
-        imageUri,
-        metadataUri,
-        eater: ctx.session.user.address,
-      })
       const coinMetadata = {
         name: "Logged Dog",
         description: description && description.trim() !== '' ? description : "Logging dogs onchain",
@@ -926,7 +920,6 @@ export const hotdogRouter = createTRPCRouter({
       const maxFeePerGas = gasPrice.maxFeePerGas.toString();
       const maxPriorityFeePerGas = gasPrice.maxPriorityFeePerGas.toString();
       const estimatedGas = await serverWallet.estimateGas?.(transaction);
-      console.log({ estimatedGas, maxFeePerGas, maxPriorityFeePerGas });
 
       // const preparedTransaction = prepareTransaction({
       //   to: LOG_A_DOG[chainId]!,
@@ -971,14 +964,12 @@ export const hotdogRouter = createTRPCRouter({
             timeoutSeconds: 10,
           }
         }
-        console.log({ body });
         const req = await fetch(`${env.THIRDWEB_ENGINE_URL}/contract/${chainId}/${LOG_A_DOG[chainId]}/write`, {
           method: 'POST',
           headers,
           body: JSON.stringify(body),
         });
         const res = await req.json() as { result: { queueId: string } };
-        console.log({ res });
         const transactionId = res.result.queueId;
   
         // Invalidate Redis cache for all hotdog queries and leaderboard for this chain

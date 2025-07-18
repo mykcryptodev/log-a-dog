@@ -16,12 +16,9 @@ const LeaderboardBannerComponent: FC<Props> = ({
   endDate,
   scrollSpeed = 50,
 }) => {
-  console.log("🏆 LeaderboardBanner render", { startDate, endDate, scrollSpeed });
-  
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    console.log("🏆 LeaderboardBanner useEffect - checking prefers-reduced-motion");
     // Check if user prefers reduced motion
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduceMotion(mediaQuery.matches);
@@ -33,22 +30,12 @@ const LeaderboardBannerComponent: FC<Props> = ({
   });
 
   const users = useMemo(() => {
-    console.log("🏆 LeaderboardBanner users memo", leaderboard?.users);
     return leaderboard?.users ?? [];
   }, [leaderboard?.users]);
   
   const hotdogs = useMemo(() => {
-    console.log("🏆 LeaderboardBanner hotdogs memo", leaderboard?.hotdogs);
     return leaderboard?.hotdogs ?? [];
   }, [leaderboard?.hotdogs]);
-
-  console.log("🏆 LeaderboardBanner state:", { 
-    leaderboard: !!leaderboard, 
-    profiles: !!profiles, 
-    usersLength: users.length,
-    hotdogsLength: hotdogs.length,
-    reduceMotion 
-  });
 
   if (!leaderboard || !profiles)
     return <div className="h-20 w-full rounded-lg bg-base-200" />;

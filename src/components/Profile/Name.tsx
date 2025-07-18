@@ -25,8 +25,6 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
     refetchOnMount: false,
   });
 
-  console.log({ userData });
-
   if (isLoading) {
     return (
       <div className="w-32 h-6 bg-base-200 rounded-full animate-pulse" />
