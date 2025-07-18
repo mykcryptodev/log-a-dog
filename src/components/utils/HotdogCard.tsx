@@ -254,20 +254,18 @@ export const HotdogCard: FC<Props> = ({
           </div>
         </div>
 
-        {/* Image */}
-        {ImageComponent}
-
-        {/* Duplicate image tag row */}
-        {hotdog.duplicateOfLogId && (
-          <div className="flex w-full justify-end">
+        {/* Image with duplicate badge overlay */}
+        <div className="relative">
+          {ImageComponent}
+          {hotdog.duplicateOfLogId && (
             <Link
               href={`/dog/${hotdog.duplicateOfLogId}`}
-              className="badge badge-warning"
+              className="badge badge-warning absolute right-2 top-2"
             >
               Duplicate Image
             </Link>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Bottom section with attestation info and actions */}
         <div className="flex w-full flex-row items-center justify-between opacity-50">
