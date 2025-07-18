@@ -30,9 +30,13 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
 
+  // Clear session when wallet disconnects to prevent state mismatch
   useEffect(() => {
-    console.log('Account changed:', account);
-  }, [account]);
+    if (!account && sessionData?.user?.id) {
+      console.log('Wallet disconnected but session exists, clearing session to prevent refresh loop');
+      void signOut({ redirect: false });
+    }
+  }, [account, sessionData?.user?.id]);
 
   const cryptoWallets = [
     createWallet("io.metamask"),
@@ -123,7 +127,9 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       }}
       auth={{
         isLoggedIn: async () => {
-          if (sessionData?.user?.id) {
+          // Only consider logged in if there's both a session AND a wallet connected
+          // This prevents state mismatches that cause infinite refreshes
+          if (sessionData?.user?.id && account?.address) {
             return true;
           }
           return false;

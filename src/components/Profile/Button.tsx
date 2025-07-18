@@ -92,6 +92,22 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     </div>
   )
 
+  // Handle case where user has session but no wallet connected
+  // This prevents infinite refresh loops
+  if (!account && sessionData?.user?.id) {
+    return (
+      <div className="mr-4 flex items-center gap-2">
+        <div className="text-xs opacity-75">
+          Session detected, wallet disconnected
+        </div>
+        <button className="btn btn-sm btn-outline" onClick={logout}>
+          Clear Session
+        </button>
+        <Connect loginBtnLabel={loginBtnLabel} />
+      </div>
+    )
+  }
+
   if (account && wallet?.id !== 'inApp' && !sessionData?.user?.id) {
     return (
       <SignInWithEthereum 
