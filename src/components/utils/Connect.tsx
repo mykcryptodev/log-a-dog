@@ -30,14 +30,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
     setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
 
-  // Clear session when wallet disconnects to prevent state mismatch
-  useEffect(() => {
-    if (!account && sessionData?.user?.id) {
-      console.log('Wallet disconnected but session exists, clearing session to prevent refresh loop');
-      void signOut({ redirect: false });
-    }
-  }, [account, sessionData?.user?.id]);
-
   const cryptoWallets = [
     createWallet("io.metamask"),
     createWallet("com.coinbase.wallet"),
@@ -80,6 +72,17 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       console.log('signed in or is signing in...')
       return;
     }
+    
+    // Check if there's already a session for this wallet address
+    if (sessionDataRef.current?.user?.address && wallet.getAccount()) {
+      const walletAddress = wallet.getAccount()!.address.toLowerCase();
+      const sessionAddress = sessionDataRef.current.user.address.toLowerCase();
+      if (walletAddress === sessionAddress) {
+        console.log('Session already exists for this wallet address');
+        return;
+      }
+    }
+    
     if (wallet.id !== 'inApp') {
       console.log('not an inApp wallet')
       return;

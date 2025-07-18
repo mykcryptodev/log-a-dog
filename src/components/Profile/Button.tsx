@@ -97,13 +97,10 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   if (!account && sessionData?.user?.id) {
     return (
       <div className="mr-4 flex items-center gap-2">
-        <div className="text-xs opacity-75">
-          Session detected, wallet disconnected
-        </div>
-        <button className="btn btn-sm btn-outline" onClick={logout}>
-          Clear Session
+        <Connect loginBtnLabel="Reconnect" />
+        <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={logout}>
+          <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
         </button>
-        <Connect loginBtnLabel={loginBtnLabel} />
       </div>
     )
   }
