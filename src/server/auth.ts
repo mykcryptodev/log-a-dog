@@ -40,6 +40,15 @@ declare module "next-auth" {
   }
 }
 
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    address?: string;
+    fid?: number;
+    fidFetched?: boolean;
+  }
+}
+
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
  *
@@ -55,8 +64,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.address = user.address;
         token.fid = user.fid;
-      } else if (token.address && !token.fid) {
-        // Only fetch FID from database if it's missing from the token
+      } else if (token.address && !token.fid && !token.fidFetched) {
+        // Only fetch FID from database once per session if it's missing from the token
         try {
           const dbUser = await db.user.findFirst({
             where: { 
@@ -67,9 +76,12 @@ export const authOptions: NextAuthOptions = {
           if (dbUser?.fid) {
             token.fid = dbUser.fid;
           }
+          // Mark that we've attempted to fetch FID to prevent repeated queries
+          token.fidFetched = true;
         } catch (dbError: unknown) {
           console.error('Database query failed in JWT callback:', dbError);
-          // Don't retry in JWT callback to avoid connection overload
+          // Mark as fetched even on error to prevent retry loops
+          token.fidFetched = true;
         }
       }
       return token;

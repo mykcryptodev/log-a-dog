@@ -112,14 +112,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     // Clear immediately on mount
     clearExpiredPending();
     
-    // Only set up interval if we have pending dogs
-    if (pendingDogs.length > 0) {
-      // Clear any existing interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      
-      // Set up interval to clear expired pending dogs every 30 seconds
+    // Set up interval to clear expired pending dogs every 30 seconds
+    // Only if we're on the client side
+    if (isClient) {
       intervalRef.current = setInterval(() => {
         clearExpiredPending();
       }, 30000); // 30 seconds
@@ -132,7 +127,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         intervalRef.current = null;
       }
     };
-  }, [clearExpiredPending, pendingDogs.length]);
+  }, [clearExpiredPending, isClient]); // Remove pendingDogs.length dependency
 
   // Handle pagination loading state
   useEffect(() => {

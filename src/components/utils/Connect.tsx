@@ -63,7 +63,8 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
 
   const silentlySignIn = useCallback(async (wallet: Wallet) => {
     console.log('silentlySignIn', wallet, sessionData?.user?.id);
-    if (sessionData?.user?.id ?? status === 'loading') {
+    // Check session state inside the function rather than in dependencies
+    if (sessionData?.user?.id || status === 'loading') {
       console.log('signed in or is signing in...')
       return;
     }
@@ -87,7 +88,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
     } catch (error) {
       console.error("Error signing in with wallet:", error);
     }
-  }, [createPayload, message, sessionData?.user?.id, status]);
+  }, [createPayload, message]); // Remove sessionData and status from dependencies
 
   // Prevent hydration mismatch by not rendering ConnectButton until mounted
   if (!mounted) {
