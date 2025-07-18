@@ -9,9 +9,7 @@ export type UseLeaderboardOptions = {
 export const useLeaderboardData = ({
   startDate,
   endDate,
-}: UseLeaderboardOptions) => {
-  console.log("🎯 useLeaderboardData hook called", { startDate, endDate });
-  
+}: UseLeaderboardOptions) => {  
   const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery(
     {
       chainId: DEFAULT_CHAIN.id,
@@ -23,12 +21,6 @@ export const useLeaderboardData = ({
     {
       refetchOnWindowFocus: false,
       refetchOnMount: false,
-      onSuccess: (data) => {
-        console.log("🎯 useLeaderboardData leaderboard query success", data);
-      },
-      onError: (error) => {
-        console.log("🎯 useLeaderboardData leaderboard query error", error);
-      },
     },
   );
 
@@ -41,20 +33,8 @@ export const useLeaderboardData = ({
       enabled: !!leaderboard?.users,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
-      onSuccess: (data) => {
-        console.log("🎯 useLeaderboardData profiles query success", data);
-      },
-      onError: (error) => {
-        console.log("🎯 useLeaderboardData profiles query error", error);
-      },
     },
   );
-
-  console.log("🎯 useLeaderboardData returning", { 
-    leaderboard: !!leaderboard, 
-    profiles: !!profiles,
-    usersCount: leaderboard?.users?.length ?? 0
-  });
 
   return { leaderboard, profiles };
 };
