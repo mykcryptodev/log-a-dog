@@ -1,15 +1,13 @@
 import { type NextPage } from "next";
-import { useContext } from "react";
 import Head from "next/head";
 import { useActiveAccount } from "thirdweb/react";
 import { api } from "~/utils/api";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { ZERO_ADDRESS } from "thirdweb";
 import HotdogCard from "~/components/utils/HotdogCard";
+import { DEFAULT_CHAIN } from "~/constants";
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
-  const { activeChain } = useContext(ActiveChainContext);
 
   const miniAppMetadata = {
     version: "next",
@@ -27,10 +25,10 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   };
 
   const { data, isLoading, refetch } = api.hotdog.getById.useQuery({
-    chainId: activeChain.id,
+    chainId: DEFAULT_CHAIN.id,
     user: account?.address ?? ZERO_ADDRESS,
     logId,
-  }, { enabled: !!logId && !!activeChain.id });
+  }, { enabled: !!logId && !!DEFAULT_CHAIN.id });
 
   if (isLoading || !data) {
     return (
@@ -60,7 +58,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
             invalidAttestations={invalidAttestations ?? "0"}
             userAttested={userAttested ?? false}
             userAttestation={userAttestation ?? false}
-            chainId={activeChain.id}
+            chainId={DEFAULT_CHAIN.id}
             onRefetch={() => void refetch()}
             linkToDetail={false}
             showAiJudgement={true}

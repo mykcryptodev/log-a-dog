@@ -110,6 +110,7 @@ interface ProcessedHotdog {
     totalInvalidStake: string;
     isValid: boolean;
   };
+  duplicateOfLogId?: string | null;
 }
 
 interface GetAllResponse {
@@ -445,6 +446,30 @@ export const hotdogRouter = createTRPCRouter({
       const zoraCoinAddressesArray = [...zoraCoinAddresses];
       const metadataUrisArray = [...metadataUris];
 
+      // Detect duplicate images
+      const imageUris = Array.from(new Set(dogEvents.map(e => e.imageUri)));
+      const duplicateEvents = await db.dogEvent.findMany({
+        where: { imageUri: { in: imageUris } },
+        orderBy: { timestamp: 'asc' },
+        select: { imageUri: true, logId: true, timestamp: true },
+      });
+      const earliestByImage = new Map<string, { logId: string; timestamp: bigint }>();
+      const countByImage = new Map<string, number>();
+      for (const ev of duplicateEvents) {
+        countByImage.set(ev.imageUri, (countByImage.get(ev.imageUri) ?? 0) + 1);
+        const existing = earliestByImage.get(ev.imageUri);
+        if (!existing || ev.timestamp < existing.timestamp) {
+          earliestByImage.set(ev.imageUri, { logId: ev.logId, timestamp: ev.timestamp });
+        }
+      }
+      const duplicateOfMap = new Map<string, string>();
+      for (const ev of duplicateEvents) {
+        const earliest = earliestByImage.get(ev.imageUri)!;
+        if ((countByImage.get(ev.imageUri) ?? 0) > 1 && ev.logId !== earliest.logId) {
+          duplicateOfMap.set(ev.logId, earliest.logId);
+        }
+      }
+
       // Fetch all Zora coin details and metadata in parallel
       const [zoraCoinDetails, metadataResults] = await Promise.all([
         zoraCoinAddressesArray.length > 0
@@ -463,12 +488,14 @@ export const hotdogRouter = createTRPCRouter({
         const zoraCoin = zoraCoinDetails.get(log.zoraCoin.toLowerCase()) ?? null;
         const metadata = metadataMap.get(log.metadataUri.toLowerCase()) ?? null;
         const attestationPeriod = attestationPeriods.get(log.logId);
+        const duplicateOfLogId = duplicateOfMap.get(log.logId) ?? null;
 
         return {
           ...log,
           zoraCoin,
           metadata,
           attestationPeriod,
+          duplicateOfLogId,
         } as ProcessedHotdog;
       });
 
@@ -590,6 +617,17 @@ export const hotdogRouter = createTRPCRouter({
         return null;
       }
 
+      // Find duplicate image logs
+      const duplicates = await db.dogEvent.findMany({
+        where: { imageUri: dogEvent.imageUri },
+        orderBy: { timestamp: 'asc' },
+        select: { logId: true, timestamp: true },
+      });
+      const duplicateOfLogId =
+        duplicates.length > 1 && duplicates[0]?.logId !== dogEvent.logId
+          ? duplicates[0]?.logId
+          : null;
+
       const [redactedLogIds, attestationCounts, userAttestations, attestationPeriods] = await Promise.all([
         getRedactedLogIds({
           contract: getContract({
@@ -647,6 +685,7 @@ export const hotdogRouter = createTRPCRouter({
         zoraCoin: processedResponse.logs[0]?.zoraCoin ? zoraCoinDetails.get(processedResponse.logs[0].zoraCoin.toLowerCase()) ?? null : null,
         metadata,
         attestationPeriod: attestationPeriods.get(logId),
+        duplicateOfLogId,
       };
 
       const response = {

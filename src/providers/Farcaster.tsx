@@ -9,7 +9,6 @@ import {
 import { optimism } from "thirdweb/chains";
 import { EIP1193 } from "thirdweb/wallets";
 import { env } from "~/env";
-import useActiveChain from "~/hooks/useActiveChain";
 import { client } from "~/providers/Thirdweb";
 import {
   type FrameNotificationDetails,
@@ -50,7 +49,6 @@ export const FarcasterProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { activeChain } = useActiveChain();
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<Context.FrameContext>();
   const [isMiniApp, setIsMiniApp] = useState(false);
@@ -66,7 +64,7 @@ export const FarcasterProvider = ({
         });
 
         // trigger the connection
-        await wallet.connect({ client, chain: activeChain });
+        await wallet.connect({ client, chain: DEFAULT_CHAIN });
 
         // return the wallet to the app context
         return wallet;
@@ -74,7 +72,7 @@ export const FarcasterProvider = ({
     } catch (err) {
       console.error("Failed to connect wallet", err);
     }
-  }, [connect, activeChain]);
+  }, [connect]);
 
   const viewProfile = useCallback(async (fid: number) => {
     try {

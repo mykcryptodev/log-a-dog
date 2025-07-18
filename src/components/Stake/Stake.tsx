@@ -7,7 +7,6 @@ import {
   useActiveAccount,
 } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
-import useActiveChain from "~/hooks/useActiveChain";
 import { HOTDOG_TOKEN, STAKING } from "~/constants/addresses";
 import {
   stake,
@@ -15,7 +14,7 @@ import {
 } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
 import { getContract } from "thirdweb";
 import { toast } from "react-toastify";
-import { MINIMUM_STAKE } from "~/constants";
+import { DEFAULT_CHAIN, MINIMUM_STAKE } from "~/constants";
 import { parseEther, formatEther, InsufficientFundsError } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
 import { Buy } from "~/components/utils/Buy";
@@ -34,15 +33,14 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
   const [unstakeAmount, setUnstakeAmount] = useState<string>("");
   const [unstakePercentage, setUnstakePercentage] = useState<number>(0);
   const [hasApproval, setHasApproval] = useState(false);
-  const { activeChain } = useActiveChain();
   const wallet = useActiveWallet();
   const account = useActiveAccount();
 
   const { data: balance, isLoading: isLoadingBalance, refetch } = useWalletBalance({
     client,
     address: account?.address,
-    chain: activeChain,
-    tokenAddress: HOTDOG_TOKEN[activeChain.id],
+    chain: DEFAULT_CHAIN,
+    tokenAddress: HOTDOG_TOKEN[DEFAULT_CHAIN.id],
   });
 
   useEffect(() => {
@@ -53,9 +51,9 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
 
   const { data: stakedAmount, isLoading: isLoadingStaked } = useReadContract({
     contract: getContract({
-      address: STAKING[activeChain.id]!,
+      address: STAKING[DEFAULT_CHAIN.id]!,
       client,
-      chain: activeChain,
+      chain: DEFAULT_CHAIN,
     }),
     method: "function stakes(address user) view returns (uint256)",
     params: [account?.address ?? "0x0"],
@@ -65,7 +63,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
   });
 
   const { data: apy, isLoading: isLoadingApy } = api.staking.getApy.useQuery(
-    { chainId: activeChain.id },
+    { chainId: DEFAULT_CHAIN.id },
     { staleTime: 30_000 }
   );
 
@@ -74,22 +72,22 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
       if (!wallet || !amount) return;
 
       const tokenContract = getContract({
-        address: HOTDOG_TOKEN[activeChain.id]!,
+        address: HOTDOG_TOKEN[DEFAULT_CHAIN.id]!,
         client,
-        chain: activeChain,
+        chain: DEFAULT_CHAIN,
       });
 
       const allowanceAmt = await allowance({
         contract: tokenContract,
         owner: wallet.getAccount()!.address,
-        spender: STAKING[activeChain.id]!,
+        spender: STAKING[DEFAULT_CHAIN.id]!,
       });
 
       setHasApproval(allowanceAmt >= parseEther(amount));
     };
 
     void checkAllowance();
-  }, [wallet, amount, activeChain]);
+  }, [wallet, amount]);
 
   useEffect(() => {
     if (!balance?.displayValue) return;
@@ -300,9 +298,9 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 transaction={() =>
                   stake({
                     contract: getContract({
-                      address: STAKING[activeChain.id]!,
+                      address: STAKING[DEFAULT_CHAIN.id]!,
                       client,
-                      chain: activeChain,
+                      chain: DEFAULT_CHAIN,
                     }),
                     amount: parseEther(amount),
                   })
@@ -342,12 +340,12 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 transaction={() =>
                   approve({
                     contract: getContract({
-                      address: HOTDOG_TOKEN[activeChain.id]!,
+                      address: HOTDOG_TOKEN[DEFAULT_CHAIN.id]!,
                       client,
-                      chain: activeChain,
+                      chain: DEFAULT_CHAIN,
                     }),
                     amount,
-                    spender: STAKING[activeChain.id]!,
+                    spender: STAKING[DEFAULT_CHAIN.id]!,
                   })
                 }
                 onTransactionSent={() => toast.loading("Approving...")}
@@ -481,9 +479,9 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
               transaction={() =>
                 unstake({
                   contract: getContract({
-                    address: STAKING[activeChain.id]!,
+                    address: STAKING[DEFAULT_CHAIN.id]!,
                     client,
-                    chain: activeChain,
+                    chain: DEFAULT_CHAIN,
                   }),
                   amount: parseEther(unstakeAmount),
                 })

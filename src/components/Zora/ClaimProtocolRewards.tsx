@@ -1,23 +1,22 @@
-import { type FC, useContext } from "react";
+import { type FC } from "react";
 import { useSession } from "next-auth/react";
 import { TransactionButton, useActiveWallet, useReadContract } from "thirdweb/react";
 import { getContract, prepareContractCall } from "thirdweb";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { PROTOCOL_REWARDS } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { formatEther } from "viem";
 import { toast } from "react-toastify";
+import { DEFAULT_CHAIN } from "~/constants";
 
 export const ClaimProtocolRewards: FC = () => {
   const { data: sessionData } = useSession();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
 
   const { data: balance } = useReadContract({
     contract: getContract({
-      address: PROTOCOL_REWARDS[activeChain.id]!,
+      address: PROTOCOL_REWARDS[DEFAULT_CHAIN.id]!,
       client,
-      chain: activeChain,
+      chain: DEFAULT_CHAIN,
     }),
     method: "function balanceOf(address) view returns (uint256)",
     params: [sessionData?.user.address ?? "0x0"],
@@ -37,9 +36,9 @@ export const ClaimProtocolRewards: FC = () => {
         transaction={() =>
           prepareContractCall({
             contract: getContract({
-              address: PROTOCOL_REWARDS[activeChain.id]!,
+              address: PROTOCOL_REWARDS[DEFAULT_CHAIN.id]!,
               client,
-              chain: activeChain,
+              chain: DEFAULT_CHAIN,
             }),
             method: "function withdraw(address to, uint256 amount)",
             params: [sessionData?.user.address ?? "0x0", balance ?? 0n],

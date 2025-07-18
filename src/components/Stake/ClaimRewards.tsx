@@ -1,24 +1,23 @@
-import { type FC, useContext } from "react";
+import { type FC } from "react";
 import { useSession } from "next-auth/react";
 import { TransactionButton, useActiveWallet, useReadContract } from "thirdweb/react";
 import { getContract } from "thirdweb";
 import { formatEther } from "viem";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { STAKING } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { claimRewards } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
 import { toast } from "react-toastify";
+import { DEFAULT_CHAIN } from "~/constants";
 
 export const ClaimRewards: FC = () => {
   const { data: sessionData } = useSession();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
 
   const { data: pendingRewards } = useReadContract({
     contract: getContract({
-      address: STAKING[activeChain.id]!,
+      address: STAKING[DEFAULT_CHAIN.id]!,
       client,
-      chain: activeChain,
+      chain: DEFAULT_CHAIN,
     }),
     method: "function getPendingRewards(address user) view returns (uint256)",
     params: [sessionData?.user.address ?? "0x0"],
@@ -40,9 +39,9 @@ export const ClaimRewards: FC = () => {
         transaction={() =>
           claimRewards({
             contract: getContract({
-              address: STAKING[activeChain.id]!,
+              address: STAKING[DEFAULT_CHAIN.id]!,
               client,
-              chain: activeChain,
+              chain: DEFAULT_CHAIN,
             }),
           })
         }

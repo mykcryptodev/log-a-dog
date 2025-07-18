@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { type FC, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { QuestionMarkCircleIcon, XMarkIcon, GiftIcon } from "@heroicons/react/24/outline";
 import { Portal } from "~/components/utils/Portal";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
-import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
+import { ATTESTATION_WINDOW_SECONDS, DEFAULT_CHAIN } from "~/constants";
 
 // Shared interval manager to prevent multiple intervals
 class IntervalManager {
@@ -93,7 +92,6 @@ export const VotingCountdown: FC<Props> = ({
   const componentId = useRef(`countdown-${logId ?? timestamp}-${Math.random()}`);
   
   const { data: session } = useSession();
-  const { activeChain } = useContext(ActiveChainContext);
 
   const rewardModeratorsMutation = api.hotdog.rewardModerators.useMutation({
     onSuccess: () => {
@@ -131,11 +129,11 @@ export const VotingCountdown: FC<Props> = ({
   const isResolved = attestationPeriod?.status === 1;
   
   const handleRewardModerators = () => {
-    if (!logId || !session?.user?.address || !activeChain) return;
+    if (!logId || !session?.user?.address || !DEFAULT_CHAIN.id) return;
     
     setIsRewardingModerators(true);
     rewardModeratorsMutation.mutate({
-      chainId: activeChain.id,
+      chainId: DEFAULT_CHAIN.id,
       logId,
     });
   };
