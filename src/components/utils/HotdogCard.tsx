@@ -257,6 +257,18 @@ export const HotdogCard: FC<Props> = ({
         {/* Image */}
         {ImageComponent}
 
+        {/* Duplicate image tag row */}
+        {hotdog.duplicateOfLogId && (
+          <div className="flex w-full justify-end">
+            <Link
+              href={`/dog/${hotdog.duplicateOfLogId}`}
+              className="badge badge-warning"
+            >
+              Duplicate Image
+            </Link>
+          </div>
+        )}
+
         {/* Bottom section with attestation info and actions */}
         <div className="flex w-full flex-row items-center justify-between opacity-50">
           <div className="flex items-center gap-1 text-xs">
@@ -269,14 +281,6 @@ export const HotdogCard: FC<Props> = ({
                 <TagIcon className="h-4 w-4" />
                 {hotdog.logId.toString()}
               </>
-            )}
-            {hotdog.duplicateOfLogId && (
-              <Link
-                href={`/dog/${hotdog.duplicateOfLogId}`}
-                className="badge badge-warning ml-2"
-              >
-                Duplicate Image
-              </Link>
             )}
           </div>
           <div className="flex items-center justify-end gap-2 text-xs">
