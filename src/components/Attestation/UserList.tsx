@@ -1,5 +1,4 @@
-import { useContext, useEffect, type FC, useState, useRef } from "react";
-import ActiveChainContext from "~/contexts/ActiveChain";
+import { useEffect, type FC, useState, useRef } from "react";
 import { api } from "~/utils/api";
 import { useActiveAccount } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
@@ -10,6 +9,7 @@ import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
 import VotingCountdown from "./VotingCountdown";
+import { DEFAULT_CHAIN } from "~/constants";
 
 type Props = {
   attestors?: string[];
@@ -22,17 +22,16 @@ type Props = {
 export const UserListAttestations: FC<Props> = ({ user, limit }) => {
   const limitOrDefault = limit ?? 4;
   const account = useActiveAccount();
-  const { activeChain } = useContext(ActiveChainContext);
   const [start, setStart] = useState<number>(0);
   const [isPaginating, setIsPaginating] = useState(false);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAllForUser.useQuery({
-    chainId: activeChain.id,
+    chainId: DEFAULT_CHAIN.id,
     user,
     limit: limitOrDefault,
   }, {
-    enabled: !!activeChain.id,
+    enabled: !!DEFAULT_CHAIN.id,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
@@ -197,7 +196,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
                     validAttestations={validAttestations?.toString() ?? "0"}
                     invalidAttestations={invalidAttestations?.toString() ?? "0"}
                     logId={hotdog.logId.toString()}
-                    chainId={activeChain.id}
+                    chainId={DEFAULT_CHAIN.id}
                     onAttestationMade={() => void refetchDogData()}
                     onAttestationAffirmationRevoked={() => void refetchDogData()}
                   />

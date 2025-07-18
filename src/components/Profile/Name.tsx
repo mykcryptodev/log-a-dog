@@ -1,16 +1,15 @@
 import Link from "next/link";
-import { type FC, useContext, memo } from "react";
+import { type FC, memo } from "react";
 import { useActiveAccount } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { ProfileButton } from "./Button";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
+import { DEFAULT_CHAIN } from "~/constants";
 
 const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noLink }) => {
-  const { activeChain } = useContext(ActiveChainContext);
   const account = useActiveAccount();
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
-    chainId: activeChain.id,
+    chainId: DEFAULT_CHAIN.id,
     address,
     }, {
     enabled: !!address,

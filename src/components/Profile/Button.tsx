@@ -1,6 +1,5 @@
-import { useContext, type FC, useState, useMemo } from "react";
+import { type FC, useState, useMemo } from "react";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { api } from "~/utils/api";
 import { ProfileForm } from "~/components/Profile/Form";
 import Connect from "~/components/utils/Connect";
@@ -13,6 +12,7 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import SignInWithEthereum from "../utils/SignIn";
 import { SignInWithFarcaster } from "../utils/SignInWithFarcaster";
+import { DEFAULT_CHAIN } from "~/constants";
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
   { ssr: false }
@@ -30,7 +30,6 @@ type Props = {
   label?: string;
 }
 export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout, hideNameAndBadge, label }) => {
-  const { activeChain } = useContext(ActiveChainContext);
   const { data: sessionData } = useSession();
   const account = useActiveAccount();
   const wallet = useActiveWallet();
@@ -38,7 +37,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   const [createdProfileImgUrl, setCreatedProfileImgUrl] = useState<string>();
 
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
-    chainId: activeChain.id,
+    chainId: DEFAULT_CHAIN.id,
     address: account?.address ?? sessionData?.user?.address ?? "",
   }, {
     enabled: !!account?.address || !!sessionData?.user?.address,

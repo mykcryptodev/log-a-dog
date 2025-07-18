@@ -34,10 +34,13 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
+  console.log("🏠 Homepage render");
+  
   const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    console.log("🏠 Homepage useEffect - mounting");
     setMounted(true);
     setUserPrefersDarkMode(
       window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -48,6 +51,8 @@ export default function Home() {
     mounted && userPrefersDarkMode
       ? '/images/banner-dark.png'
       : '/images/banner.png';
+
+  console.log("🏠 Homepage state:", { mounted, userPrefersDarkMode, bannerSrc });
 
   return (
     <>

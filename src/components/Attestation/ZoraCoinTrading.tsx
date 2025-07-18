@@ -5,7 +5,6 @@ import { createPublicClient, createWalletClient, custom, http } from "viem";
 import { tradeCoin, type TradeParameters } from "@zoralabs/coins-sdk";
 import { parseEther } from "viem";
 import { base, baseSepolia } from "viem/chains";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { EIP1193, type Wallet } from "thirdweb/wallets";
 import { Portal } from "../utils/Portal";
@@ -15,6 +14,7 @@ import { useWalletBalance } from "thirdweb/react";
 import Link from "next/link";
 import Image from "next/image";
 import { api } from "~/utils/api";
+import { DEFAULT_CHAIN } from "~/constants";
 
 type Props = {
   referrer: string;
@@ -26,7 +26,6 @@ type Props = {
 export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, referrer: _referrer, onTradeComplete }) => {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
-  const { activeChain } = useContext(ActiveChainContext);
   const farcasterContext = useContext(FarcasterContext);
   const [isLoading, setIsLoading] = useState(false);
   const [buyAmount, setBuyAmount] = useState("0.0001");
@@ -42,13 +41,13 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   // Get ETH balance
   const { data: ethBalance } = useWalletBalance({
     client,
-    chain: activeChain,
+    chain: DEFAULT_CHAIN,
     address: account?.address,
   });
 
   const { data: tokenBalance } = useWalletBalance({
     client,
-    chain: activeChain,
+    chain: DEFAULT_CHAIN,
     address: account?.address,
     tokenAddress: _coinAddress,
   });
@@ -67,7 +66,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   const tokenBalanceFormatted = formatToMaxDecimals(tokenBalance?.displayValue, 6);
 
   const convertWalletToViem = (wallet: Wallet, accountAddress: string) => {
-    const currentChain = activeChain.id === base.id ? base : baseSepolia;
+    const currentChain = DEFAULT_CHAIN.id === base.id ? base : baseSepolia;
 
     // Set up viem clients
     const publicClient = createPublicClient({
@@ -78,7 +77,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
     const provider = EIP1193.toProvider({
       client,
       wallet,
-      chain: activeChain,
+      chain: DEFAULT_CHAIN,
     });
 
     const walletClient = createWalletClient({
@@ -124,7 +123,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
       // Invalidate cache after successful buy
       try {
         await invalidateZoraCoinCache.mutateAsync({
-          chainId: activeChain.id,
+          chainId: DEFAULT_CHAIN.id,
           coinAddress: _coinAddress,
         });
         onTradeComplete?.();
@@ -135,7 +134,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
 
       // Determine block explorer URL based on chain
       let explorerBaseUrl = "https://basescan.org/tx/";
-      if (activeChain.id === baseSepolia.id) {
+      if (DEFAULT_CHAIN.id === baseSepolia.id) {
         explorerBaseUrl = "https://sepolia.basescan.org/tx/";
       }
       const txHash = receipt?.transactionHash ?? receipt?.hash;
@@ -165,7 +164,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
         // Invalidate cache after opening swap
         try {
           await invalidateZoraCoinCache.mutateAsync({
-            chainId: activeChain.id,
+            chainId: DEFAULT_CHAIN.id,
             coinAddress: _coinAddress,
           });
           onTradeComplete?.();
@@ -216,7 +215,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
 
   //     // Determine block explorer URL based on chain
   //     let explorerBaseUrl = "https://basescan.org/tx/";
-  //     if (activeChain.id === baseSepolia.id) {
+  //     if (DEFAULT_CHAIN.id === baseSepolia.id) {
   //       explorerBaseUrl = "https://sepolia.basescan.org/tx/";
   //     }
   //     const txHash = receipt?.transactionHash ?? receipt?.hash;

@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { type FC } from "react";
-import { LOG_A_DOG } from "~/constants";
-import useActiveChain from "~/hooks/useActiveChain";
+import { DEFAULT_CHAIN, LOG_A_DOG } from "~/constants";
 
 export const Rules: FC = () => {
-  const { activeChain } = useActiveChain();
-
   return (
     <div className="flex flex-col gap-4 w-full max-w-xl">
       <div className="flex flex-col gap-2">
@@ -34,7 +31,7 @@ export const Rules: FC = () => {
               <li>Logging a dog records a transaction on the blockchain.</li>
               <li>Users make onchain attestations about your logs to prove truthfulness.</li>
               <li>There is an AI bot that will attest automatically based on what it sees in the image.</li>
-              <li>The blockchain is an open protocol that people can build on top of. Find the contract code <Link href={`https://basescan.org/address/${LOG_A_DOG[activeChain.id]}#code`} className="text-primary" target="_blank" rel="noreferrer">here</Link>.</li>
+              <li>The blockchain is an open protocol that people can build on top of. Find the contract code <Link href={`https://basescan.org/address/${LOG_A_DOG[DEFAULT_CHAIN.id]}#code`} className="text-primary" target="_blank" rel="noreferrer">here</Link>.</li>
             </ul>
           </div>
         </div>

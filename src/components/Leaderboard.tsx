@@ -1,6 +1,5 @@
 import {
   memo,
-  useContext,
   type FC,
   useState,
   useRef,
@@ -8,10 +7,10 @@ import {
   useMemo,
 } from "react";
 import { api } from "~/utils/api";
-import ActiveChainContext from "~/contexts/ActiveChain";
 import Link from "next/link";
 import { Name } from "./Profile/Name";
 import { Avatar } from "./Profile/Avatar";
+import { DEFAULT_CHAIN } from "~/constants";
 
 type Props = {
   attestors?: string[];
@@ -22,7 +21,6 @@ type Props = {
 
 const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
   const limitOrDefault = limit ?? 10;
-  const { activeChain } = useContext(ActiveChainContext);
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -30,7 +28,7 @@ const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
 
   const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery(
     {
-      chainId: activeChain.id,
+      chainId: DEFAULT_CHAIN.id,
       ...(startDate && { startDate: Math.floor(startDate.getTime() / 1000) }),
       ...(endDate && { endDate: Math.floor(endDate.getTime() / 1000) }),
     },
@@ -42,7 +40,7 @@ const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
 
   const { data: profiles } = api.profile.getManyByAddress.useQuery(
     {
-      chainId: activeChain.id,
+      chainId: DEFAULT_CHAIN.id,
       addresses: [...(leaderboard?.users ?? [])],
     },
     {
