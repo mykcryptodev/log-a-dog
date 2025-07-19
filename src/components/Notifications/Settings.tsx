@@ -1,6 +1,6 @@
 import { BellIcon, BellSlashIcon } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
-import { useCallback, useContext, useMemo, useState, useEffect, type FC } from "react";
+import { useCallback, useContext, useMemo, useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { api } from "~/utils/api";
@@ -72,14 +72,6 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
     return farcaster?.context?.client?.added ?? false;
   }, [farcaster?.context?.client?.added]);
 
-  // Update step based on mini app status
-  useEffect(() => {
-    if (hasAddedMiniApp) {
-      setCurrentStep(2);
-    } else {
-      setCurrentStep(1);
-    }
-  }, [hasAddedMiniApp]);
 
   const handleToggle = useCallback(async (checked: boolean) => {
     if (!userAddress || isSessionLoading) {

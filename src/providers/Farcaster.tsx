@@ -110,6 +110,10 @@ export const FarcasterProvider = ({
         const mini = await sdk.isInMiniApp();
         setIsMiniApp(mini);
         await sdk.actions.ready({});
+        if (sdk.wallet && !hasConnectedWallet) {
+          await connectWallet();
+          setHasConnectedWallet(true);
+        }
       } catch (err) {
         console.error("Failed to load SDK", err);
       }
@@ -118,14 +122,7 @@ export const FarcasterProvider = ({
       setIsSDKLoaded(true);
       void load();
     }
-  }, [isSDKLoaded]);
-
-  // Separate effect for wallet connection after context is loaded
-  useEffect(() => {
-    if (context && sdk.wallet && isSDKLoaded && !hasConnectedWallet) {
-      void connectWallet().then(() => setHasConnectedWallet(true));
-    }
-  }, [context, isSDKLoaded, connectWallet, hasConnectedWallet]);
+  }, [isSDKLoaded, connectWallet, hasConnectedWallet]);
 
   const value = useMemo(
     () => ({

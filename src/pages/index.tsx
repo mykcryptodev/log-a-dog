@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
-import { useState, useEffect } from "react";
+import React from "react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
@@ -34,20 +34,6 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
-  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    setUserPrefersDarkMode(
-      window.matchMedia("(prefers-color-scheme: dark)").matches,
-    );
-  }, []);
-
-  const bannerSrc =
-    mounted && userPrefersDarkMode
-      ? "/images/banner-dark.png"
-      : "/images/banner.png";
 
   return (
     <>
@@ -65,11 +51,20 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
           <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             <Image
-              src={bannerSrc}
+              src="/images/banner.png"
               alt="Log a Dog"
               width={500}
               height={500}
               priority
+              className="dark:hidden"
+            />
+            <Image
+              src="/images/banner-dark.png"
+              alt="Log a Dog"
+              width={500}
+              height={500}
+              priority
+              className="hidden dark:block"
             />
           </h1>
           <div className="-mt-8 flex items-center gap-2">

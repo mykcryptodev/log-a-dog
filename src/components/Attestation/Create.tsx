@@ -96,7 +96,14 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   // Query for dog event when we have a transaction hash
   const { data: dogEvent } = api.hotdog.getDogEventByTransactionHash.useQuery(
     { transactionHash: transactionHash! },
-    { enabled: !!transactionHash && isTransactionIdResolved }
+    {
+      enabled: !!transactionHash && isTransactionIdResolved,
+      onSuccess: () => {
+        if (transactionId) {
+          removePendingDog(transactionId);
+        }
+      },
+    }
   );
 
   // Show share dialog when dog event is loaded
@@ -107,12 +114,6 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
     }
   }, [isMiniApp, dogEvent, isTransactionIdResolved]);
 
-  // Remove the optimistic dog once the real data is available
-  useEffect(() => {
-    if (dogEvent && transactionId) {
-      removePendingDog(transactionId);
-    }
-  }, [dogEvent, transactionId, removePendingDog]);
 
   const handleOnResolved = (success: boolean) => {
     if (success && account && transactionId) {
