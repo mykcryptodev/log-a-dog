@@ -1,7 +1,13 @@
 import { CheckBadgeIcon, ExclamationTriangleIcon, XMarkIcon, FlagIcon } from "@heroicons/react/24/outline";
 import { type FC, useMemo, useState } from "react";
 
-export const Badge: FC<{ address: string, isKnownSpammer: boolean, isReportedForSpam: boolean, fid?: number, className?: string }> = ({ address, isKnownSpammer, isReportedForSpam, fid, className }) => {
+export const Badge: FC<{ 
+  address: string; 
+  isKnownSpammer?: boolean | null; 
+  isReportedForSpam?: boolean | null; 
+  fid?: number | null; 
+  className?: string;
+}> = ({ address, isKnownSpammer, isReportedForSpam, fid, className }) => {
   const spammerModalId = useMemo(() => `spammer-badge-${address.toLowerCase()}-${Math.random().toString(36).substring(2, 15)}`, [address]);
   const verifiedModalId = useMemo(() => `verified-badge-${address.toLowerCase()}-${Math.random().toString(36).substring(2, 15)}`, [address]);
   

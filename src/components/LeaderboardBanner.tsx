@@ -1,7 +1,7 @@
 import { type FC, useMemo, memo } from "react";
 import Link from "next/link";
 import { Avatar } from "./Profile/Avatar";
-import { UserBadge } from "./Profile/UserBadge";
+import { Badge } from "./Profile/Badge";
 import styles from "./LeaderboardBanner.module.css";
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import usePrefersReducedMotion from "~/hooks/usePrefersReducedMotion";
@@ -60,11 +60,11 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-medium">
                   {displayName}
                 </div>
-                <UserBadge 
+                <Badge 
+                  address={address}
                   fid={profile?.fid}
                   isKnownSpammer={profile?.isKnownSpammer}
                   isReportedForSpam={profile?.isReportedForSpam}
-                  size="sm"
                 />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
@@ -114,11 +114,11 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-medium">
                   {displayName}
                 </div>
-                <UserBadge 
+                <Badge 
+                  address={address}
                   fid={profile?.fid}
                   isKnownSpammer={profile?.isKnownSpammer}
                   isReportedForSpam={profile?.isReportedForSpam}
-                  size="sm"
                 />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
@@ -147,11 +147,11 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-medium">
                   {displayName}
                 </div>
-                <UserBadge 
+                <Badge 
+                  address={address}
                   fid={profile?.fid}
                   isKnownSpammer={profile?.isKnownSpammer}
                   isReportedForSpam={profile?.isReportedForSpam}
-                  size="sm"
                 />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
