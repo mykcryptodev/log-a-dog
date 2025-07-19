@@ -3,8 +3,8 @@ import { type FC, memo } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import { api } from "~/utils/api";
 import { ProfileButton } from "./Button";
-import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 import { DEFAULT_CHAIN } from "~/constants";
+import { Badge } from "./Badge";
 
 const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noLink }) => {
   const account = useActiveAccount();
@@ -48,13 +48,12 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
       <span>Unknown</span>
     );
   }
+
   
   const content = (
     <div className="flex items-center gap-1">
       <span>{profile.username}</span>
-      {userData?.fid && (
-        <CheckBadgeIcon className="w-4 h-4 text-primary" />
-      )}
+      <Badge isKnownSpammer={userData?.isKnownSpammer ?? false} fid={userData?.fid ?? undefined} address={address} />
     </div>
   );
 
