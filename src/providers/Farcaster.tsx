@@ -118,7 +118,7 @@ export const FarcasterProvider = ({
       setIsSDKLoaded(true);
       void load();
     }
-  }, [isSDKLoaded]);
+  }, [sdk, isSDKLoaded]);
 
   // Separate effect for wallet connection after context is loaded
   useEffect(() => {
