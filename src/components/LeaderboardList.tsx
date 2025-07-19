@@ -4,7 +4,6 @@ import { Avatar } from "./Profile/Avatar";
 // Removed Name import - using backend profile data instead
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import { useSession } from "next-auth/react";
-import RenderTracker from "~/components/debug/RenderTracker";
 
 export type LeaderboardListProps = {
   limit?: number;
@@ -12,6 +11,15 @@ export type LeaderboardListProps = {
   endDate?: Date;
   showCurrentUser?: boolean;
   height?: string;
+};
+
+type ProfileData = {
+  address: string;
+  name?: string | null;
+  username?: string | null;
+  fid?: number | null;
+  isKnownSpammer?: boolean | null;
+  isReportedForSpam?: boolean | null;
 };
 
 const LeaderboardListComponent: FC<LeaderboardListProps> = ({
@@ -28,39 +36,23 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
     endDate,
   });
 
-  // Memoize profile lookup map for better performance
+  // Memoize profile lookup map for better performance with proper typing
   const profileMap = useMemo(() => {
-    if (!leaderboard?.users || !profiles) return new Map();
+    if (!leaderboard?.users || !profiles) return new Map<string, ProfileData>();
     
-    const map = new Map<string, typeof profiles[0]>();
+    const map = new Map<string, ProfileData>();
     leaderboard.users.forEach((address, index) => {
       const profile = profiles[index];
       if (profile) {
-        map.set(address.toLowerCase(), profile);
+        map.set(address.toLowerCase(), profile as ProfileData);
       }
     });
     return map;
   }, [leaderboard?.users, profiles]);
 
-  const renderDependencies = {
-    leaderboard: !!leaderboard,
-    profiles: !!profiles,
-    limit,
-    sessionUserAddress: session?.user?.address,
-    startDate: startDate?.getTime(),
-    endDate: endDate?.getTime(),
-    showCurrentUser,
-    height,
-  };
-
   if (!leaderboard || !profiles)
     return (
-      <RenderTracker 
-        componentName="LeaderboardList" 
-        dependencies={renderDependencies}
-      >
-        <div className="w-full rounded-lg bg-base-200" style={{ height }} />
-      </RenderTracker>
+      <div className="w-full rounded-lg bg-base-200" style={{ height }} />
     );
 
   const addresses = leaderboard.users ?? [];
@@ -92,14 +84,10 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
   }
 
   return (
-    <RenderTracker 
-      componentName="LeaderboardList" 
-      dependencies={renderDependencies}
+    <div
+      className="w-full space-y-2 overflow-y-auto rounded-lg bg-base-200 bg-opacity-25 p-4 backdrop-blur-sm"
+      style={{ maxHeight: height }}
     >
-      <div
-        className="w-full space-y-2 overflow-y-auto rounded-lg bg-base-200 bg-opacity-25 p-4 backdrop-blur-sm"
-        style={{ maxHeight: height }}
-      >
       {currentUserRow && (
         <div className="flex items-center justify-between rounded-lg bg-base-200 bg-opacity-50 p-3">
           <Link
@@ -151,7 +139,6 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
         );
       })}
     </div>
-    </RenderTracker>
   );
 };
 

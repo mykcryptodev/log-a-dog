@@ -5,7 +5,6 @@ import { Badge } from "./Profile/Badge";
 import styles from "./LeaderboardBanner.module.css";
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import usePrefersReducedMotion from "~/hooks/usePrefersReducedMotion";
-import RenderTracker from "~/components/debug/RenderTracker";
 
 type Props = {
   startDate?: Date;
@@ -33,25 +32,11 @@ const LeaderboardBannerComponent: FC<Props> = ({
     return leaderboard?.hotdogs ?? [];
   }, [leaderboard?.hotdogs]);
 
-  const renderDependencies = {
-    leaderboard: !!leaderboard,
-    profiles: !!profiles,
-    usersLength: users.length,
-    hotdogsLength: hotdogs.length,
-    reduceMotion,
-    startDate: startDate?.getTime(),
-    endDate: endDate?.getTime(),
-    scrollSpeed,
-  };
+
 
   if (!leaderboard || !profiles)
     return (
-      <RenderTracker 
-        componentName="LeaderboardBanner" 
-        dependencies={renderDependencies}
-      >
-        <div className="h-20 w-full rounded-lg bg-base-200" />
-      </RenderTracker>
+      <div className="h-20 w-full rounded-lg bg-base-200" />
     );
 
   // On mobile or with reduced motion, show a static banner with top 5
@@ -60,11 +45,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
     const topHotdogs = hotdogs.slice(0, 5);
 
     return (
-      <RenderTracker 
-        componentName="LeaderboardBanner" 
-        dependencies={renderDependencies}
-      >
-        <div className="w-full overflow-x-auto bg-base-200 bg-opacity-25 backdrop-blur-sm">
+      <div className="w-full overflow-x-auto bg-base-200 bg-opacity-25 backdrop-blur-sm">
         <div className="flex items-center gap-4 whitespace-nowrap p-2">
           {topUsers.map((address, index) => {
             const hotdogCount = Number(topHotdogs[index]);
@@ -98,7 +79,6 @@ const LeaderboardBannerComponent: FC<Props> = ({
           })}
         </div>
       </div>
-      </RenderTracker>
     );
   }
 
@@ -108,11 +88,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
   const animationDuration = totalWidth / scrollSpeed;
 
   return (
-    <RenderTracker 
-      componentName="LeaderboardBanner" 
-      dependencies={renderDependencies}
-    >
-      <div className="w-full overflow-hidden bg-base-200 bg-opacity-25 backdrop-blur-sm">
+    <div className="w-full overflow-hidden bg-base-200 bg-opacity-25 backdrop-blur-sm">
       <div className="relative h-14 overflow-hidden py-2">
         <div
           className={`absolute flex items-center gap-6 whitespace-nowrap ${styles.scrollContainer}`}
@@ -191,7 +167,6 @@ const LeaderboardBannerComponent: FC<Props> = ({
         </div>
       </div>
     </div>
-    </RenderTracker>
   );
 };
 

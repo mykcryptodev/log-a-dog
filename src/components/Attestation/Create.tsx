@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { type FC, useContext, useState, useMemo, useEffect, memo, useRef } from 'react';
-import RenderTracker from '~/components/debug/RenderTracker';
 import { ConnectButton, TransactionButton, useActiveWallet } from "thirdweb/react";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
@@ -302,27 +301,10 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
     setDescription('');
   }
 
-  const renderDependencies = {
-    imgUri,
-    walletExists,
-    isDisabled,
-    accountAddress,
-    coinMetadataUri,
-    isLoading,
-    description,
-    payOwnGas,
-    transactionId,
-    isTransactionIdResolved,
-    stableWalletId: stableWallet?.id,
-    stableWalletExists: stableWallet?.exists,
-    accountIsConnected: account?.isConnected,
-  };
+
 
   return (
-    <RenderTracker 
-      componentName="CreateAttestation" 
-      dependencies={renderDependencies}
-    >
+    <>
       <canvas 
         className="fixed top-0 left-0 hidden" 
         id="confetti-canvas"
@@ -454,7 +436,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
           </div>
         </div>
       </dialog>
-    </RenderTracker>
+    </>
   )
 };
 export const CreateAttestation = memo(CreateAttestationComponent);
