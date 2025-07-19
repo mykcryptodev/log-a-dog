@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 type Props = {
   name: string;
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
 };
 
 export const RenderLogger = ({ name, props }: Props) => {
@@ -20,7 +20,9 @@ export const RenderLogger = ({ name, props }: Props) => {
       if (changedProps.length > 0) {
         console.log(`  📝 ${name} - Props changed:`, changedProps);
         changedProps.forEach(key => {
-          console.log(`    ${key}: ${prevProps.current![key]} -> ${props[key]}`);
+          const oldValue = prevProps.current![key];
+          const newValue = props[key];
+          console.log(`    ${key}: ${String(oldValue)} -> ${String(newValue)}`);
         });
       }
     }
