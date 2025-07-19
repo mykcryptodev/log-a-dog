@@ -70,15 +70,27 @@ const AttestationStatusBadge: FC<Props> = ({ attestationPeriod }) => {
 
   const statusInfo = getStatusExplanation();
 
+  // Determine CSS classes based on status
+  let badgeClasses = "badge text-xs capitalize flex items-center gap-1 cursor-pointer transition-colors ";
+  if (attestationPeriod?.status === 1) {
+    if (attestationPeriod.isValid) {
+      badgeClasses += "bg-success/10 text-success hover:bg-success/20";
+    } else {
+      badgeClasses += "bg-error/10 text-error hover:bg-error/20";
+    }
+  } else {
+    badgeClasses += "bg-neutral/10 text-neutral hover:bg-neutral/20";
+  }
+
   return (
     <>
       <label 
         htmlFor={modalId}
-        className="badge badge-neutral text-xs capitalize flex items-center gap-1 cursor-pointer hover:badge-ghost transition-colors"
+        className={badgeClasses}
       >
         {icon}
         {label}
-        <QuestionMarkCircleIcon className="w-3 h-3 opacity-60" />
+        <QuestionMarkCircleIcon className="w-3 h-3 stroke-2" />
       </label>
 
       <Portal>

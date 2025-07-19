@@ -2,8 +2,6 @@ import React from "react";
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
-import usePrefersDarkMode from "~/hooks/usePrefersDarkMode";
-import useMounted from "~/hooks/useMounted";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
@@ -36,14 +34,6 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
-  const mounted = useMounted();
-  const userPrefersDarkMode = usePrefersDarkMode();
-
-  const bannerSrc =
-    mounted && userPrefersDarkMode
-      ? "/images/banner-dark.png"
-      : "/images/banner.png";
-
   return (
     <>
       <Head>
