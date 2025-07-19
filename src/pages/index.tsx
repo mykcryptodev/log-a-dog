@@ -7,7 +7,7 @@ import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { APP_DESCRIPTION } from "~/constants";
 import Image from "next/image";
-import LeaderboardList from "~/components/LeaderboardList";
+// import LeaderboardList from "~/components/LeaderboardList";
 
 const miniAppMetadata = {
   version: "next",
@@ -77,7 +77,7 @@ export default function Home() {
           <CreateAttestation />
           <div className="w-full max-w-md">
             <h2 className="text-center text-2xl font-bold">Leaderboard</h2>
-            <LeaderboardList limit={10} />
+            {/* <LeaderboardList limit={10} /> */}
           </div>
           <div className="w-full max-w-md">
             <h2 className="text-center text-2xl font-bold">Logs</h2>
