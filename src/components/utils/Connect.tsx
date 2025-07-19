@@ -13,21 +13,20 @@ type Props = {
 
 export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const { data: sessionData, status } = useSession();
-  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
+  const userPrefersDarkMode =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
   const account = useActiveAccount();
   const sessionDataRef = useRef<typeof sessionData>(null);
   const statusRef = useRef<typeof status>('loading');
 
-  // Update refs when session data changes
-  useEffect(() => {
-    sessionDataRef.current = sessionData;
-    statusRef.current = status;
-  }, [sessionData, status]);
+  // Keep refs in sync without triggering effects
+  sessionDataRef.current = sessionData;
+  statusRef.current = status;
 
   useEffect(() => {
     setMounted(true);
-    setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, []);
 
   const cryptoWallets = [

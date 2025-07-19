@@ -16,17 +16,16 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
 
   useEffect(() => {
-    if (defaultOpen && !sessionData?.user && status !== 'loading') {
-      (document.getElementById(`sign_in_modal`) as HTMLDialogElement)?.showModal();
+    const dialog = document.getElementById(
+      `sign_in_modal`,
+    ) as HTMLDialogElement | null;
+
+    if (sessionData?.user) {
+      dialog?.close();
+    } else if (defaultOpen && status !== 'loading') {
+      dialog?.showModal();
     }
   }, [defaultOpen, sessionData?.user, status]);
-
-  // close the modal if the user is signed in
-  useEffect(() => {
-    if (sessionData?.user) {
-      (document.getElementById(`sign_in_modal`) as HTMLDialogElement)?.close();
-    }
-  }, [sessionData?.user]);
  
   const promptToSign = async () => {
     if (!account?.address) return;

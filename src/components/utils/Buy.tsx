@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, type FC } from "react";
+import { useContext, type FC } from "react";
 import { darkTheme, lightTheme, BuyWidget } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { Portal } from "./Portal";
@@ -9,10 +9,9 @@ import { FarcasterContext } from "~/providers/Farcaster";
 export const Buy: FC = () => {
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
-  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
-  useEffect(() => {
-    setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
-  }, []);
+  const userPrefersDarkMode =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   const handleMiniAppBuy = async () => {
     if (!farcaster?.context) return;

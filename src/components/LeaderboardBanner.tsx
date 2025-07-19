@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState, useMemo, memo } from "react";
+import { type FC, useMemo, memo } from "react";
 import Link from "next/link";
 import { Name } from "./Profile/Name";
 import { Avatar } from "./Profile/Avatar";
@@ -16,13 +16,9 @@ const LeaderboardBannerComponent: FC<Props> = ({
   endDate,
   scrollSpeed = 50,
 }) => {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    // Check if user prefers reduced motion
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduceMotion(mediaQuery.matches);
-  }, []);
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const { leaderboard, profiles } = useLeaderboardData({
     startDate,

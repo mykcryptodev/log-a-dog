@@ -79,16 +79,12 @@ type Props = {
 export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
   const [start, setStart] = useState<number>(0);
-  const [isClient, setIsClient] = useState(false);
+  const isClient = typeof window !== 'undefined';
   const [isPaginating, setIsPaginating] = useState(false);
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fix hydration mismatch by only rendering dynamic content on client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const queryParams = {
     chainId: DEFAULT_CHAIN.id,

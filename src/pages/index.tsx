@@ -34,20 +34,18 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
-  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    setUserPrefersDarkMode(
-      window.matchMedia("(prefers-color-scheme: dark)").matches,
-    );
   }, []);
 
+  const prefersDark =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+
   const bannerSrc =
-    mounted && userPrefersDarkMode
-      ? "/images/banner-dark.png"
-      : "/images/banner.png";
+    mounted && prefersDark ? "/images/banner-dark.png" : "/images/banner.png";
 
   return (
     <>
