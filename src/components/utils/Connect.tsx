@@ -18,12 +18,18 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const account = useActiveAccount();
   const sessionDataRef = useRef<typeof sessionData>(null);
   const statusRef = useRef<typeof status>('loading');
+  const [signInAttempted, setSignInAttempted] = useState(false);
 
   // Update refs when session data changes
   useEffect(() => {
     sessionDataRef.current = sessionData;
     statusRef.current = status;
   }, [sessionData, status]);
+
+  // Reset sign-in attempt when account changes
+  useEffect(() => {
+    setSignInAttempted(false);
+  }, [account?.address]);
 
   useEffect(() => {
     setMounted(true);
@@ -68,10 +74,12 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const silentlySignIn = useCallback(async (wallet: Wallet) => {
     console.log('silentlySignIn', wallet, sessionDataRef.current?.user?.id);
     // Check session state using refs to avoid dependency issues
-    if ((sessionDataRef.current?.user?.id ?? false) || statusRef.current === 'loading') {
+    if (signInAttempted || (sessionDataRef.current?.user?.id ?? false) || statusRef.current === 'loading') {
       console.log('signed in or is signing in...')
       return;
     }
+
+    setSignInAttempted(true);
     
     // Check if there's already a session for this wallet address
     if (sessionDataRef.current?.user?.address && wallet.getAccount()) {
