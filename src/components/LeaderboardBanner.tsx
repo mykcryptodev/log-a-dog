@@ -1,9 +1,10 @@
-import { type FC, useEffect, useState, useMemo, memo } from "react";
+import { type FC, useMemo, memo } from "react";
 import Link from "next/link";
 import { Name } from "./Profile/Name";
 import { Avatar } from "./Profile/Avatar";
 import styles from "./LeaderboardBanner.module.css";
 import useLeaderboardData from "~/hooks/useLeaderboardData";
+import usePrefersReducedMotion from "~/hooks/usePrefersReducedMotion";
 
 type Props = {
   startDate?: Date;
@@ -16,13 +17,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
   endDate,
   scrollSpeed = 50,
 }) => {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    // Check if user prefers reduced motion
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduceMotion(mediaQuery.matches);
-  }, []);
+  const reduceMotion = usePrefersReducedMotion();
 
   const { leaderboard, profiles } = useLeaderboardData({
     startDate,
@@ -32,7 +27,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
   const users = useMemo(() => {
     return leaderboard?.users ?? [];
   }, [leaderboard?.users]);
-  
+
   const hotdogs = useMemo(() => {
     return leaderboard?.hotdogs ?? [];
   }, [leaderboard?.hotdogs]);
