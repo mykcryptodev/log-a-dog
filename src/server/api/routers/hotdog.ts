@@ -116,12 +116,16 @@ interface ProcessedHotdog {
     username?: string | null;
     image?: string | null;
     fid?: number | null;
+    isKnownSpammer?: boolean | null;
+    isReportedForSpam?: boolean | null;
   } | null;
   loggerProfile?: {
     name?: string | null;
     username?: string | null;
     image?: string | null;
     fid?: number | null;
+    isKnownSpammer?: boolean | null;
+    isReportedForSpam?: boolean | null;
   } | null;
 }
 
@@ -508,6 +512,8 @@ export const hotdogRouter = createTRPCRouter({
             name: true,
             image: true,
             fid: true,
+            isKnownSpammer: true,
+            isReportedForSpam: true,
           },
         })
       ]); 
@@ -525,6 +531,8 @@ export const hotdogRouter = createTRPCRouter({
             name: profile.name,
             image: profile.image,
             fid: profile.fid,
+            isKnownSpammer: profile.isKnownSpammer,
+            isReportedForSpam: profile.isReportedForSpam,
           }
         ])
       );
@@ -874,6 +882,8 @@ export const hotdogRouter = createTRPCRouter({
           username?: string | null; 
           image?: string | null;
           fid?: number | null;
+          isKnownSpammer?: boolean | null;
+          isReportedForSpam?: boolean | null;
         }>
       }>(cacheKey);
 
@@ -900,6 +910,8 @@ export const hotdogRouter = createTRPCRouter({
             username: l.username,
             image: l.image,
             fid: l.fid,
+            isKnownSpammer: l.isKnownSpammer,
+            isReportedForSpam: l.isReportedForSpam,
           })),
         };
 

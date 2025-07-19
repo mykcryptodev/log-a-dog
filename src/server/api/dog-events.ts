@@ -138,15 +138,17 @@ export async function getDogEventLeaderboard(options?: {
       username: true,
       name: true,
       image: true,
+      isKnownSpammer: true,
+      isReportedForSpam: true,
     },
   });
 
   // Create a map of address to user data and FID
   const addressToFid = new Map<string, number>();
-  const addressToUser = new Map<string, { username?: string | null; name?: string | null; image?: string | null; fid?: number | null }>();
+  const addressToUser = new Map<string, { username?: string | null; name?: string | null; image?: string | null; fid?: number | null; isKnownSpammer?: boolean | null; isReportedForSpam?: boolean | null }>();
   const fidToAddresses = new Map<number, Set<string>>();
   
-  users.forEach((user: { address: string | null; fid: number | null; username?: string | null; name?: string | null; image?: string | null }) => {
+  users.forEach((user: { address: string | null; fid: number | null; username?: string | null; name?: string | null; image?: string | null; isKnownSpammer?: boolean | null; isReportedForSpam?: boolean | null }) => {
     if (user.address) {
       const addressLower = user.address.toLowerCase();
       addressToUser.set(addressLower, {
@@ -154,6 +156,8 @@ export async function getDogEventLeaderboard(options?: {
         name: user.name,
         image: user.image,
         fid: user.fid,
+        isKnownSpammer: user.isKnownSpammer,
+        isReportedForSpam: user.isReportedForSpam,
       });
       
       if (user.fid) {
@@ -167,7 +171,7 @@ export async function getDogEventLeaderboard(options?: {
   });
 
   // Group events by FID (or address if no FID)
-  const groupedCounts = new Map<string, { count: number; addresses: string[]; fid?: number; userData?: { username?: string | null; name?: string | null; image?: string | null; fid?: number | null } }>();
+  const groupedCounts = new Map<string, { count: number; addresses: string[]; fid?: number; userData?: { username?: string | null; name?: string | null; image?: string | null; fid?: number | null; isKnownSpammer?: boolean | null; isReportedForSpam?: boolean | null } }>();
 
   dogEvents.forEach((event: { eater: string }) => {
     const eaterLower = event.eater.toLowerCase();
@@ -207,6 +211,8 @@ export async function getDogEventLeaderboard(options?: {
       name: data.userData?.name,
       username: data.userData?.username,
       image: data.userData?.image,
+      isKnownSpammer: data.userData?.isKnownSpammer,
+      isReportedForSpam: data.userData?.isReportedForSpam,
     }))
     .sort((a, b) => b.count - a.count);
 

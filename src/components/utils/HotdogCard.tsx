@@ -8,6 +8,7 @@ import {
 import { isAddressEqual } from "viem";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { Avatar } from "~/components/Profile/Avatar";
+import { UserBadge } from "~/components/Profile/UserBadge";
 // Removed Name import - using backend profile data instead
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
@@ -77,12 +78,16 @@ type HotdogData = {
     username?: string | null;
     image?: string | null;
     fid?: number | null;
+    isKnownSpammer?: boolean | null;
+    isReportedForSpam?: boolean | null;
   } | null;
   loggerProfile?: {
     name?: string | null;
     username?: string | null;
     image?: string | null;
     fid?: number | null;
+    isKnownSpammer?: boolean | null;
+    isReportedForSpam?: boolean | null;
   } | null;
 };
 
@@ -211,6 +216,12 @@ export const HotdogCard: FC<Props> = ({
             <div className="flex w-fit items-center gap-2">
               <Avatar address={hotdog.eater} fallbackSize={24} />
               <span className="text-sm font-medium">{displayName}</span>
+              <UserBadge 
+                fid={hotdog.eaterProfile?.fid}
+                isKnownSpammer={hotdog.eaterProfile?.isKnownSpammer}
+                isReportedForSpam={hotdog.eaterProfile?.isReportedForSpam}
+                size="sm"
+              />
             </div>
             <div className="flex flex-col">
               {showLoggedVia({
@@ -221,6 +232,12 @@ export const HotdogCard: FC<Props> = ({
                   <span>via</span>
                   <Avatar address={hotdog.logger} size="16px" />
                   <span>{loggerDisplayName}</span>
+                  <UserBadge 
+                    fid={hotdog.loggerProfile?.fid}
+                    isKnownSpammer={hotdog.loggerProfile?.isKnownSpammer}
+                    isReportedForSpam={hotdog.loggerProfile?.isReportedForSpam}
+                    size="sm"
+                  />
                 </div>
               )}
             </div>
