@@ -69,8 +69,10 @@ export const FarcasterProvider = ({
         // return the wallet to the app context
         return wallet;
       });
+      return true;
     } catch (err) {
       console.error("Failed to connect wallet", err);
+      return false;
     }
   }, [connect]);
 
@@ -123,7 +125,14 @@ export const FarcasterProvider = ({
   // Separate effect for wallet connection after context is loaded
   useEffect(() => {
     if (context && sdk.wallet && isSDKLoaded && !hasConnectedWallet) {
-      void connectWallet().then(() => setHasConnectedWallet(true));
+      const attemptConnect = async () => {
+        const success = await connectWallet();
+        if (!success) {
+          console.warn("Wallet connection failed, disabling further attempts");
+        }
+        setHasConnectedWallet(true);
+      };
+      void attemptConnect();
     }
   }, [context, isSDKLoaded, connectWallet, hasConnectedWallet]);
 
