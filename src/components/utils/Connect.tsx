@@ -143,7 +143,8 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
         getLoginPayload: async ({ address }) =>
           createPayload({ address }),
         doLogout: async () => {
-          await signOut();
+          // Avoid redirect loops by disabling the default signOut redirect
+          await signOut({ redirect: false });
         },
       }}
       connectModal={{
