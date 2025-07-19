@@ -75,7 +75,7 @@ export default function Home() {
               wtf?
             </Link>
           </div>
-          {/* <CreateAttestation /> */}
+          <CreateAttestation />
           {/* <div className="w-full max-w-md">
             <h2 className="text-center text-2xl font-bold">Leaderboard</h2>
             <LeaderboardList limit={10} />
@@ -85,8 +85,8 @@ export default function Home() {
             <ListAttestations limit={10} />
           </div> */}
           <div className="text-center p-4 bg-yellow-100 rounded-lg">
-            <p>Components temporarily disabled for debugging</p>
-            <p>Testing if basic homepage renders without infinite loops</p>
+            <p>Testing CreateAttestation component only</p>
+            <p>Check if this causes infinite re-renders after wallet connection</p>
           </div>
         </div>
       </main>
