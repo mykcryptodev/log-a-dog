@@ -3,7 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
 import { CreateAttestation } from "~/components/Attestation/Create";
-import { ListAttestations } from "~/components/Attestation/List";
+// import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { APP_DESCRIPTION } from "~/constants";
 import Image from "next/image";
@@ -81,7 +81,7 @@ export default function Home() {
           </div>
           <div className="w-full max-w-md">
             <h2 className="text-center text-2xl font-bold">Logs</h2>
-            <ListAttestations limit={10} />
+            {/* <ListAttestations limit={10} /> */}
           </div>
         </div>
       </main>
