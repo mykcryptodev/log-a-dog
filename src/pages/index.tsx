@@ -46,7 +46,8 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
-        <LeaderboardBanner />
+        {/* Temporarily disable heavy components to isolate re-render source */}
+        {/* <LeaderboardBanner /> */}
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
           <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             <Image
@@ -74,14 +75,18 @@ export default function Home() {
               wtf?
             </Link>
           </div>
-          <CreateAttestation />
-          <div className="w-full max-w-md">
+          {/* <CreateAttestation /> */}
+          {/* <div className="w-full max-w-md">
             <h2 className="text-center text-2xl font-bold">Leaderboard</h2>
             <LeaderboardList limit={10} />
           </div>
           <div className="w-full max-w-md">
             <h2 className="text-center text-2xl font-bold">Logs</h2>
             <ListAttestations limit={10} />
+          </div> */}
+          <div className="text-center p-4 bg-yellow-100 rounded-lg">
+            <p>Components temporarily disabled for debugging</p>
+            <p>Testing if basic homepage renders without infinite loops</p>
           </div>
         </div>
       </main>
