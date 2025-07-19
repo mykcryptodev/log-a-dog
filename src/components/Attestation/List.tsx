@@ -128,13 +128,13 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   }, [clearExpiredPending, isClient]);
 
   // Smart deduplication: only filter out optimistic data when real data with same logId exists
-  const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);
-  const filteredPendingDogs = pendingDogs.filter(pending => {
-    const hasRealData = realLogIds.has(pending.logId);
-    if (hasRealData) {
-    }
-    return !hasRealData;
-  });
+  const filteredPendingDogs = useMemo(() => {
+    const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);
+    return pendingDogs.filter(pending => {
+      const hasRealData = realLogIds.has(pending.logId);
+      return !hasRealData;
+    });
+  }, [dogData?.hotdogs, pendingDogs]);
 
   const allHotdogs: HotdogItem[] = useMemo(() => {
     return dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
