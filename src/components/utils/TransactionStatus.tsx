@@ -84,7 +84,6 @@ export const TransactionStatus: FC<Props> = ({
   useEffect(() => {
     if (!data || resolvedRef.current) return;
     const status = data.status;
-    console.log({ data, status });
 
     switch (status) {
       case "CONFIRMED":

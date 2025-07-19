@@ -66,10 +66,8 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   }, [message]);
 
   const silentlySignIn = useCallback(async (wallet: Wallet) => {
-    console.log('silentlySignIn', wallet, sessionDataRef.current?.user?.id);
     // Check session state using refs to avoid dependency issues
     if ((sessionDataRef.current?.user?.id ?? false) || statusRef.current === 'loading') {
-      console.log('signed in or is signing in...')
       return;
     }
     
@@ -78,13 +76,11 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       const walletAddress = wallet.getAccount()!.address.toLowerCase();
       const sessionAddress = sessionDataRef.current.user.address.toLowerCase();
       if (walletAddress === sessionAddress) {
-        console.log('Session already exists for this wallet address');
         return;
       }
     }
     
     if (wallet.id !== 'inApp') {
-      console.log('not an inApp wallet')
       return;
     }
     try {
@@ -125,8 +121,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
         className: "!btn !min-w-fit",
       }}
       onConnect={(wallet) => {
-        console.log('Wallet connected:', wallet);
-        console.log('Wallet account:', wallet.getAccount());
         void silentlySignIn(wallet);
       }}
       auth={{
@@ -149,7 +143,6 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
         getLoginPayload: async ({ address }) =>
           createPayload({ address }),
         doLogout: async () => {
-          console.log("logging out!");
           await signOut();
         },
       }}

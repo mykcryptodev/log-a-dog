@@ -14,7 +14,6 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
   const { data: sessionData, status } = useSession();
   const account = useActiveAccount();
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
-  console.log({ sessionData });
 
   useEffect(() => {
     if (defaultOpen && !sessionData?.user && status !== 'loading') {
@@ -30,13 +29,11 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
   }, [sessionData?.user]);
  
   const promptToSign = async () => {
-    console.log('promptToSign', account);
     if (!account?.address) return;
     setIsSigningIn(true);
     
     try {
       const nonce = await getCsrfToken();
-      console.log('Got nonce:', nonce);
 
       const message = new SiweMessage({
         domain: document.location.host,
@@ -49,7 +46,6 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
       }).prepareMessage();
 
       const signature = await signMessage({ message, account });
-      console.log('Got signature:', signature);
 
       const response = await signIn("ethereum", {
         message,
@@ -58,7 +54,6 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
         redirect: false,
       });
 
-      console.log('Sign in response:', response);
 
       if (response?.error) {
         throw new Error(response.error);

@@ -37,7 +37,6 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
     refetchOnMount: false,
   });
 
-  console.log({ dogData })
 
   useEffect(() => {
     // Only refetch if account actually changed and we haven't already refetched for this account

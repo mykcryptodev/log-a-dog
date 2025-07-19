@@ -96,7 +96,6 @@ export const JudgeAttestation: FC<Props> = ({
     }
 
     try {
-      console.log({ logId })
       await judgeMutation.mutateAsync({
         chainId,
         logId,

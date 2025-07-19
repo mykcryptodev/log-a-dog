@@ -78,7 +78,6 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   // Memoize the profile saved callback to prevent unnecessary re-renders
   const handleProfileSaved = useCallback((profile: { username: string; imgUrl: string; metadata?: string }) => {
     void refetch();
-    console.log("refetching profile", profile);
     onProfileCreated?.(profile);
     setCreatedProfileImgUrl(profile.imgUrl);
   }, [refetch, onProfileCreated]);
