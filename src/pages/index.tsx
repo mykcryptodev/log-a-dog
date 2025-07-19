@@ -46,8 +46,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
-        {/* Temporarily disable heavy components to isolate re-render source */}
-        {/* <LeaderboardBanner /> */}
+        <LeaderboardBanner />
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
           <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             <Image
@@ -85,8 +84,8 @@ export default function Home() {
             <ListAttestations limit={10} />
           </div> */}
           <div className="text-center p-4 bg-yellow-100 rounded-lg">
-            <p>Testing CreateAttestation + LeaderboardList</p>
-            <p>Check if LeaderboardList causes infinite re-renders after wallet connection</p>
+            <p>Testing CreateAttestation + LeaderboardList + LeaderboardBanner</p>
+            <p>Check if LeaderboardBanner causes infinite re-renders after wallet connection</p>
           </div>
         </div>
       </main>
