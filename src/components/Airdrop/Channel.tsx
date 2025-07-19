@@ -44,7 +44,6 @@ export const AirdropChannel = () => {
 
     setIsCheckingEligibility(true);
     try {
-      console.log("🔍 Checking eligibility for address:", account.address);
       
       // Debug the merkle tree (optional)
       await debugOfficialMerkleTree(AIRDROP_CSV_DATA);
@@ -56,9 +55,7 @@ export const AirdropChannel = () => {
       setUserAmount(isEligible ? amount : 0);
       
       if (isEligible) {
-        console.log("✅ User is eligible for", amount, "tokens");
       } else {
-        console.log("❌ User is not eligible for airdrop");
       }
     } catch (error) {
       console.error("❌ Error checking eligibility:", error);
@@ -114,11 +111,6 @@ export const AirdropChannel = () => {
             client,
           });
 
-          console.log("📤 Claiming with thirdweb's official claimERC20:", {
-            recipient: account.address,
-            tokenAddress: HOTDOG_TOKEN[DEFAULT_CHAIN.id],
-            amount: userAmount,
-          });
 
           // Use thirdweb's official claimERC20 function
           // This automatically fetches proofs from the contract metadata

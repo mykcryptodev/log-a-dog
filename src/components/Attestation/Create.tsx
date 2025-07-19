@@ -120,7 +120,6 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
       // Let it be naturally filtered out when real data appears
 
       // Just do a gentle invalidation - no forced refetch
-      console.log('🔄 Transaction resolved, gentle cache invalidation');
       void Promise.all([
         utils.hotdog.getAll.invalidate(),
         utils.hotdog.getAllForUser.invalidate(),
@@ -240,7 +239,6 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   };
 
   const getTx = useMemo(() => {
-    console.log({ coinMetadataUri, imgUri, account });
     return async () => {
       if (!imgUri) {
         toast.error("Please upload an image to log a dog");

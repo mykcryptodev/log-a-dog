@@ -143,7 +143,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const filteredPendingDogs = pendingDogs.filter(pending => {
     const hasRealData = realLogIds.has(pending.logId);
     if (hasRealData) {
-      console.log(`🔄 Filtering out optimistic dog ${pending.logId} - real data found`);
     }
     return !hasRealData;
   });

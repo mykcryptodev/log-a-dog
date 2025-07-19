@@ -61,7 +61,6 @@ export const Upload: FC<UploadProps> = ({
     reader.readAsDataURL(file);
     const base64Image = await new Promise<string>((resolve) => {
       reader.onload = () => {
-        console.log({ image: reader.result });
         resolve(reader.result as string);
       };
     });
@@ -78,7 +77,6 @@ export const Upload: FC<UploadProps> = ({
   
     const maxSize = 0.5 * 1024 * 1024; // .5MB in bytes
     const isHeic = file.type === 'image/heic' || file.type === 'image/heif';
-    console.log({ isHeic, file });
   
     let imageFile = file;
   
@@ -93,7 +91,6 @@ export const Upload: FC<UploadProps> = ({
     const img = document.createElement('img');
     const canvas = document.createElement('canvas');
     const src = URL.createObjectURL(imageFile);
-    console.log({ src });
     img.src = src;
   
     await new Promise((resolve) => {
@@ -104,7 +101,6 @@ export const Upload: FC<UploadProps> = ({
     let resizedFile = imageFile;
   
     do {
-      console.log('resizing at quality: ', quality);
       const ctx = canvas.getContext('2d');
       const width = img.width * quality;
       const height = img.height * quality;
