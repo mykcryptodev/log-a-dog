@@ -2,8 +2,6 @@ import React from "react";
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
-import usePrefersDarkMode from "~/hooks/usePrefersDarkMode";
-import useMounted from "~/hooks/useMounted";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
