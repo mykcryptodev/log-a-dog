@@ -69,9 +69,10 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
     return () => clearTimeout(timeoutId);
   }, [description, imgUri]);
 
+  const walletExists = !!wallet;
   const isDisabled = useMemo(() => {
-    return !imgUri || !wallet || isLoading;
-  }, [imgUri, isLoading, wallet]);
+    return !imgUri || !walletExists || isLoading;
+  }, [imgUri, isLoading, walletExists]);
 
   const account = useActiveAccount();
   const farcaster = useContext(FarcasterContext);
@@ -239,6 +240,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
     }
   };
 
+  const accountAddress = account?.address;
   const getTx = useMemo(() => {
     return async () => {
       if (!imgUri) {
@@ -246,7 +248,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
         throw new Error("No image uploaded");
       }
       
-      if (!account || !coinMetadataUri) {
+      if (!accountAddress || !coinMetadataUri) {
         toast.error("Please connect your wallet");
         throw new Error("No wallet connected");
       }
@@ -261,12 +263,12 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
         }),
         imageUri: imgUri!,
         metadataUri: '',
-        eater: account.address,
+        eater: accountAddress,
         coinUri: coinMetadataUri,
         poolConfig,
       });
     };
-  }, [imgUri, account, coinMetadataUri]);
+  }, [imgUri, accountAddress, coinMetadataUri]);
 
   const handleOnSuccess = () => {
     // pop confetti immediately for dopamine hit
