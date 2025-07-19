@@ -111,6 +111,18 @@ interface ProcessedHotdog {
     isValid: boolean;
   };
   duplicateOfLogId?: string | null;
+  eaterProfile?: {
+    username?: string | null;
+    name?: string | null;
+    image?: string | null;
+    fid?: number | null;
+  } | null;
+  loggerProfile?: {
+    username?: string | null;
+    name?: string | null;
+    image?: string | null;
+    fid?: number | null;
+  } | null;
 }
 
 interface GetAllResponse {
@@ -470,25 +482,61 @@ export const hotdogRouter = createTRPCRouter({
         }
       }
 
-      // Fetch all Zora coin details and metadata in parallel
-      const [zoraCoinDetails, metadataResults] = await Promise.all([
+      // Collect unique eater and logger addresses for profile fetching
+      const uniqueAddresses = new Set<string>();
+      processedResponse.logs.forEach(log => {
+        uniqueAddresses.add(log.eater.toLowerCase());
+        uniqueAddresses.add(log.logger.toLowerCase());
+      });
+      const addressesArray = [...uniqueAddresses];
+
+      // Fetch all Zora coin details, metadata, and profiles in parallel
+      const [zoraCoinDetails, metadataResults, profiles] = await Promise.all([
         zoraCoinAddressesArray.length > 0
           ? getZoraCoinDetailsBatch(zoraCoinAddressesArray, chainId)
           : new Map<string, ZoraCoinDetails>(),
-        Promise.all(metadataUrisArray.map(uri => getMetadataFromUri(uri)))
+        Promise.all(metadataUrisArray.map(uri => getMetadataFromUri(uri))),
+        db.user.findMany({
+          where: {
+            address: {
+              in: addressesArray,
+            },
+          },
+          select: {
+            address: true,
+            username: true,
+            name: true,
+            image: true,
+            fid: true,
+          },
+        })
       ]); 
 
       // Create maps for the fetched data
       const metadataMap = new Map(
         metadataUrisArray.map((uri, index) => [uri, metadataResults[index]])
       );
+      
+      const profileMap = new Map(
+        profiles.map(profile => [
+          profile.address?.toLowerCase() ?? '',
+          {
+            username: profile.username,
+            name: profile.name,
+            image: profile.image,
+            fid: profile.fid,
+          }
+        ])
+      );
 
-      // Process logs with both Zora coin details and metadata
+      // Process logs with Zora coin details, metadata, and profile data
       const processedHotdogs = processedResponse.logs.map(log => {
         const zoraCoin = zoraCoinDetails.get(log.zoraCoin.toLowerCase()) ?? null;
         const metadata = metadataMap.get(log.metadataUri.toLowerCase()) ?? null;
         const attestationPeriod = attestationPeriods.get(log.logId);
         const duplicateOfLogId = duplicateOfMap.get(log.logId) ?? null;
+        const eaterProfile = profileMap.get(log.eater.toLowerCase()) ?? null;
+        const loggerProfile = profileMap.get(log.logger.toLowerCase()) ?? null;
 
         return {
           ...log,
@@ -496,6 +544,8 @@ export const hotdogRouter = createTRPCRouter({
           metadata,
           attestationPeriod,
           duplicateOfLogId,
+          eaterProfile,
+          loggerProfile,
         } as ProcessedHotdog;
       });
 

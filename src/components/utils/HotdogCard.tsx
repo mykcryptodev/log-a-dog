@@ -8,7 +8,7 @@ import {
 import { isAddressEqual } from "viem";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { Avatar } from "~/components/Profile/Avatar";
-import Name from "~/components/Profile/Name";
+// Removed Name import - using backend profile data instead
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
 import Comments from "~/components/Attestation/Comments";
@@ -21,7 +21,7 @@ import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import { env } from "~/env";
 import Image from "next/image";
 import { sdk } from "@farcaster/frame-sdk";
-import { api } from "~/utils/api";
+// Removed api import - using backend profile data instead
 import { FarcasterContext } from "~/providers/Farcaster";
 
 // Types
@@ -72,6 +72,18 @@ type HotdogData = {
   attestationPeriod?: AttestationPeriod;
   isPending?: boolean;
   duplicateOfLogId?: string | null;
+  eaterProfile?: {
+    username?: string | null;
+    name?: string | null;
+    image?: string | null;
+    fid?: number | null;
+  } | null;
+  loggerProfile?: {
+    username?: string | null;
+    name?: string | null;
+    image?: string | null;
+    fid?: number | null;
+  } | null;
 };
 
 type Props = {
@@ -120,21 +132,15 @@ export const HotdogCard: FC<Props> = ({
     );
   };
 
-  const { data: eaterProfile } = api.profile.getByAddress.useQuery(
-    {
-      chainId,
-      address: hotdog.eater,
-    },
-    {
-      enabled: !!hotdog.eater && !!chainId,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-    },
-  );
-
   const displayName =
-    eaterProfile?.username ??
+    hotdog.eaterProfile?.username ??
+    hotdog.eaterProfile?.name ??
     `${hotdog.eater.slice(0, 6)}...${hotdog.eater.slice(-4)}`;
+
+  const loggerDisplayName =
+    hotdog.loggerProfile?.username ??
+    hotdog.loggerProfile?.name ??
+    `${hotdog.logger.slice(0, 6)}...${hotdog.logger.slice(-4)}`;
 
   const isExpired =
     Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <=
@@ -204,7 +210,7 @@ export const HotdogCard: FC<Props> = ({
           <div className="flex flex-col items-start">
             <div className="flex w-fit items-center gap-2">
               <Avatar address={hotdog.eater} fallbackSize={24} />
-              <Name address={hotdog.eater} />
+              <span className="text-sm font-medium">{displayName}</span>
             </div>
             <div className="flex flex-col">
               {showLoggedVia({
@@ -214,7 +220,7 @@ export const HotdogCard: FC<Props> = ({
                 <div className="flex items-center gap-1 text-xs opacity-75">
                   <span>via</span>
                   <Avatar address={hotdog.logger} size="16px" />
-                  <Name address={hotdog.logger} />
+                  <span>{loggerDisplayName}</span>
                 </div>
               )}
             </div>
