@@ -1,7 +1,7 @@
 import { type FC, memo } from "react";
 import Link from "next/link";
 import { Avatar } from "./Profile/Avatar";
-import { Name } from "./Profile/Name";
+// Removed Name import - using backend profile data instead
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import { useSession } from "next-auth/react";
 
@@ -74,7 +74,9 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
             </div>
             <Avatar size="32px" address={currentUserRow.address} />
             <div className="font-medium">
-              <Name address={currentUserRow.address} noLink />
+              {profiles.find(p => p.address === currentUserRow.address.toLowerCase())?.name ?? 
+               profiles.find(p => p.address === currentUserRow.address.toLowerCase())?.username ??
+               `${currentUserRow.address.slice(0, 6)}...${currentUserRow.address.slice(-4)}`}
             </div>
           </Link>
           <div className="flex items-center gap-2">
@@ -86,6 +88,10 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
       {displayUsers.map((address, idx) => {
         const hotdogCount = Number(displayHotdogs[idx]);
         const rank = addresses.indexOf(address) + 1;
+        const profileIndex = addresses.indexOf(address);
+        const profile = profiles[profileIndex];
+        const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+        
         return (
           <div
             key={address}
@@ -98,7 +104,7 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
               <div className="text-lg font-bold text-secondary">#{rank}</div>
               <Avatar size="32px" address={address} />
               <div className="font-medium">
-                <Name address={address} noLink />
+                {displayName}
               </div>
             </Link>
             <div className="flex items-center gap-2">

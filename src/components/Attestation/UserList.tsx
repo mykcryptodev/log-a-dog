@@ -4,7 +4,7 @@ import { useActiveAccount } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
-import Name from "~/components/Profile/Name";
+// Removed Name import - using backend profile data instead
 import JudgeAttestation from "~/components/Attestation/Judge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
@@ -143,7 +143,11 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
               <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
                   <Avatar address={hotdog.eater} />
-                  <Name address={hotdog.eater} />
+                  <span className="font-medium">
+                    {hotdog.eaterProfile?.name ?? 
+                     hotdog.eaterProfile?.username ?? 
+                     `${hotdog.eater.slice(0, 6)}...${hotdog.eater.slice(-4)}`}
+                  </span>
                 </div>
                 <Revoke 
                   hotdog={{ 

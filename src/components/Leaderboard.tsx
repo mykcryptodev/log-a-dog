@@ -6,11 +6,9 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { api } from "~/utils/api";
 import Link from "next/link";
-import { Name } from "./Profile/Name";
 import { Avatar } from "./Profile/Avatar";
-import { DEFAULT_CHAIN } from "~/constants";
+import useLeaderboardData from "~/hooks/useLeaderboardData";
 
 type Props = {
   attestors?: string[];
@@ -26,29 +24,10 @@ const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
   const [showSearch, setShowSearch] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery(
-    {
-      chainId: DEFAULT_CHAIN.id,
-      ...(startDate && { startDate: Math.floor(startDate.getTime() / 1000) }),
-      ...(endDate && { endDate: Math.floor(endDate.getTime() / 1000) }),
-    },
-    {
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-    },
-  );
-
-  const { data: profiles } = api.profile.getManyByAddress.useQuery(
-    {
-      chainId: DEFAULT_CHAIN.id,
-      addresses: [...(leaderboard?.users ?? [])],
-    },
-    {
-      enabled: !!leaderboard?.users,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-    },
-  );
+  const { leaderboard, profiles } = useLeaderboardData({
+    startDate,
+    endDate,
+  });
 
   const hasNextPage = leaderboard?.users
     ? leaderboard.users.length > (page + 1) * limitOrDefault
@@ -78,11 +57,12 @@ const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
   if (!leaderboard || !profiles)
     return <div className="h-72 w-[640px] rounded-lg bg-base-200" />;
 
-  const filteredUsers = displayedUsers.filter((address) => {
-    const profile = profiles.find((p) => p.address === address);
+  const filteredUsers = displayedUsers.filter((address, index) => {
+    const profile = profiles[index];
     const searchLower = searchQuery.toLowerCase();
     return (
       (profile?.username?.toLowerCase().includes(searchLower) ?? false) ||
+      (profile?.name?.toLowerCase().includes(searchLower) ?? false) ||
       address.toLowerCase().includes(searchLower)
     );
   });
@@ -129,6 +109,8 @@ const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
           const originalIndex = displayedUsers.indexOf(address);
           const hotdogCount = Number(displayedHotdogs[originalIndex]);
           const isLastElement = index === filteredUsers.length - 1;
+          const profile = profiles[originalIndex];
+          const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
 
           return (
             <div
@@ -145,7 +127,7 @@ const LeaderboardComponent: FC<Props> = ({ limit, startDate, endDate }) => {
                 </div>
                 <Avatar size="32px" address={address} />
                 <div className="font-medium">
-                  <Name address={address} noLink />
+                  {displayName}
                 </div>
               </Link>
               <div className="flex items-center gap-2">
