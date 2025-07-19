@@ -4,6 +4,7 @@ import { ZERO_ADDRESS } from "thirdweb";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 import HotdogCard from "~/components/utils/HotdogCard";
 import { DEFAULT_CHAIN } from "~/constants";
+import RenderTracker from "~/components/debug/RenderTracker";
 
 // Types from hotdog router
 type AttestationPeriod = {
@@ -181,10 +182,27 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   };
 
 
+  const renderDependencies = {
+    limit: limitOrDefault,
+    start,
+    isPaginating,
+    isLoadingHotdogs,
+    isClient,
+    dogDataExists: !!dogData,
+    pendingDogsLength: pendingDogs.length,
+    filteredPendingDogsLength: filteredPendingDogs.length,
+    allHotdogsLength: allHotdogs.length,
+    hasNextPage: dogData?.hasNextPage,
+    totalPages: dogData?.totalPages,
+  };
+
   // Show loading state while client-side query is fetching
   if (isLoadingHotdogs && !isPaginating) {
     return (
-      <>
+      <RenderTracker 
+        componentName="ListAttestations" 
+        dependencies={renderDependencies}
+      >
         <div id="top-of-list" className="invisible" />
         <div className="flex flex-col gap-4">
           {Array.from({ length: limitOrDefault }).map((_, index) => (
@@ -221,14 +239,17 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
             <button className="join-item btn" disabled>»</button>
           </div>
         </div>
-      </>
+      </RenderTracker>
     );
   }
 
   // Show error state if no data after loading
   if (!dogData && !isLoadingHotdogs && isClient) {
     return (
-      <>
+      <RenderTracker 
+        componentName="ListAttestations" 
+        dependencies={renderDependencies}
+      >
         <div id="top-of-list" className="invisible" />
         <div className="flex flex-col gap-4 items-center justify-center py-8">
           <div className="text-center">
@@ -242,7 +263,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
             </button>
           </div>
         </div>
-      </>
+      </RenderTracker>
     );
   }
 
@@ -276,9 +297,12 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   };
 
   return (
-    <>
-    <div id="top-of-list" className="invisible" />
-    <div className="flex flex-col gap-4">
+    <RenderTracker 
+      componentName="ListAttestations" 
+      dependencies={renderDependencies}
+    >
+      <div id="top-of-list" className="invisible" />
+      <div className="flex flex-col gap-4">
       {/* Show pagination loading overlay */}
       {isPaginating && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -331,6 +355,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         </button>
       </div>
     </div>
-    </>
+    </RenderTracker>
   );
 }
