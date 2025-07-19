@@ -1,7 +1,8 @@
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
-import { useState, useEffect } from "react";
+import usePrefersDarkMode from "~/hooks/usePrefersDarkMode";
+import useMounted from "~/hooks/useMounted";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
@@ -34,15 +35,8 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
-  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    setUserPrefersDarkMode(
-      window.matchMedia("(prefers-color-scheme: dark)").matches,
-    );
-  }, []);
+  const mounted = useMounted();
+  const userPrefersDarkMode = usePrefersDarkMode();
 
   const bannerSrc =
     mounted && userPrefersDarkMode

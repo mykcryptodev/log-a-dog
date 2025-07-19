@@ -1,34 +1,36 @@
-import { type FC, useState, useEffect, useCallback, useRef } from "react";
+import { type FC, useEffect, useCallback, useRef } from "react";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
-import { createWallet, inAppWallet, type Wallet, walletConnect } from "thirdweb/wallets";
+import {
+  createWallet,
+  inAppWallet,
+  type Wallet,
+  walletConnect,
+} from "thirdweb/wallets";
 import { useSession, signIn, getCsrfToken, signOut } from "next-auth/react";
 import { env } from "~/env";
 import { signMessage } from "thirdweb/utils";
 import { DEFAULT_CHAIN } from "~/constants";
+import usePrefersDarkMode from "~/hooks/usePrefersDarkMode";
+import useMounted from "~/hooks/useMounted";
 
 type Props = {
   loginBtnLabel?: string;
-}
+};
 
 export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const { data: sessionData, status } = useSession();
-  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
+  const userPrefersDarkMode = usePrefersDarkMode();
   const account = useActiveAccount();
   const sessionDataRef = useRef<typeof sessionData>(null);
-  const statusRef = useRef<typeof status>('loading');
+  const statusRef = useRef<typeof status>("loading");
 
   // Update refs when session data changes
   useEffect(() => {
     sessionDataRef.current = sessionData;
     statusRef.current = status;
   }, [sessionData, status]);
-
-  useEffect(() => {
-    setMounted(true);
-    setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
-  }, []);
 
   const cryptoWallets = [
     createWallet("io.metamask"),
@@ -40,66 +42,76 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const inAppWallets = [
     inAppWallet({
       auth: {
-        options: ['email', 'phone', 'x', 'google']
-      }
-    })
+        options: ["email", "phone", "x", "google"],
+      },
+    }),
   ];
 
   const message = `Sign into Log a Dog`;
-  const createPayload = useCallback(async ({ address }: { address: string }) => {
-    const nonce = await getCsrfToken();
-    if (!nonce) throw new Error("Failed to get CSRF token");
-    const now = new Date();
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+  const createPayload = useCallback(
+    async ({ address }: { address: string }) => {
+      const nonce = await getCsrfToken();
+      if (!nonce) throw new Error("Failed to get CSRF token");
+      const now = new Date();
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
-    return {
-      nonce,
-      domain: env.NEXT_PUBLIC_APP_DOMAIN,
-      message,
-      address,
-      statement: message,
-      version: "1",
-      issued_at: now.toISOString(),
-      expiration_time: oneHourFromNow.toISOString(),
-      invalid_before: now.toISOString()
-    }
-  }, [message]);
+      return {
+        nonce,
+        domain: env.NEXT_PUBLIC_APP_DOMAIN,
+        message,
+        address,
+        statement: message,
+        version: "1",
+        issued_at: now.toISOString(),
+        expiration_time: oneHourFromNow.toISOString(),
+        invalid_before: now.toISOString(),
+      };
+    },
+    [message],
+  );
 
-  const silentlySignIn = useCallback(async (wallet: Wallet) => {
-    // Check session state using refs to avoid dependency issues
-    if ((sessionDataRef.current?.user?.id ?? false) || statusRef.current === 'loading') {
-      return;
-    }
-    
-    // Check if there's already a session for this wallet address
-    if (sessionDataRef.current?.user?.address && wallet.getAccount()) {
-      const walletAddress = wallet.getAccount()!.address.toLowerCase();
-      const sessionAddress = sessionDataRef.current.user.address.toLowerCase();
-      if (walletAddress === sessionAddress) {
+  const silentlySignIn = useCallback(
+    async (wallet: Wallet) => {
+      // Check session state using refs to avoid dependency issues
+      if (
+        (sessionDataRef.current?.user?.id ?? false) ||
+        statusRef.current === "loading"
+      ) {
         return;
       }
-    }
-    
-    if (wallet.id !== 'inApp') {
-      return;
-    }
-    try {
-      const walletAddress = wallet.getAccount()!.address;
-      const payload = await createPayload({ address: walletAddress });
-      const signature = await signMessage({
-        message,
-        account: wallet.getAccount()!,
-      });
-      await signIn('ethereum', {
-        message,
-        signature,
-        address: payload.address,
-        redirect: false,
-      });
-    } catch (error) {
-      console.error("Error signing in with wallet:", error);
-    }
-  }, [createPayload, message]); // Stable dependencies only
+
+      // Check if there's already a session for this wallet address
+      if (sessionDataRef.current?.user?.address && wallet.getAccount()) {
+        const walletAddress = wallet.getAccount()!.address.toLowerCase();
+        const sessionAddress =
+          sessionDataRef.current.user.address.toLowerCase();
+        if (walletAddress === sessionAddress) {
+          return;
+        }
+      }
+
+      if (wallet.id !== "inApp") {
+        return;
+      }
+      try {
+        const walletAddress = wallet.getAccount()!.address;
+        const payload = await createPayload({ address: walletAddress });
+        const signature = await signMessage({
+          message,
+          account: wallet.getAccount()!,
+        });
+        await signIn("ethereum", {
+          message,
+          signature,
+          address: payload.address,
+          redirect: false,
+        });
+      } catch (error) {
+        console.error("Error signing in with wallet:", error);
+      }
+    },
+    [createPayload, message],
+  ); // Stable dependencies only
 
   // Prevent hydration mismatch by not rendering ConnectButton until mounted
   if (!mounted) {
@@ -133,15 +145,14 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           return false;
         },
         doLogin: async (params) => {
-          await signIn('ethereum', {
+          await signIn("ethereum", {
             message,
             signature: params.signature,
             address: params.payload.address,
             redirect: false,
           });
         },
-        getLoginPayload: async ({ address }) =>
-          createPayload({ address }),
+        getLoginPayload: async ({ address }) => createPayload({ address }),
         doLogout: async () => {
           // Avoid redirect loops by disabling the default signOut redirect
           await signOut({ redirect: false });
@@ -154,20 +165,20 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
           title: "Login to Log a Dog",
           img: {
             src: "/images/logo.png",
-          }
+          },
         },
         showThirdwebBranding: false,
       }}
       recommendedWallets={[createWallet("com.coinbase.wallet")]}
       wallets={[
         ...cryptoWallets,
-        ...inAppWallets.map(wallet => ({
+        ...inAppWallets.map((wallet) => ({
           ...wallet,
           accountAbstraction: {
             chain: DEFAULT_CHAIN,
             gasless: true,
-          }
-        }))
+          },
+        })),
       ]}
       showAllWallets={true}
     />
