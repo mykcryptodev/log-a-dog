@@ -39,21 +39,26 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
 
   if (profile?.username === "") {
     return (
-      <span>{`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+      <div className="flex items-center gap-1">
+        <span>{`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+        <Badge className="z-10" isKnownSpammer={userData?.isKnownSpammer ?? false} fid={userData?.fid ?? undefined} address={address} />
+      </div>
     )
   }
 
   if (!profile) {
     return (
-      <span>Unknown</span>
+      <div className="flex items-center gap-1">
+        <span>Unknown</span>
+        <Badge className="z-10" isKnownSpammer={userData?.isKnownSpammer ?? false} fid={userData?.fid ?? undefined} address={address} />
+      </div>
     );
   }
 
-  
   const content = (
     <div className="flex items-center gap-1">
       <span>{profile.username}</span>
-      <Badge isKnownSpammer={userData?.isKnownSpammer ?? false} fid={userData?.fid ?? undefined} address={address} />
+      <Badge className="z-20 relative" isKnownSpammer={userData?.isKnownSpammer ?? false} fid={userData?.fid ?? undefined} address={address} />
     </div>
   );
 
@@ -62,9 +67,19 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
   }
 
   return (
-    <Link href={`/profile/address/${profile.address}`}>
-      {content}
-    </Link>
+    <div className="flex items-center gap-1 relative z-10">
+      <Link 
+        href={`/profile/address/${profile.address}`}
+        className="hover:underline focus:outline-none focus:underline"
+        onClick={(e) => {
+          // Ensure this link click doesn't interfere with other interactions
+          e.stopPropagation();
+        }}
+      >
+        {profile.username}
+      </Link>
+      <Badge className="z-20 relative" isKnownSpammer={userData?.isKnownSpammer ?? false} fid={userData?.fid ?? undefined} address={address} />
+    </div>
   );
 };
 

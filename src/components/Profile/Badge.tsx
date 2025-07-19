@@ -1,31 +1,30 @@
 import { CheckBadgeIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { FC, useMemo } from "react";
-import { Portal } from "../utils/Portal";
 
-export const Badge: FC<{ address: string, isKnownSpammer: boolean, fid?: number }> = ({ address, isKnownSpammer, fid }) => {
-  // Create unique modal IDs to handle multiple badge instances
-  const spammerModalId = useMemo(() => `spammer-badge-${address.toLowerCase()}`, []);
-  const verifiedModalId = useMemo(() => `verified-badge-${address.toLowerCase()}`, []);
+export const Badge: FC<{ address: string, isKnownSpammer: boolean, fid?: number, className?: string }> = ({ address, isKnownSpammer, fid, className }) => {
+  const spammerModalId = useMemo(() => `spammer-badge-${address.toLowerCase()}-${Math.random().toString(36).substring(2, 15)}`, [address]);
+  const verifiedModalId = useMemo(() => `verified-badge-${address.toLowerCase()}-${Math.random().toString(36).substring(2, 15)}`, [address]);
 
   if (isKnownSpammer) {
     return (
       <>
-        <label 
-          htmlFor={spammerModalId}
-          className="cursor-pointer hover:opacity-80 transition-opacity"
+        <button 
+          onClick={() => (document.getElementById(spammerModalId) as HTMLDialogElement)?.showModal()}
+          className={`cursor-pointer hover:opacity-80 transition-opacity inline-flex items-center justify-center ${className}`}
         >
           <ExclamationTriangleIcon className="w-4 h-4 text-warning" />
-        </label>
+        </button>
 
-        <Portal>
-          <input type="checkbox" id={spammerModalId} className="modal-toggle" />
-          <div className="modal modal-bottom sm:modal-middle" role="dialog">
+          <dialog id={spammerModalId} className="modal modal-bottom sm:modal-middle">
             <div className="modal-box relative bg-base-100 bg-opacity-90 backdrop-blur-lg">
-            <label htmlFor={spammerModalId} className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4">
+              <button 
+                onClick={() => (document.getElementById(spammerModalId) as HTMLDialogElement)?.close()}
+                className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4"
+              >
                 <XMarkIcon className="w-4 h-4" />
-              </label>
+              </button>
               <h3 className="font-bold text-lg flex items-center gap-2">
-                <ExclamationTriangleIcon className="w-6 h-6 text-warning" />
+                <ExclamationTriangleIcon className="w-6 h-6 stroke-2 text-warning" />
                 Known Spammer
               </h3>
               <div className="py-4 space-y-2">
@@ -39,11 +38,15 @@ export const Badge: FC<{ address: string, isKnownSpammer: boolean, fid?: number 
                 </p>
               </div>
               <div className="modal-action">
-                <label htmlFor={spammerModalId} className="btn">Close</label>
+                <button 
+                  onClick={() => (document.getElementById(spammerModalId) as HTMLDialogElement)?.close()}
+                  className="btn"
+                >
+                  Close
+                </button>
               </div>
             </div>
-          </div>
-        </Portal>
+          </dialog>
       </>
     );
   }
@@ -51,20 +54,21 @@ export const Badge: FC<{ address: string, isKnownSpammer: boolean, fid?: number 
   if (fid) {
     return (
       <>
-        <label 
-          htmlFor={verifiedModalId}
-          className="cursor-pointer hover:opacity-80 transition-opacity"
+        <button 
+          onClick={() => (document.getElementById(verifiedModalId) as HTMLDialogElement)?.showModal()}
+          className={`cursor-pointer hover:opacity-80 transition-opacity inline-flex items-center justify-center ${className}`}
         >
-          <CheckBadgeIcon className="w-4 h-4 text-primary" />
-        </label>
+          <CheckBadgeIcon className="w-4 h-4 stroke-2 text-primary" />
+        </button>
 
-        <Portal>
-          <input type="checkbox" id={verifiedModalId} className="modal-toggle" />
-          <div className="modal modal-bottom sm:modal-middle" role="dialog">
+          <dialog id={verifiedModalId} className="modal modal-bottom sm:modal-middle">
             <div className="modal-box relative bg-base-100 bg-opacity-90 backdrop-blur-lg">
-              <label htmlFor={verifiedModalId} className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4">
+              <button 
+                onClick={() => (document.getElementById(verifiedModalId) as HTMLDialogElement)?.close()}
+                className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4"
+              >
                 <XMarkIcon className="w-4 h-4" />
-              </label>
+              </button>
               <h3 className="font-bold text-lg flex items-center gap-2">
                 <CheckBadgeIcon className="w-6 h-6 text-primary" />
                 Verified User
@@ -81,11 +85,15 @@ export const Badge: FC<{ address: string, isKnownSpammer: boolean, fid?: number 
                 </p>
               </div>
               <div className="modal-action">
-                <label htmlFor={verifiedModalId} className="btn">Close</label>
+                <button 
+                  onClick={() => (document.getElementById(verifiedModalId) as HTMLDialogElement)?.close()}
+                  className="btn"
+                >
+                  Close
+                </button>
               </div>
             </div>
-          </div>
-        </Portal>
+          </dialog>
       </>
     );
   }
