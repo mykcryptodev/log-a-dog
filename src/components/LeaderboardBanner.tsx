@@ -1,6 +1,5 @@
 import { type FC, useMemo, memo } from "react";
 import Link from "next/link";
-import { Name } from "./Profile/Name";
 import { Avatar } from "./Profile/Avatar";
 import styles from "./LeaderboardBanner.module.css";
 import useLeaderboardData from "~/hooks/useLeaderboardData";
@@ -56,7 +55,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 </div>
                 <Avatar size="24px" address={address} />
                 <div className="text-sm font-medium">
-                  <Name address={address} noLink />
+                  {`${address.slice(0, 6)}...${address.slice(-4)}`}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
@@ -102,7 +101,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 </div>
                 <Avatar size="24px" address={address} />
                 <div className="text-sm font-medium">
-                  <Name address={address} noLink />
+                  {`${address.slice(0, 6)}...${address.slice(-4)}`}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
@@ -127,7 +126,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 </div>
                 <Avatar size="24px" address={address} />
                 <div className="text-sm font-medium">
-                  <Name address={address} noLink />
+                  {`${address.slice(0, 6)}...${address.slice(-4)}`}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
