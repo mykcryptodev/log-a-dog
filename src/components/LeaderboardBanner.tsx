@@ -44,6 +44,8 @@ const LeaderboardBannerComponent: FC<Props> = ({
         <div className="flex items-center gap-4 whitespace-nowrap p-2">
           {topUsers.map((address, index) => {
             const hotdogCount = Number(topHotdogs[index]);
+            const profile = profiles[index];
+            const displayName = profile?.username ?? profile?.name ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
             return (
               <Link
                 key={address}
@@ -55,7 +57,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 </div>
                 <Avatar size="24px" address={address} />
                 <div className="text-sm font-medium">
-                  {`${address.slice(0, 6)}...${address.slice(-4)}`}
+                  {displayName}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
@@ -89,6 +91,8 @@ const LeaderboardBannerComponent: FC<Props> = ({
           {/* First set of items */}
           {users.map((address, index) => {
             const hotdogCount = Number(hotdogs[index]);
+            const profile = profiles[index];
+            const displayName = profile?.username ?? profile?.name ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
 
             return (
               <Link
@@ -101,7 +105,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 </div>
                 <Avatar size="24px" address={address} />
                 <div className="text-sm font-medium">
-                  {`${address.slice(0, 6)}...${address.slice(-4)}`}
+                  {displayName}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
@@ -114,6 +118,8 @@ const LeaderboardBannerComponent: FC<Props> = ({
           {/* Duplicate set for seamless loop */}
           {users.map((address, index) => {
             const hotdogCount = Number(hotdogs[index]);
+            const profile = profiles[index];
+            const displayName = profile?.username ?? profile?.name ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
 
             return (
               <Link
@@ -126,7 +132,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 </div>
                 <Avatar size="24px" address={address} />
                 <div className="text-sm font-medium">
-                  {`${address.slice(0, 6)}...${address.slice(-4)}`}
+                  {displayName}
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>

@@ -815,12 +815,23 @@ export const hotdogRouter = createTRPCRouter({
       const cacheKey = `leaderboard:${chainId}:${startDate ?? 'all'}:${endDate ?? 'all'}`;
 
       // Try to get cached data first
-      const cachedData = await getCachedData<{ users: string[], hotdogs: string[] }>(cacheKey);
+      const cachedData = await getCachedData<{ 
+        users: string[], 
+        hotdogs: string[],
+        profiles: Array<{
+          address: string;
+          username?: string | null;
+          name?: string | null; 
+          image?: string | null;
+          fid?: number | null;
+        }>
+      }>(cacheKey);
 
       if (cachedData) {
         return {
           users: cachedData.users,
           hotdogs: cachedData.hotdogs,
+          profiles: cachedData.profiles,
         };
       }
 
@@ -833,6 +844,13 @@ export const hotdogRouter = createTRPCRouter({
         const result = {
           users: leaderboard.map(l => l.eater.toLowerCase()),
           hotdogs: leaderboard.map(l => l.count.toString()),
+          profiles: leaderboard.map(l => ({
+            address: l.eater.toLowerCase(),
+            username: l.username,
+            name: l.name,
+            image: l.image,
+            fid: l.fid,
+          })),
         };
 
         await setCachedData(cacheKey, result, CACHE_DURATION.MEDIUM);
