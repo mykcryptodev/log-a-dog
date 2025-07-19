@@ -573,13 +573,73 @@ export const hotdogRouter = createTRPCRouter({
         zoraCoin: event.zoraCoin ?? '',
       }));
 
-      // Events are already filtered by user in the database query
-      const userHotdogs = moderatedHotdogs;
+      // Collect unique zoraCoin addresses and metadata URIs for batch fetching
+      const zoraCoinAddresses = new Set<string>();
+      const metadataUris = new Set<string>();
+      
+      moderatedHotdogs.forEach(log => {
+        if (log.zoraCoin) zoraCoinAddresses.add(log.zoraCoin);
+        if (log.metadataUri) metadataUris.add(log.metadataUri);
+      });
+      
+      const zoraCoinAddressesArray = [...zoraCoinAddresses];
+      const metadataUrisArray = [...metadataUris];
+
+      // Detect duplicate images
+      const imageUris = Array.from(new Set(filteredEvents.map(e => e.imageUri)));
+      const duplicateEvents = await db.dogEvent.findMany({
+        where: { imageUri: { in: imageUris } },
+        orderBy: { timestamp: 'asc' },
+        select: { imageUri: true, logId: true, timestamp: true },
+      });
+      const earliestByImage = new Map<string, { logId: string; timestamp: bigint }>();
+      const countByImage = new Map<string, number>();
+      for (const ev of duplicateEvents) {
+        countByImage.set(ev.imageUri, (countByImage.get(ev.imageUri) ?? 0) + 1);
+        const existing = earliestByImage.get(ev.imageUri);
+        if (!existing || ev.timestamp < existing.timestamp) {
+          earliestByImage.set(ev.imageUri, { logId: ev.logId, timestamp: ev.timestamp });
+        }
+      }
+      const duplicateOfMap = new Map<string, string>();
+      for (const ev of duplicateEvents) {
+        const earliest = earliestByImage.get(ev.imageUri)!;
+        if ((countByImage.get(ev.imageUri) ?? 0) > 1 && ev.logId !== earliest.logId) {
+          duplicateOfMap.set(ev.logId, earliest.logId);
+        }
+      }
+
+      // Fetch Zora coin details and metadata in parallel
+      const [zoraCoinDetails, metadataResults] = await Promise.all([
+        zoraCoinAddressesArray.length > 0
+          ? getZoraCoinDetailsBatch(zoraCoinAddressesArray, chainId)
+          : new Map<string, ZoraCoinDetails>(),
+        Promise.all(metadataUrisArray.map(uri => getMetadataFromUri(uri)))
+      ]);
+
+      // Create maps for the fetched data
+      const metadataMap = new Map(
+        metadataUrisArray.map((uri, index) => [uri, metadataResults[index]])
+      );
+
+      // Process logs with both Zora coin details and metadata
+      const processedHotdogs = moderatedHotdogs.map(log => {
+        const zoraCoin = zoraCoinDetails.get(log.zoraCoin.toLowerCase()) ?? null;
+        const metadata = metadataMap.get(log.metadataUri.toLowerCase()) ?? null;
+        const duplicateOfLogId = duplicateOfMap.get(log.logId) ?? null;
+
+        return {
+          ...log,
+          zoraCoin,
+          metadata,
+          duplicateOfLogId,
+        } as ProcessedHotdog;
+      });
 
       return {
-        hotdogs: userHotdogs,
-        validAttestations: userHotdogs.map(() => "0"), // Default to 0 for each hotdog
-        invalidAttestations: userHotdogs.map(() => "0"), // Default to 0 for each hotdog
+        hotdogs: processedHotdogs,
+        validAttestations: processedHotdogs.map(() => "0"), // Default to 0 for each hotdog
+        invalidAttestations: processedHotdogs.map(() => "0"), // Default to 0 for each hotdog
         totalPages,
         hasNextPage,
       }
