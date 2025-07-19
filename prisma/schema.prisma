@@ -58,6 +58,8 @@ model User {
     fid           Int?
     dogEvents     DogEvent[]
     notificationsEnabled Boolean? @default(false)
+    isKnownSpammer Boolean? @default(false)
+    isReportedForSpam Boolean? @default(false)
 }
 
 model VerificationToken {
