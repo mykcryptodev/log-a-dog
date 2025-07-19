@@ -36,14 +36,6 @@ export const getStaticProps = async () => {
 };
 
 export default function Home() {
-  const mounted = useMounted();
-  const userPrefersDarkMode = usePrefersDarkMode();
-
-  const bannerSrc =
-    mounted && userPrefersDarkMode
-      ? "/images/banner-dark.png"
-      : "/images/banner.png";
-
   return (
     <>
       <Head>

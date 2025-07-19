@@ -21,7 +21,7 @@ export const Badge: FC<{ address: string, isKnownSpammer: boolean, fid?: number 
           <input type="checkbox" id={spammerModalId} className="modal-toggle" />
           <div className="modal modal-bottom sm:modal-middle" role="dialog">
             <div className="modal-box relative bg-base-100 bg-opacity-90 backdrop-blur-lg">
-              <label htmlFor={spammerModalId} className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4">
+            <label htmlFor={spammerModalId} className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4">
                 <XMarkIcon className="w-4 h-4" />
               </label>
               <h3 className="font-bold text-lg flex items-center gap-2">
@@ -32,7 +32,7 @@ export const Badge: FC<{ address: string, isKnownSpammer: boolean, fid?: number 
                 <p>This user has been flagged as a known spammer.</p>
                 <p className="text-sm text-base-content/70">
                   Spammers are users who have been identified as posting duplicate content, 
-                  fake submissions, or other content that violates the platform's integrity standards.
+                  fake submissions, or other content that violates the platform&apos;s integrity standards.
                 </p>
                 <p className="text-sm text-base-content/70">
                   Please exercise caution when interacting with content from this user.
