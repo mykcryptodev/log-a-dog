@@ -76,17 +76,17 @@ export default function Home() {
             </Link>
           </div>
           <CreateAttestation />
-          {/* <div className="w-full max-w-md">
+          <div className="w-full max-w-md">
             <h2 className="text-center text-2xl font-bold">Leaderboard</h2>
             <LeaderboardList limit={10} />
           </div>
-          <div className="w-full max-w-md">
+          {/* <div className="w-full max-w-md">
             <h2 className="text-center text-2xl font-bold">Logs</h2>
             <ListAttestations limit={10} />
           </div> */}
           <div className="text-center p-4 bg-yellow-100 rounded-lg">
-            <p>Testing CreateAttestation component only</p>
-            <p>Check if this causes infinite re-renders after wallet connection</p>
+            <p>Testing CreateAttestation + LeaderboardList</p>
+            <p>Check if LeaderboardList causes infinite re-renders after wallet connection</p>
           </div>
         </div>
       </main>
