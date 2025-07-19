@@ -125,6 +125,11 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       }}
       auth={{
         isLoggedIn: async () => {
+          // Avoid triggering auth flow while the session status is loading
+          if (status === 'loading') {
+            return true;
+          }
+
           // Only consider logged in if there's both a session AND a wallet connected
           // This prevents state mismatches that cause infinite refreshes
           if (sessionData?.user?.id && account?.address) {
