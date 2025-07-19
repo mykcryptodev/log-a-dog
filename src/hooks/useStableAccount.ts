@@ -24,14 +24,16 @@ export const useStableWallet = () => {
   const walletId = wallet?.id;
   
   return useMemo(() => {
-    if (!isConnected || !wallet) return null;
+    if (!isConnected) return null;
     
+    // Return a stable object that doesn't change reference unless connection state changes
     return {
       id: walletId!,
       isConnected: true,
-      wallet, // Keep the full wallet reference - this might cause issues but needed for functionality
+      // Only include essential methods to avoid reference changes
+      exists: true,
     };
-  }, [isConnected, walletId, wallet]);
+  }, [isConnected, walletId]);
 };
 
 export default useStableAccount;

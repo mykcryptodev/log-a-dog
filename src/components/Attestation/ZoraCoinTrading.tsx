@@ -16,6 +16,7 @@ import Image from "next/image";
 import { api } from "~/utils/api";
 import { DEFAULT_CHAIN } from "~/constants";
 import { useStableAccount } from "~/hooks/useStableAccount";
+import { useIsMobile } from "~/hooks/useIsMobile";
 
 type Props = {
   referrer: string;
@@ -25,6 +26,7 @@ type Props = {
 }
 
 export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, referrer: _referrer, onTradeComplete }) => {
+  const isMobile = useIsMobile();
   const account = useStableAccount();
   const wallet = useActiveWallet();
   const farcasterContext = useContext(FarcasterContext);
@@ -39,7 +41,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   // Get cache invalidation mutation
   const invalidateZoraCoinCache = api.hotdog.invalidateZoraCoinCache.useMutation();
 
-  // Get ETH balance
+  // Get ETH balance - only when account is stable
   const { data: ethBalance } = useWalletBalance({
     client,
     chain: DEFAULT_CHAIN,
@@ -235,6 +237,11 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   //     setIsLoading(false);
   //   }
   // };
+
+  // Don't render on mobile to prevent performance issues
+  if (isMobile) {
+    return null;
+  }
 
   return (
     <div className="flex items-center gap-2">

@@ -8,7 +8,6 @@ import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { APP_DESCRIPTION } from "~/constants";
 import Image from "next/image";
 import LeaderboardList from "~/components/LeaderboardList";
-import RenderLogger from "~/components/Debug/RenderLogger";
 
 const miniAppMetadata = {
   version: "next",
@@ -37,7 +36,6 @@ export const getStaticProps = async () => {
 export default function Home() {
   return (
     <>
-      <RenderLogger name="Homepage" />
       <Head>
         <title>Log a Dog</title>
         <meta

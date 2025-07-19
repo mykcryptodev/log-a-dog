@@ -17,7 +17,7 @@ import { getContract } from 'thirdweb';
 import { client } from '~/providers/Thirdweb';
 import { upload } from 'thirdweb/storage';
 import { encodePoolConfig } from '~/server/utils/poolConfig';
-import { useStableAccount } from '~/hooks/useStableAccount';
+import { useStableAccount, useStableWallet } from '~/hooks/useStableAccount';
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -39,7 +39,8 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
   const [payOwnGas, setPayOwnGas] = useState<boolean>(false);
-  const wallet = useActiveWallet();
+  const wallet = useActiveWallet(); // Keep for transaction functionality
+  const stableWallet = useStableWallet(); // Use for renders
   const [coinMetadataUri, setCoinMetadataUri] = useState<string | undefined>();
 
   // Debounced upload effect
@@ -70,7 +71,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
     return () => clearTimeout(timeoutId);
   }, [description, imgUri]);
 
-  const walletExists = !!wallet;
+  const walletExists = !!stableWallet?.exists;
   const isDisabled = useMemo(() => {
     return !imgUri || !walletExists || isLoading;
   }, [imgUri, isLoading, walletExists]);
