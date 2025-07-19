@@ -52,7 +52,7 @@ export default async function handler(
     }
 
     // Create the profile URL
-    const profileUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://logadog.xyz'}/profile/address/${address}`;
+    const profileUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://logadog.xyz'}/profile/address/${address}`;
 
     // Format the Telegram message
     let message = `🚨 **Spam User Report**\n\n`;
