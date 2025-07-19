@@ -112,14 +112,14 @@ interface ProcessedHotdog {
   };
   duplicateOfLogId?: string | null;
   eaterProfile?: {
-    username?: string | null;
     name?: string | null;
+    username?: string | null;
     image?: string | null;
     fid?: number | null;
   } | null;
   loggerProfile?: {
-    username?: string | null;
     name?: string | null;
+    username?: string | null;
     image?: string | null;
     fid?: number | null;
   } | null;
@@ -870,8 +870,8 @@ export const hotdogRouter = createTRPCRouter({
         hotdogs: string[],
         profiles: Array<{
           address: string;
-          username?: string | null;
-          name?: string | null; 
+          name?: string | null;
+          username?: string | null; 
           image?: string | null;
           fid?: number | null;
         }>
@@ -896,8 +896,8 @@ export const hotdogRouter = createTRPCRouter({
           hotdogs: leaderboard.map(l => l.count.toString()),
           profiles: leaderboard.map(l => ({
             address: l.eater.toLowerCase(),
-            username: l.username,
             name: l.name,
+            username: l.username,
             image: l.image,
             fid: l.fid,
           })),

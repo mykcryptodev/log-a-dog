@@ -73,14 +73,14 @@ type HotdogData = {
   isPending?: boolean;
   duplicateOfLogId?: string | null;
   eaterProfile?: {
-    username?: string | null;
     name?: string | null;
+    username?: string | null;
     image?: string | null;
     fid?: number | null;
   } | null;
   loggerProfile?: {
-    username?: string | null;
     name?: string | null;
+    username?: string | null;
     image?: string | null;
     fid?: number | null;
   } | null;
@@ -133,13 +133,13 @@ export const HotdogCard: FC<Props> = ({
   };
 
   const displayName =
-    hotdog.eaterProfile?.username ??
     hotdog.eaterProfile?.name ??
+    hotdog.eaterProfile?.username ??
     `${hotdog.eater.slice(0, 6)}...${hotdog.eater.slice(-4)}`;
 
   const loggerDisplayName =
-    hotdog.loggerProfile?.username ??
     hotdog.loggerProfile?.name ??
+    hotdog.loggerProfile?.username ??
     `${hotdog.logger.slice(0, 6)}...${hotdog.logger.slice(-4)}`;
 
   const isExpired =

@@ -45,7 +45,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
           {topUsers.map((address, index) => {
             const hotdogCount = Number(topHotdogs[index]);
             const profile = profiles[index];
-            const displayName = profile?.username ?? profile?.name ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+            const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
             return (
               <Link
                 key={address}
@@ -92,7 +92,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
           {users.map((address, index) => {
             const hotdogCount = Number(hotdogs[index]);
             const profile = profiles[index];
-            const displayName = profile?.username ?? profile?.name ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+            const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
 
             return (
               <Link
@@ -119,7 +119,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
           {users.map((address, index) => {
             const hotdogCount = Number(hotdogs[index]);
             const profile = profiles[index];
-            const displayName = profile?.username ?? profile?.name ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+            const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
 
             return (
               <Link

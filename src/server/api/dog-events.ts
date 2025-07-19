@@ -204,8 +204,8 @@ export async function getDogEventLeaderboard(options?: {
       count: data.count,
       fid: data.fid,
       addresses: data.addresses,
-      username: data.userData?.username,
       name: data.userData?.name,
+      username: data.userData?.username,
       image: data.userData?.image,
     }))
     .sort((a, b) => b.count - a.count);
