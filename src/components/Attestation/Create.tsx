@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { type FC, useContext, useState, useMemo, useEffect, memo, useRef } from 'react';
-import { ConnectButton, TransactionButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { ConnectButton, TransactionButton, useActiveWallet } from "thirdweb/react";
 import { toast } from "react-toastify";
 import JSConfetti from 'js-confetti';
 import dynamic from 'next/dynamic';
@@ -17,6 +17,7 @@ import { getContract } from 'thirdweb';
 import { client } from '~/providers/Thirdweb';
 import { upload } from 'thirdweb/storage';
 import { encodePoolConfig } from '~/server/utils/poolConfig';
+import { useStableAccount } from '~/hooks/useStableAccount';
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -74,7 +75,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
     return !imgUri || !walletExists || isLoading;
   }, [imgUri, isLoading, walletExists]);
 
-  const account = useActiveAccount();
+  const account = useStableAccount();
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
   const [transactionId, setTransactionId] = useState<string | undefined>();
@@ -136,7 +137,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   }
 
   const ActionButton: FC = () => {
-    if (!account) return (
+    if (!account?.isConnected) return (
       <button className="btn btn-secondary flex-1" disabled>
         Connect Wallet
       </button>
@@ -186,7 +187,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
 
         // Trigger immediate UI update
         void onAttestationCreated?.({
-          hotdogEater: account.address,
+          hotdogEater: account!.address,
           imageUri: imgUri!,
         });
 
@@ -384,7 +385,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
               <button className="btn">Close</button>
             </form>
             <div className="flex flex-col gap-2">
-              {!account ? (
+              {!account?.isConnected ? (
                 <ConnectButton client={client} />
               ) : payOwnGas ? (
                 <TransactionButton

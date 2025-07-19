@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { type FC, memo } from "react";
-import { useActiveAccount } from "thirdweb/react";
 import { api } from "~/utils/api";
 import { ProfileButton } from "./Button";
 import { DEFAULT_CHAIN } from "~/constants";
 import { Badge } from "./Badge";
+import { useStableAccount } from "~/hooks/useStableAccount";
 
 const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noLink }) => {
-  const account = useActiveAccount();
+  const account = useStableAccount();
+  const accountAddress = account?.address?.toLowerCase();
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
     chainId: DEFAULT_CHAIN.id,
     address,
@@ -31,7 +32,7 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
     );
   }
 
-  if (profile?.username === "" && account?.address.toLowerCase() === address.toLowerCase()) {
+  if (profile?.username === "" && accountAddress === address.toLowerCase()) {
     return (
       <ProfileButton hideLogout />
     );
