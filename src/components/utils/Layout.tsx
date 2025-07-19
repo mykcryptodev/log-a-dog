@@ -1,4 +1,4 @@
-import { type FC, type ReactNode,useEffect, useState } from "react"
+import { type FC, type ReactNode, useState } from "react"
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { BottomNav } from "./BottomNav";
@@ -10,13 +10,11 @@ interface LayoutProps {
 export const Layout: FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
 
-  const [userPrefersDarkMode, setUserPrefersDarkMode] = useState<boolean>(false);
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-    setUserPrefersDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
-  }, []);
+  const [userPrefersDarkMode] = useState<boolean>(() =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches,
+  );
+  const mounted = typeof window !== 'undefined';
 
   // Prevent hydration mismatch by not applying dark mode styles until mounted
   const fromYellow = mounted && userPrefersDarkMode ? "from-yellow-300" : "from-yellow-100";

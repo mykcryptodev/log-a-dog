@@ -1,4 +1,4 @@
-import { type FC, useState, useEffect, useCallback, useRef } from "react";
+import { type FC, useState, useCallback, useRef } from "react";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { createWallet, inAppWallet, type Wallet, walletConnect } from "thirdweb/wallets";
@@ -18,12 +18,9 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   const account = useActiveAccount();
   const sessionDataRef = useRef<typeof sessionData>(null);
   const statusRef = useRef<typeof status>('loading');
-
-  // Update refs when session data changes
-  useEffect(() => {
-    sessionDataRef.current = sessionData;
-    statusRef.current = status;
-  }, [sessionData, status]);
+  // keep refs in sync without triggering effects
+  sessionDataRef.current = sessionData;
+  statusRef.current = status;
 
   useEffect(() => {
     setMounted(true);

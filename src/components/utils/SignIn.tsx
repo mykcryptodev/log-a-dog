@@ -1,6 +1,6 @@
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { getCsrfToken, signIn, useSession } from 'next-auth/react';
-import React, { type FC, useState, useEffect } from 'react';
+import React, { type FC, useState } from 'react';
 import { SiweMessage } from 'siwe';
 import { useActiveAccount } from 'thirdweb/react';
 import { signMessage } from "thirdweb/utils";
@@ -14,19 +14,10 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
   const { data: sessionData, status } = useSession();
   const account = useActiveAccount();
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+  const [internalOpen, setInternalOpen] = useState(false);
 
-  useEffect(() => {
-    if (defaultOpen && !sessionData?.user && status !== 'loading') {
-      (document.getElementById(`sign_in_modal`) as HTMLDialogElement)?.showModal();
-    }
-  }, [defaultOpen, sessionData?.user, status]);
-
-  // close the modal if the user is signed in
-  useEffect(() => {
-    if (sessionData?.user) {
-      (document.getElementById(`sign_in_modal`) as HTMLDialogElement)?.close();
-    }
-  }, [sessionData?.user]);
+  const isOpen =
+    internalOpen || (defaultOpen && !sessionData?.user && status !== 'loading');
  
   const promptToSign = async () => {
     if (!account?.address) return;
@@ -54,10 +45,10 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
         redirect: false,
       });
 
-
       if (response?.error) {
         throw new Error(response.error);
       }
+      setInternalOpen(false);
     } catch (e) {
       console.error('Error signing in:', e);
     } finally {
@@ -67,15 +58,14 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
   if (sessionData?.user) return null;
   return (
     <>
-    {/* Open the modal using document.getElementById('ID').showModal() method */}
-    <button className="btn" onClick={()=>(document.getElementById(`sign_in_modal`) as HTMLDialogElement).showModal()}>
+    <button className="btn" onClick={() => setInternalOpen(true)}>
       {`${btnLabel ?? 'Vow to play with honor'}`}
     </button>
-    <dialog id={`sign_in_modal`} className="modal">
+    <dialog id={`sign_in_modal`} className="modal" open={isOpen}>
       <div className="modal-box relative">
-        <button 
+        <button
           className="btn btn-circle btn-sm btn-ghost absolute top-4 right-4"
-          onClick={()=>(document.getElementById(`sign_in_modal`) as HTMLDialogElement).close()}
+          onClick={() => setInternalOpen(false)}
         >
           &times;
         </button>
