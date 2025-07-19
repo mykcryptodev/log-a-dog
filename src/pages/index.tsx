@@ -1,3 +1,4 @@
+import React from "react";
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
@@ -59,11 +60,20 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
           <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             <Image
-              src={bannerSrc}
+              src="/images/banner.png"
               alt="Log a Dog"
               width={500}
               height={500}
               priority
+              className="dark:hidden"
+            />
+            <Image
+              src="/images/banner-dark.png"
+              alt="Log a Dog"
+              width={500}
+              height={500}
+              priority
+              className="hidden dark:block"
             />
           </h1>
           <div className="-mt-8 flex items-center gap-2">

@@ -35,25 +35,21 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
     enabled: !!DEFAULT_CHAIN.id,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    onSettled: () => setIsPaginating(false),
   });
 
 
   useEffect(() => {
-    // Only refetch if account actually changed and we haven't already refetched for this account
     if (account?.address && account.address !== lastAccountRef.current) {
       lastAccountRef.current = account.address;
       void refetchDogData();
     }
+    return () => {
+      if (paginationTimeoutRef.current) {
+        clearTimeout(paginationTimeoutRef.current);
+      }
+    };
   }, [account?.address, refetchDogData]);
-
-  // Handle pagination loading state
-  useEffect(() => {
-    if (isLoadingHotdogs && start > 0) {
-      setIsPaginating(true);
-    } else {
-      setIsPaginating(false);
-    }
-  }, [isLoadingHotdogs, start]);
 
   // Mobile-safe scroll function
   const scrollToTop = () => {
@@ -92,14 +88,6 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
     scrollToTop();
   };
 
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (paginationTimeoutRef.current) {
-        clearTimeout(paginationTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4 relative">

@@ -79,16 +79,12 @@ type Props = {
 export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
   const [start, setStart] = useState<number>(0);
-  const [isClient, setIsClient] = useState(false);
+  const isClient = typeof window !== 'undefined';
   const [isPaginating, setIsPaginating] = useState(false);
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fix hydration mismatch by only rendering dynamic content on client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const queryParams = {
     chainId: DEFAULT_CHAIN.id,
@@ -102,6 +98,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
+    onSettled: () => setIsPaginating(false),
   });
 
   // Get pending dogs for current chain
@@ -111,32 +108,24 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   useEffect(() => {
     // Clear immediately on mount
     clearExpiredPending();
-    
+
     // Set up interval to clear expired pending dogs every 30 seconds
-    // Only if we're on the client side
     if (isClient) {
       intervalRef.current = setInterval(() => {
         clearExpiredPending();
-      }, 30000); // 30 seconds
+      }, 30000);
     }
-    
-    // Cleanup function
+
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      if (paginationTimeoutRef.current) {
+        clearTimeout(paginationTimeoutRef.current);
+      }
     };
-  }, [clearExpiredPending, isClient]); // Remove pendingDogs.length dependency
-
-  // Handle pagination loading state
-  useEffect(() => {
-    if (isLoadingHotdogs && start > 0) {
-      setIsPaginating(true);
-    } else {
-      setIsPaginating(false);
-    }
-  }, [isLoadingHotdogs, start]);
+  }, [clearExpiredPending, isClient]);
 
   // Smart deduplication: only filter out optimistic data when real data with same logId exists
   const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);
@@ -191,14 +180,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     scrollToTop();
   };
 
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (paginationTimeoutRef.current) {
-        clearTimeout(paginationTimeoutRef.current);
-      }
-    };
-  }, []);
 
   // Show loading state while client-side query is fetching
   if (isLoadingHotdogs && !isPaginating) {
