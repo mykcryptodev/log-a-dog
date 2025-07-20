@@ -80,7 +80,7 @@ export default function Home() {
           <CreateAttestation />
           <div role="tablist" className="tabs tabs-boxed">
             {tabs.map((tab) => (
-              <a role="tab" className={`tab ${activeTab === tab ? "bg-secondary/50 text-secondary-content" : ""}`} onClick={() => setActiveTab(tab)}>
+              <a key={tab} role="tab" className={`tab ${activeTab === tab ? "bg-secondary/50 text-secondary-content" : ""}`} onClick={() => setActiveTab(tab)}>
                 {tab}
               </a>
             ))}

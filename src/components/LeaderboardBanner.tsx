@@ -6,6 +6,7 @@ import useLeaderboardData from "~/hooks/useLeaderboardData";
 import usePrefersReducedMotion from "~/hooks/usePrefersReducedMotion";
 import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 import { getProxiedUrl } from "~/utils/imageProxy";
+import Image from "next/image";
 
 type Props = {
   startDate?: Date;
@@ -64,7 +65,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 {avatarUrl && avatarUrl !== "" ? (
                   <div className="avatar">
                     <div className="w-6 h-6 rounded-full">
-                      <img
+                      <Image
                         src={getProxiedUrl(avatarUrl)}
                         alt={displayName}
                         width={24}
@@ -144,7 +145,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 {avatarUrl && avatarUrl !== "" ? (
                   <div className="avatar">
                     <div className="w-6 h-6 rounded-full">
-                      <img
+                      <Image
                         src={getProxiedUrl(avatarUrl)}
                         alt={displayName}
                         width={24}
@@ -196,7 +197,7 @@ const LeaderboardBannerComponent: FC<Props> = ({
                   #{index + 1}
                 </div>
                 {avatarUrl && avatarUrl !== "" ? (
-                  <img
+                  <Image
                     src={getProxiedUrl(avatarUrl)}
                     alt={displayName}
                     width={24}

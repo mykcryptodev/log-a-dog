@@ -6,6 +6,7 @@ import useLeaderboardData from "~/hooks/useLeaderboardData";
 import { useSession } from "next-auth/react";
 import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 import { getProxiedUrl } from "~/utils/imageProxy";
+import Image from "next/image";
 
 export type LeaderboardListProps = {
   limit?: number;
@@ -106,7 +107,7 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
               return avatarUrl && avatarUrl !== "" ? (
                 <div className="avatar">
                   <div className="w-6 h-6 rounded-full">
-                    <img
+                    <Image
                       src={getProxiedUrl(avatarUrl)}
                       alt={profile?.name ?? profile?.username ?? 'User'}
                       width={32}
@@ -159,7 +160,7 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
                 return avatarUrl && avatarUrl !== "" ? (
                   <div className="avatar">
                     <div className="w-6 h-6 rounded-full">
-                      <img
+                      <Image
                         src={getProxiedUrl(avatarUrl)}
                         alt={displayName}
                         width={32}
