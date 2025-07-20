@@ -29,6 +29,17 @@ import { db } from "~/server/db";
 import { getUserOpGasFees } from "thirdweb/wallets/smart";
 import { abi } from "~/constants/abi/logadog";
 
+// Helper function to convert IPFS URLs to HTTPS URLs
+const convertIpfsToHttps = (url: string | null | undefined): string | null => {
+  if (!url) return url ?? null;
+  
+  if (url.startsWith('ipfs://')) {
+    return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  }
+  
+  return url;
+};
+
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
 
 // Mapping from chain id to slug used by Zora to construct coin URLs
@@ -946,7 +957,7 @@ export const hotdogRouter = createTRPCRouter({
             address: l.eater.toLowerCase(),
             name: l.name,
             username: l.username,
-            image: l.image,
+            image: convertIpfsToHttps(l.image),
             fid: l.fid,
             isKnownSpammer: l.isKnownSpammer,
             isReportedForSpam: l.isReportedForSpam,
