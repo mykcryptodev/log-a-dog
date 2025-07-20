@@ -8,7 +8,8 @@ import {
 import { isAddressEqual } from "viem";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { Avatar } from "~/components/Profile/Avatar";
-import Name from "~/components/Profile/Name";
+import { Badge } from "~/components/Profile/Badge";
+// Removed Name import - using backend profile data instead
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
 import Comments from "~/components/Attestation/Comments";
@@ -21,7 +22,7 @@ import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import { env } from "~/env";
 import Image from "next/image";
 import { sdk } from "@farcaster/frame-sdk";
-import { api } from "~/utils/api";
+// Removed api import - using backend profile data instead
 import { FarcasterContext } from "~/providers/Farcaster";
 
 // Types
@@ -72,6 +73,22 @@ type HotdogData = {
   attestationPeriod?: AttestationPeriod;
   isPending?: boolean;
   duplicateOfLogId?: string | null;
+  eaterProfile?: {
+    name?: string | null;
+    username?: string | null;
+    image?: string | null;
+    fid?: number | null;
+    isKnownSpammer?: boolean | null;
+    isReportedForSpam?: boolean | null;
+  } | null;
+  loggerProfile?: {
+    name?: string | null;
+    username?: string | null;
+    image?: string | null;
+    fid?: number | null;
+    isKnownSpammer?: boolean | null;
+    isReportedForSpam?: boolean | null;
+  } | null;
 };
 
 type Props = {
@@ -120,21 +137,15 @@ export const HotdogCard: FC<Props> = ({
     );
   };
 
-  const { data: eaterProfile } = api.profile.getByAddress.useQuery(
-    {
-      chainId,
-      address: hotdog.eater,
-    },
-    {
-      enabled: !!hotdog.eater && !!chainId,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-    },
-  );
-
   const displayName =
-    eaterProfile?.username ??
+    hotdog.eaterProfile?.name ??
+    hotdog.eaterProfile?.username ??
     `${hotdog.eater.slice(0, 6)}...${hotdog.eater.slice(-4)}`;
+
+  const loggerDisplayName =
+    hotdog.loggerProfile?.name ??
+    hotdog.loggerProfile?.username ??
+    `${hotdog.logger.slice(0, 6)}...${hotdog.logger.slice(-4)}`;
 
   const isExpired =
     Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <=
@@ -202,9 +213,17 @@ export const HotdogCard: FC<Props> = ({
         {/* Header with user info and revoke button */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col items-start">
-            <div className="flex w-fit items-center gap-2">
-              <Avatar address={hotdog.eater} fallbackSize={24} />
-              <Name address={hotdog.eater} />
+            <div className="flex w-fit items-center gap-1">
+              <Link href={`/profile/${hotdog.eater}`} className="flex items-center gap-2">
+                <Avatar address={hotdog.eater} fallbackSize={24} />
+                <span className="text-sm font-medium">{displayName}</span>
+              </Link>              
+              <Badge 
+                address={hotdog.eater}
+                fid={hotdog.eaterProfile?.fid}
+                isKnownSpammer={hotdog.eaterProfile?.isKnownSpammer}
+                isReportedForSpam={hotdog.eaterProfile?.isReportedForSpam}
+              />
             </div>
             <div className="flex flex-col">
               {showLoggedVia({
@@ -214,7 +233,13 @@ export const HotdogCard: FC<Props> = ({
                 <div className="flex items-center gap-1 text-xs opacity-75">
                   <span>via</span>
                   <Avatar address={hotdog.logger} size="16px" />
-                  <Name address={hotdog.logger} />
+                  <span>{loggerDisplayName}</span>
+                  <Badge 
+                    address={hotdog.logger}
+                    fid={hotdog.loggerProfile?.fid}
+                    isKnownSpammer={hotdog.loggerProfile?.isKnownSpammer}
+                    isReportedForSpam={hotdog.loggerProfile?.isReportedForSpam}
+                  />
                 </div>
               )}
             </div>

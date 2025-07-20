@@ -25,22 +25,10 @@ export const useLeaderboardData = ({
     },
   );
 
-  // Memoize the profile addresses to prevent infinite re-renders
-  const profileAddresses = useMemo(() => {
-    return leaderboard?.users ?? [];
-  }, [leaderboard?.users]);
-
-  const { data: profiles } = api.profile.getManyByAddress.useQuery(
-    {
-      chainId: DEFAULT_CHAIN.id,
-      addresses: profileAddresses,
-    },
-    {
-      enabled: !!leaderboard?.users && profileAddresses.length > 0,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-    },
-  );
+  // The leaderboard now includes profile data directly, so we can return it
+  const profiles = useMemo(() => {
+    return leaderboard?.profiles ?? [];
+  }, [leaderboard?.profiles]);
 
   return { leaderboard, profiles };
 };

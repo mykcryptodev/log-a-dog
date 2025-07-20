@@ -125,7 +125,7 @@ export async function getDogEventLeaderboard(options?: {
   // Get unique eater addresses
   const uniqueEaters = [...new Set(dogEvents.map((e: { eater: string }) => e.eater.toLowerCase()))];
 
-  // Fetch users with FIDs for these addresses
+  // Fetch users with FIDs and profile data for these addresses
   const users = await db.user.findMany({
     where: {
       address: {
@@ -135,29 +135,48 @@ export async function getDogEventLeaderboard(options?: {
     select: {
       address: true,
       fid: true,
+      username: true,
+      name: true,
+      image: true,
+      isKnownSpammer: true,
+      isReportedForSpam: true,
     },
   });
 
-  // Create a map of address to FID
+  // Create a map of address to user data and FID
   const addressToFid = new Map<string, number>();
+  const addressToUser = new Map<string, { username?: string | null; name?: string | null; image?: string | null; fid?: number | null; isKnownSpammer?: boolean | null; isReportedForSpam?: boolean | null }>();
   const fidToAddresses = new Map<number, Set<string>>();
   
-  users.forEach((user: { address: string | null; fid: number | null }) => {
-    if (user.fid) {
-      addressToFid.set(user.address!.toLowerCase(), user.fid);
-      if (!fidToAddresses.has(user.fid)) {
-        fidToAddresses.set(user.fid, new Set());
+  users.forEach((user: { address: string | null; fid: number | null; username?: string | null; name?: string | null; image?: string | null; isKnownSpammer?: boolean | null; isReportedForSpam?: boolean | null }) => {
+    if (user.address) {
+      const addressLower = user.address.toLowerCase();
+      addressToUser.set(addressLower, {
+        username: user.username,
+        name: user.name,
+        image: user.image,
+        fid: user.fid,
+        isKnownSpammer: user.isKnownSpammer,
+        isReportedForSpam: user.isReportedForSpam,
+      });
+      
+      if (user.fid) {
+        addressToFid.set(addressLower, user.fid);
+        if (!fidToAddresses.has(user.fid)) {
+          fidToAddresses.set(user.fid, new Set());
+        }
+        fidToAddresses.get(user.fid)!.add(addressLower);
       }
-      fidToAddresses.get(user.fid)!.add(user.address!.toLowerCase());
     }
   });
 
   // Group events by FID (or address if no FID)
-  const groupedCounts = new Map<string, { count: number; addresses: string[]; fid?: number }>();
+  const groupedCounts = new Map<string, { count: number; addresses: string[]; fid?: number; userData?: { username?: string | null; name?: string | null; image?: string | null; fid?: number | null; isKnownSpammer?: boolean | null; isReportedForSpam?: boolean | null } }>();
 
   dogEvents.forEach((event: { eater: string }) => {
     const eaterLower = event.eater.toLowerCase();
     const fid = addressToFid.get(eaterLower);
+    const userData = addressToUser.get(eaterLower);
     
     if (fid) {
       // Group by FID
@@ -166,7 +185,8 @@ export async function getDogEventLeaderboard(options?: {
         groupedCounts.set(key, { 
           count: 0, 
           addresses: Array.from(fidToAddresses.get(fid) ?? []),
-          fid 
+          fid,
+          userData
         });
       }
       groupedCounts.get(key)!.count++;
@@ -174,7 +194,7 @@ export async function getDogEventLeaderboard(options?: {
       // No FID, group by address
       const key = `addr:${eaterLower}`;
       if (!groupedCounts.has(key)) {
-        groupedCounts.set(key, { count: 0, addresses: [eaterLower] });
+        groupedCounts.set(key, { count: 0, addresses: [eaterLower], userData });
       }
       groupedCounts.get(key)!.count++;
     }
@@ -188,6 +208,11 @@ export async function getDogEventLeaderboard(options?: {
       count: data.count,
       fid: data.fid,
       addresses: data.addresses,
+      name: data.userData?.name,
+      username: data.userData?.username,
+      image: data.userData?.image,
+      isKnownSpammer: data.userData?.isKnownSpammer,
+      isReportedForSpam: data.userData?.isReportedForSpam,
     }))
     .sort((a, b) => b.count - a.count);
 

@@ -181,6 +181,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   };
 
 
+
+
   // Show loading state while client-side query is fetching
   if (isLoadingHotdogs && !isPaginating) {
     return (
@@ -277,8 +279,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
   return (
     <>
-    <div id="top-of-list" className="invisible" />
-    <div className="flex flex-col gap-4">
+      <div id="top-of-list" className="invisible" />
+      <div className="flex flex-col gap-4">
       {/* Show pagination loading overlay */}
       {isPaginating && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">

@@ -1,9 +1,12 @@
-import { type FC, memo } from "react";
+import { type FC, memo, useMemo } from "react";
 import Link from "next/link";
-import { Avatar } from "./Profile/Avatar";
-import { Name } from "./Profile/Name";
+// Removed Avatar import - using backend profile data instead
+// Removed Name import - using backend profile data instead
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import { useSession } from "next-auth/react";
+import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
+import { getProxiedUrl } from "~/utils/imageProxy";
+import Image from "next/image";
 
 export type LeaderboardListProps = {
   limit?: number;
@@ -11,6 +14,16 @@ export type LeaderboardListProps = {
   endDate?: Date;
   showCurrentUser?: boolean;
   height?: string;
+};
+
+type ProfileData = {
+  address: string;
+  name?: string | null;
+  username?: string | null;
+  image?: string | null;
+  fid?: number | null;
+  isKnownSpammer?: boolean | null;
+  isReportedForSpam?: boolean | null;
 };
 
 const LeaderboardListComponent: FC<LeaderboardListProps> = ({
@@ -27,8 +40,24 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
     endDate,
   });
 
+  // Memoize profile lookup map for better performance with proper typing
+  const profileMap = useMemo(() => {
+    if (!leaderboard?.users || !profiles) return new Map<string, ProfileData>();
+    
+    const map = new Map<string, ProfileData>();
+    leaderboard.users.forEach((address, index) => {
+      const profile = profiles[index];
+      if (profile) {
+        map.set(address.toLowerCase(), profile as ProfileData);
+      }
+    });
+    return map;
+  }, [leaderboard?.users, profiles]);
+
   if (!leaderboard || !profiles)
-    return <div className="w-full rounded-lg bg-base-200" style={{ height }} />;
+    return (
+      <div className="w-full rounded-lg bg-base-200" style={{ height }} />
+    );
 
   const addresses = leaderboard.users ?? [];
   const hotdogs = leaderboard.hotdogs ?? [];
@@ -67,14 +96,40 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
         <div className="flex items-center justify-between rounded-lg bg-base-200 bg-opacity-50 p-3">
           <Link
             href={`/profile/address/${currentUserRow.address}`}
-            className="flex items-center gap-3"
+            className="flex items-center gap-2"
           >
-            <div className="text-lg font-bold text-secondary">
+            <div className="text-lg font-bold text-secondary mr-2">
               #{currentUserRow.rank}
             </div>
-            <Avatar size="32px" address={currentUserRow.address} />
+            {(() => {
+              const profile = profileMap.get(currentUserRow.address.toLowerCase());
+              const avatarUrl = profile?.image;
+              return avatarUrl && avatarUrl !== "" ? (
+                <div className="avatar">
+                  <div className="w-6 h-6 rounded-full">
+                    <Image
+                      src={getProxiedUrl(avatarUrl)}
+                      alt={profile?.name ?? profile?.username ?? 'User'}
+                      width={32}
+                      height={32}
+                      className="rounded-full w-6 h-6 object-cover"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-0.5">
+                  <Jazzicon
+                    diameter={24}
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                    seed={jsNumberForAddress(currentUserRow.address)}
+                  />
+                </div>
+              );
+            })()}
             <div className="font-medium">
-              <Name address={currentUserRow.address} noLink />
+              {profileMap.get(currentUserRow.address.toLowerCase())?.name ?? 
+               profileMap.get(currentUserRow.address.toLowerCase())?.username ??
+               `${currentUserRow.address.slice(0, 6)}...${currentUserRow.address.slice(-4)}`}
             </div>
           </Link>
           <div className="flex items-center gap-2">
@@ -86,6 +141,9 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
       {displayUsers.map((address, idx) => {
         const hotdogCount = Number(displayHotdogs[idx]);
         const rank = addresses.indexOf(address) + 1;
+        const profile = profileMap.get(address.toLowerCase());
+        const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+        
         return (
           <div
             key={address}
@@ -93,12 +151,36 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
           >
             <Link
               href={`/profile/address/${address}`}
-              className="flex items-center gap-3"
+              className="flex items-center gap-2"
             >
-              <div className="text-lg font-bold text-secondary">#{rank}</div>
-              <Avatar size="32px" address={address} />
+              <div className="text-lg font-bold text-secondary mr-2">#{rank}</div>
+              {(() => {
+                const profile = profileMap.get(address.toLowerCase());
+                const avatarUrl = profile?.image;
+                return avatarUrl && avatarUrl !== "" ? (
+                  <div className="avatar">
+                    <div className="w-6 h-6 rounded-full">
+                      <Image
+                        src={getProxiedUrl(avatarUrl)}
+                        alt={displayName}
+                        width={32}
+                        height={32}
+                        className="rounded-full w-6 h-6 object-cover"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-0.5">
+                    <Jazzicon
+                      diameter={24}
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                      seed={jsNumberForAddress(address)}
+                    />
+                  </div>
+                );
+              })()}
               <div className="font-medium">
-                <Name address={address} noLink />
+                {displayName}
               </div>
             </Link>
             <div className="flex items-center gap-2">

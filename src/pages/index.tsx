@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
-import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { APP_DESCRIPTION } from "~/constants";
 import Image from "next/image";
 import LeaderboardList from "~/components/LeaderboardList";
@@ -33,7 +32,10 @@ export const getStaticProps = async () => {
   };
 };
 
+const tabs = ["logs", "leaderboard"] as const;
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("logs");
+
   return (
     <>
       <Head>
@@ -46,7 +48,6 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
-        <LeaderboardBanner />
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
           <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             <Image
@@ -75,14 +76,23 @@ export default function Home() {
             </Link>
           </div>
           <CreateAttestation />
-          <div className="w-full max-w-md">
-            <h2 className="text-center text-2xl font-bold">Leaderboard</h2>
-            <LeaderboardList limit={10} />
+          <div role="tablist" className="tabs tabs-boxed">
+            {tabs.map((tab) => (
+              <a key={tab} role="tab" className={`tab ${activeTab === tab ? "bg-secondary/50 text-secondary-content" : ""}`} onClick={() => setActiveTab(tab)}>
+                {tab}
+              </a>
+            ))}
           </div>
-          <div className="w-full max-w-md">
-            <h2 className="text-center text-2xl font-bold">Logs</h2>
-            <ListAttestations limit={10} />
-          </div>
+          {activeTab === "leaderboard" && (
+            <div className="w-full max-w-md">
+              <LeaderboardList limit={10} />
+            </div>
+          )}
+          {activeTab === "logs" && (
+            <div className="w-full max-w-md">
+              <ListAttestations limit={10} />
+            </div>
+          )}
         </div>
       </main>
     </>

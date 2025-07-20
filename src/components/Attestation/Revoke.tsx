@@ -2,12 +2,14 @@ import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { getContract, sendTransaction } from "thirdweb";
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { useActiveWallet } from "thirdweb/react";
 import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { DEFAULT_CHAIN } from "~/constants";
 import { LOG_A_DOG } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { revokeHotdogLog } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c";
+import { useStableAccount } from "~/hooks/useStableAccount";
+import { useIsMobile } from "~/hooks/useIsMobile";
 
 type Props = {
   hotdog: {
@@ -18,8 +20,9 @@ type Props = {
 }
 
 export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
+  const isMobile = useIsMobile();
   const wallet = useActiveWallet();
-  const account = useActiveAccount();
+  const account = useStableAccount();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
   const revoke = async () => {
@@ -73,9 +76,14 @@ export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
     }
   };
 
+  // Don't render revoke button on mobile to improve performance
+  if (isMobile) {
+    return null;
+  }
+
   return (
     <>
-      {hotdog.eater.toLowerCase() === account?.address.toLowerCase() && (
+      {hotdog.eater.toLowerCase() === account?.address?.toLowerCase() && (
         <label htmlFor={`${hotdog.logId}-revoke-modal`} className="btn btn-xs btn-circle btn-ghost w-fit px-2">
           <TrashIcon className="w-4 h-4" />
         </label>

@@ -1,10 +1,12 @@
 import { type FC, useMemo, memo } from "react";
+import { Badge } from "./Profile/Badge";
 import Link from "next/link";
-import { Name } from "./Profile/Name";
-import { Avatar } from "./Profile/Avatar";
 import styles from "./LeaderboardBanner.module.css";
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import usePrefersReducedMotion from "~/hooks/usePrefersReducedMotion";
+import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
+import { getProxiedUrl } from "~/utils/imageProxy";
+import Image from "next/image";
 
 type Props = {
   startDate?: Date;
@@ -16,8 +18,8 @@ const LeaderboardBannerComponent: FC<Props> = ({
   startDate,
   endDate,
   scrollSpeed = 50,
-}) => {
-  const reduceMotion = usePrefersReducedMotion();
+  }) => {
+    const reduceMotion = usePrefersReducedMotion();
 
   const { leaderboard, profiles } = useLeaderboardData({
     startDate,
@@ -33,7 +35,9 @@ const LeaderboardBannerComponent: FC<Props> = ({
   }, [leaderboard?.hotdogs]);
 
   if (!leaderboard || !profiles)
-    return <div className="h-20 w-full rounded-lg bg-base-200" />;
+    return (
+      <div className="h-20 w-full rounded-lg bg-base-200" />
+    );
 
   // On mobile or with reduced motion, show a static banner with top 5
   if (reduceMotion) {
@@ -41,10 +45,14 @@ const LeaderboardBannerComponent: FC<Props> = ({
     const topHotdogs = hotdogs.slice(0, 5);
 
     return (
-      <div className="w-full overflow-x-auto bg-base-200 bg-opacity-25 backdrop-blur-sm">
+      <div className="w-full overflow-x-auto">
         <div className="flex items-center gap-4 whitespace-nowrap p-2">
           {topUsers.map((address, index) => {
             const hotdogCount = Number(topHotdogs[index]);
+            const profile = profiles[index];
+            const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+            const avatarUrl = profile?.image;
+            
             return (
               <Link
                 key={address}
@@ -54,10 +62,36 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-bold text-secondary">
                   #{index + 1}
                 </div>
-                <Avatar size="24px" address={address} />
+                {avatarUrl && avatarUrl !== "" ? (
+                  <div className="avatar">
+                    <div className="w-6 h-6 rounded-full">
+                      <Image
+                        src={getProxiedUrl(avatarUrl)}
+                        alt={displayName}
+                        width={24}
+                        height={24}
+                        className="rounded-full w-6 h-6 object-cover"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-0.5">
+                    <Jazzicon
+                      diameter={16}
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                      seed={jsNumberForAddress(address)}
+                    />
+                  </div>
+                )}
                 <div className="text-sm font-medium">
-                  <Name address={address} noLink />
+                  {displayName}
                 </div>
+                <Badge 
+                  address={address}
+                  fid={profile?.fid}
+                  isKnownSpammer={profile?.isKnownSpammer}
+                  isReportedForSpam={profile?.isReportedForSpam}
+                />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
                   <span className="text-xs text-base-content/70">🌭</span>
@@ -72,11 +106,16 @@ const LeaderboardBannerComponent: FC<Props> = ({
 
   // Calculate animation duration based on content width and scroll speed
   const itemWidth = 200; // approximate width per item
-  const totalWidth = users.length * itemWidth;
+  
+  // Limit to top 10 users to prevent browser crashes
+  const topUsers = users.slice(0, 10);
+  const topHotdogs = hotdogs.slice(0, 10);
+  
+  const totalWidth = topUsers.length * itemWidth;
   const animationDuration = totalWidth / scrollSpeed;
 
   return (
-    <div className="w-full overflow-hidden bg-base-200 bg-opacity-25 backdrop-blur-sm">
+    <div className="w-full overflow-hidden">
       <div className="relative h-14 overflow-hidden py-2">
         <div
           className={`absolute flex items-center gap-6 whitespace-nowrap ${styles.scrollContainer}`}
@@ -88,8 +127,11 @@ const LeaderboardBannerComponent: FC<Props> = ({
           }
         >
           {/* First set of items */}
-          {users.map((address, index) => {
-            const hotdogCount = Number(hotdogs[index]);
+          {topUsers.map((address, index) => {
+            const hotdogCount = Number(topHotdogs[index]);
+            const profile = profiles[index];
+            const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+            const avatarUrl = profile?.image;
 
             return (
               <Link
@@ -100,10 +142,36 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-bold text-secondary">
                   #{index + 1}
                 </div>
-                <Avatar size="24px" address={address} />
+                {avatarUrl && avatarUrl !== "" ? (
+                  <div className="avatar">
+                    <div className="w-6 h-6 rounded-full">
+                      <Image
+                        src={getProxiedUrl(avatarUrl)}
+                        alt={displayName}
+                        width={24}
+                        height={24}
+                        className="rounded-full w-6 h-6 object-cover"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-0.5">
+                    <Jazzicon
+                      diameter={16}
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                      seed={jsNumberForAddress(address)}
+                    />
+                  </div>
+                )}
                 <div className="text-sm font-medium">
-                  <Name address={address} noLink />
+                  {displayName}
                 </div>
+                <Badge 
+                  address={address}
+                  fid={profile?.fid}
+                  isKnownSpammer={profile?.isKnownSpammer}
+                  isReportedForSpam={profile?.isReportedForSpam}
+                />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
                   <span className="text-xs text-base-content/70">🌭</span>
@@ -113,8 +181,11 @@ const LeaderboardBannerComponent: FC<Props> = ({
           })}
 
           {/* Duplicate set for seamless loop */}
-          {users.map((address, index) => {
-            const hotdogCount = Number(hotdogs[index]);
+          {topUsers.map((address, index) => {
+            const hotdogCount = Number(topHotdogs[index]);
+            const profile = profiles[index];
+            const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+            const avatarUrl = profile?.image;
 
             return (
               <Link
@@ -125,10 +196,32 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-bold text-secondary">
                   #{index + 1}
                 </div>
-                <Avatar size="24px" address={address} />
+                {avatarUrl && avatarUrl !== "" ? (
+                  <Image
+                    src={getProxiedUrl(avatarUrl)}
+                    alt={displayName}
+                    width={24}
+                    height={24}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="mt-0.5">
+                    <Jazzicon
+                      diameter={16}
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                      seed={jsNumberForAddress(address)}
+                    />
+                  </div>
+                )}
                 <div className="text-sm font-medium">
-                  <Name address={address} noLink />
+                  {displayName}
                 </div>
+                <Badge 
+                  address={address}
+                  fid={profile?.fid}
+                  isKnownSpammer={profile?.isKnownSpammer}
+                  isReportedForSpam={profile?.isReportedForSpam}
+                />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
                   <span className="text-xs text-base-content/70">🌭</span>
