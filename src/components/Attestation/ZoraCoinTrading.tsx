@@ -238,10 +238,6 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
   //   }
   // };
 
-  // Don't render on mobile to prevent performance issues
-  if (isMobile) {
-    return null;
-  }
 
   return (
     <div className="flex items-center gap-2">
