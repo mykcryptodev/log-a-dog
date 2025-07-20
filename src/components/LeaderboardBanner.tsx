@@ -101,7 +101,12 @@ const LeaderboardBannerComponent: FC<Props> = ({
 
   // Calculate animation duration based on content width and scroll speed
   const itemWidth = 200; // approximate width per item
-  const totalWidth = users.length * itemWidth;
+  
+  // Limit to top 10 users to prevent browser crashes
+  const topUsers = users.slice(0, 10);
+  const topHotdogs = hotdogs.slice(0, 10);
+  
+  const totalWidth = topUsers.length * itemWidth;
   const animationDuration = totalWidth / scrollSpeed;
 
   return (
@@ -117,8 +122,8 @@ const LeaderboardBannerComponent: FC<Props> = ({
           }
         >
           {/* First set of items */}
-          {users.map((address, index) => {
-            const hotdogCount = Number(hotdogs[index]);
+          {topUsers.map((address, index) => {
+            const hotdogCount = Number(topHotdogs[index]);
             const profile = profiles[index];
             const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
             const avatarUrl = profile?.image;
@@ -167,8 +172,8 @@ const LeaderboardBannerComponent: FC<Props> = ({
           })}
 
           {/* Duplicate set for seamless loop */}
-          {users.map((address, index) => {
-            const hotdogCount = Number(hotdogs[index]);
+          {topUsers.map((address, index) => {
+            const hotdogCount = Number(topHotdogs[index]);
             const profile = profiles[index];
             const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
             const avatarUrl = profile?.image;
