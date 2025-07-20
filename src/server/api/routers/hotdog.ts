@@ -842,10 +842,45 @@ export const hotdogRouter = createTRPCRouter({
       };
 
       const zoraCoinAddressesArray = processedResponse.logs[0]?.zoraCoin ? [processedResponse.logs[0].zoraCoin] : [];
-      const [zoraCoinDetails, metadata] = await Promise.all([
+      
+      // Collect unique eater and logger addresses for profile fetching
+      const uniqueAddresses = [dogEvent.eater.toLowerCase(), dogEvent.logger.toLowerCase()];
+      
+      const [zoraCoinDetails, metadata, profiles] = await Promise.all([
         zoraCoinAddressesArray.length > 0 ? getZoraCoinDetailsBatch(zoraCoinAddressesArray, chainId) : new Map<string, ZoraCoinDetails>(),
         getMetadataFromUri(processedResponse.logs[0]?.metadataUri ?? ''),
+        db.user.findMany({
+          where: {
+            address: {
+              in: uniqueAddresses,
+            },
+          },
+          select: {
+            address: true,
+            username: true,
+            name: true,
+            image: true,
+            fid: true,
+            isKnownSpammer: true,
+            isReportedForSpam: true,
+          },
+        })
       ]);
+
+      // Create profile map for lookup
+      const profileMap = new Map(
+        profiles.map(profile => [
+          profile.address?.toLowerCase() ?? '',
+          {
+            username: profile.username,
+            name: profile.name,
+            image: profile.image,
+            fid: profile.fid,
+            isKnownSpammer: profile.isKnownSpammer,
+            isReportedForSpam: profile.isReportedForSpam,
+          }
+        ])
+      );
 
       const processedHotdog: ProcessedHotdog = {
         ...processedResponse.logs[0]!,
@@ -853,6 +888,8 @@ export const hotdogRouter = createTRPCRouter({
         metadata,
         attestationPeriod: attestationPeriods.get(logId),
         duplicateOfLogId,
+        eaterProfile: profileMap.get(dogEvent.eater.toLowerCase()) ?? null,
+        loggerProfile: profileMap.get(dogEvent.logger.toLowerCase()) ?? null,
       };
 
       const response = {
