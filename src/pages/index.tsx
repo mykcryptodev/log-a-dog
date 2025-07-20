@@ -46,7 +46,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
-        {/* <LeaderboardBanner /> */}
+        <LeaderboardBanner />
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
           <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             <Image
