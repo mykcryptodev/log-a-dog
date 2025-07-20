@@ -95,22 +95,26 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
         <div className="flex items-center justify-between rounded-lg bg-base-200 bg-opacity-50 p-3">
           <Link
             href={`/profile/address/${currentUserRow.address}`}
-            className="flex items-center gap-3"
+            className="flex items-center gap-2"
           >
-            <div className="text-lg font-bold text-secondary">
+            <div className="text-lg font-bold text-secondary mr-2">
               #{currentUserRow.rank}
             </div>
             {(() => {
               const profile = profileMap.get(currentUserRow.address.toLowerCase());
               const avatarUrl = profile?.image;
               return avatarUrl && avatarUrl !== "" ? (
-                <img
-                  src={getProxiedUrl(avatarUrl)}
-                  alt={profile?.name ?? profile?.username ?? 'User'}
-                  width={32}
-                  height={32}
-                  className="rounded-full object-cover"
-                />
+                <div className="avatar">
+                  <div className="w-6 h-6 rounded-full">
+                    <img
+                      src={getProxiedUrl(avatarUrl)}
+                      alt={profile?.name ?? profile?.username ?? 'User'}
+                      width={32}
+                      height={32}
+                      className="rounded-full w-6 h-6 object-cover"
+                    />
+                  </div>
+                </div>
               ) : (
                 <div className="mt-0.5">
                   <Jazzicon
@@ -146,20 +150,24 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
           >
             <Link
               href={`/profile/address/${address}`}
-              className="flex items-center gap-3"
+              className="flex items-center gap-2"
             >
-              <div className="text-lg font-bold text-secondary">#{rank}</div>
+              <div className="text-lg font-bold text-secondary mr-2">#{rank}</div>
               {(() => {
                 const profile = profileMap.get(address.toLowerCase());
                 const avatarUrl = profile?.image;
                 return avatarUrl && avatarUrl !== "" ? (
-                  <img
-                    src={getProxiedUrl(avatarUrl)}
-                    alt={displayName}
-                    width={32}
-                    height={32}
-                    className="rounded-full object-cover"
-                  />
+                  <div className="avatar">
+                    <div className="w-6 h-6 rounded-full">
+                      <img
+                        src={getProxiedUrl(avatarUrl)}
+                        alt={displayName}
+                        width={32}
+                        height={32}
+                        className="rounded-full w-6 h-6 object-cover"
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <div className="mt-0.5">
                     <Jazzicon

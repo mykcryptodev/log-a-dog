@@ -62,13 +62,17 @@ const LeaderboardBannerComponent: FC<Props> = ({
                   #{index + 1}
                 </div>
                 {avatarUrl && avatarUrl !== "" ? (
-                  <img
-                    src={getProxiedUrl(avatarUrl)}
-                    alt={displayName}
-                    width={24}
-                    height={24}
-                    className="rounded-full object-cover"
-                  />
+                  <div className="avatar">
+                    <div className="w-6 h-6 rounded-full">
+                      <img
+                        src={getProxiedUrl(avatarUrl)}
+                        alt={displayName}
+                        width={24}
+                        height={24}
+                        className="rounded-full w-6 h-6 object-cover"
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <div className="mt-0.5">
                     <Jazzicon
@@ -138,13 +142,17 @@ const LeaderboardBannerComponent: FC<Props> = ({
                   #{index + 1}
                 </div>
                 {avatarUrl && avatarUrl !== "" ? (
-                  <img
-                    src={getProxiedUrl(avatarUrl)}
-                    alt={displayName}
-                    width={24}
-                    height={24}
-                    className="rounded-full object-cover"
-                  />
+                  <div className="avatar">
+                    <div className="w-6 h-6 rounded-full">
+                      <img
+                        src={getProxiedUrl(avatarUrl)}
+                        alt={displayName}
+                        width={24}
+                        height={24}
+                        className="rounded-full w-6 h-6 object-cover"
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <div className="mt-0.5">
                     <Jazzicon

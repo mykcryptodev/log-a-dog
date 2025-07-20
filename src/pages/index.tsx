@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 // import Link from "next/link";
@@ -33,7 +33,10 @@ export const getStaticProps = async () => {
   };
 };
 
+const tabs = ["logs", "leaderboard"] as const;
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("logs");
+
   return (
     <>
       <Head>
@@ -75,14 +78,23 @@ export default function Home() {
             </Link>
           </div>
           <CreateAttestation />
-          <div className="w-full max-w-md">
-            <h2 className="text-center text-2xl font-bold">Leaderboard</h2>
-            <LeaderboardList limit={10} />
+          <div role="tablist" className="tabs tabs-boxed">
+            {tabs.map((tab) => (
+              <a role="tab" className={`tab ${activeTab === tab ? "bg-secondary/50 text-secondary-content" : ""}`} onClick={() => setActiveTab(tab)}>
+                {tab}
+              </a>
+            ))}
           </div>
-          <div className="w-full max-w-md">
-            <h2 className="text-center text-2xl font-bold">Logs</h2>
-            <ListAttestations limit={10} />
-          </div>
+          {activeTab === "leaderboard" && (
+            <div className="w-full max-w-md">
+              <LeaderboardList limit={10} />
+            </div>
+          )}
+          {activeTab === "logs" && (
+            <div className="w-full max-w-md">
+              <ListAttestations limit={10} />
+            </div>
+          )}
         </div>
       </main>
     </>
