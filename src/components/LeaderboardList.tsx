@@ -1,9 +1,11 @@
 import { type FC, memo, useMemo } from "react";
 import Link from "next/link";
-import { Avatar } from "./Profile/Avatar";
+// Removed Avatar import - using backend profile data instead
 // Removed Name import - using backend profile data instead
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import { useSession } from "next-auth/react";
+import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
+import { getProxiedUrl } from "~/utils/imageProxy";
 
 export type LeaderboardListProps = {
   limit?: number;
@@ -17,6 +19,7 @@ type ProfileData = {
   address: string;
   name?: string | null;
   username?: string | null;
+  image?: string | null;
   fid?: number | null;
   isKnownSpammer?: boolean | null;
   isReportedForSpam?: boolean | null;
@@ -97,7 +100,27 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
             <div className="text-lg font-bold text-secondary">
               #{currentUserRow.rank}
             </div>
-            <Avatar size="32px" address={currentUserRow.address} />
+            {(() => {
+              const profile = profileMap.get(currentUserRow.address.toLowerCase());
+              const avatarUrl = profile?.image;
+              return avatarUrl && avatarUrl !== "" ? (
+                <img
+                  src={getProxiedUrl(avatarUrl)}
+                  alt={profile?.name ?? profile?.username ?? 'User'}
+                  width={32}
+                  height={32}
+                  className="rounded-full object-cover"
+                />
+              ) : (
+                <div className="mt-0.5">
+                  <Jazzicon
+                    diameter={24}
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                    seed={jsNumberForAddress(currentUserRow.address)}
+                  />
+                </div>
+              );
+            })()}
             <div className="font-medium">
               {profileMap.get(currentUserRow.address.toLowerCase())?.name ?? 
                profileMap.get(currentUserRow.address.toLowerCase())?.username ??
@@ -126,7 +149,27 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
               className="flex items-center gap-3"
             >
               <div className="text-lg font-bold text-secondary">#{rank}</div>
-              <Avatar size="32px" address={address} />
+              {(() => {
+                const profile = profileMap.get(address.toLowerCase());
+                const avatarUrl = profile?.image;
+                return avatarUrl && avatarUrl !== "" ? (
+                  <img
+                    src={getProxiedUrl(avatarUrl)}
+                    alt={displayName}
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="mt-0.5">
+                    <Jazzicon
+                      diameter={24}
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                      seed={jsNumberForAddress(address)}
+                    />
+                  </div>
+                );
+              })()}
               <div className="font-medium">
                 {displayName}
               </div>
