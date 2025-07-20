@@ -213,9 +213,11 @@ export const HotdogCard: FC<Props> = ({
         {/* Header with user info and revoke button */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col items-start">
-            <div className="flex w-fit items-center gap-2">
-              <Avatar address={hotdog.eater} fallbackSize={24} />
-              <span className="text-sm font-medium">{displayName}</span>
+            <div className="flex w-fit items-center gap-1">
+              <Link href={`/profile/${hotdog.eater}`} className="flex items-center gap-2">
+                <Avatar address={hotdog.eater} fallbackSize={24} />
+                <span className="text-sm font-medium">{displayName}</span>
+              </Link>              
               <Badge 
                 address={hotdog.eater}
                 fid={hotdog.eaterProfile?.fid}
