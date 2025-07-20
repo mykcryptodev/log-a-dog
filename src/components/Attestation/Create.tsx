@@ -330,7 +330,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
         🌭
       </button>
       <dialog id="create_attestation_modal" className="modal">
-        <div className="modal-box overflow-hidden">
+        <div className="modal-box max-h-[90vh] overflow-y-auto">
           <h3 className="font-bold text-2xl mb-4">Log a Dog</h3>
           <div className="flex flex-col gap-2">
             <Upload
