@@ -4,7 +4,6 @@ import Link from "next/link";
 // import Link from "next/link";
 import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
-import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { APP_DESCRIPTION } from "~/constants";
 import Image from "next/image";
 import LeaderboardList from "~/components/LeaderboardList";
@@ -49,7 +48,6 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
-        <LeaderboardBanner />
         <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
           <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             <Image
