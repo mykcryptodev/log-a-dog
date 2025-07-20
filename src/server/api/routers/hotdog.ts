@@ -874,7 +874,7 @@ export const hotdogRouter = createTRPCRouter({
           {
             username: profile.username,
             name: profile.name,
-            image: profile.image,
+            image: convertIpfsToHttps(profile.image),
             fid: profile.fid,
             isKnownSpammer: profile.isKnownSpammer,
             isReportedForSpam: profile.isReportedForSpam,
