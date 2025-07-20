@@ -79,7 +79,7 @@ const AttestationStatusBadge: FC<Props> = ({ attestationPeriod }) => {
       badgeClasses += "bg-error/10 text-error hover:bg-error/20";
     }
   } else {
-    badgeClasses += "bg-neutral/10 text-neutral hover:bg-neutral/20";
+    badgeClasses += "bg-neutral/10 text-neutral dark:text-neutral-content hover:bg-neutral/20";
   }
 
   return (
