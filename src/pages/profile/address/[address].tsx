@@ -156,11 +156,9 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
               existingUsername={displayUsername}
             />
           )}
-          {!acccount && (
             <div className="mb-4">
               <ConnectButton client={client} />
             </div>
-          )}
           {isOwnProfile && (
             <CreateAttestation />
           )}
