@@ -6,7 +6,7 @@ import { api } from "~/utils/api";
 import dynamic from "next/dynamic";
 import { client } from "~/providers/Thirdweb";
 import { CreateAttestation } from "~/components/Attestation/Create";
-import { useActiveAccount } from "thirdweb/react";
+import { useActiveAccount, ConnectButton } from "thirdweb/react";
 import { useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import HotdogCard from "~/components/utils/HotdogCard";
@@ -48,6 +48,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
     chainId: DEFAULT_CHAIN.id,
     user: address,
     limit,
+    start,
   }, {
     enabled: !!address && !!DEFAULT_CHAIN.id,
     refetchOnWindowFocus: false,
@@ -154,6 +155,11 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
               existingImgUrl={displayImage}
               existingUsername={displayUsername}
             />
+          )}
+          {!acccount && (
+            <div className="mb-4">
+              <ConnectButton client={client} />
+            </div>
           )}
           {isOwnProfile && (
             <CreateAttestation />
