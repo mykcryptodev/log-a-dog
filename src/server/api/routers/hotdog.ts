@@ -584,27 +584,31 @@ export const hotdogRouter = createTRPCRouter({
       return response;
     }),
   getAllForUser: publicProcedure
-    .input(z.object({ 
+    .input(z.object({
       chainId: z.number(),
       user: z.string(),
       limit: z.number(),
+      start: z.number(),
     }))
     .query(async ({ input }) => {
-      const { chainId, user, limit } = input;
+      const { chainId, user, limit, start } = input;
       // Get dog events from database for specific user
       const contestStartTime = BigInt(new Date(CONTEST_START_TIME).getTime() / 1000);
       const contestEndTime = BigInt(new Date(CONTEST_END_TIME).getTime() / 1000);
-      
-      const userDogEvents = await getDogEventsByEater(user.toLowerCase(), {
-        take: limit,
-      });
 
-      // Filter by contest time period
-      const filteredEvents = userDogEvents.filter(event => 
-        event.chainId === chainId.toString() &&
-        event.timestamp >= contestStartTime &&
-        event.timestamp <= contestEndTime
-      );
+      const userDogEvents = await getDogEvents({
+        where: {
+          eater: user.toLowerCase(),
+          chainId: chainId.toString(),
+          timestamp: {
+            gte: contestStartTime,
+            lte: contestEndTime,
+          },
+        },
+        orderBy: { timestamp: 'desc' },
+        take: limit,
+        skip: start,
+      });
 
       // Get total count for pagination
       const totalEvents = await db.dogEvent.count({
@@ -628,11 +632,11 @@ export const hotdogRouter = createTRPCRouter({
           }),
         }),
       ]);
-      const currentPage = 1;
-      const hasNextPage = currentPage < totalPages;
+      const currentPage = Math.floor(start / limit) + 1;
+      const hasNextPage = start + limit < totalEvents;
 
       const redactedLogIdsStr = Array.from(redactedLogIds).map(id => id.toString());
-      const moderatedHotdogs = filteredEvents.map(event => ({
+      const moderatedHotdogs = userDogEvents.map(event => ({
         logId: event.logId,
         timestamp: event.timestamp.toString(),
         imageUri: redactedLogIdsStr.includes(event.logId) ? redactedImage : event.imageUri,
@@ -659,7 +663,7 @@ export const hotdogRouter = createTRPCRouter({
       const addressesArray = [...uniqueAddresses];
 
       // Detect duplicate images
-      const imageUris = Array.from(new Set(filteredEvents.map(e => e.imageUri)));
+      const imageUris = Array.from(new Set(userDogEvents.map(e => e.imageUri)));
       const duplicateEvents = await db.dogEvent.findMany({
         where: { imageUri: { in: imageUris } },
         orderBy: { timestamp: 'asc' },
