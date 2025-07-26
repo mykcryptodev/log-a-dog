@@ -31,6 +31,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
     chainId: DEFAULT_CHAIN.id,
     user,
     limit: limitOrDefault,
+    start,
   }, {
     enabled: !!DEFAULT_CHAIN.id,
     refetchOnWindowFocus: false,
