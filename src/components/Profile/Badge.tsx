@@ -55,7 +55,7 @@ export const Badge: FC<{
           onClick={() => (document.getElementById(spammerModalId) as HTMLDialogElement)?.showModal()}
           className={`cursor-pointer hover:opacity-80 transition-opacity inline-flex items-center justify-center ${className}`}
         >
-          <ExclamationTriangleIcon className="w-4 h-4 text-warning" />
+          <ExclamationTriangleIcon className="w-4 h-4 text-error" />
         </button>
 
           <dialog id={spammerModalId} className="modal modal-bottom sm:modal-middle">
@@ -67,7 +67,7 @@ export const Badge: FC<{
                 <XMarkIcon className="w-4 h-4" />
               </button>
               <h3 className="font-bold text-lg flex items-center gap-2">
-                <ExclamationTriangleIcon className="w-6 h-6 stroke-2 text-warning" />
+                <ExclamationTriangleIcon className="w-6 h-6 stroke-2 text-error" />
                 Known Spammer
               </h3>
               <div className="py-4 space-y-2">
