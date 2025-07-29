@@ -92,12 +92,12 @@ export default function Home() {
           )}
           {activeTab === "logs" && (
             <div className="w-full max-w-md space-y-4">
-              <div role="tablist" className="tabs tabs-boxed">
+              <div role="tablist" className="tabs tabs-bordered">
                 {logTabs.map((tab) => (
                   <a
                     key={tab}
                     role="tab"
-                    className={`tab ${activeLogTab === tab ? "bg-secondary/50 text-secondary-content" : ""}`}
+                    className={`tab ${activeLogTab === tab ? "tab-active" : ""}`}
                     onClick={() => setActiveLogTab(tab)}
                   >
                     {tab}
