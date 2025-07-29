@@ -64,9 +64,29 @@ type RealDogEvent = {
   attestationPeriod?: AttestationPeriod;
   metadata?: HotdogMetadata | null;
   duplicateOfLogId?: string | null;
+  eaterProfile?: {
+    name?: string | null;
+    username?: string | null;
+    image?: string | null;
+    fid?: number | null;
+    isKnownSpammer?: boolean | null;
+    isReportedForSpam?: boolean | null;
+  } | null;
+  loggerProfile?: {
+    name?: string | null;
+    username?: string | null;
+    image?: string | null;
+    fid?: number | null;
+    isKnownSpammer?: boolean | null;
+    isReportedForSpam?: boolean | null;
+  } | null;
 };
 
 type HotdogItem = RealDogEvent | PendingDogEvent;
+
+const isRealDogEvent = (dog: HotdogItem): dog is RealDogEvent => {
+  return !("isPending" in dog && dog.isPending);
+};
 
 type Props = {
   attestors?: string[];
@@ -74,9 +94,10 @@ type Props = {
   endDate?: Date;
   limit: number;
   address?: string;
+  includeSpammers?: boolean; // when false, filter out known spammer logs
 };
 
-export const ListAttestations: FC<Props> = ({ limit }) => {
+export const ListAttestations: FC<Props> = ({ limit, includeSpammers = true }) => {
   const limitOrDefault = limit ?? 4;
   const [start, setStart] = useState<number>(0);
   const isClient = typeof window !== 'undefined';
@@ -139,6 +160,16 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const allHotdogs: HotdogItem[] = useMemo(() => {
     return dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
   }, [dogData?.hotdogs, filteredPendingDogs, pendingDogs]);
+
+  const displayHotdogs: HotdogItem[] = useMemo(() => {
+    if (includeSpammers) return allHotdogs;
+    return allHotdogs.filter((hotdog) => {
+      if (!isRealDogEvent(hotdog)) return true;
+      const eaterSpam = hotdog.eaterProfile?.isKnownSpammer;
+      const loggerSpam = hotdog.loggerProfile?.isKnownSpammer;
+      return !eaterSpam && !loggerSpam;
+    });
+  }, [allHotdogs, includeSpammers]);
 
   // Mobile-safe scroll function
   const scrollToTop = () => {
@@ -293,7 +324,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         </div>
       )}
       
-      {allHotdogs.map((hotdog) => {
+      {displayHotdogs.map((hotdog) => {
         const attestationData = getAttestationData(hotdog);
         const isPending = 'isPending' in hotdog && hotdog.isPending;
         
