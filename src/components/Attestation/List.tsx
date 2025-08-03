@@ -113,7 +113,12 @@ export const ListAttestations: FC<Props> = ({ limit, includeSpammers = true }) =
     limit: limitOrDefault,
   };
 
-  const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
+  const {
+    data: dogData,
+    isLoading: isLoadingHotdogs,
+    isFetching: isFetchingHotdogs,
+    refetch: refetchDogData,
+  } = api.hotdog.getAll.useQuery(queryParams, {
     enabled: !!DEFAULT_CHAIN.id && isClient, // Only run query on client side
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -213,13 +218,13 @@ export const ListAttestations: FC<Props> = ({ limit, includeSpammers = true }) =
     (node: HTMLDivElement | null) => {
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
-        if (entries[0]?.isIntersecting && hasNextPage && !isLoadingHotdogs) {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingHotdogs) {
           setStart((prev) => prev + limitOrDefault);
         }
       });
       if (node) observer.current.observe(node);
     },
-    [hasNextPage, isLoadingHotdogs, limitOrDefault],
+    [hasNextPage, isFetchingHotdogs, limitOrDefault],
   );
 
 
@@ -341,7 +346,7 @@ export const ListAttestations: FC<Props> = ({ limit, includeSpammers = true }) =
         );
       })}
       <div ref={lastElementRef} />
-      {isLoadingHotdogs && loadedHotdogs.length > 0 && (
+      {isFetchingHotdogs && loadedHotdogs.length > 0 && (
         <div className="flex justify-center py-4">
           <span className="loading loading-spinner loading-md"></span>
         </div>
