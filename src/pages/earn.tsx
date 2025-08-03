@@ -19,6 +19,7 @@ import { HOTDOG_TOKEN, DEFAULT_CHAIN } from "~/constants";
 import { AirdropChannel } from "~/components/Airdrop/Channel";
 import Link from "next/link";
 import RelevantHolders from "~/components/RelevantHolders";
+import Image from "next/image";
 
 const EarnPage: NextPage = () => {
   const [mode, setMode] = useState<"eat" | "judge">("judge");
@@ -97,6 +98,42 @@ const EarnPage: NextPage = () => {
                   <CurrencyDollarIcon className="h-6 w-6" />
                   How Earning Works
                 </h2>
+
+                <div>
+                  <Image
+                    src="/images/how.png"
+                    className="w-full h-auto rounded-xl shadow cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl"
+                    alt="How Earning Works"
+                    width={1000}
+                    height={1000}
+                    onClick={() => {
+                      const modal = document.getElementById('how-earning-modal') as HTMLDialogElement | null;
+                      if (modal) modal.showModal();
+                    }}
+                  />
+                  <dialog id="how-earning-modal" className="modal">
+                    <form method="dialog" className="modal-box p-0 bg-transparent shadow-none max-w-3xl">
+                      <Image
+                        src="/images/how.png"
+                        className="w-full h-auto rounded-xl shadow-lg"
+                        alt="How Earning Works (Large)"
+                        width={1600}
+                        height={1600}
+                        priority
+                      />
+                      <button
+                        className="btn btn-sm btn-circle absolute right-2 top-2"
+                        aria-label="Close"
+                        type="submit"
+                      >
+                        ✕
+                      </button>
+                    </form>
+                    <form method="dialog" className="modal-backdrop">
+                      <button aria-label="Close"></button>
+                    </form>
+                  </dialog>
+                </div>
 
                 <div role="tablist" className="tabs tabs-bordered mb-4">
                   <a
