@@ -139,10 +139,11 @@ export const ListAttestations: FC<Props> = ({ limit, includeSpammers = true }) =
     const newUserAttested: Record<string, boolean> = {};
     const newUserAttestation: Record<string, boolean> = {};
     dogData.hotdogs.forEach((h, i) => {
-      newValid[h.logId] = dogData.validAttestations[i];
-      newInvalid[h.logId] = dogData.invalidAttestations[i];
-      newUserAttested[h.logId] = dogData.userAttested[i];
-      newUserAttestation[h.logId] = dogData.userAttestations[i];
+      const logId = h.logId;
+      newValid[logId] = dogData.validAttestations[i] ?? "0";
+      newInvalid[logId] = dogData.invalidAttestations[i] ?? "0";
+      newUserAttested[logId] = dogData.userAttested[i] ?? false;
+      newUserAttestation[logId] = dogData.userAttestations[i] ?? false;
     });
     setValidMap((prev) => ({ ...prev, ...newValid }));
     setInvalidMap((prev) => ({ ...prev, ...newInvalid }));
