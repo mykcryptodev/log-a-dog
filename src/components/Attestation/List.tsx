@@ -214,18 +214,33 @@ export const ListAttestations: FC<Props> = ({ limit, includeSpammers = true }) =
     });
   }, [allHotdogs, includeSpammers]);
 
+  // Guard against multiple rapid intersection events by using a ref
+  const loadingMoreRef = useRef(false);
+
   const lastElementRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
-        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingHotdogs) {
+        if (
+          entries[0]?.isIntersecting &&
+          hasNextPage &&
+          !loadingMoreRef.current
+        ) {
+          loadingMoreRef.current = true;
           setStart((prev) => prev + limitOrDefault);
         }
       });
       if (node) observer.current.observe(node);
     },
-    [hasNextPage, isFetchingHotdogs, limitOrDefault],
+    [hasNextPage, limitOrDefault],
   );
+
+  // Reset the loading guard when fetch status changes
+  useEffect(() => {
+    if (!isFetchingHotdogs) {
+      loadingMoreRef.current = false;
+    }
+  }, [isFetchingHotdogs]);
 
 
 
