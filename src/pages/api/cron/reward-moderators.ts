@@ -176,12 +176,15 @@ export default async function handler(
     console.log(`Moderator reward process completed: ${results.processed} processed, ${results.skipped} skipped, ${results.errors} errors`);
 
     // Send Telegram notification for cron job completion
-    try {
-      const message = formatCronJobMessage(results.processed, results.skipped);
-      await sendTelegramMessage(message);
-    } catch (telegramError) {
-      console.error('Failed to send Telegram notification:', telegramError);
-      // Don't fail the cron job if Telegram fails
+    // Only notify if some rewards were actually processed
+    if (results.processed > 0) {
+      try {
+        const message = formatCronJobMessage(results.processed, results.skipped);
+        await sendTelegramMessage(message);
+      } catch (telegramError) {
+        console.error('Failed to send Telegram notification:', telegramError);
+        // Don't fail the cron job if Telegram fails
+      }
     }
 
     // Explicitly disconnect from database
