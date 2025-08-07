@@ -127,6 +127,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       client={client}
       chain={DEFAULT_CHAIN}
       theme={userPrefersDarkMode ? "dark" : "light"}
+      autoConnect={false}
       connectButton={{
         label: loginBtnLabel ?? "Login",
         className: "!btn !min-w-fit",
