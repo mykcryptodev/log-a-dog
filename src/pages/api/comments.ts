@@ -1,4 +1,5 @@
 import { type NextApiRequest, type NextApiResponse } from "next";
+import { EMPTY_PARENT_ID } from "@ecp.eth/sdk";
 
 interface GraphQLResponse {
   data: {
@@ -19,8 +20,17 @@ interface GraphQLResponse {
         author: string;
         txHash: string;
         targetUri: string;
-        flatReplies: {
-          items: any[];
+        parentId: string | null;
+        replies: {
+          items: {
+            id: string;
+            createdAt: string;
+            content: string;
+            author: string;
+            txHash: string;
+            targetUri: string;
+            moderationClassifierScore: number;
+          }[];
         };
       }[];
     };
@@ -54,12 +64,14 @@ export default async function handler(
         ) {
           totalCount
           items {
-            flatReplies {
+            replies {
               items {
                 id
                 createdAt
                 content
                 author
+                txHash
+                targetUri
                 moderationClassifierScore
               }
             }
@@ -71,6 +83,7 @@ export default async function handler(
             author
             txHash
             targetUri
+            parentId
           }
           pageInfo {
             endCursor
@@ -117,7 +130,23 @@ export default async function handler(
 
     // Transform the response to match the SDK format
     const validatedData = data as GraphQLResponse;
-    const transformedComments = validatedData.data.comments.items.map((comment) => ({
+    
+    // Debug: Log all comments with their parentId values
+    console.log("All comments with parentId:", validatedData.data.comments.items.map(c => ({
+      id: c.id,
+      content: c.content.substring(0, 20) + '...',
+      parentId: c.parentId,
+      isEmptyParent: c.parentId === EMPTY_PARENT_ID
+    })));
+    
+    // Filter out replies from top-level comments (only show comments without parentId)
+    const topLevelComments = validatedData.data.comments.items.filter(
+      comment => !comment.parentId || comment.parentId === EMPTY_PARENT_ID
+    );
+    
+    console.log("Filtered top-level comments:", topLevelComments.length);
+    
+    const transformedComments = topLevelComments.map((comment) => ({
       id: comment.id,
       content: comment.content,
       author: {
@@ -127,13 +156,15 @@ export default async function handler(
       targetUri: comment.targetUri,
       txHash: comment.txHash,
       replies: {
-        results: comment.flatReplies.items.map((reply) => ({
+        results: comment.replies.items.map((reply) => ({
           id: reply.id,
           content: reply.content,
           author: {
             address: reply.author,
           },
           createdAt: new Date(parseInt(reply.createdAt)).toISOString(),
+          targetUri: reply.targetUri,
+          txHash: reply.txHash,
         })),
       },
     }));
@@ -141,7 +172,7 @@ export default async function handler(
     return res.status(200).json({
       results: transformedComments,
       pagination: {
-        totalCount: validatedData.data.comments.totalCount,
+        totalCount: topLevelComments.length, // Use filtered count instead of total
         hasNext: validatedData.data.comments.pageInfo.hasNextPage,
         endCursor: validatedData.data.comments.pageInfo.endCursor,
       },

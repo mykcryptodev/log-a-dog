@@ -11,13 +11,29 @@ import {
   createCommentData,
   createCommentTypedData
 } from "@ecp.eth/sdk/comments";
-import { type Hex, hashTypedData } from "viem";
+import { type Hex, hashTypedData, keccak256, toBytes } from "viem";
 import { privateKeyToAccount, signTypedData } from "viem/accounts";
 import crypto from "crypto";
 import { env } from "~/env";
 
 // Server signing key for app signatures - should be stored securely
 // This account signs on behalf of the app to enable gasless comments
+
+// Helper function to convert comment ID to bytes32 format
+function commentIdToBytes32(commentId: string): `0x${string}` {
+  // If it's already a hex string with correct length (66 chars: 0x + 64 hex chars)
+  if (commentId.startsWith('0x') && commentId.length === 66) {
+    return commentId as `0x${string}`;
+  }
+  
+  // If it's a hex string without 0x prefix and correct length (64 chars)
+  if (!commentId.startsWith('0x') && commentId.length === 64 && /^[0-9a-fA-F]+$/.test(commentId)) {
+    return `0x${commentId}` as `0x${string}`;
+  }
+  
+  // Otherwise, hash the comment ID to get a bytes32 value
+  return keccak256(toBytes(commentId));
+}
 // In production, APP_SIGNING_KEY should be set in environment variables
 
 export const commentsRouter = createTRPCRouter({
@@ -47,16 +63,37 @@ export const commentsRouter = createTRPCRouter({
         console.log("App address from private key:", appAccount.address);
         console.log("BACKEND_WALLET_ADDRESS:", env.BACKEND_WALLET_ADDRESS);
         
-        // Create comment data - use the address derived from the private key
-        const commentData = await createCommentData({
+        // Debug: Log the parentId value we received
+        console.log("Input parentId:", input.parentId);
+        console.log("EMPTY_PARENT_ID:", EMPTY_PARENT_ID);
+        
+        // Convert parentId to bytes32 format if provided, otherwise use EMPTY_PARENT_ID
+        const finalParentId = input.parentId 
+          ? commentIdToBytes32(input.parentId)
+          : EMPTY_PARENT_ID;
+        console.log("Final parentId to use:", finalParentId);
+        
+        // For replies, targetUri should be empty string, not the actual URI
+        const isReply = input.parentId !== undefined && input.parentId !== null;
+        const targetUriForComment = isReply ? "" : input.targetUri;
+        
+        console.log("Is reply:", isReply);
+        console.log("Target URI for comment:", targetUriForComment);
+        
+        // Manually create comment data structure to avoid SDK overriding our parentId
+        const commentData = {
           author: input.author as `0x${string}`,
-          targetUri: input.targetUri,
-          content: input.text,
-          parentId: (input.parentId || EMPTY_PARENT_ID) as `0x${string}`,
+          app: appAccount.address as `0x${string}`,
           channelId: BigInt(input.channelId || DEFAULT_CHANNEL_ID),
+          deadline: BigInt(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+          content: input.text,
+          metadata: [] as any[],
           commentType: input.commentType || COMMENT_TYPE_COMMENT,
-          app: appAccount.address as `0x${string}`, // Use address from private key
-        });
+          targetUri: targetUriForComment,
+          parentId: finalParentId as `0x${string}`,
+        };
+
+        console.log("Manual commentData.parentId:", commentData.parentId);
 
         // Get the correct chain ID and comment manager address
         const chainId = input.chainId;
