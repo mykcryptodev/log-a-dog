@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { ChatBubbleLeftRightIcon, PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ChatBubbleLeftRightIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import { api } from "~/utils/api";
 import { useActiveAccount } from "thirdweb/react";
 
@@ -29,9 +29,6 @@ interface Comment {
   createdAt: string;
   targetUri: string;
   txHash: string;
-  replies?: {
-    results: Comment[];
-  };
 }
 
 export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId }) => {
@@ -40,7 +37,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
   const [newComment, setNewComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [replyTo, setReplyTo] = useState<string | null>(null);
+
   const [cursor, setCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(false);
 
@@ -108,7 +105,6 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
         targetUri,
         text: newComment,
         chainId: DEFAULT_CHAIN.id,
-        parentId: replyTo || undefined,
       });
 
       // Step 2: Submit the comment to the blockchain using thirdweb
@@ -147,7 +143,6 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
 
       // Clear the comment field and reload comments
       setNewComment("");
-      setReplyTo(null);
       
       // Wait for indexer to catch up, then reload comments with multiple attempts
       const checkForComment = async (attempt: number, maxAttempts = 6) => {
@@ -168,15 +163,15 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
     }
   };
 
-  // Render a single comment
-  const renderComment = (comment: Comment, depth = 0) => {
+  // Render a single comment - all comments are flat, no nesting
+  const renderComment = (comment: Comment) => {
     const authorDisplay = comment.author?.ens?.name || 
       (comment.author?.address ? `${comment.author.address.slice(0, 6)}...${comment.author.address.slice(-4)}` : "Anonymous");
     
     const avatarUrl = comment.author?.ens?.avatarUrl || comment.author?.farcaster?.pfpUrl;
     
     return (
-      <div key={comment.id} className={`${depth > 0 ? "ml-8 mt-2" : ""} p-4 border-l-2 border-base-200`}>
+      <div key={comment.id} className="p-4">
         <div className="flex items-start gap-3">
           {avatarUrl && (
             <Image
@@ -203,67 +198,9 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
             
             <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
             
-            <div className="flex items-center gap-4 mt-2">
-              <button
-                onClick={() => setReplyTo(comment.id)}
-                className="text-xs text-primary hover:underline flex items-center gap-1"
-              >
-                <ChatBubbleLeftRightIcon className="h-3 w-3" />
-                Reply
-              </button>
-              
-              {comment.replies?.results && comment.replies.results.length > 0 && (
-                <span className="text-xs text-base-content/60">
-                  {comment.replies.results.length} {comment.replies.results.length === 1 ? "reply" : "replies"}
-                </span>
-              )}
-            </div>
-            
-            {replyTo === comment.id && (
-              <div className="mt-3 p-3 bg-base-100 rounded-lg border border-base-300">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-base-content/70">Replying to {authorDisplay}</span>
-                  <button
-                    onClick={() => setReplyTo(null)}
-                    className="btn btn-ghost btn-xs"
-                  >
-                    <XMarkIcon className="h-3 w-3" />
-                  </button>
-                </div>
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write your reply..."
-                  className="textarea textarea-bordered w-full min-h-[60px] text-sm"
-                  disabled={!account}
-                />
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={handleSubmitComment}
-                    disabled={!account || !newComment.trim() || isSubmitting}
-                    className="btn btn-primary btn-sm"
-                  >
-                    {isSubmitting ? (
-                      <span className="loading loading-spinner loading-xs" />
-                    ) : (
-                      <>
-                        <PaperAirplaneIcon className="h-4 w-4" />
-                        Send
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
+
           </div>
         </div>
-        
-        {/* Render replies */}
-        {comment.replies?.results && comment.replies.results.length > 0 && (
-          <div className="mt-2">
-            {comment.replies.results.map(reply => renderComment(reply, depth + 1))}
-          </div>
-        )}
       </div>
     );
   };
@@ -271,7 +208,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
   return (
     <div className="w-full max-w-4xl mx-auto">
       {/* Comment input */}
-      {account && replyTo === null && (
+      {account && (
         <div className="mb-6 p-4 bg-base-100 rounded-lg border border-base-300">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">
