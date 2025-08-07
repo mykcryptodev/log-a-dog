@@ -72,20 +72,20 @@ export const EthCommentsModal: React.FC<EthCommentsModalProps> = ({ logId, accou
     <>
       <button 
         onClick={handleModalToggle}
-        className="btn btn-circle btn-ghost relative hover:bg-base-200 transition-colors group"
+        className="btn btn-xs btn-circle btn-ghost relative hover:bg-base-200 transition-colors group"
         aria-label="Open comments"
       >
-        <ChatBubbleLeftRightIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
+        <ChatBubbleLeftRightIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
         {commentCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-error text-error-content text-xs rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center font-bold bg-opacity-50">
-            {commentCount > 99 ? '99+' : commentCount}
-          </span>
+          <div className="badge badge-xs badge-secondary absolute top-0 right-0 -translate-y-0.5 translate-x-1/2">
+          {commentCount > 99 ? '99+' : commentCount}
+          </div>
         )}
       </button>
 
       <Portal>
         {isModalOpen && (
-          <div className="modal modal-open" role="dialog">
+          <div className="modal modal-open modal-bottom sm:modal-middle" role="dialog">
             <div 
               className="modal-backdrop" 
               onClick={handleModalToggle}

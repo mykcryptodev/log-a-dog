@@ -12,6 +12,9 @@ import { prepareContractCall, sendTransaction, waitForReceipt } from "thirdweb";
 import { getContract } from "thirdweb";
 import { base as thirdwebBase, baseSepolia as thirdwebBaseSepolia } from "thirdweb/chains";
 import { client } from "~/providers/Thirdweb";
+import Connect from "./utils/Connect";
+import Avatar from "./Profile/Avatar";
+import Name from "./Profile/Name";
 
 interface CustomCommentsProps {
   targetUri: string;
@@ -192,14 +195,12 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
             />
           )}
           {!avatarUrl && (
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">
-              {authorDisplay[0]?.toUpperCase()}
-            </div>
+            <Avatar address={comment.author.address} size="32px" fallbackSize={32} />
           )}
           
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold">{authorDisplay}</span>
+              <Name address={comment.author.address} />
               <span className="text-xs text-base-content/60">
                 {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
               </span>
@@ -220,9 +221,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
       {account && (
         <div className="mb-6 p-4 bg-base-100 rounded-lg border border-base-300">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">
-              {account.address[2]?.toUpperCase()}
-            </div>
+            <Avatar address={account.address} size="32px" fallbackSize={32} />
             <div className="flex-1">
               <textarea
                 value={newComment}
@@ -230,10 +229,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
                 placeholder="Share your thoughts..."
                 className="textarea textarea-bordered w-full min-h-[80px]"
               />
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-xs text-base-content/60">
-                  Posting as {account.address.slice(0, 6)}...{account.address.slice(-4)}
-                </span>
+              <div className="flex justify-end items-center mt-2">
                 <button
                   onClick={handleSubmitComment}
                   disabled={!newComment.trim() || isSubmitting}
@@ -255,8 +251,8 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
       )}
 
       {!account && (
-        <div className="mb-6 p-4 bg-base-200 rounded-lg text-center">
-          <p className="text-sm text-base-content/70">Connect your wallet to join the conversation</p>
+        <div className="flex justify-center py-4">
+          <Connect loginBtnLabel="Login to join the conversation" />
         </div>
       )}
 
