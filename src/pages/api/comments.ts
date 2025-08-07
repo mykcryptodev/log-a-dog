@@ -153,7 +153,7 @@ export default async function handler(
         return {
           results: transformedComments,
           pagination: {
-            totalCount: transformedComments.length,
+            totalCount: validatedData.data.comments.totalCount,
             hasNext: validatedData.data.comments.pageInfo.hasNextPage,
             endCursor: validatedData.data.comments.pageInfo.endCursor,
           },
