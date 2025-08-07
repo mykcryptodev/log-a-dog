@@ -16,7 +16,6 @@ import Image from "next/image";
 import { api } from "~/utils/api";
 import { DEFAULT_CHAIN } from "~/constants";
 import { useStableAccount } from "~/hooks/useStableAccount";
-import { useIsMobile } from "~/hooks/useIsMobile";
 
 type Props = {
   referrer: string;
@@ -26,7 +25,6 @@ type Props = {
 }
 
 export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, referrer: _referrer, onTradeComplete }) => {
-  const isMobile = useIsMobile();
   const account = useStableAccount();
   const wallet = useActiveWallet();
   const farcasterContext = useContext(FarcasterContext);

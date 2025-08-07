@@ -24,6 +24,8 @@ import Image from "next/image";
 import { sdk } from "@farcaster/frame-sdk";
 // Removed api import - using backend profile data instead
 import { FarcasterContext } from "~/providers/Farcaster";
+import EthCommentsModal from "../EthCommentsModal";
+import { useActiveAccount } from "thirdweb/react";
 
 // Types
 type AttestationPeriod = {
@@ -119,7 +121,9 @@ export const HotdogCard: FC<Props> = ({
   showAiJudgement = false,
   disabled = false,
 }) => {
-  const showLoggedVia = (hotdog: { eater: string; logger: string }) => {
+  const account = useActiveAccount();
+
+  const showLoggedVia = (hotdog: { eater: string; logger: string }) => {   
     const loggerIsNotEater = !isAddressEqual(
       hotdog.eater as `0x${string}`,
       hotdog.logger as `0x${string}`,
@@ -245,6 +249,7 @@ export const HotdogCard: FC<Props> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <EthCommentsModal logId={hotdog.logId} account={account} />
             <button
               onClick={shareOnX}
               className="btn btn-circle btn-ghost btn-xs w-fit px-2"
