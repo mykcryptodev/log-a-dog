@@ -88,8 +88,6 @@ export default async function handler(
       ...(cursor && typeof cursor === "string" ? { after: cursor } : {}),
     };
 
-    console.log("Fetching comments with GraphQL:", { targetUri, variables });
-
     const response = await fetch("https://api.ethcomments.xyz/graphql", {
       method: "POST",
       headers: {
@@ -102,7 +100,6 @@ export default async function handler(
     });
 
     if (!response.ok) {
-      console.error("GraphQL API error:", response.status, response.statusText);
       return res.status(response.status).json({ 
         error: "Failed to fetch comments from GraphQL API" 
       });
@@ -110,21 +107,13 @@ export default async function handler(
 
     const data = await response.json();
     
-    console.log("Raw GraphQL response:", JSON.stringify(data, null, 2));
-    
     // Check if the response has the expected structure
     if (!data.data || !data.data.comments) {
-      console.error("Unexpected GraphQL response structure:", data);
       return res.status(500).json({ 
         error: "Invalid GraphQL response structure",
         details: data.errors ? data.errors : "Missing data.comments in response"
       });
     }
-    
-    console.log("GraphQL response:", {
-      totalCount: data.data.comments.totalCount,
-      itemsCount: data.data.comments.items.length,
-    });
 
     // Transform the response to match the SDK format
     const validatedData = data as GraphQLResponse;
@@ -158,7 +147,6 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error("Error fetching comments:", error);
     return res.status(500).json({ 
       error: "Internal server error",
       details: error instanceof Error ? error.message : "Unknown error"

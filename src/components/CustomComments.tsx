@@ -46,7 +46,6 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
 
   // Mutations for comment operations
   const prepareCommentMutation = api.comments.prepareComment.useMutation();
-  const submitCommentMutation = api.comments.submitSignedComment.useMutation();
 
   // Fetch comments using our GraphQL API endpoint
   const loadComments = useCallback(async (append = false, retries = 3) => {
@@ -62,8 +61,6 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
         params.append("cursor", cursor);
       }
 
-      console.log("Fetching comments from GraphQL API:", { targetUri });
-
       const response = await fetch(`/api/comments?${params.toString()}`);
       
       if (!response.ok) {
@@ -78,25 +75,6 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
           endCursor: string;
         };
       };
-
-      console.log("✅ Fetched comments from GraphQL:", result.results.length, "total");
-      console.log("Comments data:", result.results.map(c => ({ 
-        id: c.id, 
-        author: c.author?.address,
-        content: c.content?.substring(0, 50) + '...',
-        targetUri: c.targetUri,
-        createdAt: c.createdAt
-      })));
-      
-      // Check specifically for the test comments we know were posted
-      const testComments = result.results.filter(c => 
-        c.content?.includes('test')
-      );
-      if (testComments.length > 0) {
-        console.log(`✅ Found ${testComments.length} test comment(s)!`, testComments);
-      } else {
-        console.log("❌ No test comments found yet");
-      }
 
       if (append) {
         setComments(prev => [...prev, ...result.results]);
@@ -167,19 +145,12 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
         transactionHash: result.transactionHash,
       });
 
-      console.log("Comment posted successfully:", receipt);
-
       // Clear the comment field and reload comments
       setNewComment("");
       setReplyTo(null);
       
       // Wait for indexer to catch up, then reload comments with multiple attempts
-      console.log("✅ Comment posted to blockchain! Transaction hash:", result.transactionHash);
-      console.log("⏳ Waiting for EthComments indexer to process...");
-      
-      // Try multiple times with increasing delays to catch the indexer
       const checkForComment = async (attempt: number, maxAttempts = 6) => {
-        console.log(`🔄 Checking for comment (attempt ${attempt}/${maxAttempts})`);
         await loadComments();
         
         if (attempt < maxAttempts) {
