@@ -5,6 +5,7 @@ import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
 import HotdogCard from "~/components/utils/HotdogCard";
 import { DEFAULT_CHAIN } from "~/constants";
+import EthComments from "~/components/EthComments";
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
@@ -64,6 +65,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
             showAiJudgement={true}
             disabled={false}
           />
+          <EthComments />
         </div>
       </main>
     </>

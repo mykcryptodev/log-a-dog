@@ -22,6 +22,7 @@
   "dependencies": {
     "@apollo/client": "^3.9.5",
     "@auth/prisma-adapter": "^1.4.0",
+    "@ecp.eth/sdk": "^0.0.25",
     "@ethereum-attestation-service/eas-sdk": "^1.5.0",
     "@farcaster/auth-client": "^0.6.0",
     "@farcaster/auth-kit": "^0.6.0",
