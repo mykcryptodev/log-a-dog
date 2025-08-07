@@ -21,9 +21,10 @@ export function EthComments({ account }: EthCommentsProps = {}) {
   useEffect(() => {
     if (account?.address) {
       const timer = setTimeout(() => {
-        const iframe = document.querySelector('iframe[src*="ecp.eth"], iframe[src*="ethcomments"]') as HTMLIFrameElement;
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({
+        const iframe = document.querySelector('iframe[src*="ecp.eth"], iframe[src*="ethcomments"]');
+        if (iframe && 'contentWindow' in iframe) {
+          const iframeElement = iframe as HTMLIFrameElement;
+          iframeElement.contentWindow?.postMessage({
             type: 'walletConnected',
             address: account.address,
           }, '*');

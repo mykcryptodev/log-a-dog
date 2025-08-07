@@ -4,7 +4,7 @@ import { Portal } from "~/components/utils/Portal";
 import CustomComments from "~/components/CustomComments";
 import useMounted from "~/hooks/useMounted";
 import type { Account } from "thirdweb/wallets";
-import { DEFAULT_CHAIN } from "~/constants";
+
 
 interface EthCommentsModalProps {
   logId: string;
@@ -18,9 +18,6 @@ export const EthCommentsModal: React.FC<EthCommentsModalProps> = ({ logId, accou
   
   const targetUri = useMemo(
     () => {
-      if (typeof window !== 'undefined') {
-        return `https://logadog.xyz${window.location.pathname}`;
-      }
       return `https://logadog.xyz/dog/${logId}`;
     },
     [logId]
@@ -50,7 +47,7 @@ export const EthCommentsModal: React.FC<EthCommentsModalProps> = ({ logId, accou
     if (mounted) {
       void fetchCommentCount();
       // Refresh count every 30 seconds
-      const interval = setInterval(fetchCommentCount, 30000);
+      const interval = setInterval(() => void fetchCommentCount(), 30000);
       return () => clearInterval(interval);
     }
   }, [mounted, targetUri]);

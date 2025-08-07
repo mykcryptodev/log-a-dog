@@ -8,7 +8,6 @@ import {
   COMMENT_MANAGER_ADDRESS
 } from "@ecp.eth/sdk";
 import { 
-  createCommentData,
   createCommentTypedData
 } from "@ecp.eth/sdk/comments";
 import { type Hex, hashTypedData } from "viem";
@@ -52,18 +51,18 @@ export const commentsRouter = createTRPCRouter({
         const commentData = {
           author: input.author as `0x${string}`,
           app: appAccount.address as `0x${string}`,
-          channelId: BigInt(input.channelId || DEFAULT_CHANNEL_ID),
+          channelId: BigInt(input.channelId ?? DEFAULT_CHANNEL_ID),
           deadline: BigInt(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
           content: input.text,
-          metadata: [] as any[],
-          commentType: input.commentType || COMMENT_TYPE_COMMENT,
+          metadata: [] as never[],
+          commentType: input.commentType ?? COMMENT_TYPE_COMMENT,
           targetUri: targetUriForComment,
-          parentId: finalParentId as `0x${string}`,
+          parentId: finalParentId,
         };
 
         // Get the correct chain ID and comment manager address
         const chainId = input.chainId;
-        const commentsAddress = COMMENT_MANAGER_ADDRESS as `0x${string}`;
+        const commentsAddress = COMMENT_MANAGER_ADDRESS;
 
         // Create the EIP-712 typed data for signing
         const typedData = createCommentTypedData({
@@ -126,7 +125,7 @@ export const commentsRouter = createTRPCRouter({
         chainId: z.number(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       try {
         // In production, you would:
         // 1. Verify the signature

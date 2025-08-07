@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChatBubbleLeftRightIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import { api } from "~/utils/api";
 import { useActiveAccount } from "thirdweb/react";
@@ -34,7 +34,7 @@ interface Comment {
   txHash: string;
 }
 
-export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId }) => {
+export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri }) => {
   const account = useActiveAccount();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -49,7 +49,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
   const bustCacheMutation = api.comments.bustCache.useMutation();
 
   // Fetch comments using our GraphQL API endpoint
-  const loadComments = useCallback(async (append = false, retries = 3) => {
+  const loadComments = useCallback(async (append = false) => {
     setIsLoading(true);
     try {
       // Build query parameters
@@ -90,12 +90,12 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
     } finally {
       setIsLoading(false);
     }
-  }, [targetUri, account?.address, cursor]);
+  }, [targetUri, cursor]);
 
   // Load comments on mount and when account changes
   useEffect(() => {
     void loadComments();
-  }, [targetUri, account?.address]);
+  }, [loadComments]);
 
   // Handle posting a new comment
   const handleSubmitComment = async () => {
@@ -118,7 +118,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
       const contract = getContract({
         client,
         chain,
-        address: COMMENT_MANAGER_ADDRESS as `0x${string}`,
+        address: COMMENT_MANAGER_ADDRESS,
         abi: CommentManagerABI,
       });
 
@@ -139,7 +139,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
       });
 
       // Wait for confirmation
-      const receipt = await waitForReceipt({
+      await waitForReceipt({
         client,
         chain,
         transactionHash: result.transactionHash,
@@ -177,10 +177,10 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
 
   // Render a single comment - all comments are flat, no nesting
   const renderComment = (comment: Comment) => {
-    const authorDisplay = comment.author?.ens?.name || 
+    const authorDisplay = comment.author?.ens?.name ?? 
       (comment.author?.address ? `${comment.author.address.slice(0, 6)}...${comment.author.address.slice(-4)}` : "Anonymous");
     
-    const avatarUrl = comment.author?.ens?.avatarUrl || comment.author?.farcaster?.pfpUrl;
+    const avatarUrl = comment.author?.ens?.avatarUrl ?? comment.author?.farcaster?.pfpUrl;
     
     return (
       <div key={comment.id} className="p-4">

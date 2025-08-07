@@ -35,6 +35,7 @@ interface GraphQLResponse {
       }[];
     };
   };
+  errors?: Array<{ message: string }>;
 }
 
 export default async function handler(
@@ -52,7 +53,7 @@ export default async function handler(
   }
 
   // Create cache key based on query parameters
-  const cacheKey = `comments:${targetUri}:${limit}:${cursor || 'first'}`;
+  const cacheKey = `comments:${targetUri}:${String(limit)}:${String(cursor ?? 'first')}`;
 
   try {
     // Use cache or fetch fresh data
@@ -125,18 +126,18 @@ export default async function handler(
           });
         }
 
-        const data = await response.json();
+        const data = await response.json() as GraphQLResponse;
         
         // Check if the response has the expected structure
-        if (!data.data || !data.data.comments) {
+        if (!data.data?.comments) {
           return res.status(500).json({ 
             error: "Invalid GraphQL response structure",
-            details: data.errors ? data.errors : "Missing data.comments in response"
+            details: data.errors ?? "Missing data.comments in response"
           });
         }
 
         // Transform the response to match the SDK format
-        const validatedData = data as GraphQLResponse;
+        const validatedData = data;
         
         // Return all comments in a flat list - no replies needed since we removed reply functionality
         const transformedComments = validatedData.data.comments.items.map((comment) => ({
