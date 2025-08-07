@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { ChatBubbleLeftRightIcon, PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { api } from "~/utils/api";
 import { useActiveAccount } from "thirdweb/react";
-import { fetchComments, type IndexerAPIListCommentsSchemaType } from "@ecp.eth/sdk/indexer";
+
 import { COMMENT_MANAGER_ADDRESS, CommentManagerABI } from "@ecp.eth/sdk";
 import { DEFAULT_CHAIN } from "~/constants";
 import Image from "next/image";
@@ -18,33 +18,85 @@ interface CustomCommentsProps {
   logId: string;
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  author: {
+    address: string;
+    ens?: { name: string; avatarUrl?: string };
+    farcaster?: { pfpUrl?: string };
+  };
+  createdAt: string;
+  targetUri: string;
+  txHash: string;
+  replies?: {
+    results: Comment[];
+  };
+}
+
 export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId }) => {
   const account = useActiveAccount();
-  const [comments, setComments] = useState<IndexerAPIListCommentsSchemaType["results"]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
-  const [cursor, setCursor] = useState<`0x${string}` | undefined>();
+  const [cursor, setCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(false);
 
   // Mutations for comment operations
   const prepareCommentMutation = api.comments.prepareComment.useMutation();
   const submitCommentMutation = api.comments.submitSignedComment.useMutation();
 
-  // Fetch comments from the indexer
-  const loadComments = useCallback(async (append = false) => {
+  // Fetch comments using our GraphQL API endpoint
+  const loadComments = useCallback(async (append = false, retries = 3) => {
     setIsLoading(true);
     try {
-      const result = await fetchComments({
+      // Build query parameters
+      const params = new URLSearchParams({
         targetUri,
-        chainId: DEFAULT_CHAIN.id,
-        viewer: account?.address as `0x${string}` | undefined,
-        limit: 20,
-        cursor: append ? cursor : undefined,
-        sort: "desc",
-        mode: "nested",
+        limit: "50",
       });
+      
+      if (append && cursor) {
+        params.append("cursor", cursor);
+      }
+
+      console.log("Fetching comments from GraphQL API:", { targetUri });
+
+      const response = await fetch(`/api/comments?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json() as {
+        results: Comment[];
+        pagination: {
+          totalCount: number;
+          hasNext: boolean;
+          endCursor: string;
+        };
+      };
+
+      console.log("✅ Fetched comments from GraphQL:", result.results.length, "total");
+      console.log("Comments data:", result.results.map(c => ({ 
+        id: c.id, 
+        author: c.author?.address,
+        content: c.content?.substring(0, 50) + '...',
+        targetUri: c.targetUri,
+        createdAt: c.createdAt
+      })));
+      
+      // Check specifically for the test comments we know were posted
+      const testComments = result.results.filter(c => 
+        c.content?.includes('test')
+      );
+      if (testComments.length > 0) {
+        console.log(`✅ Found ${testComments.length} test comment(s)!`, testComments);
+      } else {
+        console.log("❌ No test comments found yet");
+      }
 
       if (append) {
         setComments(prev => [...prev, ...result.results]);
@@ -120,7 +172,24 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
       // Clear the comment field and reload comments
       setNewComment("");
       setReplyTo(null);
-      await loadComments();
+      
+      // Wait for indexer to catch up, then reload comments with multiple attempts
+      console.log("✅ Comment posted to blockchain! Transaction hash:", result.transactionHash);
+      console.log("⏳ Waiting for EthComments indexer to process...");
+      
+      // Try multiple times with increasing delays to catch the indexer
+      const checkForComment = async (attempt: number, maxAttempts = 6) => {
+        console.log(`🔄 Checking for comment (attempt ${attempt}/${maxAttempts})`);
+        await loadComments();
+        
+        if (attempt < maxAttempts) {
+          setTimeout(() => {
+            void checkForComment(attempt + 1, maxAttempts);
+          }, attempt * 2000); // 2s, 4s, 6s, 8s, 10s, 12s
+        }
+      };
+      
+      void checkForComment(1);
     } catch (error) {
       console.error("Error posting comment:", error);
     } finally {
@@ -129,7 +198,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
   };
 
   // Render a single comment
-  const renderComment = (comment: IndexerAPIListCommentsSchemaType["results"][0], depth = 0) => {
+  const renderComment = (comment: Comment, depth = 0) => {
     const authorDisplay = comment.author?.ens?.name || 
       (comment.author?.address ? `${comment.author.address.slice(0, 6)}...${comment.author.address.slice(-4)}` : "Anonymous");
     
@@ -221,7 +290,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
         {/* Render replies */}
         {comment.replies?.results && comment.replies.results.length > 0 && (
           <div className="mt-2">
-            {comment.replies.results.map(reply => renderComment(reply as IndexerAPIListCommentsSchemaType["results"][0], depth + 1))}
+            {comment.replies.results.map(reply => renderComment(reply, depth + 1))}
           </div>
         )}
       </div>
@@ -234,7 +303,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
       {account && replyTo === null && (
         <div className="mb-6 p-4 bg-base-100 rounded-lg border border-base-300">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">
               {account.address[2]?.toUpperCase()}
             </div>
             <div className="flex-1">

@@ -4,7 +4,6 @@ import { Portal } from "~/components/utils/Portal";
 import CustomComments from "~/components/CustomComments";
 import useMounted from "~/hooks/useMounted";
 import type { Account } from "thirdweb/wallets";
-import { fetchComments } from "@ecp.eth/sdk/indexer";
 import { DEFAULT_CHAIN } from "~/constants";
 
 interface EthCommentsModalProps {
@@ -27,24 +26,22 @@ export const EthCommentsModal: React.FC<EthCommentsModalProps> = ({ logId, accou
     [logId]
   );
 
-  // Fetch comment count
+  // Fetch comment count using our GraphQL API
   useEffect(() => {
     const fetchCommentCount = async () => {
       try {
-        const result = await fetchComments({
+        const params = new URLSearchParams({
           targetUri,
-          chainId: DEFAULT_CHAIN.id,
-          limit: 50, // Fetch enough to get a good count
-          mode: "flat", // Flat mode to get all comments
+          limit: "1", // We just need the totalCount
         });
-        // Count all results plus any nested replies
-        let totalCount = result.results.length;
-        result.results.forEach(comment => {
-          if (comment.replies?.results) {
-            totalCount += comment.replies.results.length;
-          }
-        });
-        setCommentCount(totalCount);
+
+        const response = await fetch(`/api/comments?${params.toString()}`);
+        if (response.ok) {
+          const result = await response.json() as {
+            pagination: { totalCount: number };
+          };
+          setCommentCount(result.pagination.totalCount);
+        }
       } catch (error) {
         console.error("Error fetching comment count:", error);
       }
@@ -80,7 +77,7 @@ export const EthCommentsModal: React.FC<EthCommentsModalProps> = ({ logId, accou
       >
         <ChatBubbleLeftRightIcon className="h-6 w-6 group-hover:scale-110 transition-transform" />
         {commentCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-error text-error-content text-xs rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center font-bold animate-pulse">
+          <span className="absolute -top-1 -right-1 bg-error text-error-content text-xs rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center font-bold bg-opacity-50">
             {commentCount > 99 ? '99+' : commentCount}
           </span>
         )}
@@ -112,7 +109,7 @@ export const EthCommentsModal: React.FC<EthCommentsModalProps> = ({ logId, accou
                 </p>
                 {account?.address && (
                   <div className="mt-2 text-xs text-success flex items-center gap-1">
-                    <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+                    <div className="w-2 h-2 bg-success rounded-full" />
                     Connected as {account.address.slice(0, 6)}...{account.address.slice(-4)}
                   </div>
                 )}

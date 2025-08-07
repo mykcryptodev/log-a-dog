@@ -61,6 +61,7 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: z.string(),
     NEXT_PUBLIC_APP_DOMAIN: z.string(),
     NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS: z.string(),
+    NEXT_PUBLIC_BACKEND_WALLET_ADDRESS: z.string(),
   },
 
   /**
@@ -97,6 +98,7 @@ export const env = createEnv({
     TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
     TELEGRAM_NOTIFICATIONS_ENABLED: process.env.TELEGRAM_NOTIFICATIONS_ENABLED,
+    NEXT_PUBLIC_BACKEND_WALLET_ADDRESS: process.env.NEXT_PUBLIC_BACKEND_WALLET_ADDRESS,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
