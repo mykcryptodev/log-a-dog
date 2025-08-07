@@ -15,6 +15,7 @@ import { type Hex, hashTypedData } from "viem";
 import { privateKeyToAccount, signTypedData } from "viem/accounts";
 import crypto from "crypto";
 import { env } from "~/env";
+import { deleteCachedData } from "~/server/utils/redis";
 
 // Server signing key for app signatures - should be stored securely
 // This account signs on behalf of the app to enable gasless comments
@@ -144,6 +145,27 @@ export const commentsRouter = createTRPCRouter({
           code: "INTERNAL_SERVER_ERROR", 
           message: "Failed to submit comment",
         });
+      }
+    }),
+
+  /**
+   * Bust the cache for comments after a new comment is posted
+   */
+  bustCache: publicProcedure
+    .input(
+      z.object({
+        targetUri: z.string().url(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        // Delete all cached comments for this targetUri
+        await deleteCachedData(`comments:${input.targetUri}:*`);
+        return { success: true };
+      } catch (error) {
+        console.error("Failed to bust cache:", error);
+        // Don't throw error - cache busting failure shouldn't break the flow
+        return { success: false };
       }
     }),
 });

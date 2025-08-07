@@ -43,6 +43,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
 
   // Mutations for comment operations
   const prepareCommentMutation = api.comments.prepareComment.useMutation();
+  const bustCacheMutation = api.comments.bustCache.useMutation();
 
   // Fetch comments using our GraphQL API endpoint
   const loadComments = useCallback(async (append = false, retries = 3) => {
@@ -141,8 +142,16 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri, logId
         transactionHash: result.transactionHash,
       });
 
-      // Clear the comment field and reload comments
+      // Clear the comment field 
       setNewComment("");
+      
+      // Bust the cache for this targetUri
+      try {
+        await bustCacheMutation.mutateAsync({ targetUri });
+      } catch (error) {
+        console.error("Failed to bust cache:", error);
+        // Continue even if cache busting fails
+      }
       
       // Wait for indexer to catch up, then reload comments with multiple attempts
       const checkForComment = async (attempt: number, maxAttempts = 6) => {

@@ -1,4 +1,5 @@
 import { type NextApiRequest, type NextApiResponse } from "next";
+import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 
 interface GraphQLResponse {
   data: {
@@ -50,106 +51,118 @@ export default async function handler(
     return res.status(400).json({ error: "targetUri is required" });
   }
 
+  // Create cache key based on query parameters
+  const cacheKey = `comments:${targetUri}:${limit}:${cursor || 'first'}`;
+
   try {
-    // Build the GraphQL query
-    const query = `
-      query Comments($targetUri: String!, $limit: Int, $after: String) {
-        comments(
-          where: { targetUri: $targetUri }
-          limit: $limit
-          after: $after
-          orderDirection: "desc"
-          orderBy: "createdAt"
-        ) {
-          totalCount
-          items {
-            replies {
+    // Use cache or fetch fresh data
+    const result = await getOrSetCache(
+      cacheKey,
+      async () => {
+        // Build the GraphQL query
+        const query = `
+          query Comments($targetUri: String!, $limit: Int, $after: String) {
+            comments(
+              where: { targetUri: $targetUri }
+              limit: $limit
+              after: $after
+              orderDirection: "desc"
+              orderBy: "createdAt"
+            ) {
+              totalCount
               items {
+                replies {
+                  items {
+                    id
+                    createdAt
+                    content
+                    author
+                    txHash
+                    targetUri
+                    moderationClassifierScore
+                  }
+                }
+                moderationClassifierScore
                 id
                 createdAt
+                commentType
                 content
                 author
                 txHash
                 targetUri
-                moderationClassifierScore
+                parentId
+              }
+              pageInfo {
+                endCursor
+                startCursor
+                hasNextPage
+                hasPreviousPage
               }
             }
-            moderationClassifierScore
-            id
-            createdAt
-            commentType
-            content
-            author
-            txHash
-            targetUri
-            parentId
           }
-          pageInfo {
-            endCursor
-            startCursor
-            hasNextPage
-            hasPreviousPage
-          }
+        `;
+
+        const variables = {
+          targetUri,
+          limit: parseInt(limit as string),
+          ...(cursor && typeof cursor === "string" ? { after: cursor } : {}),
+        };
+
+        const response = await fetch("https://api.ethcomments.xyz/graphql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query,
+            variables,
+          }),
+        });
+
+        if (!response.ok) {
+          return res.status(response.status).json({ 
+            error: "Failed to fetch comments from GraphQL API" 
+          });
         }
-      }
-    `;
 
-    const variables = {
-      targetUri,
-      limit: parseInt(limit as string),
-      ...(cursor && typeof cursor === "string" ? { after: cursor } : {}),
-    };
+        const data = await response.json();
+        
+        // Check if the response has the expected structure
+        if (!data.data || !data.data.comments) {
+          return res.status(500).json({ 
+            error: "Invalid GraphQL response structure",
+            details: data.errors ? data.errors : "Missing data.comments in response"
+          });
+        }
 
-    const response = await fetch("https://api.ethcomments.xyz/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+        // Transform the response to match the SDK format
+        const validatedData = data as GraphQLResponse;
+        
+        // Return all comments in a flat list - no replies needed since we removed reply functionality
+        const transformedComments = validatedData.data.comments.items.map((comment) => ({
+          id: comment.id,
+          content: comment.content,
+          author: {
+            address: comment.author,
+          },
+          createdAt: new Date(parseInt(comment.createdAt)).toISOString(),
+          targetUri: comment.targetUri,
+          txHash: comment.txHash,
+        }));
+
+        return {
+          results: transformedComments,
+          pagination: {
+            totalCount: transformedComments.length,
+            hasNext: validatedData.data.comments.pageInfo.hasNextPage,
+            endCursor: validatedData.data.comments.pageInfo.endCursor,
+          },
+        };
       },
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
-    });
+      CACHE_DURATION.MEDIUM // Cache for 5 minutes
+    );
 
-    if (!response.ok) {
-      return res.status(response.status).json({ 
-        error: "Failed to fetch comments from GraphQL API" 
-      });
-    }
-
-    const data = await response.json();
-    
-    // Check if the response has the expected structure
-    if (!data.data || !data.data.comments) {
-      return res.status(500).json({ 
-        error: "Invalid GraphQL response structure",
-        details: data.errors ? data.errors : "Missing data.comments in response"
-      });
-    }
-
-    // Transform the response to match the SDK format
-    const validatedData = data as GraphQLResponse;
-    
-    // Return all comments in a flat list - no replies needed since we removed reply functionality
-    const transformedComments = validatedData.data.comments.items.map((comment) => ({
-      id: comment.id,
-      content: comment.content,
-      author: {
-        address: comment.author,
-      },
-      createdAt: new Date(parseInt(comment.createdAt)).toISOString(),
-      targetUri: comment.targetUri,
-      txHash: comment.txHash,
-    }));
-
-    return res.status(200).json({
-      results: transformedComments,
-      pagination: {
-        totalCount: transformedComments.length,
-        hasNext: validatedData.data.comments.pageInfo.hasNextPage,
-        endCursor: validatedData.data.comments.pageInfo.endCursor,
-      },
-    });
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({ 
       error: "Internal server error",
