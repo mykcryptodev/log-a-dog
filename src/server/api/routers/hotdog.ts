@@ -1035,11 +1035,6 @@ export const hotdogRouter = createTRPCRouter({
   checkForSafety: protectedProcedure
     .input(z.object({ base64ImageString: z.string() }))
     .mutation(async ({ input }) => {
-      if (env.NEXT_PUBLIC_DISABLE_IMAGE_SAFETY_CHECK) {
-        console.warn("Skipping image safety check due to disabled flag");
-        return true;
-      }
-
       const { base64ImageString } = input;
       const base64Data = base64ImageString.replace(/^data:image\/\w+;base64,/, "");
       const url = `https://vision.googleapis.com/v1/images:annotate?key=${env.GOOGLE_VISION_API_KEY}`;
