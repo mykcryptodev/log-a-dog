@@ -7,6 +7,7 @@ import { client } from "~/providers/Thirdweb";
 import heic2any from "heic2any";
 import { api } from "~/utils/api";
 import { DEFAULT_UPLOAD_PHRASE } from "~/constants";
+import { env } from "~/env";
 
 interface UploadProps {
   className?: string; // completely override classes
@@ -143,22 +144,24 @@ export const Upload: FC<UploadProps> = ({
       return;
     }
 
-    // Check if the image is safe
-    setDropzoneLabel("🕵🏻‍♂️ Checking for safety...");
-    try {
-      const isSafe = await conductImageSafetyCheck(resizedFiles[0]!);
-      if (!isSafe) {
-        toast.error("Image is not safe to upload");
-        onUploadError?.(new Error("Image is not safe to upload"));
-        setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
-        return;
+    if (!env.NEXT_PUBLIC_DISABLE_IMAGE_SAFETY_CHECK) {
+      // Check if the image is safe
+      setDropzoneLabel("🕵🏻‍♂️ Checking for safety...");
+      try {
+        const isSafe = await conductImageSafetyCheck(resizedFiles[0]!);
+        if (!isSafe) {
+          toast.error("Image is not safe to upload");
+          onUploadError?.(new Error("Image is not safe to upload"));
+          setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
+          return;
+        }
+        setDropzoneLabel("✅ Image passed safety check!");
+      } catch (e) {
+        console.warn("Image safety check failed, skipping due to service outage", e);
+        setDropzoneLabel("⚠️ Skipping safety check");
       }
-      setDropzoneLabel("✅ Image passed safety check!");
-    } catch (e) {
-      toast.error("Error checking image safety");
-      onUploadError?.(e as Error);
-      setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
-      return;
+    } else {
+      setDropzoneLabel("⚠️ Skipping safety check");
     }
 
     try {
