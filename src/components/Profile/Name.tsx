@@ -42,7 +42,7 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
     return (
       <div className="flex items-center gap-1">
         <span>{`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
-        <Badge className="z-10" isKnownSpammer={userData?.isKnownSpammer ?? false} isReportedForSpam={userData?.isReportedForSpam ?? false} fid={userData?.fid ?? undefined} address={address} />
+        <Badge className="z-10" isKnownSpammer={userData?.isKnownSpammer ?? false} isReportedForSpam={userData?.isReportedForSpam ?? false} isDisqualified={userData?.isDisqualified ?? false} fid={userData?.fid ?? undefined} address={address} />
       </div>
     )
   }
@@ -51,7 +51,7 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
     return (
       <div className="flex items-center gap-1">
         <span>Unknown</span>
-        <Badge className="z-10" isKnownSpammer={userData?.isKnownSpammer ?? false} isReportedForSpam={userData?.isReportedForSpam ?? false} fid={userData?.fid ?? undefined} address={address} />
+        <Badge className="z-10" isKnownSpammer={userData?.isKnownSpammer ?? false} isReportedForSpam={userData?.isReportedForSpam ?? false} isDisqualified={userData?.isDisqualified ?? false} fid={userData?.fid ?? undefined} address={address} />
       </div>
     );
   }
@@ -59,7 +59,7 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
   const content = (
     <div className="flex items-center gap-1">
       <span>{profile.username}</span>
-      <Badge className="z-20 relative" isKnownSpammer={userData?.isKnownSpammer ?? false} isReportedForSpam={userData?.isReportedForSpam ?? false} fid={userData?.fid ?? undefined} address={address} />
+      <Badge className="z-20 relative" isKnownSpammer={userData?.isKnownSpammer ?? false} isReportedForSpam={userData?.isReportedForSpam ?? false} isDisqualified={userData?.isDisqualified ?? false} fid={userData?.fid ?? undefined} address={address} />
     </div>
   );
 
@@ -79,7 +79,7 @@ const NameComponent: FC<{ address: string; noLink?: boolean }> = ({ address, noL
       >
         {profile.username}
       </Link>
-      <Badge className="z-20 relative" isKnownSpammer={userData?.isKnownSpammer ?? false} isReportedForSpam={userData?.isReportedForSpam ?? false} fid={userData?.fid ?? undefined} address={address} />
+      <Badge className="z-20 relative" isKnownSpammer={userData?.isKnownSpammer ?? false} isReportedForSpam={userData?.isReportedForSpam ?? false} isDisqualified={userData?.isDisqualified ?? false} fid={userData?.fid ?? undefined} address={address} />
     </div>
   );
 };

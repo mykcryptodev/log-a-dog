@@ -24,6 +24,7 @@ type ProfileData = {
   fid?: number | null;
   isKnownSpammer?: boolean | null;
   isReportedForSpam?: boolean | null;
+  isDisqualified?: boolean | null;
 };
 
 const LeaderboardListComponent: FC<LeaderboardListProps> = ({

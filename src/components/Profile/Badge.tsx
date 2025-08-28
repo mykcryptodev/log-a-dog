@@ -1,15 +1,17 @@
-import { CheckBadgeIcon, ExclamationTriangleIcon, XMarkIcon, FlagIcon } from "@heroicons/react/24/outline";
+import { CheckBadgeIcon, ExclamationTriangleIcon, XMarkIcon, FlagIcon, NoSymbolIcon } from "@heroicons/react/24/outline";
 import { type FC, useMemo, useState } from "react";
 
-export const Badge: FC<{ 
-  address: string; 
-  isKnownSpammer?: boolean | null; 
-  isReportedForSpam?: boolean | null; 
-  fid?: number | null; 
+export const Badge: FC<{
+  address: string;
+  isKnownSpammer?: boolean | null;
+  isReportedForSpam?: boolean | null;
+  isDisqualified?: boolean | null;
+  fid?: number | null;
   className?: string;
-}> = ({ address, isKnownSpammer, isReportedForSpam, fid, className }) => {
+}> = ({ address, isKnownSpammer, isReportedForSpam, isDisqualified, fid, className }) => {
   const spammerModalId = useMemo(() => `spammer-badge-${address.toLowerCase()}-${Math.random().toString(36).substring(2, 15)}`, [address]);
   const verifiedModalId = useMemo(() => `verified-badge-${address.toLowerCase()}-${Math.random().toString(36).substring(2, 15)}`, [address]);
+  const disqualifiedModalId = useMemo(() => `disqualified-badge-${address.toLowerCase()}-${Math.random().toString(36).substring(2, 15)}`, [address]);
   
   const [isReporting, setIsReporting] = useState(false);
   const [reportStatus, setReportStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -43,15 +45,54 @@ export const Badge: FC<{
     } catch (error) {
       console.error('Error reporting user:', error);
       setReportStatus('error');
-    } finally {
-      setIsReporting(false);
-    }
-  };
+  } finally {
+    setIsReporting(false);
+  }
+};
+
+  if (isDisqualified) {
+    return (
+      <>
+        <button
+          onClick={() => (document.getElementById(disqualifiedModalId) as HTMLDialogElement)?.showModal()}
+          className={`cursor-pointer hover:opacity-80 transition-opacity inline-flex items-center justify-center ${className}`}
+        >
+          <NoSymbolIcon className="w-4 h-4 text-error" />
+        </button>
+
+          <dialog id={disqualifiedModalId} className="modal modal-bottom sm:modal-middle">
+            <div className="modal-box relative bg-base-100 bg-opacity-90 backdrop-blur-lg">
+              <button
+                onClick={() => (document.getElementById(disqualifiedModalId) as HTMLDialogElement)?.close()}
+                className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4"
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <NoSymbolIcon className="w-6 h-6 stroke-2 text-error" />
+                Disqualified
+              </h3>
+              <div className="py-4 space-y-2">
+                <p>This user has been disqualified from the contest.</p>
+              </div>
+              <div className="modal-action">
+                <button
+                  onClick={() => (document.getElementById(disqualifiedModalId) as HTMLDialogElement)?.close()}
+                  className="btn"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </dialog>
+      </>
+    );
+  }
 
   if (isKnownSpammer) {
     return (
       <>
-        <button 
+        <button
           onClick={() => (document.getElementById(spammerModalId) as HTMLDialogElement)?.showModal()}
           className={`cursor-pointer hover:opacity-80 transition-opacity inline-flex items-center justify-center ${className}`}
         >
