@@ -60,6 +60,7 @@ model User {
     notificationsEnabled Boolean? @default(false)
     isKnownSpammer Boolean? @default(false)
     isReportedForSpam Boolean? @default(false)
+    isDisqualified Boolean? @default(false)
 }
 
 model VerificationToken {
