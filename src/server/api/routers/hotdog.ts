@@ -129,6 +129,7 @@ interface ProcessedHotdog {
     fid?: number | null;
     isKnownSpammer?: boolean | null;
     isReportedForSpam?: boolean | null;
+    isDisqualified?: boolean | null;
   } | null;
   loggerProfile?: {
     name?: string | null;
@@ -137,6 +138,7 @@ interface ProcessedHotdog {
     fid?: number | null;
     isKnownSpammer?: boolean | null;
     isReportedForSpam?: boolean | null;
+    isDisqualified?: boolean | null;
   } | null;
 }
 
@@ -525,9 +527,10 @@ export const hotdogRouter = createTRPCRouter({
             fid: true,
             isKnownSpammer: true,
             isReportedForSpam: true,
+            isDisqualified: true,
           },
         })
-      ]); 
+      ]);
 
       // Create maps for the fetched data
       const metadataMap = new Map(
@@ -544,6 +547,7 @@ export const hotdogRouter = createTRPCRouter({
             fid: profile.fid,
             isKnownSpammer: profile.isKnownSpammer,
             isReportedForSpam: profile.isReportedForSpam,
+            isDisqualified: profile.isDisqualified,
           }
         ])
       );
@@ -706,6 +710,7 @@ export const hotdogRouter = createTRPCRouter({
             fid: true,
             isKnownSpammer: true,
             isReportedForSpam: true,
+            isDisqualified: true,
           },
         })
       ]);
@@ -725,6 +730,7 @@ export const hotdogRouter = createTRPCRouter({
             fid: profile.fid,
             isKnownSpammer: profile.isKnownSpammer,
             isReportedForSpam: profile.isReportedForSpam,
+            isDisqualified: profile.isDisqualified,
           }
         ])
       );
@@ -867,6 +873,7 @@ export const hotdogRouter = createTRPCRouter({
             fid: true,
             isKnownSpammer: true,
             isReportedForSpam: true,
+            isDisqualified: true,
           },
         })
       ]);
@@ -882,6 +889,7 @@ export const hotdogRouter = createTRPCRouter({
             fid: profile.fid,
             isKnownSpammer: profile.isKnownSpammer,
             isReportedForSpam: profile.isReportedForSpam,
+            isDisqualified: profile.isDisqualified,
           }
         ])
       );
@@ -963,17 +971,18 @@ export const hotdogRouter = createTRPCRouter({
       const cacheKey = `leaderboard:${chainId}:${startDate ?? 'all'}:${endDate ?? 'all'}`;
 
       // Try to get cached data first
-      const cachedData = await getCachedData<{ 
-        users: string[], 
+      const cachedData = await getCachedData<{
+        users: string[],
         hotdogs: string[],
         profiles: Array<{
           address: string;
           name?: string | null;
-          username?: string | null; 
+          username?: string | null;
           image?: string | null;
           fid?: number | null;
           isKnownSpammer?: boolean | null;
           isReportedForSpam?: boolean | null;
+          isDisqualified?: boolean | null;
         }>
       }>(cacheKey);
 
@@ -1002,6 +1011,7 @@ export const hotdogRouter = createTRPCRouter({
             fid: l.fid,
             isKnownSpammer: l.isKnownSpammer,
             isReportedForSpam: l.isReportedForSpam,
+            isDisqualified: l.isDisqualified,
           })),
         };
 
