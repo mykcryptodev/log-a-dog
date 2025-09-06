@@ -16,6 +16,7 @@ export const userRouter = createTRPCRouter({
           fid: true,
           isKnownSpammer: true,
           isReportedForSpam: true,
+          isDisqualified: true,
           username: true,
           image: true,
           name: true,

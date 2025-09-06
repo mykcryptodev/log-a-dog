@@ -82,6 +82,7 @@ type HotdogData = {
     fid?: number | null;
     isKnownSpammer?: boolean | null;
     isReportedForSpam?: boolean | null;
+    isDisqualified?: boolean | null;
   } | null;
   loggerProfile?: {
     name?: string | null;
@@ -90,6 +91,7 @@ type HotdogData = {
     fid?: number | null;
     isKnownSpammer?: boolean | null;
     isReportedForSpam?: boolean | null;
+    isDisqualified?: boolean | null;
   } | null;
 };
 
@@ -222,11 +224,12 @@ export const HotdogCard: FC<Props> = ({
                 <Avatar address={hotdog.eater} fallbackSize={24} />
                 <span className="text-sm font-medium">{displayName}</span>
               </Link>              
-              <Badge 
+              <Badge
                 address={hotdog.eater}
                 fid={hotdog.eaterProfile?.fid}
                 isKnownSpammer={hotdog.eaterProfile?.isKnownSpammer}
                 isReportedForSpam={hotdog.eaterProfile?.isReportedForSpam}
+                isDisqualified={hotdog.eaterProfile?.isDisqualified}
               />
             </div>
             <div className="flex flex-col">
@@ -238,11 +241,12 @@ export const HotdogCard: FC<Props> = ({
                   <span>via</span>
                   <Avatar address={hotdog.logger} size="16px" />
                   <span>{loggerDisplayName}</span>
-                  <Badge 
+                  <Badge
                     address={hotdog.logger}
                     fid={hotdog.loggerProfile?.fid}
                     isKnownSpammer={hotdog.loggerProfile?.isKnownSpammer}
                     isReportedForSpam={hotdog.loggerProfile?.isReportedForSpam}
+                    isDisqualified={hotdog.loggerProfile?.isDisqualified}
                   />
                 </div>
               )}

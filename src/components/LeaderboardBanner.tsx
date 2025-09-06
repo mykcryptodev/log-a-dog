@@ -86,11 +86,12 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-medium">
                   {displayName}
                 </div>
-                <Badge 
+                <Badge
                   address={address}
                   fid={profile?.fid}
                   isKnownSpammer={profile?.isKnownSpammer}
                   isReportedForSpam={profile?.isReportedForSpam}
+                  isDisqualified={profile?.isDisqualified}
                 />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
@@ -166,11 +167,12 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-medium">
                   {displayName}
                 </div>
-                <Badge 
+                <Badge
                   address={address}
                   fid={profile?.fid}
                   isKnownSpammer={profile?.isKnownSpammer}
                   isReportedForSpam={profile?.isReportedForSpam}
+                  isDisqualified={profile?.isDisqualified}
                 />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
@@ -216,11 +218,12 @@ const LeaderboardBannerComponent: FC<Props> = ({
                 <div className="text-sm font-medium">
                   {displayName}
                 </div>
-                <Badge 
+                <Badge
                   address={address}
                   fid={profile?.fid}
                   isKnownSpammer={profile?.isKnownSpammer}
                   isReportedForSpam={profile?.isReportedForSpam}
+                  isDisqualified={profile?.isDisqualified}
                 />
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-bold">{hotdogCount}</span>
