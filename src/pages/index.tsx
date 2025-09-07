@@ -75,6 +75,18 @@ export default function Home() {
               wtf?
             </Link>
           </div>
+          <div className="w-full max-w-xl">
+            <p className="text-center text-lg font-bold">Season 2 is over! Watch the award ceremony:</p>
+            <div className="mt-2 aspect-video">
+              <iframe
+                className="h-full w-full rounded-lg"
+                src="https://www.youtube.com/embed/U1RklCM-h2g"
+                title="Season 2 Award Ceremony"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
           <CreateAttestation />
           <div role="tablist" className="tabs tabs-boxed">
             {tabs.map((tab) => (
