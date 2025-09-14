@@ -35,6 +35,8 @@ export const getStaticProps = async () => {
 const tabs = ["logs", "leaderboard"] as const;
 export default function Home() {
   const [activeTab, setActiveTab] = useState<typeof tabs[number]>("logs");
+  const logTabs = ["feed", "all"] as const;
+  const [activeLogTab, setActiveLogTab] = useState<typeof logTabs[number]>("feed");
 
   return (
     <>
@@ -101,8 +103,20 @@ export default function Home() {
             </div>
           )}
           {activeTab === "logs" && (
-            <div className="w-full max-w-md">
-              <ListAttestations limit={10} />
+            <div className="w-full max-w-md space-y-4">
+              <div role="tablist" className="tabs tabs-bordered">
+                {logTabs.map((tab) => (
+                  <a
+                    key={tab}
+                    role="tab"
+                    className={`tab ${activeLogTab === tab ? "tab-active" : ""}`}
+                    onClick={() => setActiveLogTab(tab)}
+                  >
+                    {tab}
+                  </a>
+                ))}
+              </div>
+              <ListAttestations limit={10} includeSpammers={activeLogTab === "all"} />
             </div>
           )}
         </div>
