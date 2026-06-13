@@ -17,7 +17,7 @@ export const Rules: FC = () => {
               Log a Dog is a global competition with a simple, yet challenging goal:
             </p>
             <ul style={{listStyleType: 'circle'}} className="ml-5">
-              <li>Eat as many hotdogs as you can during Summer 2025. (Jul 4 - Sep 1)</li>
+              <li>Eat as many hotdogs as you can during Summer 2026. (Jul 4 - Sep 7)</li>
               <li>Record each hotdog that you eat by uploading a pic of you eating it.</li>
               <li>Compete against participants from all around the world.</li>
               <li>Rate the truthfulness of other submissions.</li>
