@@ -26,6 +26,7 @@ import { db } from "~/server/db";
 
 interface CreateContextOptions {
   session: Session | null;
+  headers?: CreateNextContextOptions["req"]["headers"];
 }
 
 /**
@@ -41,6 +42,7 @@ interface CreateContextOptions {
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
+    headers: opts.headers,
     db,
   };
 };
@@ -59,6 +61,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 
   return createInnerTRPCContext({
     session,
+    headers: req.headers,
   });
 };
 

@@ -1150,68 +1150,13 @@ export const hotdogRouter = createTRPCRouter({
         poolConfig: POOL_CONFIG,
       });
 
-      // get the gas price
-      const gasPrice = await getUserOpGasFees({
-        options: {
-          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-          client,
-        },
-      });
-      const maxFeePerGas = gasPrice.maxFeePerGas.toString();
-      const maxPriorityFeePerGas = gasPrice.maxPriorityFeePerGas.toString();
-      const estimatedGas = await serverWallet.estimateGas?.(transaction);
-
-      // const preparedTransaction = prepareTransaction({
-      //   to: LOG_A_DOG[chainId]!,
-      //   data,
-      //   chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-      //   client,
-      //   gas: BigInt(5000000), // 5M gas limit
-      //   maxFeePerGas,
-      //   maxPriorityFeePerGas,
-      // });
-
-      console.log({
-        imageUri,
-        metadataUri,
-        coinMetadataUri,
-        eater: ctx.session.user.address,
-        poolConfig: POOL_CONFIG,
-      })
-      
       try {
-        // const { transactionId } = await serverWallet.enqueueTransaction({ transaction: preparedTransaction });
-        const headers = {
-          // Authorization: `Bearer ${env.THIRDWEB_ENGINE_API_KEY}`,
-          Authorization: `Bearer ${env.THIRDWEB_SECRET_KEY}`,
-          'Content-Type': 'application/json',
-          'X-Backend-Wallet-Address': MAKER_WALLET,
-        }
-        const body = {
-          functionName: 'logHotdogOnBehalf',
-          args: [
-            imageUri,
-            metadataUri,
-            coinMetadataUri,
-            ctx.session.user.address,
-            POOL_CONFIG,
-          ],
-          abi,
-          txOverrides: {
-            gas: "5000000", // 5M gas limit (realistic for this transaction)
-            maxFeePerGas: (BigInt(maxFeePerGas) * 2n).toString(), // 100 gwei (reasonable for Base)
-            maxPriorityFeePerGas: (BigInt(maxPriorityFeePerGas) * 2n).toString(), // 100 gwei (lower priority fee)
-            timeoutSeconds: 10,
-          }
-        }
-        const req = await fetch(`${env.THIRDWEB_ENGINE_URL}/contract/${chainId}/${LOG_A_DOG[chainId]}/write`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-        });
-        const res = await req.json() as { result: { queueId: string } };
-        const transactionId = res.result.queueId;
-  
+        // Send through the Thirdweb server wallet (0x360E36…), which holds
+        // OPERATOR_ROLE on LogADog and is therefore authorized to call
+        // logHotdogOnBehalf. Same path judge/rewardModerators use; the returned
+        // transactionId is pollable via engine.getTransactionStatus.
+        const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
+
         // Invalidate Redis cache for all hotdog queries and leaderboard for this chain
         const hotdogPattern = `hotdogs:${chainId}:*`;
         const leaderboardPattern = `leaderboard:${chainId}:*`;

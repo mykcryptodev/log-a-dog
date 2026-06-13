@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/reward-moderators",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/index-chain",
+      "schedule": "0 * * * *"
     }
   ]
 } 

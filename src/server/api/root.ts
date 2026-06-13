@@ -5,6 +5,7 @@ import { contestRouter } from "~/server/api/routers/contest";
 import { engineRouter } from "~/server/api/routers/engine";
 import { ghostRouter } from "~/server/api/routers/ghost";
 import { hotdogRouter } from "~/server/api/routers/hotdog";
+import { indexerRouter } from "~/server/api/routers/indexer";
 import { profileRouter } from "~/server/api/routers/profile";
 import { userRouter } from "~/server/api/routers/user";
 import { warpcastRouter } from "~/server/api/routers/warpcast";
@@ -22,6 +23,7 @@ export const appRouter = createTRPCRouter({
   engine: engineRouter,
   ghost: ghostRouter,
   hotdog: hotdogRouter,
+  indexer: indexerRouter,
   profile: profileRouter,
   staking: stakingRouter,
   user: userRouter,

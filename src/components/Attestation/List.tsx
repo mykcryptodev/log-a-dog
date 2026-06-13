@@ -1,4 +1,5 @@
 import { useEffect, type FC, useState, useMemo, useRef } from "react";
+import { toast } from "react-toastify";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
@@ -100,6 +101,23 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     refetchOnReconnect: false,
     onSettled: () => setIsPaginating(false),
   });
+
+  // Manual "Refresh feed" — pulls any new on-chain logs into the DB then refetches.
+  // Backend enforces a per-user cooldown; we surface that as a toast.
+  const { mutateAsync: refreshFeed, isLoading: isRefreshing } =
+    api.indexer.refreshFeed.useMutation();
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    try {
+      await refreshFeed({ chainId: DEFAULT_CHAIN.id });
+      await refetchDogData();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Could not refresh right now.";
+      toast.info(message);
+    }
+  };
 
   // Get pending dogs for current chain
   const pendingDogs = getPendingDogsForChain(DEFAULT_CHAIN.id.toString());
@@ -281,6 +299,21 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     <>
       <div id="top-of-list" className="invisible" />
       <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <button
+          className="btn btn-ghost btn-sm gap-2"
+          onClick={() => void handleRefresh()}
+          disabled={isRefreshing}
+          title="Not seeing your dog? Pull the latest logs from the chain."
+        >
+          {isRefreshing ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            <span>↻</span>
+          )}
+          Refresh feed
+        </button>
+      </div>
       {/* Show pagination loading overlay */}
       {isPaginating && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">

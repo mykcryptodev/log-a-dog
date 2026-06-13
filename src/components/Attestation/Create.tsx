@@ -30,6 +30,7 @@ type Props = {
 }
 const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
   const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
+  const { mutateAsync: indexAfterLog } = api.indexer.refreshFeed.useMutation();
   const utils = api.useUtils();
   const { addPendingDog, removePendingDog } = usePendingTransactionsStore();
   const [imgUri, setImgUri] = useState<string | undefined>();
@@ -123,12 +124,20 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
       // Keep the optimistic data - don't remove it here
       // Let it be naturally filtered out when real data appears
 
-      // Just do a gentle invalidation - no forced refetch
-      void Promise.all([
-        utils.hotdog.getAll.invalidate(),
-        utils.hotdog.getAllForUser.invalidate(),
-        utils.hotdog.getLeaderboard.invalidate(),
-      ]);
+      // The on-chain tx is mined; pull it into the DB read-model via the
+      // CDP-backed indexer (it waits for CDP to have the tx), then refresh.
+      void indexAfterLog({
+        chainId: DEFAULT_CHAIN.id,
+        transactionHash,
+      })
+        .catch(() => undefined)
+        .finally(() => {
+          void Promise.all([
+            utils.hotdog.getAll.invalidate(),
+            utils.hotdog.getAllForUser.invalidate(),
+            utils.hotdog.getLeaderboard.invalidate(),
+          ]);
+        });
 
     } else if (!success && transactionId) {
       // If transaction failed, remove the optimistic update
