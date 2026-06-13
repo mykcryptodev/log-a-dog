@@ -348,9 +348,12 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
                 setImgUri(uris[0]);
               }}
               initialUrls={memoInitialUpload}
-              onUploadError={() => {
-                // close the modal
-                (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+              onUploadError={(error) => {
+                // Keep the modal open so the inline error from <Upload> stays
+                // visible. Previously this closed the modal, which (combined
+                // with the dialog top-layer hiding toasts) made uploads fail
+                // silently with no message.
+                console.error("Upload failed:", error);
               }}
               label={DEFAULT_UPLOAD_PHRASE}
             />
