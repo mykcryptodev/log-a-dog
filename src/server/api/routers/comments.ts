@@ -50,7 +50,7 @@ export const commentsRouter = createTRPCRouter({
         // Manually create comment data structure to avoid SDK overriding our parentId
         const commentData = {
           author: input.author as `0x${string}`,
-          app: appAccount.address as `0x${string}`,
+          app: appAccount.address,
           channelId: BigInt(input.channelId ?? DEFAULT_CHANNEL_ID),
           deadline: BigInt(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
           content: input.text,

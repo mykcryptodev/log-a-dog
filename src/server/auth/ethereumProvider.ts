@@ -46,7 +46,7 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
       const isValid = await verifySignature(
         credentials.message,
         credentials.signature,
-        credentials.address,
+        credentials.address as `0x${string}`,
       );
 
       if (isValid) {

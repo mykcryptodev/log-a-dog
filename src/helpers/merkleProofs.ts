@@ -60,10 +60,9 @@ export async function saveSnapshot(merkleRoot: string, snapshotUri: string) {
     // Keep old merkle roots from other tokenIds
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (metadata.merkle) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-      for (const key of Object.keys(metadata.merkle)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-        merkleInfos[key] = metadata.merkle[key];
+      const existingMerkle = metadata.merkle as Record<string, string>;
+      for (const key of Object.keys(existingMerkle)) {
+        merkleInfos[key] = existingMerkle[key]!;
       }
     }
     
