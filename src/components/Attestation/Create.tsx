@@ -4,7 +4,6 @@
 import { type FC, useContext, useState, useMemo, useEffect, memo, useRef } from 'react';
 import { ConnectButton, TransactionButton, useActiveWallet } from "thirdweb/react";
 import { toast } from "react-toastify";
-import JSConfetti from 'js-confetti';
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
 import { TransactionStatus } from '../utils/TransactionStatus';
@@ -20,6 +19,25 @@ import { encodePoolConfig } from '~/server/utils/poolConfig';
 import { useStableAccount, useStableWallet } from '~/hooks/useStableAccount';
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
+
+// Confetti only fires after a user logs a dog, so the library is loaded lazily
+// on demand rather than shipped in the homepage bundle. See React rule
+// `bundle-conditional`.
+const fireConfetti = async () => {
+  const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
+  if (!canvas) return;
+  const { default: JSConfetti } = await import('js-confetti');
+  canvas.style.display = 'block';
+  const jsConfetti = new JSConfetti({ canvas });
+  void jsConfetti
+    .addConfetti({ emojis: ['🌭', '🎉', '🌈', '✨'] })
+    .then(() => {
+      // Hide the canvas after confetti animation completes
+      setTimeout(() => {
+        canvas.style.display = 'none';
+      }, 3000);
+    });
+};
 
 type Props = {
   onAttestationCreated?: (attestation: {
@@ -146,88 +164,61 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
     setIsTransactionIdResolved(true);
   }
 
-  const ActionButton: FC = () => {
-    if (!account?.isConnected) return (
-      <button className="btn btn-secondary flex-1" disabled>
-        Connect Wallet
-      </button>
-    )
+  // Hoisted out of render rather than defined as an inline `<ActionButton />`
+  // component. Defining a component inside another component gives it a new
+  // identity on every render, which forces React to unmount/remount its
+  // subtree and discard its state. See React rule `rerender-no-inline-components`.
+  const logDog = async () => {
+    if (!wallet) {
+      return toast.error("You must login to attest to dogs!");
+    }
+    if (isDisabled) return;
+    setIsLoading(true);
+    try {
+      // Reset state for new logs
+      setTransactionId(undefined);
+      setIsTransactionIdResolved(false);
+      // Call the backend tRPC procedure
+      const result = await logHotdog({
+        chainId: DEFAULT_CHAIN.id,
+        imageUri: imgUri!,
+        metadataUri: '',
+        description,
+      });
 
-    const logDog = async () => {
-      if (!wallet) {
-        return toast.error("You must login to attest to dogs!");
-      }
-      if (isDisabled) return;
-      setIsLoading(true);
-      try {
-        // Reset state for new logs
-        setTransactionId(undefined);
-        setIsTransactionIdResolved(false);
-        // Call the backend tRPC procedure
-        const result = await logHotdog({
-          chainId: DEFAULT_CHAIN.id,
-          imageUri: imgUri!,
-          metadataUri: '',
-          description,
-        });
-        
-        // Add optimistic update to store
-        addPendingDog({
-          ...result.optimisticData,
-          transactionId: result.transactionId,
-          createdAt: Date.now(),
-        });
+      // Add optimistic update to store
+      addPendingDog({
+        ...result.optimisticData,
+        transactionId: result.transactionId,
+        createdAt: Date.now(),
+      });
 
-        // pop confetti immediately for dopamine hit
-        const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-        canvas.style.display = 'block';
-        const jsConfetti = new JSConfetti({ canvas });
-        void jsConfetti.addConfetti({
-          emojis: ['🌭', '🎉', '🌈', '✨']
-        }).then(() => {
-          // Hide the canvas after confetti animation completes
-          setTimeout(() => {
-            canvas.style.display = 'none';
-          }, 3000);
-        });
+      // pop confetti immediately for dopamine hit
+      void fireConfetti();
 
-        setLastLoggedImgUri(imgUri);
-        setLastLoggedDescription(description);
-        setTransactionId(result.transactionId);
+      setLastLoggedImgUri(imgUri);
+      setLastLoggedDescription(description);
+      setTransactionId(result.transactionId);
 
-        // Trigger immediate UI update
-        void onAttestationCreated?.({
-          hotdogEater: account!.address,
-          imageUri: imgUri!,
-        });
+      // Trigger immediate UI update
+      void onAttestationCreated?.({
+        hotdogEater: account!.address,
+        imageUri: imgUri!,
+      });
 
-        // close the modal
-        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-        setImgUri(undefined);
-        setDescription('');
-      } catch (error) {
-        const e = error as Error;
-        console.error(error);
-        toast.error(`Attestation failed: ${e.message}`);
-      } finally {
-        setIsLoading(false);
-        // close the modal
-        (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
-      }
-    };
-
-    return (
-      <button
-        className="btn btn-primary flex-1"
-        onClick={logDog}
-        disabled={isDisabled}
-      >
-        {isLoading && (
-          <div className="loading loading-spinner" />
-        )}
-        Log a Dog
-      </button>
-    )
+      // close the modal
+      (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+      setImgUri(undefined);
+      setDescription('');
+    } catch (error) {
+      const e = error as Error;
+      console.error(error);
+      toast.error(`Attestation failed: ${e.message}`);
+    } finally {
+      setIsLoading(false);
+      // close the modal
+      (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+    }
   };
 
   const shareOnFarcaster = async () => {
@@ -283,17 +274,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
 
   const handleOnSuccess = () => {
     // pop confetti immediately for dopamine hit
-    const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement;
-    canvas.style.display = 'block';
-    const jsConfetti = new JSConfetti({ canvas });
-    void jsConfetti.addConfetti({
-      emojis: ['🌭', '🎉', '🌈', '✨']
-    }).then(() => {
-      // Hide the canvas after confetti animation completes
-      setTimeout(() => {
-        canvas.style.display = 'none';
-      }, 3000);
-    });
+    void fireConfetti();
 
     setLastLoggedImgUri(imgUri);
     setLastLoggedDescription(description);
@@ -412,7 +393,16 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
                   Log a Dog
                 </TransactionButton>
               ) : (
-                <ActionButton />
+                <button
+                  className="btn btn-primary flex-1"
+                  onClick={logDog}
+                  disabled={isDisabled}
+                >
+                  {isLoading && (
+                    <div className="loading loading-spinner" />
+                  )}
+                  Log a Dog
+                </button>
               ) }
             </div>
           </div>

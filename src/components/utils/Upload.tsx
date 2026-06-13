@@ -242,8 +242,8 @@ export const Upload: FC<UploadProps> = ({
             <Image
               src={previewImageSrc(urls[0]!)}
               alt="uploaded image"
-              layout="fill"
-              objectFit={objectCover ? "cover" : "contain"}
+              fill
+              style={{ objectFit: objectCover ? "cover" : "contain" }}
               className={imageClassName}
             />
           </div>

@@ -1,4 +1,4 @@
-import { type FC, useCallback, useContext } from "react";
+import { type FC, memo, useCallback, useContext } from "react";
 import Link from "next/link";
 import {
   CurrencyDollarIcon,
@@ -111,7 +111,7 @@ type Props = {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
 
-export const HotdogCard: FC<Props> = ({
+const HotdogCardComponent: FC<Props> = ({
   hotdog,
   validAttestations,
   invalidAttestations,
@@ -420,5 +420,11 @@ export const HotdogCard: FC<Props> = ({
     </div>
   );
 };
+
+// Memoized so that a re-render of the parent feed (e.g. the 30s
+// `clearExpiredPending` interval tick or pagination) doesn't re-render every
+// card. This relies on the parent passing a stable `onRefetch` callback.
+// See React rule `rerender-memo`.
+export const HotdogCard = memo(HotdogCardComponent);
 
 export default HotdogCard;

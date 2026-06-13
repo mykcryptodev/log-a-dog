@@ -1,4 +1,4 @@
-import { useEffect, type FC, useState, useMemo, useRef } from "react";
+import { useEffect, type FC, useState, useMemo, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
@@ -158,6 +158,55 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     return dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
   }, [dogData?.hotdogs, filteredPendingDogs, pendingDogs]);
 
+  // Stable callback so every memoized <HotdogCard> doesn't re-render when this
+  // list re-renders (e.g. the 30s expired-pending interval). `refetchDogData`
+  // from react-query is itself stable. See React rule `rerender-memo`.
+  const handleRefetch = useCallback(() => void refetchDogData(), [refetchDogData]);
+
+  // Build logId -> attestation lookup maps once per data change instead of on
+  // every render (the list re-renders on a 30s interval). See `js-index-maps`.
+  const attestationMaps = useMemo(() => {
+    const hotdogs = dogData?.hotdogs;
+    if (!hotdogs) {
+      return {
+        validMap: {} as Record<string, string>,
+        invalidMap: {} as Record<string, string>,
+        userAttestedMap: {} as Record<string, boolean>,
+        userAttestationMap: {} as Record<string, boolean>,
+      };
+    }
+    return {
+      validMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.validAttestations?.[i]])) as Record<string, string>,
+      invalidMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.invalidAttestations?.[i]])) as Record<string, string>,
+      userAttestedMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.userAttested?.[i]])) as Record<string, boolean>,
+      userAttestationMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.userAttestations?.[i]])) as Record<string, boolean>,
+    };
+  }, [dogData]);
+
+  // Helper to get attestation data for a hotdog. Stable across renders so it
+  // doesn't defeat the memoization above.
+  const getAttestationData = useCallback((hotdog: HotdogItem): {
+    validAttestations: string;
+    invalidAttestations: string;
+    userAttested: boolean;
+    userAttestation: boolean;
+  } => {
+    if ('isPending' in hotdog && hotdog.isPending) {
+      return {
+        validAttestations: "0",
+        invalidAttestations: "0",
+        userAttested: false,
+        userAttestation: false,
+      };
+    }
+    return {
+      validAttestations: attestationMaps.validMap[hotdog.logId] ?? "0",
+      invalidAttestations: attestationMaps.invalidMap[hotdog.logId] ?? "0",
+      userAttested: attestationMaps.userAttestedMap[hotdog.logId] ?? false,
+      userAttestation: attestationMaps.userAttestationMap[hotdog.logId] ?? false,
+    };
+  }, [attestationMaps]);
+
   // Mobile-safe scroll function
   const scrollToTop = () => {
     // Clear any pending scroll timeout
@@ -266,35 +315,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     );
   }
 
-  // Create maps to ensure correct attestation data is passed by logId
-  const validMap = dogData?.hotdogs && dogData.validAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.validAttestations[i]])) : {};
-  const invalidMap = dogData?.hotdogs && dogData.invalidAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.invalidAttestations[i]])) : {};
-  const userAttestedMap = dogData?.hotdogs && dogData.userAttested ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttested[i]])) : {};
-  const userAttestationMap = dogData?.hotdogs && dogData.userAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttestations[i]])) : {};
-
-  // Helper function to get attestation data for a hotdog
-  const getAttestationData = (hotdog: HotdogItem): {
-    validAttestations: string;
-    invalidAttestations: string;
-    userAttested: boolean;
-    userAttestation: boolean;
-  } => {
-    if ('isPending' in hotdog && hotdog.isPending) {
-      return {
-        validAttestations: "0",
-        invalidAttestations: "0", 
-        userAttested: false,
-        userAttestation: false,
-      };
-    }
-    return {
-      validAttestations: validMap[hotdog.logId] ?? "0",
-      invalidAttestations: invalidMap[hotdog.logId] ?? "0",
-      userAttested: userAttestedMap[hotdog.logId] ?? false,
-      userAttestation: userAttestationMap[hotdog.logId] ?? false,
-    };
-  };
-
   return (
     <>
       <div id="top-of-list" className="invisible" />
@@ -339,7 +359,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
             userAttested={attestationData.userAttested}
             userAttestation={attestationData.userAttestation}
             chainId={DEFAULT_CHAIN.id}
-            onRefetch={() => void refetchDogData()}
+            onRefetch={handleRefetch}
             linkToDetail={true}
             showAiJudgement={false}
             disabled={isPending}
