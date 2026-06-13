@@ -39,6 +39,7 @@ export const Upload: FC<UploadProps> = ({
 }) => {
   const [urls, setUrls] = useState<string[]>([]);
   const [dropzoneLabel, setDropzoneLabel] = useState<string>(label ?? DEFAULT_UPLOAD_PHRASE);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
   // Prevent re-renders when parent passes a new array reference
@@ -128,16 +129,29 @@ export const Upload: FC<UploadProps> = ({
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setUrls([]);
+    setUploadError(null);
     setDropzoneLabel("🖼️ Preparing upload...");
 
-    const resizedFilesPromises = acceptedFiles.map(async (file) => {
-      return await resizeImageFile(file);
-    });
-
-    const resizedFiles = await Promise.all(resizedFilesPromises);
+    // Resize / HEIC-convert. This was previously unguarded, so a conversion
+    // failure became an unhandled rejection with no user-visible message.
+    let resizedFiles: File[];
+    try {
+      resizedFiles = await Promise.all(
+        acceptedFiles.map((file) => resizeImageFile(file)),
+      );
+    } catch (e) {
+      const err = e as Error;
+      console.error("Error preparing image:", err);
+      toast.error("Couldn't process that image. Try a JPG or PNG.");
+      setUploadError(`Couldn't process that image: ${err.message}`);
+      onUploadError?.(err);
+      setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
+      return;
+    }
 
     if (resizedFiles.length === 0) {
       toast.error("No files to upload");
+      setUploadError("No files to upload");
       onUploadError?.(new Error("No files to upload"));
       setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
       return;
@@ -149,14 +163,18 @@ export const Upload: FC<UploadProps> = ({
       const isSafe = await conductImageSafetyCheck(resizedFiles[0]!);
       if (!isSafe) {
         toast.error("Image is not safe to upload");
+        setUploadError("That image didn't pass the safety check.");
         onUploadError?.(new Error("Image is not safe to upload"));
         setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
         return;
       }
       setDropzoneLabel("✅ Image passed safety check!");
     } catch (e) {
+      const err = e as Error;
+      console.error("Error checking image safety:", err);
       toast.error("Error checking image safety");
-      onUploadError?.(e as Error);
+      setUploadError(`Safety check failed: ${err.message}`);
+      onUploadError?.(err);
       setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
       return;
     }
@@ -186,8 +204,11 @@ export const Upload: FC<UploadProps> = ({
       setUrls(resolvedUrls);
       onUpload?.({ resolvedUrls, uris: typeof uris === 'string' ? [uris] : uris });
     } catch (e) {
+      const err = e as Error;
+      console.error("Error uploading file:", err);
       toast("Error uploading file", { type: "error" });
-      onUploadError?.(e as Error);
+      setUploadError(`Upload failed: ${err.message}`);
+      onUploadError?.(err);
     } finally {
       setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
     }
@@ -227,7 +248,12 @@ export const Upload: FC<UploadProps> = ({
             />
           </div>
         ) : (
-          <p>{dropzoneLabel}</p>
+          <div className="flex flex-col items-center gap-1 px-4 text-center">
+            <p>{dropzoneLabel}</p>
+            {uploadError && (
+              <p className="text-error text-xs">{uploadError}</p>
+            )}
+          </div>
         )
       }
     </div>
