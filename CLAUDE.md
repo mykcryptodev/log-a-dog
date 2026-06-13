@@ -48,11 +48,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `engine.ts` - Thirdweb Engine / server-wallet transaction helpers
   - `ghost.ts` - Reads on-chain data via the GhostGraph indexer (see below)
   - `hotdog.ts` - Hot dog event processing
+  - `indexer.ts` - `refreshFeed` mutation: pulls new on-chain events into the DB on demand (after a log, or the "Refresh feed" button). Backed by `src/server/utils/indexer.ts` (CDP SQL).
   - `profile.ts` - User profile management
   - `staking.ts` - Staking mechanism
   - `user.ts` - User account operations
   - `warpcast.ts` - Warpcast/Farcaster integration
-- **Plain API routes** (`src/pages/api/`): webhooks (`webhook/dog-events`, `webhook/attestation-resolved`), the cron endpoint (`cron/reward-moderators`), OG image generation (`og/[logId]`), `image-proxy`, `ghostgraph`, and `judge` (image moderation).
+- **Plain API routes** (`src/pages/api/`): the cron endpoints (`cron/index-chain` — CDP-SQL indexer; `cron/reward-moderators`), OG image generation (`og/[logId]`), `image-proxy`, `ghostgraph`, `judge` (image moderation), and the legacy webhooks (`webhook/dog-events`, `webhook/attestation-resolved` — no longer driven by anything; see Data Flow below).
 
 ### Smart Contracts (`contracts/src/`)
 - `LogADog.sol` - Main logging contract for dog events
@@ -69,15 +70,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Blockchain Integration
 - **Chains**: Base Sepolia (development, chainId 84532), Base Mainnet (production, chainId 8453). Per-chain ABIs/addresses live in `src/constants/` and `src/thirdweb/{8453,84532}/`.
 - **Thirdweb Integration**: Contract interactions and wallet connections
-- **Thirdweb Engine + server wallet**: Backend-initiated transactions (e.g. the moderator-rewards cron, resolving attestation periods) are sent through Thirdweb Engine using a server wallet, not a user wallet. See `engine.ts` and the `THIRDWEB_ENGINE_*` / `*_WALLET_*` env vars.
+- **Thirdweb server wallet**: Backend-initiated transactions (logging on behalf of users via `hotdog.log`, attestations, resolving attestation periods, moderator-rewards cron) are sent through a **Thirdweb hosted server wallet** — `serverWallet.enqueueTransaction` in `src/server/utils.ts`, vault-backed via `THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN`. The server wallet address (`NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS`, `0x360E36…`) holds `OPERATOR_ROLE` on `LogADog`, authorizing the `*OnBehalf` calls. **Note:** the old self-hosted **Thirdweb Engine (Railway) is shut down** — `THIRDWEB_ENGINE_URL` is dead; do not route new writes through it. `engine.ts` only reads tx status (`Engine.getTransactionStatus`), which still works against Thirdweb's hosted infra.
 - **Attestation System**: EAS (Ethereum Attestation Service) integration
 - **Zora Protocol**: Coin creation and trading functionality (`@zoralabs/coins-sdk`) — each dog log mints a Zora coin
 
 ### Data Flow & On-Chain Sync (important)
 The **Supabase/Postgres DB is a cache/read-model of on-chain state, not the source of truth.** Understand this flow before changing how DogEvents or attestations are written:
 1. Users perform actions on-chain via Thirdweb (`LogADog.sol`, `AttestationManager.sol`, etc.).
-2. On-chain events are pushed to webhook endpoints (`/api/webhook/dog-events`, `/api/webhook/attestation-resolved`), which upsert into the DB idempotently (handles duplicates).
-3. The hourly cron (`/api/cron/reward-moderators`) resolves expired attestation periods on-chain; the resolution webhook then writes results back to the DB.
+2. A **pull-based indexer** (`src/server/utils/indexer.ts`) reads `HotdogLogged` and `AttestationPeriodResolved` from the **Coinbase CDP SQL API** (`base.events`) and upserts them into the DB idempotently. It is triggered three ways: the hourly cron `/api/cron/index-chain` (safety net), automatically after an in-app log once the tx confirms, and the manual "Refresh feed" button — the latter two via the `indexer.refreshFeed` mutation (Redis block-number cursors + lock + per-identity cooldown). Requires `CDP_CLIENT_TOKEN`; Base mainnet (8453) only.
+   - **Historical note:** events used to be *pushed* by a self-hosted Thirdweb Engine (Railway) to `/api/webhook/{dog-events,attestation-resolved}`. That Engine is gone; the webhook endpoints still exist but nothing drives them (kept as a payload reference / future push path).
+3. The hourly cron (`/api/cron/reward-moderators`) resolves expired attestation periods on-chain; the indexer (cron or on-demand) then reads the `AttestationPeriodResolved` event and writes results back to the DB.
 4. The **GhostGraph indexer** (Ghost Protocol) provides queryable on-chain data; the `ghost.ts` router and `/api/ghostgraph` proxy read from it (auth via `GHOST_PROTOCOL_API_KEY`).
 - Docs: `WEBHOOK_DOCUMENTATION.md`, `CRON_JOBS.md`.
 
@@ -107,15 +109,20 @@ The **Supabase/Postgres DB is a cache/read-model of on-chain state, not the sour
 - **Upstash Redis**: Caching and session storage
 - **Vercel OG**: Dynamic social media image generation
 - **Prisma**: Database ORM with PostgreSQL (Supabase) — migrations also tracked in `supabase/migrations/`
-- **GhostGraph (Ghost Protocol)**: On-chain data indexing/querying
+- **Coinbase CDP SQL API**: Primary on-chain event source for the indexer (`base.events`); auth via `CDP_CLIENT_TOKEN`
+- **GhostGraph (Ghost Protocol)**: Secondary on-chain data indexing/querying (judges/votes via `ghost.ts`)
 - **Google Vision**: Image content moderation
 - **Telegram**: Optional notifications (`TELEGRAM_*` env vars)
 
 ### Automated Jobs
+- **On-Chain Indexer Cron**: Hourly safety-net sweep that pulls new `HotdogLogged` / `AttestationPeriodResolved` events from the CDP SQL API into the DB
+  - Path: `/api/cron/index-chain`
+  - Schedule: Every hour (`0 * * * *`)
+  - Backstops the on-demand indexing (after-log + "Refresh feed" button)
 - **Moderator Rewards Cron**: Runs hourly to automatically distribute rewards for resolved attestation periods
   - Path: `/api/cron/reward-moderators`
   - Schedule: Every hour (`0 * * * *`)
-  - See `CRON_JOBS.md` for detailed documentation
+- See `CRON_JOBS.md` for detailed documentation of both
 
 ## Development Notes
 
@@ -123,7 +130,7 @@ The **Supabase/Postgres DB is a cache/read-model of on-chain state, not the sour
 - Uses `.env` files for configuration. **All env vars are validated by a Zod schema in `src/env.js`** (via `@t3-oss/env-nextjs`) — add new vars there or the build/runtime will reject them.
 - Prisma generates client on postinstall
 - Database URL (`DATABASE_URL`) and direct URL (`DIRECT_URL`) required for Prisma
-- Key secrets: `THIRDWEB_*` / wallet vars, `NEYNAR_API_KEY`, `GHOST_PROTOCOL_API_KEY`, `UPSTASH_REDIS_REST_*`, `GOOGLE_VISION_API_KEY`, `CRON_SECRET`, `NEXTAUTH_SECRET`
+- Key secrets: `THIRDWEB_*` / wallet vars, `CDP_CLIENT_TOKEN` (indexer), `NEYNAR_API_KEY`, `GHOST_PROTOCOL_API_KEY`, `UPSTASH_REDIS_REST_*`, `GOOGLE_VISION_API_KEY`, `CRON_SECRET`, `NEXTAUTH_SECRET`
 
 ### Build Process
 - **IMPORTANT**: Always run `bun run build` before committing changes to ensure TypeScript and linting errors are caught

@@ -1,8 +1,55 @@
-# Dog Events Webhook Documentation
+# Dog Events Indexing & Webhook Documentation
 
-## Overview
+> ## ⚠️ Architecture change: the indexer is now pull-based
+>
+> On-chain events used to be **pushed** to the webhook endpoints below by a
+> self-hosted **Thirdweb Engine** (running on Railway). **That Engine is shut
+> down.** The Supabase/Postgres `DogEvent` read-model is now populated by a
+> **pull-based indexer** that queries the **Coinbase CDP SQL API**
+> (`base.events`) — see [On-Chain Indexer](#on-chain-indexer-current) below.
+>
+> The webhook endpoints (`/api/webhook/dog-events`,
+> `/api/webhook/attestation-resolved`) **still exist and still work**; they are
+> just no longer driven by anything. They remain documented here as a reference
+> for the event/payload shapes and as a ready-made push path if a hosted indexer
+> (e.g. Thirdweb Insight, Alchemy, QuickNode) is wired up in the future.
 
-This application receives and stores dog event data from blockchain webhooks. The system is designed to handle duplicate events gracefully and provides APIs to query the stored data.
+## On-Chain Indexer (current)
+
+**Source of truth**: on-chain. **Read-model**: Supabase/Postgres `DogEvent`.
+**Pipeline**: `src/server/utils/indexer.ts` → CDP SQL API → `DogEvent` upserts.
+
+The indexer pulls new `HotdogLogged` and `AttestationPeriodResolved` events from
+CDP's `base.events` table and upserts them into `DogEvent` idempotently (the same
+rows the webhooks below would have written). It runs from three triggers:
+
+| Trigger | Where | When |
+| --- | --- | --- |
+| Hourly safety-net cron | `/api/cron/index-chain` | Every hour (`0 * * * *`) |
+| Auto after an in-app log | `indexer.refreshFeed` tRPC mutation (called from `Attestation/Create.tsx` once the log tx confirms) | On every successful log |
+| Manual "Refresh feed" button | `indexer.refreshFeed` (called from `Attestation/List.tsx`) | On click, per-identity 20s cooldown |
+
+Implementation notes:
+- **Cursors**: integer block-number cursors in Redis
+  (`indexer:cursor:logs|attestations:{chainId}`) keep each run to ~2 CDP queries.
+- **Locking**: a Redis lock (`indexer:lock:{chainId}`) coalesces concurrent
+  triggers into one CDP scan.
+- **Idempotency**: writes key off the unique `transactionHash` (inserts) and
+  per-`logId` updates, so re-scans and overlapping runs are safe.
+- **Notifications**: Telegram/Neynar "new dog" notifications fire only for
+  events less than 2 hours old (so a backfill/sweep doesn't spam users).
+- **Env**: requires `CDP_CLIENT_TOKEN`. Only Base mainnet (8453) is indexed
+  (`base.events` is mainnet-only).
+- See `CRON_JOBS.md` for the cron details.
+
+---
+
+## Overview (legacy webhook reference)
+
+The endpoints below receive and store dog event data from blockchain webhooks.
+The system handles duplicate events gracefully and provides APIs to query the
+stored data. **No live producer currently calls these** (see the banner above);
+they are retained as a payload reference and future push path.
 
 ## Webhook Endpoint
 
@@ -178,9 +225,14 @@ The `DogEvent` table stores:
 
 ## Setup Instructions
 
+> **Note:** The live system uses the [On-Chain Indexer](#on-chain-indexer-current)
+> (CDP SQL pull), so no webhook producer needs to be configured. The steps below
+> apply only if you re-introduce a push-based producer (e.g. Thirdweb Insight,
+> Alchemy, QuickNode) pointed at these endpoints.
+
 1. Run database migrations:
    ```bash
-   npx prisma db push
+   bun run db:push
    ```
 
 2. Configure your webhook service to send events to:
