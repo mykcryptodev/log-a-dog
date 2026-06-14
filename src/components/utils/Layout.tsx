@@ -42,10 +42,9 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
             <div className="flex items-center gap-2 font-display text-xs tracking-wider">
               <Link
                 href="/rules"
-                aria-label="How it works"
                 className="rounded-full bg-base-200 px-2.5 py-1"
               >
-                ?
+                RULES
               </Link>
               <Link
                 href="/earn"

@@ -321,9 +321,9 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
       )}
       <dialog id="create_attestation_modal" className="modal modal-bottom sm:modal-middle">
         <div className="modal-box max-h-[92vh] overflow-y-auto">
-          <h3 className="mb-1 font-display text-3xl tracking-wide">LOG A DOG</h3>
-          <p className="mb-4 text-sm opacity-70">Show us the dog. 🌭</p>
-          <div className="flex flex-col gap-2">
+          <h3 className="mb-1 font-display text-3xl tracking-wide">LOG A DOG 🌭</h3>
+          <p className="mb-4 text-sm opacity-70">Show us the evidence.</p>
+          <div className="flex flex-col gap-3">
             <Upload
               onUpload={({ uris }) => {
                 if (!uris) return;
@@ -339,18 +339,18 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
               }}
               label={DEFAULT_UPLOAD_PHRASE}
             />
-            <span className="text-center text-xs opacity-50">
-              Images uploaded here are public and will be displayed on the global leaderboard
-            </span>
-            <div className="collapse collapse-arrow w-full bg-base-200 bg-opacity-30">
+            <p className="text-center text-xs opacity-40">
+              Photos are public and count toward the global leaderboard
+            </p>
+            <div className="collapse collapse-arrow w-full rounded-2xl bg-base-200/50">
               <input type="checkbox" />
-              <div className="collapse-title text-sm font-medium">
-                Advanced
+              <div className="collapse-title text-sm font-medium opacity-70">
+                Advanced options
               </div>
               <div className="collapse-content">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text text-xs opacity-75">Description</span>
+                    <span className="label-text text-xs opacity-75">Caption</span>
                   </label>
                   <textarea
                     className="textarea textarea-bordered w-full"
@@ -359,53 +359,45 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
-                <div className="form-control mt-2">
-                  <label className="label">
-                    <span className="label-text text-xs opacity-75">Gas Fees</span>
-                  </label>
-                  <div className="flex items-center gap-2 pl-2">
+                <div className="form-control mt-3">
+                  <label className="label cursor-pointer justify-start gap-2">
                     <input
                       type="checkbox"
                       className="checkbox checkbox-xs checkbox-primary"
                       checked={payOwnGas}
                       onChange={(e) => setPayOwnGas(e.target.checked)}
                     />
-                    <span className="text-xs opacity-75">I will pay my own blockchain fees</span>
-                  </div>
+                    <span className="label-text text-xs opacity-75">Pay my own gas fees</span>
+                  </label>
                 </div>
               </div>
             </div>
           </div>
           <div className="modal-action">
             <form method="dialog">
-              {/* if there is a button in form, it will close the modal */}
-              <button className="btn">Close</button>
+              <button className="btn btn-ghost">Cancel</button>
             </form>
-            <div className="flex flex-col gap-2">
-              {!account?.isConnected ? (
-                <ConnectButton client={client} />
-              ) : payOwnGas ? (
-                <TransactionButton
-                  className="!btn !btn-primary flex-1 font-display tracking-wide"
-                  transaction={getTx}
-                  onTransactionConfirmed={handleOnSuccess}
-                  disabled={!imgUri}
-                >
-                  LOG IT
-                </TransactionButton>
-              ) : (
-                <button
-                  className="btn btn-primary flex-1 font-display tracking-wide"
-                  onClick={logDog}
-                  disabled={isDisabled}
-                >
-                  {isLoading && (
-                    <div className="loading loading-spinner" />
-                  )}
-                  LOG IT
-                </button>
-              ) }
-            </div>
+            {!account?.isConnected ? (
+              <ConnectButton client={client} />
+            ) : payOwnGas ? (
+              <TransactionButton
+                className="!btn !btn-primary font-display tracking-wide"
+                transaction={getTx}
+                onTransactionConfirmed={handleOnSuccess}
+                disabled={!imgUri}
+              >
+                LOG IT
+              </TransactionButton>
+            ) : (
+              <button
+                className="btn btn-primary font-display tracking-wide"
+                onClick={logDog}
+                disabled={isDisabled}
+              >
+                {isLoading && <span className="loading loading-spinner loading-sm" />}
+                LOG IT
+              </button>
+            )}
           </div>
         </div>
       </dialog>
@@ -428,14 +420,16 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
         />
       )}
       <dialog id="share_cast_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box bg-opacity-50 backdrop-blur-lg">
-          <h3 className="font-bold text-lg">Share on Farcaster?</h3>
-          <p className="py-4">Would you like to share your logged dog on Farcaster?</p>
+        <div className="modal-box">
+          <h3 className="font-display text-2xl tracking-wide">Share the dog? 🌭</h3>
+          <p className="py-3 text-sm opacity-70">Cast it on Farcaster and get the people talking.</p>
           <div className="modal-action">
             <form method="dialog">
-              <button className="btn">No thanks</button>
+              <button className="btn btn-ghost">Skip</button>
             </form>
-            <button className="btn btn-primary" onClick={shareOnFarcaster}>Share</button>
+            <button className="btn btn-primary font-display tracking-wide" onClick={shareOnFarcaster}>
+              CAST IT
+            </button>
           </div>
         </div>
       </dialog>
