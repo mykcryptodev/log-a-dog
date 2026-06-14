@@ -18,7 +18,7 @@ import { env } from "~/env";
 import { download } from 'thirdweb/storage';
 import { getCoins } from '@zoralabs/coins-sdk';
 import { getCachedData, getOrSetCache, setCachedData, CACHE_DURATION, deleteCachedData /*, invalidateCache */ } from "~/server/utils/redis";
-import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
+import { CONTEST_END_TIME, DOG_FEED_START_TIME } from "~/constants";
 import { encodePoolConfig } from "~/server/utils/poolConfig";
 import { upload } from "thirdweb/storage";
 import { canParticipateInAttestation } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
@@ -377,14 +377,14 @@ export const hotdogRouter = createTRPCRouter({
       }
 
       // Get dog events from database instead of blockchain
-      const contestStartTime = BigInt(new Date(CONTEST_START_TIME).getTime() / 1000);
+      const feedStartTime = BigInt(new Date(DOG_FEED_START_TIME).getTime() / 1000);
       const contestEndTime = BigInt(new Date(CONTEST_END_TIME).getTime() / 1000);
       
       const queryParams = {
         where: {
           chainId: chainId.toString(),
           timestamp: {
-            gte: contestStartTime,
+            gte: feedStartTime,
             lte: contestEndTime,
           },
           ...(!isZeroAddress(user) && { eater: user.toLowerCase() }),
@@ -407,7 +407,7 @@ export const hotdogRouter = createTRPCRouter({
         where: {
           chainId: chainId.toString(),
           timestamp: {
-            gte: contestStartTime,
+            gte: feedStartTime,
             lte: contestEndTime,
           },
           ...(!isZeroAddress(user) && { eater: user.toLowerCase() }),
@@ -608,7 +608,7 @@ export const hotdogRouter = createTRPCRouter({
       const { chainId, user, limit } = input;
       const start = input.cursor ?? input.start ?? 0;
       // Get dog events from database for specific user
-      const contestStartTime = BigInt(new Date(CONTEST_START_TIME).getTime() / 1000);
+      const feedStartTime = BigInt(new Date(DOG_FEED_START_TIME).getTime() / 1000);
       const contestEndTime = BigInt(new Date(CONTEST_END_TIME).getTime() / 1000);
 
       const userDogEvents = await getDogEvents({
@@ -616,7 +616,7 @@ export const hotdogRouter = createTRPCRouter({
           eater: user.toLowerCase(),
           chainId: chainId.toString(),
           timestamp: {
-            gte: contestStartTime,
+            gte: feedStartTime,
             lte: contestEndTime,
           },
         },
@@ -631,7 +631,7 @@ export const hotdogRouter = createTRPCRouter({
           eater: user.toLowerCase(),
           chainId: chainId.toString(),
           timestamp: {
-            gte: contestStartTime,
+            gte: feedStartTime,
             lte: contestEndTime,
           },
         },

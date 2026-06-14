@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getContract } from "thirdweb";
 import { db } from "~/server/db";
 import { client, serverWallet } from "~/server/utils";
-import { ATTESTATION_MANAGER, ATTESTATION_WINDOW_SECONDS, CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
+import { ATTESTATION_MANAGER, ATTESTATION_WINDOW_SECONDS, CONTEST_END_TIME, DOG_FEED_START_TIME } from "~/constants";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { sendTelegramMessage, formatCronJobMessage } from "~/lib/telegram";
@@ -49,7 +49,7 @@ export default async function handler(
     // 1. Created more than ATTESTATION_WINDOW_SECONDS ago (attestation window has passed)
     // 2. attestationValid is null (not yet processed by our system)
     const cutoffTime = new Date(Date.now() - ATTESTATION_WINDOW_SECONDS * 1000);
-    const contestStartTimestamp = BigInt(Math.floor(new Date(CONTEST_START_TIME).getTime() / 1000));
+    const contestStartTimestamp = BigInt(Math.floor(new Date(DOG_FEED_START_TIME).getTime() / 1000));
     const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
     
     const eligibleEvents = await db.dogEvent.findMany({

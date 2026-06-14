@@ -1,7 +1,7 @@
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 import { type UserProfile, fetchUserProfiles } from "~/server/utils/profile";
-import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
+import { CONTEST_END_TIME, DOG_FEED_START_TIME } from "~/constants";
 import { DEFAULT_CHAIN } from "~/constants/chains";
 import { db } from "~/server/db";
 import { z } from "zod";
@@ -18,9 +18,9 @@ interface JudgeResult {
 export const ghostRouter = createTRPCRouter({
   getJudges: publicProcedure.query(async () => {
     const chainId = DEFAULT_CHAIN.id.toString();
-    const contestStartTimestamp = BigInt(Math.floor(new Date(CONTEST_START_TIME).getTime() / 1000));
+    const contestStartTimestamp = BigInt(Math.floor(new Date(DOG_FEED_START_TIME).getTime() / 1000));
     const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
-    const cacheKey = `judges:ranking:${chainId}:${CONTEST_START_TIME}`;
+    const cacheKey = `judges:ranking:${chainId}:${DOG_FEED_START_TIME}`;
     
     return getOrSetCache(
       cacheKey,
@@ -117,9 +117,9 @@ export const ghostRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const voter = input.voter.toLowerCase();
       const chainId = DEFAULT_CHAIN.id.toString();
-      const contestStartTimestamp = BigInt(Math.floor(new Date(CONTEST_START_TIME).getTime() / 1000));
+      const contestStartTimestamp = BigInt(Math.floor(new Date(DOG_FEED_START_TIME).getTime() / 1000));
       const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
-      const cacheKey = `votes:${chainId}:${voter}:${CONTEST_START_TIME}`;
+      const cacheKey = `votes:${chainId}:${voter}:${DOG_FEED_START_TIME}`;
 
       return getOrSetCache(
         cacheKey,

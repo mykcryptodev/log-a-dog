@@ -55,7 +55,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               </Link>
               {mounted && (
                 <span className="rounded-full bg-primary/20 px-2.5 py-1 text-primary">
-                  {isLive ? `DAY ${day}` : "OFFSEASON"}
+                  {isLive ? `DAY ${day}` : "PRE-SEASON"}
                 </span>
               )}
             </div>

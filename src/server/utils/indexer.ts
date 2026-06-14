@@ -20,7 +20,7 @@
 import { db } from "~/server/db";
 import { redis } from "~/server/utils/redis";
 import { env } from "~/env";
-import { CONTEST_START_TIME } from "~/constants";
+import { DOG_FEED_START_TIME } from "~/constants";
 import { LOG_A_DOG, ATTESTATION_MANAGER, ATTESTATION_MANAGER_V1 } from "~/constants/addresses";
 import { sendTelegramMessage, formatDogLogMessage } from "~/lib/telegram";
 import { sendNotificationToUsers } from "~/lib/neynar";
@@ -542,11 +542,11 @@ async function indexAttestationMade(
   if (maxBlock > fromBlock) await setCursor(cursorKey, maxBlock);
   if (touchedVoters.size > 0) {
     await redis.del(`judges:ranking:${chainId}`);
-    await redis.del(`judges:ranking:${chainId}:${CONTEST_START_TIME}`);
+    await redis.del(`judges:ranking:${chainId}:${DOG_FEED_START_TIME}`);
     await Promise.all(
       [...touchedVoters].flatMap((voter) => [
         redis.del(`votes:${chainId}:${voter}`),
-        redis.del(`votes:${chainId}:${voter}:${CONTEST_START_TIME}`),
+        redis.del(`votes:${chainId}:${voter}:${DOG_FEED_START_TIME}`),
       ]),
     );
   }
