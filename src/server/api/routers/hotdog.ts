@@ -41,6 +41,9 @@ const convertIpfsToHttps = (url: string | null | undefined): string | null => {
 };
 
 const redactedImage = "https://ipfs.io/ipfs/QmXZ8SpvGwRgk3bQroyM9x9dQCvd87c23gwVjiZ5FMeXGs/Image%20(1).png";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+const isZeroAddress = (address: string) => address.toLowerCase() === ZERO_ADDRESS;
 
 // Mapping from chain id to slug used by Zora to construct coin URLs
 const ZORA_CHAIN_SLUGS: Record<number, string> = {
@@ -381,7 +384,7 @@ export const hotdogRouter = createTRPCRouter({
             gte: contestStartTime,
             lte: contestEndTime,
           },
-          ...(user !== "0x0000000000000000000000000000000000000000" && { eater: user.toLowerCase() }),
+          ...(!isZeroAddress(user) && { eater: user.toLowerCase() }),
         },
         orderBy: { timestamp: "desc" as const },
         take: limit,
@@ -404,7 +407,7 @@ export const hotdogRouter = createTRPCRouter({
             gte: contestStartTime,
             lte: contestEndTime,
           },
-          ...(user !== "0x0000000000000000000000000000000000000000" && { eater: user.toLowerCase() }),
+          ...(!isZeroAddress(user) && { eater: user.toLowerCase() }),
         },
       });
       const totalPages = Math.ceil(totalEvents / limit);
@@ -417,14 +420,16 @@ export const hotdogRouter = createTRPCRouter({
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
         }),
-        getUserAttestationsWithChoices({
-          contract: getContract({
-            address: ATTESTATION_MANAGER[chainId]!,
-            client,
-            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-          }),
-          user,
-        })
+        isZeroAddress(user)
+          ? Promise.resolve([[], []] as [bigint[], boolean[]])
+          : getUserAttestationsWithChoices({
+              contract: getContract({
+                address: ATTESTATION_MANAGER[chainId]!,
+                client,
+                chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+              }),
+              user,
+            })
       ]);
 
       // Get attestation counts and periods for each log ID
@@ -822,14 +827,16 @@ export const hotdogRouter = createTRPCRouter({
           }),
           logIds: [BigInt(logId)],
         }),
-        getUserAttestationsWithChoices({
-          contract: getContract({
-            address: ATTESTATION_MANAGER[chainId]!,
-            client,
-            chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-          }),
-          user,
-        }),
+        isZeroAddress(user)
+          ? Promise.resolve([[], []] as [bigint[], boolean[]])
+          : getUserAttestationsWithChoices({
+              contract: getContract({
+                address: ATTESTATION_MANAGER[chainId]!,
+                client,
+                chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+              }),
+              user,
+            }),
         getAttestationPeriodsBatch([logId], chainId)
       ]);
 
