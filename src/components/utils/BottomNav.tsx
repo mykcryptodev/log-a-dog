@@ -1,6 +1,7 @@
 import { type FC } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { CreateAttestation } from "~/components/Attestation/Create";
 
@@ -64,9 +65,16 @@ export const BottomNav: FC = () => {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 12 }}
-              className="btn btn-primary btn-circle -mt-8 h-16 w-16 border-4 border-base-100 text-3xl shadow-dog-lg"
+              className="-mt-8 h-16 w-16 overflow-hidden rounded-full border-4 border-base-100 shadow-dog-lg"
             >
-              🌭
+              <Image
+                src="/images/hotdog-icon.png"
+                alt=""
+                width={64}
+                height={64}
+                className="h-full w-full object-cover"
+                priority
+              />
             </motion.button>
           </div>
 
