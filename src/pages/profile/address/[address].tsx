@@ -38,22 +38,26 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const [showProfileForm, setShowProfileForm] = useState<boolean>(false);
   
   // Hotdog data for this user
-  const [start, setStart] = useState<number>(0);
-  const [isPaginating, setIsPaginating] = useState(false);
-  const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const limit = 4;
 
-  const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAllForUser.useQuery({
-    chainId: DEFAULT_CHAIN.id,
-    user: address,
-    limit,
-    start,
-  }, {
-    enabled: !!address && !!DEFAULT_CHAIN.id,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    onSettled: () => setIsPaginating(false),
-  });
+  const {
+    data: dogData,
+    isLoading: isLoadingHotdogs,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchDogData,
+  } = api.hotdog.getAllForUser.useInfiniteQuery({
+      chainId: DEFAULT_CHAIN.id,
+      user: address,
+      limit,
+    }, {
+      enabled: !!address && !!DEFAULT_CHAIN.id,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
 
   // Check if this is the user's own profile
   const isOwnProfile = useMemo(() => {
@@ -65,51 +69,101 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const displayUsername = (isOwnProfile && sessionData?.user?.username) ? sessionData.user.username : data?.username;
   const displayImage = (isOwnProfile && sessionData?.user?.image) ? sessionData.user.image : data?.imgUrl;
 
-  // Mobile-safe scroll function for pagination
-  const scrollToTop = () => {
-    // Clear any pending scroll timeout
-    if (paginationTimeoutRef.current) {
-      clearTimeout(paginationTimeoutRef.current);
-    }
-    
-    // Use a longer delay on mobile and requestAnimationFrame for smoother scrolling
-    const isMobile = window.innerWidth <= 768;
-    const delay = isMobile ? 300 : 100;
-    
-    paginationTimeoutRef.current = setTimeout(() => {
-      requestAnimationFrame(() => {
-        // Scroll to top of the user list
-        window.scrollTo({ 
-          top: 0, 
-          behavior: isMobile ? "auto" : "smooth" 
-        });
-      });
-    }, delay);
-  };
-
-  // Handle pagination with loading state
-  const handlePagination = (direction: 'prev' | 'next') => {
-    if (isPaginating) return; // Prevent rapid pagination clicks
-    
-    setIsPaginating(true);
-    
-    if (direction === 'prev') {
-      setStart((prev) => Math.max(0, prev - limit));
-    } else {
-      setStart((prev) => prev + limit);
-    }
-    
-    scrollToTop();
-  };
-
-  // Cleanup timeout on unmount
   useEffect(() => {
-    return () => {
-      if (paginationTimeoutRef.current) {
-        clearTimeout(paginationTimeoutRef.current);
-      }
-    };
-  }, []);
+    const loadMoreTarget = loadMoreRef.current;
+    if (!loadMoreTarget) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: "600px 0px" }
+    );
+
+    observer.observe(loadMoreTarget);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadedHotdogs = useMemo(() => {
+    return dogData?.pages.flatMap((page) =>
+      page.hotdogs.map((hotdog, index) => ({
+        hotdog,
+        validAttestations: page.validAttestations[index],
+        invalidAttestations: page.invalidAttestations[index],
+      }))
+    ) ?? [];
+  }, [dogData?.pages]);
+
+  const totalHotdogs = dogData?.pages[0]?.totalCount ?? 0;
+
+  const handleRefetchDogData = () => {
+    void refetchDogData();
+  };
+
+  const renderHotdogSkeletons = () => (
+    <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+      {Array.from({ length: limit }).map((_, index) => (
+        <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
+          <div className="flex gap-2 items-center">
+            <div className="h-10 w-10 bg-base-300 animate-pulse rounded-full" />
+            <div className="h-4 w-20 bg-base-300 animate-pulse rounded-lg" />
+          </div>
+          <div className="card-body p-4">
+            <div className="mx-auto w-56 h-56 bg-base-300 animate-pulse rounded-lg" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderHotdogList = () => {
+    if (isLoadingHotdogs) {
+      return renderHotdogSkeletons();
+    }
+
+    if (loadedHotdogs.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-base-content/70">No hotdog logs found for this user.</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+          {loadedHotdogs.map(({ hotdog, validAttestations, invalidAttestations }, index) => (
+            <HotdogCard
+              key={`${hotdog.logId}-${index}`}
+              hotdog={hotdog}
+              validAttestations={validAttestations?.toString() ?? "0"}
+              invalidAttestations={invalidAttestations?.toString() ?? "0"}
+              userAttested={false}
+              userAttestation={false}
+              chainId={DEFAULT_CHAIN.id}
+              onRefetch={handleRefetchDogData}
+              linkToDetail={true}
+              showAiJudgement={false}
+              disabled={false}
+            />
+          ))}
+        </div>
+
+        <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center">
+          {isFetchingNextPage ? (
+            <div className="flex items-center gap-2 text-sm text-base-content/70">
+              <span className="loading loading-spinner loading-sm" />
+              <span>Loading more dogs...</span>
+            </div>
+          ) : !hasNextPage ? (
+            <p className="text-sm text-base-content/60">You&apos;ve reached the end of this profile.</p>
+          ) : null}
+        </div>
+      </>
+    );
+  };
 
   if (isLoading) return (
     <main className="flex flex-col items-center justify-center">
@@ -141,7 +195,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
           <h1 className="font-display text-3xl tracking-wide">{displayUsername ?? `${address.slice(0, 6)}...${address.slice(-4)}`}</h1>
           <div className="flex items-center gap-2">
             <span className="font-display text-4xl tabular-nums leading-none">
-              {dogData?.totalCount ?? 0}
+              {totalHotdogs}
             </span>
             <span className="text-lg">🌭 logged this season</span>
           </div>
@@ -172,84 +226,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
         )}
         {/* User's Hotdog Submissions */}
           <div className="w-full">
-            {/* Show pagination loading overlay */}
-            {isPaginating && (
-              <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-                <div className="bg-base-100 p-4 rounded-lg shadow-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="loading loading-spinner loading-sm"></div>
-                    <span>Loading page...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {isLoadingHotdogs && !isPaginating ? (
-              // Loading skeleton
-              <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-                {Array.from({ length: limit }).map((_, index) => (
-                  <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
-                    <div className="flex gap-2 items-center">
-                      <div className="h-10 w-10 bg-base-300 animate-pulse rounded-full" />
-                      <div className="h-4 w-20 bg-base-300 animate-pulse rounded-lg" />
-                    </div>
-                    <div className="card-body p-4">
-                      <div className="mx-auto w-56 h-56 bg-base-300 animate-pulse rounded-lg" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : dogData?.hotdogs && dogData.hotdogs.length > 0 ? (
-              <>
-                <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-                  {dogData.hotdogs.map((hotdog, index) => {
-                    const validAttestations = dogData?.validAttestations[index];
-                    const invalidAttestations = dogData?.invalidAttestations[index];
-
-                    return (
-                      <HotdogCard
-                        key={`${hotdog.logId}-${index}`}
-                        hotdog={hotdog}
-                        validAttestations={validAttestations?.toString() ?? "0"}
-                        invalidAttestations={invalidAttestations?.toString() ?? "0"}
-                        userAttested={false} // Profile page typically doesn't show user's own attestations
-                        userAttestation={false}
-                        chainId={DEFAULT_CHAIN.id}
-                        onRefetch={() => void refetchDogData()}
-                        linkToDetail={true}
-                        showAiJudgement={false}
-                        disabled={false}
-                      />
-                    );
-                  })}
-                </div>
-                
-                {/* Pagination */}
-                <div className="join md:col-span-2 place-content-center mt-4">
-                  <button
-                    className="join-item btn"
-                    onClick={() => handlePagination('prev')}
-                    disabled={start === 0 || isPaginating}
-                  >
-                    {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "«"}
-                  </button>
-                  <button className="join-item btn" disabled>
-                    Page {(Math.floor(start / limit) + 1)} of {dogData?.totalPages?.toString() ?? '...'}
-                  </button>
-                  <button
-                    className="join-item btn"
-                    onClick={() => handlePagination('next')}
-                    disabled={!dogData?.hasNextPage || isPaginating}
-                  >
-                    {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "»"}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-base-content/70">No hotdog logs found for this user.</p>
-              </div>
-            )}
+            {renderHotdogList()}
           </div>
         </div>
     </main>

@@ -162,7 +162,7 @@ export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height
   const preview = coin?.mediaContent?.previewImage?.medium;
   const blurhash = coin?.mediaContent?.previewImage?.blurhash;
   const [blurDataURL, setBlurDataURL] = useState<string>();
-  const [imageError, setImageError] = useState(false);
+  const [failedPreview, setFailedPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (blurhash) {
@@ -171,7 +171,11 @@ export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height
     }
   }, [blurhash]);
 
-  if (preview) {
+  useEffect(() => {
+    setFailedPreview(null);
+  }, [preview, src]);
+
+  if (preview && failedPreview !== preview) {
     return (
       <Image
         src={getProxiedUrl(preview)}
@@ -182,20 +186,8 @@ export const HotdogImage: FC<Props> = ({ src, zoraCoin, className, width, height
         placeholder={blurDataURL ? "blur" : undefined}
         blurDataURL={blurDataURL}
         style={{ height, width }}
-        onError={() => setImageError(true)}
+        onError={() => setFailedPreview(preview)}
       />
-    );
-  }
-
-  // Show fallback if there's an error
-  if (imageError) {
-    return (
-      <div 
-        className={`flex items-center justify-center bg-gray-200 ${className}`}
-        style={{ height, width }}
-      >
-        <span className="text-gray-500 text-sm">Image unavailable</span>
-      </div>
     );
   }
 

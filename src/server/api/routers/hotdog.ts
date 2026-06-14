@@ -153,6 +153,7 @@ interface GetAllResponse {
   userAttestations: boolean[];
   totalPages: number;
   hasNextPage: boolean;
+  nextCursor?: number;
 }
 
 // Helper function to fetch and parse metadata from IPFS
@@ -356,11 +357,13 @@ export const hotdogRouter = createTRPCRouter({
     .input(z.object({ 
       chainId: z.number(),
       user: z.string(),
-      start: z.number(),
+      start: z.number().optional(),
+      cursor: z.number().optional(),
       limit: z.number(),
     }))
     .query(async ({ input }) => {
-      const { chainId, user, start, limit } = input;
+      const { chainId, user, limit } = input;
+      const start = input.cursor ?? input.start ?? 0;
       console.log('GET ALL')
       // Generate cache key for this query
       // const cacheKey = `hotdogs:${chainId}:${user}:${start}:${limit}`;
@@ -585,6 +588,7 @@ export const hotdogRouter = createTRPCRouter({
         userAttestations: processedResponse.userAttestations,
         totalPages: Number(totalPages),
         hasNextPage: start + limit < totalEvents,
+        nextCursor: start + limit < totalEvents ? start + limit : undefined,
       };
 
       // TEMPORARILY DISABLE CACHING during development
@@ -597,10 +601,12 @@ export const hotdogRouter = createTRPCRouter({
       chainId: z.number(),
       user: z.string(),
       limit: z.number(),
-      start: z.number(),
+      start: z.number().optional(),
+      cursor: z.number().optional(),
     }))
     .query(async ({ input }) => {
-      const { chainId, user, limit, start } = input;
+      const { chainId, user, limit } = input;
+      const start = input.cursor ?? input.start ?? 0;
       // Get dog events from database for specific user
       const contestStartTime = BigInt(new Date(CONTEST_START_TIME).getTime() / 1000);
       const contestEndTime = BigInt(new Date(CONTEST_END_TIME).getTime() / 1000);
@@ -765,6 +771,7 @@ export const hotdogRouter = createTRPCRouter({
         totalPages,
         totalCount: totalEvents,
         hasNextPage,
+        nextCursor: hasNextPage ? start + limit : undefined,
       }
     }),
   getById: publicProcedure

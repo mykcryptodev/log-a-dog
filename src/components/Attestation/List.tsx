@@ -1,4 +1,4 @@
-import { useEffect, type FC, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, type FC, useMemo, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
@@ -79,27 +79,31 @@ type Props = {
 
 export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
-  const [start, setStart] = useState<number>(0);
   const isClient = typeof window !== 'undefined';
-  const [isPaginating, setIsPaginating] = useState(false);
   const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const paginationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
 
   const queryParams = {
     chainId: DEFAULT_CHAIN.id,
     user: ZERO_ADDRESS, // Always use zero address to get ALL hotdogs for the homepage feed
-    start,
     limit: limitOrDefault,
   };
 
-  const { data: dogData, isLoading: isLoadingHotdogs, refetch: refetchDogData } = api.hotdog.getAll.useQuery(queryParams, {
+  const {
+    data: dogData,
+    isLoading: isLoadingHotdogs,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchDogData,
+  } = api.hotdog.getAll.useInfiniteQuery(queryParams, {
     enabled: !!DEFAULT_CHAIN.id && isClient, // Only run query on client side
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    onSettled: () => setIsPaginating(false),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 
   // Manual "Refresh feed" — pulls any new on-chain logs into the DB then refetches.
@@ -139,24 +143,44 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      if (paginationTimeoutRef.current) {
-        clearTimeout(paginationTimeoutRef.current);
-      }
     };
   }, [clearExpiredPending, isClient]);
 
+  useEffect(() => {
+    if (!isClient) return;
+
+    const loadMoreTarget = loadMoreRef.current;
+    if (!loadMoreTarget) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: "600px 0px" }
+    );
+
+    observer.observe(loadMoreTarget);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isClient, isFetchingNextPage]);
+
+  const loadedHotdogs = useMemo(() => {
+    return dogData?.pages.flatMap((page) => page.hotdogs) ?? [];
+  }, [dogData?.pages]);
+
   // Smart deduplication: only filter out optimistic data when real data with same logId exists
   const filteredPendingDogs = useMemo(() => {
-    const realLogIds = new Set(dogData?.hotdogs?.map(h => h.logId) ?? []);
+    const realLogIds = new Set(loadedHotdogs.map(h => h.logId));
     return pendingDogs.filter(pending => {
       const hasRealData = realLogIds.has(pending.logId);
       return !hasRealData;
     });
-  }, [dogData?.hotdogs, pendingDogs]);
+  }, [loadedHotdogs, pendingDogs]);
 
   const allHotdogs: HotdogItem[] = useMemo(() => {
-    return dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
-  }, [dogData?.hotdogs, filteredPendingDogs, pendingDogs]);
+    return loadedHotdogs.length > 0 ? [...filteredPendingDogs, ...loadedHotdogs] : pendingDogs;
+  }, [filteredPendingDogs, loadedHotdogs, pendingDogs]);
 
   // Stable callback so every memoized <HotdogCard> doesn't re-render when this
   // list re-renders (e.g. the 30s expired-pending interval). `refetchDogData`
@@ -166,8 +190,8 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   // Build logId -> attestation lookup maps once per data change instead of on
   // every render (the list re-renders on a 30s interval). See `js-index-maps`.
   const attestationMaps = useMemo(() => {
-    const hotdogs = dogData?.hotdogs;
-    if (!hotdogs) {
+    const pages = dogData?.pages;
+    if (!pages) {
       return {
         validMap: {} as Record<string, string>,
         invalidMap: {} as Record<string, string>,
@@ -175,11 +199,26 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         userAttestationMap: {} as Record<string, boolean>,
       };
     }
+
+    const validMap: Record<string, string> = {};
+    const invalidMap: Record<string, string> = {};
+    const userAttestedMap: Record<string, boolean> = {};
+    const userAttestationMap: Record<string, boolean> = {};
+
+    pages.forEach((page) => {
+      page.hotdogs.forEach((hotdog, index) => {
+        validMap[hotdog.logId] = page.validAttestations?.[index] ?? "0";
+        invalidMap[hotdog.logId] = page.invalidAttestations?.[index] ?? "0";
+        userAttestedMap[hotdog.logId] = page.userAttested?.[index] ?? false;
+        userAttestationMap[hotdog.logId] = page.userAttestations?.[index] ?? false;
+      });
+    });
+
     return {
-      validMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.validAttestations?.[i]])) as Record<string, string>,
-      invalidMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.invalidAttestations?.[i]])) as Record<string, string>,
-      userAttestedMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.userAttested?.[i]])) as Record<string, boolean>,
-      userAttestationMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.userAttestations?.[i]])) as Record<string, boolean>,
+      validMap,
+      invalidMap,
+      userAttestedMap,
+      userAttestationMap,
     };
   }, [dogData]);
 
@@ -207,52 +246,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     };
   }, [attestationMaps]);
 
-  // Mobile-safe scroll function
-  const scrollToTop = () => {
-    // Clear any pending scroll timeout
-    if (paginationTimeoutRef.current) {
-      clearTimeout(paginationTimeoutRef.current);
-    }
-    
-    // Use a longer delay on mobile and requestAnimationFrame for smoother scrolling
-    const isMobile = window.innerWidth <= 768;
-    const delay = isMobile ? 300 : 100;
-    
-    paginationTimeoutRef.current = setTimeout(() => {
-      requestAnimationFrame(() => {
-        const element = document.getElementById('top-of-list');
-        if (element) {
-          // Use smooth scrolling on desktop, instant on mobile to prevent conflicts
-          element.scrollIntoView({ 
-            behavior: isMobile ? "auto" : "smooth",
-            block: "start"
-          });
-        }
-      });
-    }, delay);
-  };
-
-  // Handle pagination with loading state
-  const handlePagination = (direction: 'prev' | 'next') => {
-    if (isPaginating) return; // Prevent rapid pagination clicks
-    
-    setIsPaginating(true);
-    
-    if (direction === 'prev') {
-      setStart((prev) => Math.max(0, prev - limitOrDefault));
-    } else {
-      setStart((prev) => prev + limitOrDefault);
-    }
-    
-    scrollToTop();
-  };
-
-
-
-
   // Show loading state while client-side query is fetching — grill-mark shimmer
   // skeleton cards (REDESIGN §4 States).
-  if (isLoadingHotdogs && !isPaginating) {
+  if (isLoadingHotdogs) {
     return (
       <>
         <div id="top-of-list" className="invisible" />
@@ -333,18 +329,6 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
           Refresh feed
         </button>
       </div>
-      {/* Show pagination loading overlay */}
-      {isPaginating && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-base-100 p-4 rounded-lg shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="loading loading-spinner loading-sm"></div>
-              <span>Loading page...</span>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {allHotdogs.map((hotdog) => {
         const attestationData = getAttestationData(hotdog);
         const isPending = 'isPending' in hotdog && hotdog.isPending;
@@ -365,24 +349,15 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
           />
         );
       })}
-      <div className="join md:col-span-2 place-content-center">
-        <button
-          className="join-item btn"
-          onClick={() => handlePagination('prev')}
-          disabled={start === 0 || isPaginating}
-        >
-          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "«"}
-        </button>
-        <button className="join-item btn" disabled>
-          Page {(Math.floor(start / limitOrDefault) + 1)} of {dogData?.totalPages.toString() ?? '...'}
-        </button>
-        <button
-          className="join-item btn"
-          onClick={() => handlePagination('next')}
-          disabled={!dogData?.hasNextPage || isPaginating}
-        >
-          {isPaginating ? <span className="loading loading-spinner loading-xs"></span> : "»"}
-        </button>
+      <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center">
+        {isFetchingNextPage ? (
+          <div className="flex items-center gap-2 text-sm text-base-content/70">
+            <span className="loading loading-spinner loading-sm" />
+            <span>Loading more dogs...</span>
+          </div>
+        ) : !hasNextPage ? (
+          <p className="text-sm text-base-content/60">You&apos;ve reached the end of the grill.</p>
+        ) : null}
       </div>
     </div>
     </>
