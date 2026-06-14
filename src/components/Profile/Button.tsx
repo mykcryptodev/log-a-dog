@@ -142,7 +142,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
         >
           {isCompact ? compactLabel : createProfileBtnLabel ?? 'Profile'}
         </button>
-        <button className={`btn ${hideLogout || isCompact ? 'hidden' : ''}`} onClick={logout}>
+        <button className={`btn ${hideLogout === true || isCompact ? 'hidden' : ''}`} onClick={logout}>
           <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
         </button>
       </div>
