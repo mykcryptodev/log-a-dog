@@ -47,3 +47,6 @@ yarn-error.log*
 
 # Bun
 bun.lockb
+
+# accidental Expo config generated at the web app root
+/app.json

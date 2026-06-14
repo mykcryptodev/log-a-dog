@@ -1,0 +1,145 @@
+import React, { useMemo } from "react";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Image } from "expo-image";
+import { useRouter } from "expo-router";
+import { ProfileAvatar } from "~/components/ProfileAvatar";
+import { ProfileBadge } from "~/components/ProfileBadge";
+import { VerdictStamp } from "~/components/VerdictStamp";
+import { VoteBar } from "~/components/VoteBar";
+import {
+  convertIpfsToHttps,
+  formatTimestamp,
+  getDisplayName,
+} from "~/utils/format";
+import type { ProcessedHotdog } from "~/types";
+
+interface Props {
+  hotdog: ProcessedHotdog;
+  validCount: string;
+  invalidCount: string;
+  userHasVoted: boolean;
+  userVotedValid: boolean;
+  onVoteSuccess?: () => void;
+}
+
+export function HotdogCard({
+  hotdog,
+  validCount,
+  invalidCount,
+  userHasVoted,
+  userVotedValid,
+  onVoteSuccess,
+}: Props) {
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const cardWidth = Math.min(width - 32, 480);
+  const imageHeight = Math.round(cardWidth * (5 / 4));
+
+  const eaterName = useMemo(
+    () => getDisplayName(hotdog.eaterProfile, hotdog.eater),
+    [hotdog.eaterProfile, hotdog.eater],
+  );
+  const loggerName = useMemo(
+    () => getDisplayName(hotdog.loggerProfile, hotdog.logger),
+    [hotdog.loggerProfile, hotdog.logger],
+  );
+  const showVia =
+    hotdog.eater.toLowerCase() !== hotdog.logger.toLowerCase();
+
+  const imageUri = useMemo(
+    () =>
+      convertIpfsToHttps(
+        hotdog.zoraCoin?.mediaContent?.previewImage?.medium ??
+          hotdog.imageUri,
+      ),
+    [hotdog.zoraCoin, hotdog.imageUri],
+  );
+
+  const isResolved = hotdog.attestationPeriod?.status === 1;
+  const isValid = hotdog.attestationPeriod?.isValid ?? false;
+
+  return (
+    <Pressable
+      onPress={() => router.push(`/dog/${hotdog.logId}` as never)}
+      className="mb-4 mx-4 rounded-3xl overflow-hidden bg-base-200"
+      style={{
+        shadowColor: "#E23B2E",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 20,
+        elevation: 4,
+      }}
+    >
+      {/* Header */}
+      <View className="flex-row items-center p-3 gap-2">
+        <ProfileAvatar
+          image={hotdog.eaterProfile?.image}
+          address={hotdog.eater}
+          size={38}
+        />
+        <View className="flex-1">
+          <View className="flex-row items-center gap-1">
+            <Text className="font-bold text-neutral text-sm" numberOfLines={1}>
+              {eaterName}
+            </Text>
+            <ProfileBadge profile={hotdog.eaterProfile} />
+          </View>
+          {showVia && (
+            <Text className="text-xs text-neutral/50" numberOfLines={1}>
+              via {loggerName}
+            </Text>
+          )}
+        </View>
+        <Text className="text-xs text-neutral/40">
+          {formatTimestamp(hotdog.timestamp)}
+        </Text>
+      </View>
+
+      {/* Image */}
+      <View style={{ width: cardWidth, height: imageHeight }}>
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            style={{ flex: 1 }}
+            contentFit="cover"
+            transition={300}
+            placeholder={hotdog.zoraCoin?.mediaContent?.previewImage?.blurhash}
+          />
+        ) : (
+          <View className="flex-1 bg-base-300 items-center justify-center">
+            <Text className="text-5xl">🌭</Text>
+          </View>
+        )}
+        {isResolved && <VerdictStamp isValid={isValid} />}
+        {hotdog.duplicateOfLogId && (
+          <View className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1">
+            <Text className="text-white text-xs">♻ Duplicate</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Vote bar */}
+      <VoteBar
+        logId={hotdog.logId}
+        validCount={validCount}
+        invalidCount={invalidCount}
+        userHasVoted={userHasVoted}
+        userVotedValid={userVotedValid}
+        attestationStatus={hotdog.attestationPeriod?.status}
+        onVoteSuccess={onVoteSuccess}
+      />
+
+      {/* Footer */}
+      <View className="flex-row items-center justify-between px-3 pb-3">
+        <Text className="text-xs text-neutral/40 font-mono">
+          🌭 #{hotdog.logId}
+        </Text>
+        {hotdog.zoraCoin?.marketCap && (
+          <Text className="text-xs text-info">
+            Ξ {parseFloat(hotdog.zoraCoin.marketCap).toFixed(4)} mcap
+          </Text>
+        )}
+      </View>
+    </Pressable>
+  );
+}
