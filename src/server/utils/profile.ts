@@ -117,8 +117,9 @@ export async function fetchUserProfiles(addresses: string[], chainId?: number): 
   // Fetch profiles with caching
   const profiles = await Promise.all(
     addresses.map(async (address) => {
-      const profile = await getCachedProfile(address, chainId);
-      return { address, profile };
+      const normalizedAddress = address.toLowerCase();
+      const profile = await getCachedProfile(normalizedAddress, chainId);
+      return { address: normalizedAddress, profile };
     })
   );
 
@@ -126,6 +127,75 @@ export async function fetchUserProfiles(addresses: string[], chainId?: number): 
   profiles.forEach(({ address, profile }) => {
     profileMap.set(address, profile);
   });
+
+  return profileMap;
+}
+
+export interface HotdogProfile {
+  name?: string | null;
+  username?: string | null;
+  image?: string | null;
+  fid?: number | null;
+  isKnownSpammer?: boolean | null;
+  isReportedForSpam?: boolean | null;
+  isDisqualified?: boolean | null;
+}
+
+/** DB spam/fid fields merged with Zora/Neynar display names for feed cards. */
+export async function buildHotdogProfileMap(
+  addresses: string[],
+  chainId?: number,
+): Promise<Map<string, HotdogProfile>> {
+  const uniqueAddresses = [...new Set(addresses.map((a) => a.toLowerCase()))];
+  if (uniqueAddresses.length === 0) {
+    return new Map();
+  }
+
+  const [dbUsers, externalProfiles] = await Promise.all([
+    db.user.findMany({
+      where: { address: { in: uniqueAddresses } },
+      select: {
+        address: true,
+        username: true,
+        name: true,
+        image: true,
+        fid: true,
+        isKnownSpammer: true,
+        isReportedForSpam: true,
+        isDisqualified: true,
+      },
+    }),
+    fetchUserProfiles(uniqueAddresses, chainId),
+  ]);
+
+  const dbUserMap = new Map(
+    dbUsers.map((u) => [u.address?.toLowerCase() ?? "", u]),
+  );
+
+  const profileMap = new Map<string, HotdogProfile>();
+
+  for (const address of uniqueAddresses) {
+    const dbUser = dbUserMap.get(address);
+    const external = externalProfiles.get(address);
+    const externalName =
+      external?.username && external.username.length > 0
+        ? external.username
+        : null;
+    const externalImage =
+      external?.imgUrl && external.imgUrl.length > 0 ? external.imgUrl : null;
+    const displayName =
+      externalName ?? dbUser?.name ?? dbUser?.username ?? null;
+
+    profileMap.set(address, {
+      username: externalName ?? dbUser?.username ?? null,
+      name: displayName,
+      image: externalImage ?? dbUser?.image ?? null,
+      fid: dbUser?.fid ?? null,
+      isKnownSpammer: dbUser?.isKnownSpammer ?? null,
+      isReportedForSpam: dbUser?.isReportedForSpam ?? null,
+      isDisqualified: dbUser?.isDisqualified ?? null,
+    });
+  }
 
   return profileMap;
 } 

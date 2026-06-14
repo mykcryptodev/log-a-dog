@@ -129,7 +129,7 @@ export function VoteBar({
                 userHasVoted && userVotedValid ? "text-white" : "text-accent",
               ].join(" ")}
             >
-              ✓ VALID DOG {validPct}%
+              ✓ VALID {validPct}%
             </Text>
           </Pressable>
         </Animated.View>

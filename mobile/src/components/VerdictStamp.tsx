@@ -66,7 +66,7 @@ export function VerdictStamp({ isValid }: Props) {
             textTransform: "uppercase",
           }}
         >
-          {isValid ? "VALID DOG" : "SUS"}
+          {isValid ? "VALID" : "SUS"}
         </Text>
       </Animated.View>
     </View>

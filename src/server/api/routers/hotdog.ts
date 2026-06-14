@@ -26,6 +26,7 @@ import { getUserAttestationsWithChoices } from "~/thirdweb/84532/0xfbc7552a4bc2e
 import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
 import { getDogEvents, getDogEventsByEater, getDogEventLeaderboard } from "~/server/api/dog-events";
 import { db } from "~/server/db";
+import { buildHotdogProfileMap } from "~/server/utils/profile";
 import { getUserOpGasFees } from "thirdweb/wallets/smart";
 import { abi } from "~/constants/abi/logadog";
 
@@ -516,48 +517,17 @@ export const hotdogRouter = createTRPCRouter({
       const addressesArray = [...uniqueAddresses];
 
       // Fetch all Zora coin details, metadata, and profiles in parallel
-      const [zoraCoinDetails, metadataResults, profiles] = await Promise.all([
+      const [zoraCoinDetails, metadataResults, profileMap] = await Promise.all([
         zoraCoinAddressesArray.length > 0
           ? getZoraCoinDetailsBatch(zoraCoinAddressesArray, chainId)
           : new Map<string, ZoraCoinDetails>(),
         Promise.all(metadataUrisArray.map(uri => getMetadataFromUri(uri))),
-        db.user.findMany({
-          where: {
-            address: {
-              in: addressesArray,
-            },
-          },
-          select: {
-            address: true,
-            username: true,
-            name: true,
-            image: true,
-            fid: true,
-            isKnownSpammer: true,
-            isReportedForSpam: true,
-            isDisqualified: true,
-          },
-        })
+        buildHotdogProfileMap(addressesArray, chainId),
       ]);
 
       // Create maps for the fetched data
       const metadataMap = new Map(
         metadataUrisArray.map((uri, index) => [uri, metadataResults[index]])
-      );
-      
-      const profileMap = new Map(
-        profiles.map(profile => [
-          profile.address?.toLowerCase() ?? '',
-          {
-            username: profile.username,
-            name: profile.name,
-            image: profile.image,
-            fid: profile.fid,
-            isKnownSpammer: profile.isKnownSpammer,
-            isReportedForSpam: profile.isReportedForSpam,
-            isDisqualified: profile.isDisqualified,
-          }
-        ])
       );
 
       // Process logs with Zora coin details, metadata, and profile data
@@ -702,48 +672,17 @@ export const hotdogRouter = createTRPCRouter({
       }
 
       // Fetch Zora coin details, metadata, and profiles in parallel
-      const [zoraCoinDetails, metadataResults, profiles] = await Promise.all([
+      const [zoraCoinDetails, metadataResults, profileMap] = await Promise.all([
         zoraCoinAddressesArray.length > 0
           ? getZoraCoinDetailsBatch(zoraCoinAddressesArray, chainId)
           : new Map<string, ZoraCoinDetails>(),
         Promise.all(metadataUrisArray.map(uri => getMetadataFromUri(uri))),
-        db.user.findMany({
-          where: {
-            address: {
-              in: addressesArray,
-            },
-          },
-          select: {
-            address: true,
-            username: true,
-            name: true,
-            image: true,
-            fid: true,
-            isKnownSpammer: true,
-            isReportedForSpam: true,
-            isDisqualified: true,
-          },
-        })
+        buildHotdogProfileMap(addressesArray, chainId),
       ]);
 
       // Create maps for the fetched data
       const metadataMap = new Map(
         metadataUrisArray.map((uri, index) => [uri, metadataResults[index]])
-      );
-      
-      const profileMap = new Map(
-        profiles.map(profile => [
-          profile.address?.toLowerCase() ?? '',
-          {
-            username: profile.username,
-            name: profile.name,
-            image: profile.image,
-            fid: profile.fid,
-            isKnownSpammer: profile.isKnownSpammer,
-            isReportedForSpam: profile.isReportedForSpam,
-            isDisqualified: profile.isDisqualified,
-          }
-        ])
       );
 
       // Process logs with Zora coin details, metadata, and profile data
@@ -871,43 +810,16 @@ export const hotdogRouter = createTRPCRouter({
       // Collect unique eater and logger addresses for profile fetching
       const uniqueAddresses = [dogEvent.eater.toLowerCase(), dogEvent.logger.toLowerCase()];
       
-      const [zoraCoinDetails, metadata, profiles] = await Promise.all([
+      const [zoraCoinDetails, metadata, profileMap] = await Promise.all([
         zoraCoinAddressesArray.length > 0 ? getZoraCoinDetailsBatch(zoraCoinAddressesArray, chainId) : new Map<string, ZoraCoinDetails>(),
         getMetadataFromUri(processedResponse.logs[0]?.metadataUri ?? ''),
-        db.user.findMany({
-          where: {
-            address: {
-              in: uniqueAddresses,
-            },
-          },
-          select: {
-            address: true,
-            username: true,
-            name: true,
-            image: true,
-            fid: true,
-            isKnownSpammer: true,
-            isReportedForSpam: true,
-            isDisqualified: true,
-          },
-        })
+        buildHotdogProfileMap(uniqueAddresses, chainId),
       ]);
 
-      // Create profile map for lookup
-      const profileMap = new Map(
-        profiles.map(profile => [
-          profile.address?.toLowerCase() ?? '',
-          {
-            username: profile.username,
-            name: profile.name,
-            image: convertIpfsToHttps(profile.image),
-            fid: profile.fid,
-            isKnownSpammer: profile.isKnownSpammer,
-            isReportedForSpam: profile.isReportedForSpam,
-            isDisqualified: profile.isDisqualified,
-          }
-        ])
-      );
+      const withResolvedImage = (profile: ReturnType<typeof profileMap.get>) =>
+        profile
+          ? { ...profile, image: convertIpfsToHttps(profile.image) }
+          : null;
 
       const processedHotdog: ProcessedHotdog = {
         ...processedResponse.logs[0]!,
@@ -915,8 +827,8 @@ export const hotdogRouter = createTRPCRouter({
         metadata,
         attestationPeriod: attestationPeriods.get(logId),
         duplicateOfLogId,
-        eaterProfile: profileMap.get(dogEvent.eater.toLowerCase()) ?? null,
-        loggerProfile: profileMap.get(dogEvent.logger.toLowerCase()) ?? null,
+        eaterProfile: withResolvedImage(profileMap.get(dogEvent.eater.toLowerCase())),
+        loggerProfile: withResolvedImage(profileMap.get(dogEvent.logger.toLowerCase())),
       };
 
       const response = {

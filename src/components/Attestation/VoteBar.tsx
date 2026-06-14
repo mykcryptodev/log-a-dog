@@ -197,7 +197,7 @@ export const VoteBar: FC<Props> = ({
                 />
               )}
             </AnimatePresence>
-            <span className="relative">🥬 VALID DOG</span>
+            <span className="relative">🥬 VALID</span>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.92 }}

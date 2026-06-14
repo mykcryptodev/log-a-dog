@@ -19,7 +19,7 @@ export function VerdictStamp({ valid }: { valid: boolean }) {
         valid ? "border-accent text-accent" : "border-error text-error"
       }`}
     >
-      {valid ? "VALID DOG" : "SUS"}
+      {valid ? "VALID" : "SUS"}
     </motion.div>
   );
 }
