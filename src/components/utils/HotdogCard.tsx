@@ -209,7 +209,7 @@ const HotdogCardComponent: FC<Props> = ({
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
-      className="card overflow-hidden rounded-3xl bg-base-200 shadow-dog"
+      className="card glass-card overflow-hidden rounded-3xl border-4 border-[#1a1a1a]/5"
     >
       <div className="flex flex-col gap-3 p-4">
         {/* Identity row */}
