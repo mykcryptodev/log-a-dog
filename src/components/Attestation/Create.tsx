@@ -45,8 +45,12 @@ type Props = {
     imageUri: string;
     metadata?: string;
   }) => void;
+  // When false, the component renders only the modal/canvas/status machinery
+  // (no inline "Log a Dog" button or FAB). Used by the global BottomNav, which
+  // owns the single ceremonial Log action. See REDESIGN §2.
+  showTriggers?: boolean;
 }
-const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
+const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTriggers = true }) => {
   const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
   const { mutateAsync: indexAfterLog } = api.indexer.refreshFeed.useMutation();
   const utils = api.useUtils();
@@ -305,23 +309,20 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
           pointerEvents: 'none'
         }}
       />
-      {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <button 
-        className="btn btn-primary" 
-        onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
-      >
-        Log a Dog
-      </button>
-      <button 
-        className="btn btn-primary text-4xl btn-circle btn-lg fixed bottom-24 right-6 z-50 shadow-xl shadow-pink-500/75" 
-        style={{ filter: 'drop-shadow(0 -9px 19px rgba(236, 72, 153, 0.75)) drop-shadow(0 -6px 15px rgba(254, 240, 138, 0.5))' }}
-        onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
-      >
-        🌭
-      </button>
-      <dialog id="create_attestation_modal" className="modal">
-        <div className="modal-box max-h-[90vh] overflow-y-auto">
-          <h3 className="font-bold text-2xl mb-4">Log a Dog</h3>
+      {/* Inline trigger kept for legacy embeds; the global BottomNav now owns
+          the primary Log action and renders this component with showTriggers=false. */}
+      {showTriggers && (
+        <button
+          className="btn btn-primary font-display tracking-wide"
+          onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
+        >
+          Log a Dog
+        </button>
+      )}
+      <dialog id="create_attestation_modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box max-h-[92vh] overflow-y-auto">
+          <h3 className="mb-1 font-display text-3xl tracking-wide">LOG A DOG</h3>
+          <p className="mb-4 text-sm opacity-70">Show us the dog. 🌭</p>
           <div className="flex flex-col gap-2">
             <Upload
               onUpload={({ uris }) => {
@@ -385,23 +386,23 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated }) => {
                 <ConnectButton client={client} />
               ) : payOwnGas ? (
                 <TransactionButton
-                  className="!btn !btn-primary flex-1"
+                  className="!btn !btn-primary flex-1 font-display tracking-wide"
                   transaction={getTx}
                   onTransactionConfirmed={handleOnSuccess}
                   disabled={!imgUri}
                 >
-                  Log a Dog
+                  LOG IT
                 </TransactionButton>
               ) : (
                 <button
-                  className="btn btn-primary flex-1"
+                  className="btn btn-primary flex-1 font-display tracking-wide"
                   onClick={logDog}
                   disabled={isDisabled}
                 >
                   {isLoading && (
                     <div className="loading loading-spinner" />
                   )}
-                  Log a Dog
+                  LOG IT
                 </button>
               ) }
             </div>

@@ -1,54 +1,86 @@
-import { useContext, type FC } from "react"
-import { CurrencyDollarIcon, NewspaperIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
-import { useRouter } from "next/router"
-import dynamic from "next/dynamic"
-import { FarcasterContext } from "~/providers/Farcaster";
-import { NotificationsSettings } from "../Notifications/Settings";
+import { type FC } from "react";
+import { useRouter } from "next/router";
+import dynamic from "next/dynamic";
+import { motion } from "motion/react";
+import { CreateAttestation } from "~/components/Attestation/Create";
 
 // Dynamically import ProfileButton with no SSR to prevent hydration issues
-const ProfileButton = dynamic(() => import("../Profile/Button").then(mod => ({ default: mod.ProfileButton })), {
-  ssr: false,
-  loading: () => null
-});
+const ProfileButton = dynamic(
+  () => import("../Profile/Button").then((mod) => ({ default: mod.ProfileButton })),
+  { ssr: false, loading: () => null },
+);
+
+const openLogModal = () => {
+  (document.getElementById("create_attestation_modal") as HTMLDialogElement | null)?.showModal();
+};
+
+const NavButton: FC<{
+  emoji: string;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}> = ({ emoji, label, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${
+      active ? "text-primary" : "text-base-content/60"
+    }`}
+  >
+    <span className="text-xl leading-none">{emoji}</span>
+    <span className="font-display text-[0.65rem] tracking-wide">{label}</span>
+  </button>
+);
 
 export const BottomNav: FC = () => {
   const router = useRouter();
-  const farcaster = useContext(FarcasterContext);
-  const isMiniApp = farcaster?.isMiniApp ?? false;
   const isActive = (path: string) => router.pathname === path;
 
   return (
-    <div className="btm-nav h-20 pb-2 bg-opacity-50 backdrop-blur-lg z-50 text-sm pb">
-      <button 
-        onClick={() => void router.push('/')}
-        className={isActive('/') ? 'border-t-2 border-primary' : ''}
-      >
-        <NewspaperIcon className="h-6 w-6" />
-        Feed
-      </button>
-      <button 
-        onClick={() => void router.push('/earn')}
-        className={isActive('/earn') ? 'border-t-2 border-primary' : ''}
-      >
-        <CurrencyDollarIcon className="h-6 w-6" />
-        Earn
-      </button>
-      <button 
-        onClick={() => void router.push('/faq')}
-        className={isActive('/faq') ? 'border-t-2 border-primary' : ''}
-      >
-        <QuestionMarkCircleIcon className="h-6 w-6" />
-        FAQ
-      </button>
-      {isMiniApp && (
-        <button>
-          <NotificationsSettings className="h-6 w-6" />
-          Notify
-        </button>
-      )}
-      <button>
-        <ProfileButton hideNameAndBadge label="Profile" />
-      </button>
-    </div>
-  )
-}
+    <>
+      {/* Global upload machinery (modal + confetti + tx status) — the center
+          Log button below opens it. No inline trigger or FAB. */}
+      <CreateAttestation showTriggers={false} />
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-base-content/10 bg-base-100/80 backdrop-blur-lg">
+        <div className="mx-auto grid h-20 max-w-md grid-cols-5 items-center px-2 pb-2">
+          <NavButton
+            emoji="🌭"
+            label="Feed"
+            active={isActive("/")}
+            onClick={() => void router.push("/")}
+          />
+          <NavButton
+            emoji="🏆"
+            label="Leaderboard"
+            active={isActive("/leaderboard")}
+            onClick={() => void router.push("/leaderboard")}
+          />
+
+          {/* Raised, ceremonial center Log action. */}
+          <div className="flex justify-center">
+            <motion.button
+              onClick={openLogModal}
+              aria-label="Log a dog"
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400, damping: 12 }}
+              className="btn btn-primary btn-circle -mt-8 h-16 w-16 border-4 border-base-100 text-3xl shadow-dog-lg"
+            >
+              🌭
+            </motion.button>
+          </div>
+
+          <NavButton
+            emoji="🧑‍⚖️"
+            label="Judge"
+            active={isActive("/judges")}
+            onClick={() => void router.push("/judges")}
+          />
+          <div className="flex items-center justify-center">
+            <ProfileButton hideNameAndBadge label="You" />
+          </div>
+        </div>
+      </nav>
+    </>
+  );
+};

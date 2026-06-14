@@ -1,7 +1,6 @@
 import { type FC, memo, useMemo } from "react";
 import Link from "next/link";
-// Removed Avatar import - using backend profile data instead
-// Removed Name import - using backend profile data instead
+import { motion } from "motion/react";
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import { useSession } from "next-auth/react";
 import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
@@ -14,6 +13,8 @@ export type LeaderboardListProps = {
   endDate?: Date;
   showCurrentUser?: boolean;
   height?: string;
+  /** Show top-3 podium treatment above the list. */
+  showPodium?: boolean;
 };
 
 type ProfileData = {
@@ -27,51 +28,75 @@ type ProfileData = {
   isDisqualified?: boolean | null;
 };
 
+const nameFor = (p: ProfileData | undefined, address: string) =>
+  p?.name ?? p?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+// Module-scope so it keeps a stable identity across renders
+// (see React rule rerender-no-inline-components).
+const LbAvatar: FC<{ profile?: ProfileData; address: string; size: number }> = ({
+  profile,
+  address,
+  size,
+}) => {
+  const avatarUrl = profile?.image;
+  if (avatarUrl && avatarUrl !== "") {
+    return (
+      <Image
+        src={getProxiedUrl(avatarUrl)}
+        alt={nameFor(profile, address)}
+        width={size}
+        height={size}
+        className="rounded-full object-cover"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    <Jazzicon diameter={size} seed={jsNumberForAddress(address)} />
+  );
+};
+
+const PODIUM_STYLE = [
+  { ring: "ring-primary", glow: "shadow-dog-lg", medal: "🥇", order: "order-2" },
+  { ring: "ring-base-content/30", glow: "shadow-dog", medal: "🥈", order: "order-1" },
+  { ring: "ring-secondary/60", glow: "shadow-dog", medal: "🥉", order: "order-3" },
+];
+
 const LeaderboardListComponent: FC<LeaderboardListProps> = ({
   limit = 10,
   startDate,
   endDate,
   showCurrentUser = false,
   height = "400px",
+  showPodium = false,
 }) => {
   const { data: session } = useSession();
+  const { leaderboard, profiles } = useLeaderboardData({ startDate, endDate });
 
-  const { leaderboard, profiles } = useLeaderboardData({
-    startDate,
-    endDate,
-  });
-
-  // Memoize profile lookup map for better performance with proper typing
   const profileMap = useMemo(() => {
     if (!leaderboard?.users || !profiles) return new Map<string, ProfileData>();
-    
     const map = new Map<string, ProfileData>();
     leaderboard.users.forEach((address, index) => {
       const profile = profiles[index];
-      if (profile) {
-        map.set(address.toLowerCase(), profile as ProfileData);
-      }
+      if (profile) map.set(address.toLowerCase(), profile as ProfileData);
     });
     return map;
   }, [leaderboard?.users, profiles]);
 
   if (!leaderboard || !profiles)
-    return (
-      <div className="w-full rounded-lg bg-base-200" style={{ height }} />
-    );
+    return <div className="grill-skeleton w-full animate-grill-shimmer rounded-2xl" style={{ height }} />;
 
   const addresses = leaderboard.users ?? [];
   const hotdogs = leaderboard.hotdogs ?? [];
 
-  const displayUsers = addresses.slice(0, limit);
-  const displayHotdogs = hotdogs.slice(0, limit);
+  const podium = showPodium ? addresses.slice(0, 3) : [];
+  const listStartIdx = showPodium ? 3 : 0;
 
-  let currentUserRow: {
-    address: string;
-    rank: number;
-    hotdogs: number;
-  } | null = null;
+  const displayUsers = addresses.slice(listStartIdx, limit);
+  const displayHotdogs = hotdogs.slice(listStartIdx, limit);
 
+  let currentUserRow: { address: string; rank: number; hotdogs: number } | null = null;
   if (showCurrentUser && session?.user?.address) {
     const addrLower = session.user.address.toLowerCase();
     const index = addresses.findIndex((a) => a.toLowerCase() === addrLower);
@@ -81,116 +106,98 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
         rank: index + 1,
         hotdogs: Number(hotdogs[index]!),
       };
-      if (index < limit) {
-        displayUsers.splice(index, 1);
-        displayHotdogs.splice(index, 1);
+      const localIdx = displayUsers.indexOf(addresses[index]!);
+      if (localIdx >= 0) {
+        displayUsers.splice(localIdx, 1);
+        displayHotdogs.splice(localIdx, 1);
       }
     }
   }
 
   return (
-    <div
-      className="w-full space-y-2 overflow-y-auto rounded-lg bg-base-200 bg-opacity-25 p-4 backdrop-blur-sm"
-      style={{ maxHeight: height }}
-    >
-      {currentUserRow && (
-        <div className="flex items-center justify-between rounded-lg bg-base-200 bg-opacity-50 p-3">
-          <Link
-            href={`/profile/address/${currentUserRow.address}`}
-            className="flex items-center gap-2"
-          >
-            <div className="text-lg font-bold text-secondary mr-2">
-              #{currentUserRow.rank}
-            </div>
-            {(() => {
-              const profile = profileMap.get(currentUserRow.address.toLowerCase());
-              const avatarUrl = profile?.image;
-              return avatarUrl && avatarUrl !== "" ? (
-                <div className="avatar">
-                  <div className="w-6 h-6 rounded-full">
-                    <Image
-                      src={getProxiedUrl(avatarUrl)}
-                      alt={profile?.name ?? profile?.username ?? 'User'}
-                      width={32}
-                      height={32}
-                      className="rounded-full w-6 h-6 object-cover"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-0.5">
-                  <Jazzicon
-                    diameter={24}
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-                    seed={jsNumberForAddress(currentUserRow.address)}
-                  />
-                </div>
-              );
-            })()}
-            <div className="font-medium">
-              {profileMap.get(currentUserRow.address.toLowerCase())?.name ?? 
-               profileMap.get(currentUserRow.address.toLowerCase())?.username ??
-               `${currentUserRow.address.slice(0, 6)}...${currentUserRow.address.slice(-4)}`}
-            </div>
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold">{currentUserRow.hotdogs}</span>
-            <span className="text-sm text-base-content/70">🌭</span>
-          </div>
+    <div className="w-full space-y-4">
+      {/* Podium — top 3, #1 raised with a mustard glow */}
+      {showPodium && podium.length > 0 && (
+        <div className="grid grid-cols-3 items-end gap-2">
+          {podium.map((address, i) => {
+            const profile = profileMap.get(address.toLowerCase());
+            const count = Number(hotdogs[i]);
+            const style = PODIUM_STYLE[i]!;
+            const isFirst = i === 0;
+            return (
+              <Link
+                key={address}
+                href={`/profile/address/${address}`}
+                className={`${style.order} flex flex-col items-center gap-1 rounded-3xl bg-base-200 p-3 ${style.glow} ${
+                  isFirst ? "pb-6" : ""
+                }`}
+              >
+                <span className="text-2xl">{style.medal}</span>
+                <motion.div
+                  className={`rounded-full ring-4 ${style.ring}`}
+                  animate={isFirst ? { boxShadow: ["0 0 0px #F5C518", "0 0 18px #F5C518", "0 0 0px #F5C518"] } : undefined}
+                  transition={isFirst ? { duration: 2.4, repeat: Infinity } : undefined}
+                >
+                  <LbAvatar profile={profile} address={address} size={isFirst ? 64 : 48} />
+                </motion.div>
+                <span className="max-w-full truncate text-xs font-semibold">
+                  {nameFor(profile, address)}
+                </span>
+                <span className="font-display text-2xl tabular-nums leading-none">
+                  {count} 🌭
+                </span>
+              </Link>
+            );
+          })}
         </div>
       )}
-      {displayUsers.map((address, idx) => {
-        const hotdogCount = Number(displayHotdogs[idx]);
-        const rank = addresses.indexOf(address) + 1;
-        const profile = profileMap.get(address.toLowerCase());
-        const displayName = profile?.name ?? profile?.username ?? `${address.slice(0, 6)}...${address.slice(-4)}`;
-        
-        return (
-          <div
-            key={address}
-            className="flex items-center justify-between gap-2 rounded-lg bg-base-200 bg-opacity-50 p-3 transition-colors hover:bg-base-300"
+
+      <div
+        className="w-full space-y-2 overflow-y-auto rounded-2xl bg-base-200/40 p-3 backdrop-blur-sm"
+        style={{ maxHeight: height }}
+      >
+        {currentUserRow && (
+          <motion.div
+            layout
+            className="flex items-center justify-between gap-2 rounded-2xl bg-primary/15 p-3 ring-1 ring-primary/40"
           >
-            <Link
-              href={`/profile/address/${address}`}
-              className="flex items-center gap-2"
-            >
-              <div className="text-lg font-bold text-secondary mr-2">#{rank}</div>
-              {(() => {
-                const profile = profileMap.get(address.toLowerCase());
-                const avatarUrl = profile?.image;
-                return avatarUrl && avatarUrl !== "" ? (
-                  <div className="avatar">
-                    <div className="w-6 h-6 rounded-full">
-                      <Image
-                        src={getProxiedUrl(avatarUrl)}
-                        alt={displayName}
-                        width={32}
-                        height={32}
-                        className="rounded-full w-6 h-6 object-cover"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-0.5">
-                    <Jazzicon
-                      diameter={24}
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-                      seed={jsNumberForAddress(address)}
-                    />
-                  </div>
-                );
-              })()}
-              <div className="font-medium">
-                {displayName}
-              </div>
+            <Link href={`/profile/address/${currentUserRow.address}`} className="flex items-center gap-3">
+              <span className="w-10 text-center font-display text-2xl tabular-nums text-secondary">
+                {currentUserRow.rank}
+              </span>
+              <LbAvatar profile={profileMap.get(currentUserRow.address.toLowerCase())} address={currentUserRow.address} size={28} />
+              <span className="font-semibold">
+                {nameFor(profileMap.get(currentUserRow.address.toLowerCase()), currentUserRow.address)}
+                <span className="ml-1 text-xs opacity-60">(you)</span>
+              </span>
             </Link>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold">{hotdogCount}</span>
-              <span className="text-sm text-base-content/70">🌭</span>
-            </div>
-          </div>
-        );
-      })}
+            <span className="font-display text-2xl tabular-nums">{currentUserRow.hotdogs} 🌭</span>
+          </motion.div>
+        )}
+
+        {displayUsers.map((address, idx) => {
+          const hotdogCount = Number(displayHotdogs[idx]);
+          const rank = addresses.indexOf(address) + 1;
+          const profile = profileMap.get(address.toLowerCase());
+          return (
+            <motion.div
+              key={address}
+              layout
+              transition={{ type: "spring", stiffness: 500, damping: 40 }}
+              className="flex items-center justify-between gap-2 rounded-2xl bg-base-200/60 p-3 transition-colors hover:bg-base-300"
+            >
+              <Link href={`/profile/address/${address}`} className="flex items-center gap-3">
+                <span className="w-10 text-center font-display text-2xl tabular-nums text-secondary">
+                  {rank}
+                </span>
+                <LbAvatar profile={profile} address={address} size={28} />
+                <span className="font-semibold">{nameFor(profile, address)}</span>
+              </Link>
+              <span className="font-display text-2xl tabular-nums">{hotdogCount} 🌭</span>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 };

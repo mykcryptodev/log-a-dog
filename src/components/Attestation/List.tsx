@@ -250,45 +250,26 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
 
 
-  // Show loading state while client-side query is fetching
+  // Show loading state while client-side query is fetching — grill-mark shimmer
+  // skeleton cards (REDESIGN §4 States).
   if (isLoadingHotdogs && !isPaginating) {
     return (
       <>
         <div id="top-of-list" className="invisible" />
         <div className="flex flex-col gap-4">
           {Array.from({ length: limitOrDefault }).map((_, index) => (
-            <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
-              <div className="flex gap-2 items-center">
-                <div className="h-10 w-10 bg-base-300 animate-pulse rounded-full" />
-                <div className="h-4 w-20 bg-base-300 animate-pulse rounded-lg" />
+            <div className="card overflow-hidden rounded-3xl bg-base-200 p-4 shadow-dog" key={index}>
+              <div className="flex items-center gap-2">
+                <div className="grill-skeleton h-10 w-10 animate-grill-shimmer rounded-full" />
+                <div className="grill-skeleton h-4 w-24 animate-grill-shimmer rounded-lg" />
               </div>
-              <div className="card-body p-4">
-                <div className="mx-auto w-56 h-56 bg-base-300 animate-pulse rounded-lg" />
-              </div>
-              <div className="flex flex-row w-full items-center justify-between">
-                <div className="text-xs flex items-center gap-1">
-                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-                  <div className="h-4 w-8 bg-base-300 animate-pulse rounded-lg" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 bg-base-300 animate-pulse rounded-full" />
-                  <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
-                </div>
-                <div className="flex justify-end items-center gap-2">
-                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-                </div>
+              <div className="grill-skeleton mt-3 aspect-[4/5] w-full animate-grill-shimmer rounded-2xl" />
+              <div className="mt-3 flex gap-2">
+                <div className="grill-skeleton h-10 flex-1 animate-grill-shimmer rounded-xl" />
+                <div className="grill-skeleton h-10 flex-1 animate-grill-shimmer rounded-xl" />
               </div>
             </div>
           ))}
-          <div className="join md:col-span-2 place-content-center">
-            <button className="join-item btn" disabled>«</button>
-            <button className="join-item btn">Page 1 of ...</button>
-            <button className="join-item btn" disabled>»</button>
-          </div>
         </div>
       </>
     );
@@ -299,17 +280,35 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     return (
       <>
         <div id="top-of-list" className="invisible" />
-        <div className="flex flex-col gap-4 items-center justify-center py-8">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">Unable to load hotdogs</h3>
-            <p className="text-sm text-base-content/70 mb-4">Please try refreshing the page</p>
-            <button 
-              className="btn btn-primary"
-              onClick={() => void refetchDogData()}
-            >
-              Retry
-            </button>
-          </div>
+        <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+          <span className="text-5xl">🧊</span>
+          <h3 className="font-display text-2xl tracking-wide">The grill went cold.</h3>
+          <p className="text-sm text-base-content/70">Couldn&apos;t load the dogs.</p>
+          <button className="btn btn-primary font-display tracking-wide" onClick={() => void refetchDogData()}>
+            Retry
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // Empty feed — be the first to log.
+  if (isClient && !isLoadingHotdogs && allHotdogs.length === 0) {
+    return (
+      <>
+        <div id="top-of-list" className="invisible" />
+        <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+          <span className="text-6xl">🌭</span>
+          <h3 className="font-display text-2xl tracking-wide">No dogs yet today.</h3>
+          <p className="text-sm text-base-content/70">The grill is hot. 🔥 Be the first to log.</p>
+          <button
+            className="btn btn-primary font-display tracking-wide"
+            onClick={() =>
+              (document.getElementById("create_attestation_modal") as HTMLDialogElement | null)?.showModal()
+            }
+          >
+            Log a Dog
+          </button>
         </div>
       </>
     );

@@ -9,7 +9,27 @@ export const Media: FC = () => {
         <h3 className="text-2xl font-bold mx-auto">Media</h3>
         <div className="w-full justify-center flex flex-col gap-2 items-center">
           <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
-            <input type="checkbox" /> 
+            <input type="checkbox" />
+            <div className="collapse-title font-bold">
+              Season 2 Award Ceremony
+            </div>
+            <div className="collapse-content">
+              <p className="mb-4">
+                Watch the Season 2 award ceremony:
+              </p>
+              <div className="aspect-video">
+                <iframe
+                  className="h-full w-full rounded-lg"
+                  src="https://www.youtube.com/embed/U1RklCM-h2g"
+                  title="Season 2 Award Ceremony"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          </div>
+          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+            <input type="checkbox" />
             <div className="collapse-title font-bold">
               Podcast Episode
             </div>

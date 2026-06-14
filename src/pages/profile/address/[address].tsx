@@ -5,7 +5,6 @@ import { ProfileForm } from "~/components/Profile/Form";
 import { api } from "~/utils/api";
 import dynamic from "next/dynamic";
 import { client } from "~/providers/Thirdweb";
-import { CreateAttestation } from "~/components/Attestation/Create";
 import { useActiveAccount, ConnectButton } from "thirdweb/react";
 import { useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
@@ -127,42 +126,51 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
 
   if (!data) return null;
   return (
-    <main className="flex flex-col items-center justify-center">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <CustomMediaRenderer
-                src={displayImage ?? ''}
-                alt={displayUsername ?? ''}
-                className="rounded-full"
-                width={"48px"}
-                height={"48px"}
-                client={client}
-              />
-              <h1 className="text-2xl font-bold">{displayUsername}</h1>
-            </div>
-            <button className={`btn btn-ghost btn-xs ${isOwnProfile ? '' : 'hidden'}`} onClick={() => setShowProfileForm(!showProfileForm)}>
+    <main className="flex flex-col items-center px-4 pt-6">
+      <div className="flex w-full max-w-xl flex-col gap-6">
+        {/* Stat hero */}
+        <div className="flex flex-col items-center gap-3 rounded-3xl bg-base-200 p-6 text-center shadow-dog">
+          <CustomMediaRenderer
+            src={displayImage ?? ''}
+            alt={displayUsername ?? ''}
+            className="rounded-full ring-4 ring-primary/40"
+            width={"88px"}
+            height={"88px"}
+            client={client}
+          />
+          <h1 className="font-display text-3xl tracking-wide">{displayUsername ?? `${address.slice(0, 6)}...${address.slice(-4)}`}</h1>
+          <div className="flex items-center gap-2">
+            <span className="font-display text-4xl tabular-nums leading-none">
+              {dogData?.totalCount ?? 0}
+            </span>
+            <span className="text-lg">🌭 logged this season</span>
+          </div>
+          {isOwnProfile && (
+            <button
+              className="btn btn-ghost btn-xs"
+              onClick={() => setShowProfileForm(!showProfileForm)}
+            >
               {showProfileForm ? 'Cancel Edit' : 'Edit Profile'}
             </button>
+          )}
+        </div>
+
+        {showProfileForm && (
+          <ProfileForm
+            onProfileSaved={() => {
+              void refetch();
+              setShowProfileForm(false);
+            }}
+            existingImgUrl={displayImage}
+            existingUsername={displayUsername}
+          />
+        )}
+        {isOwnProfile && (
+          <div className="flex justify-center">
+            <ConnectButton client={client} />
           </div>
-          {showProfileForm && (
-            <ProfileForm
-              onProfileSaved={() => {
-                void refetch();
-                setShowProfileForm(false);
-              }}
-              existingImgUrl={displayImage}
-              existingUsername={displayUsername}
-            />
-          )}
-            <div className="mb-4">
-              <ConnectButton client={client} />
-            </div>
-          {isOwnProfile && (
-            <CreateAttestation />
-          )}
-          {/* User's Hotdog Submissions */}
+        )}
+        {/* User's Hotdog Submissions */}
           <div className="w-full">
             {/* Show pagination loading overlay */}
             {isPaginating && (
@@ -244,7 +252,6 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
             )}
           </div>
         </div>
-      </div>
     </main>
   );
 };
