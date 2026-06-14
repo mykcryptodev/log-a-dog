@@ -30,12 +30,22 @@ contract HotdogStakingV2Test is Test {
         assertEq(stakingContract.getCurrentEmissionRate(), 0);
     }
 
-    function testCannotStakeBeforeSeasonStarts() public {
+    function testCanStakeBeforeSeasonStartsWithoutRewards() public {
         vm.startPrank(user1);
         hotdogToken.approve(address(stakingContract), STAKE_AMOUNT);
-        vm.expectRevert("Season has not started");
         stakingContract.stake(STAKE_AMOUNT);
         vm.stopPrank();
+
+        (uint256 amount,,,, uint256 stakeTimestamp) = stakingContract.stakes(user1);
+        assertEq(amount, STAKE_AMOUNT);
+        assertEq(stakeTimestamp, block.timestamp);
+        assertEq(stakingContract.getPendingRewards(user1), 0);
+
+        vm.warp(stakingContract.SEASON_START_TIME() - 1);
+        assertEq(stakingContract.getPendingRewards(user1), 0);
+
+        vm.warp(stakingContract.SEASON_START_TIME() + 1 days);
+        assertTrue(stakingContract.getPendingRewards(user1) > 0);
     }
 
     function testCanStakeDuringSeason() public {

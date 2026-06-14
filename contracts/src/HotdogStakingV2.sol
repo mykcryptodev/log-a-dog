@@ -121,11 +121,11 @@ contract HotdogStakingV2 is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Stake HOTDOG tokens
+     * @notice Stake HOTDOG tokens. Pre-season staking is allowed so judges can
+     * prepare before opening day; emissions still begin at SEASON_START_TIME.
      * @param amount Amount of tokens to stake
      */
     function stake(uint256 amount) external nonReentrant {
-        require(block.timestamp >= SEASON_START_TIME, "Season has not started");
         require(block.timestamp < REWARD_END_TIME, "Reward period has ended");
         require(amount >= MINIMUM_STAKE, "Amount below minimum stake");
 

@@ -48,7 +48,7 @@ const DEPLOYMENT_START_BLOCKS: Record<
   8453: {
     logADog: 32424776,
     attestationManagerV1: 32424776,
-    attestationManagerV2: 47340122,
+    attestationManagerV2: 47340440,
   },
 };
 

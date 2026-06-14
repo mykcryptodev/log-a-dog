@@ -13,7 +13,7 @@ export const STAKING_V1: ContractAddress = {
 }
 
 export const STAKING: ContractAddress = {
-  [base.id]: "0xD883D797F1B8501007C95318B1d998e35cA4B7F7",
+  [base.id]: "0x42B32e8de4eC9cc53825bcd61D4d29A724BC9f54",
   [baseSepolia.id]: "0x605150F6be3E9b81963Cd6d895b7C11D73e34874",
 }
 
@@ -23,7 +23,7 @@ export const ATTESTATION_MANAGER_V1: ContractAddress = {
 }
 
 export const ATTESTATION_MANAGER: ContractAddress = {
-  [base.id]: "0x527cF86bEc47b8596571d1dF7bFDF1981435Fe31",
+  [base.id]: "0xf890Ba81bA07aEf61320e1500AbB141BC3316fdC",
   [baseSepolia.id]: "0xC6073175c71Bd69dBb42aB92e024DD31BEE81f3A",
 }
 

@@ -1,0 +1,15 @@
+{
+  "network": "Base Mainnet",
+  "chainId": 8453,
+  "deployer": "0x653Ff253b0c7C1cc52f484e891b71f9f1F010Bfb",
+  "contracts": {
+    "HotdogToken": "0x61f47EC6D1d0ef9b095574D7b76cF0467d13fB07",
+    "HotdogStakingV2": "0x42B32e8de4eC9cc53825bcd61D4d29A724BC9f54",
+    "AttestationManagerV2": "0xf890Ba81bA07aEf61320e1500AbB141BC3316fdC",
+    "LogADog": "0x6CfB88C8d0d7FFC563155e13C62b4Fa17bc25974"
+  },
+  "seasonStartTime": 1783173600,
+  "rewardEndTime": 1788839940,
+  "rewardsPool": "0",
+  "timestamp": 1781470221
+}
