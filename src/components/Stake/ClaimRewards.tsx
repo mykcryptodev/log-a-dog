@@ -86,7 +86,7 @@ export const ClaimRewards: FC = () => {
       {hasSeparateLegacyStaking && (
         <div className="rounded-lg border border-base-300 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <span className="font-semibold">Legacy V1 Rewards</span>
+            <span className="font-semibold">Legacy Season 2 Rewards</span>
             <span className="font-mono text-sm">{legacyReward} $HOTDOG</span>
           </div>
           <p className="mb-3 text-sm opacity-70">
