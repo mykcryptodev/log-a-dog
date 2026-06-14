@@ -1,12 +1,5 @@
-import React, { useState } from "react";
 import Head from "next/head";
-import Link from "next/link";
-// import Link from "next/link";
-import { CreateAttestation } from "~/components/Attestation/Create";
 import { ListAttestations } from "~/components/Attestation/List";
-import { APP_DESCRIPTION } from "~/constants";
-import Image from "next/image";
-import LeaderboardList from "~/components/LeaderboardList";
 
 const miniAppMetadata = {
   version: "next",
@@ -32,79 +25,22 @@ export const getStaticProps = async () => {
   };
 };
 
-const tabs = ["logs", "leaderboard"] as const;
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("logs");
-
   return (
     <>
       <Head>
-        <title>Log a Dog</title>
+        <title>Log a Dog — the internet&apos;s summer hotdog-eating sport</title>
         <meta
           name="description"
-          content="Track how many hotdogs you eat and compete against your friends!"
+          content="The internet's summer hotdog-eating sport. Log a dog, get judged, climb the board."
         />
         <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen flex-col items-center justify-center">
-        <div className="container flex flex-col items-center justify-center gap-4 px-4 pb-8 pt-8">
-          <h1 className="flex items-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            <Image
-              src="/images/banner.png"
-              alt="Log a Dog"
-              width={500}
-              height={500}
-              priority
-              className="dark:hidden"
-            />
-            <Image
-              src="/images/banner-dark.png"
-              alt="Log a Dog"
-              width={500}
-              height={500}
-              priority
-              className="hidden dark:block"
-            />
-          </h1>
-          <div className="-mt-8 flex items-center gap-2">
-            <p className="max-w-xs text-center text-sm sm:text-lg">
-              {APP_DESCRIPTION}
-            </p>
-            <Link href="/faq" className="text-xs underline">
-              wtf?
-            </Link>
-          </div>
-          <div className="w-full max-w-xl">
-            <p className="text-center text-lg font-bold">Season 2 is over! Watch the award ceremony:</p>
-            <div className="mt-2 aspect-video">
-              <iframe
-                className="h-full w-full rounded-lg"
-                src="https://www.youtube.com/embed/U1RklCM-h2g"
-                title="Season 2 Award Ceremony"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-          <CreateAttestation />
-          <div role="tablist" className="tabs tabs-boxed">
-            {tabs.map((tab) => (
-              <a key={tab} role="tab" className={`tab ${activeTab === tab ? "bg-secondary/50 text-secondary-content" : ""}`} onClick={() => setActiveTab(tab)}>
-                {tab}
-              </a>
-            ))}
-          </div>
-          {activeTab === "leaderboard" && (
-            <div className="w-full max-w-md">
-              <LeaderboardList limit={10} />
-            </div>
-          )}
-          {activeTab === "logs" && (
-            <div className="w-full max-w-md">
-              <ListAttestations limit={10} />
-            </div>
-          )}
+      {/* Feed-first: the first paint is a dog, not a press release. */}
+      <main className="flex flex-col items-center px-4 pt-4">
+        <div className="w-full max-w-xl">
+          <ListAttestations limit={10} />
         </div>
       </main>
     </>

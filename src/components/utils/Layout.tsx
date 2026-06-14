@@ -1,59 +1,49 @@
 import { type FC, type ReactNode } from "react";
-import { useRouter } from "next/router";
 import Link from "next/link";
 import { BottomNav } from "./BottomNav";
 import { ToastProvider } from "~/providers/Toast";
-import usePrefersDarkMode from "~/hooks/usePrefersDarkMode";
 import useMounted from "~/hooks/useMounted";
+import { getSeasonInfo } from "~/helpers/season";
+
 interface LayoutProps {
   children: ReactNode;
 }
 
 export const Layout: FC<LayoutProps> = ({ children }) => {
-  const router = useRouter();
-
+  // Compute on the client to avoid a hydration mismatch on the day counter.
   const mounted = useMounted();
-  const userPrefersDarkMode = usePrefersDarkMode();
-
-  // Prevent hydration mismatch by not applying dark mode styles until mounted
-  const fromYellow =
-    mounted && userPrefersDarkMode ? "from-yellow-300" : "from-yellow-100";
-  const toYellow =
-    mounted && userPrefersDarkMode ? "to-yellow-800" : "to-yellow-00";
-  const fromPink =
-    mounted && userPrefersDarkMode ? "from-pink-300" : "from-pink-100";
-  const toPink = mounted && userPrefersDarkMode ? "to-pink-800" : "to-pink-500";
-  const viaPink =
-    mounted && userPrefersDarkMode ? "via-pink-300" : "via-pink-200";
-  const darkModeOpacity = mounted && userPrefersDarkMode ? "opacity-30" : "";
+  const { season, day, isLive } = getSeasonInfo();
 
   return (
-    <div className="block">
-      <div
-        className={`absolute bg-gradient-to-t ${fromYellow} ${toYellow} -left-[45%] -top-[75%] -z-10 h-full w-full rounded-full blur-3xl ${darkModeOpacity}`}
-      ></div>
-      <div
-        className={`fixed bg-gradient-to-br ${fromYellow} ${viaPink} ${toPink} -bottom-0 -right-[90%] -z-10 h-full w-full rounded-full blur-3xl ${darkModeOpacity}`}
-      ></div>
-      <div
-        className={`fixed bg-gradient-to-br ${fromYellow} ${viaPink} ${toPink} -bottom-0 -left-[55%] -z-10 h-full w-1/2 rounded-full blur-3xl ${darkModeOpacity}`}
-      ></div>
-      <div
-        className={`fixed bg-gradient-to-tl ${fromYellow} ${viaPink} ${toYellow} -bottom-0 -left-[25%] -z-10 h-full w-1/2 rounded-full blur-3xl ${darkModeOpacity}`}
-      ></div>
-      <div
-        className={`fixed bg-gradient-to-bl ${fromPink} ${toPink} -left-[35%] -top-[-85%] -z-10 h-full w-full rounded-full blur-3xl ${darkModeOpacity}`}
-      ></div>
+    <div className="app-bg block min-h-screen">
       <div className="mx-auto min-h-screen max-w-7xl overflow-x-hidden pb-24">
-        <div className="mr-4 flex w-full items-center justify-between">
-          <div className="flex items-center gap-2">
-            {router.pathname !== "/" && (
-              <Link href="/" className="btn btn-ghost ml-4 pt-6 text-neutral">
-                🌭 Log a Dog
+        {/* Slim sticky scoreboard header — brand left, season/day right. */}
+        <header className="sticky top-0 z-40 border-b border-base-content/10 bg-base-100/70 backdrop-blur-lg">
+          <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-2">
+            <Link href="/" className="flex items-center gap-1.5 font-display tracking-wide">
+              <span className="text-xl">🌭</span>
+              <span className="text-lg leading-none">LOG A DOG</span>
+            </Link>
+            <div className="flex items-center gap-2 font-display text-xs tracking-wider">
+              <Link
+                href="/rules"
+                aria-label="How it works"
+                className="rounded-full bg-base-200 px-2.5 py-1"
+              >
+                ?
               </Link>
-            )}
+              <span className="rounded-full bg-base-200 px-2.5 py-1">
+                SEASON {season}
+              </span>
+              {mounted && (
+                <span className="rounded-full bg-primary/20 px-2.5 py-1 text-primary">
+                  {isLive ? `DAY ${day}` : "OFFSEASON"}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        </header>
+
         <ToastProvider />
         {children}
         <BottomNav />

@@ -22,6 +22,40 @@
   }
 }
 
+@layer components {
+  /* "Stadium under a summer sun" backdrop: one warm radial sun-glow
+     top-center over a very faint grill-grate texture. Replaces the old
+     blurred pink/yellow gradient blobs. */
+  .app-bg {
+    background-color: hsl(var(--b1));
+    background-image:
+      radial-gradient(
+        90rem 50rem at 50% -20%,
+        hsl(var(--p) / 0.18),
+        transparent 60%
+      ),
+      repeating-linear-gradient(
+        0deg,
+        hsl(var(--bc) / 0.025) 0px,
+        hsl(var(--bc) / 0.025) 1px,
+        transparent 1px,
+        transparent 38px
+      );
+    background-attachment: fixed;
+  }
+
+  /* Grill-mark shimmer sweep for skeleton loaders. */
+  .grill-skeleton {
+    background-image: linear-gradient(
+      100deg,
+      hsl(var(--b2)) 30%,
+      hsl(var(--b3)) 50%,
+      hsl(var(--b2)) 70%
+    );
+    background-size: 200% 100%;
+  }
+}
+
 .thirdweb-btn {
   @apply btn !important;
 }

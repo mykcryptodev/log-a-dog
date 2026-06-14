@@ -758,6 +758,7 @@ export const hotdogRouter = createTRPCRouter({
         validAttestations: processedHotdogs.map(() => "0"), // Default to 0 for each hotdog
         invalidAttestations: processedHotdogs.map(() => "0"), // Default to 0 for each hotdog
         totalPages,
+        totalCount: totalEvents,
         hasNextPage,
       }
     }),

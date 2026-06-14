@@ -1,28 +1,26 @@
-import { type FC, useCallback, useContext } from "react";
+import { type FC, memo, useCallback, useContext } from "react";
 import Link from "next/link";
+import { motion } from "motion/react";
 import {
   CurrencyDollarIcon,
   FireIcon,
-  TagIcon,
 } from "@heroicons/react/24/outline";
 import { isAddressEqual } from "viem";
 import HotdogImage from "~/components/utils/HotdogImage";
 import { Avatar } from "~/components/Profile/Avatar";
 import { Badge } from "~/components/Profile/Badge";
-// Removed Name import - using backend profile data instead
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
 import Comments from "~/components/Attestation/Comments";
-import JudgeAttestation from "~/components/Attestation/Judge";
+import VoteBar from "~/components/Attestation/VoteBar";
 import VotingCountdown from "~/components/Attestation/VotingCountdown";
-import AttestationStatusBadge from "~/components/Attestation/AttestationStatusBadge";
 import ZoraCoinTrading from "~/components/Attestation/ZoraCoinTrading";
+import VerdictStamp from "~/components/utils/VerdictStamp";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import { env } from "~/env";
 import Image from "next/image";
 import { sdk } from "@farcaster/frame-sdk";
-// Removed api import - using backend profile data instead
 import { FarcasterContext } from "~/providers/Farcaster";
 import EthCommentsModal from "../EthCommentsModal";
 import { useActiveAccount } from "thirdweb/react";
@@ -111,7 +109,7 @@ type Props = {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
 
-export const HotdogCard: FC<Props> = ({
+const HotdogCardComponent: FC<Props> = ({
   hotdog,
   validAttestations,
   invalidAttestations,
@@ -125,7 +123,7 @@ export const HotdogCard: FC<Props> = ({
 }) => {
   const account = useActiveAccount();
 
-  const showLoggedVia = (hotdog: { eater: string; logger: string }) => {   
+  const showLoggedVia = (hotdog: { eater: string; logger: string }) => {
     const loggerIsNotEater = !isAddressEqual(
       hotdog.eater as `0x${string}`,
       hotdog.logger as `0x${string}`,
@@ -156,6 +154,8 @@ export const HotdogCard: FC<Props> = ({
   const isExpired =
     Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <=
     Date.now();
+
+  const isResolved = hotdog.attestationPeriod?.status === 1;
 
   const shareUrl = `${env.NEXT_PUBLIC_APP_URL}/dog/${hotdog.logId}`;
   const shareText = `be like ${displayName}, log your dogs! 🌭`;
@@ -189,41 +189,40 @@ export const HotdogCard: FC<Props> = ({
   // Handle zoraCoin being either an object or string
   const zoraCoinData =
     typeof hotdog.zoraCoin === "object" ? hotdog.zoraCoin : null;
+  const zoraCoinAddress =
+    zoraCoinData?.address ??
+    (typeof hotdog.zoraCoin === "string" ? hotdog.zoraCoin : undefined);
 
-  const ImageComponent = linkToDetail ? (
-    <Link
-      href={`/dog/${hotdog.logId}`}
-      className={`flex w-full items-center justify-center ${hotdog.duplicateOfLogId ? "opacity-50" : ""}`}
-    >
-      <HotdogImage
-        src={hotdog.imageUri}
-        zoraCoin={zoraCoinData}
-        className="rounded-lg"
-        width="400"
-        height="400"
-      />
-    </Link>
-  ) : (
+  // Full-bleed 4:5 photo (Instagram portrait), object-cover with blurhash.
+  const Photo = (
     <HotdogImage
       src={hotdog.imageUri}
       zoraCoin={zoraCoinData}
-      className="rounded-lg"
+      className="h-full w-full object-cover"
       width="100%"
       height="100%"
     />
   );
 
   return (
-    <div className="card bg-base-200 bg-opacity-25 shadow backdrop-blur-sm">
-      <div className="card-body max-w-lg p-4">
-        {/* Header with user info and revoke button */}
+    <motion.div
+      initial={{ y: -16, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+      className="card overflow-hidden rounded-3xl bg-base-200 shadow-dog"
+    >
+      <div className="flex flex-col gap-3 p-4">
+        {/* Identity row */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col items-start">
             <div className="flex w-fit items-center gap-1">
-              <Link href={`/profile/${hotdog.eater}`} className="flex items-center gap-2">
-                <Avatar address={hotdog.eater} fallbackSize={24} />
-                <span className="text-sm font-medium">{displayName}</span>
-              </Link>              
+              <Link
+                href={`/profile/${hotdog.eater}`}
+                className="flex items-center gap-2"
+              >
+                <Avatar address={hotdog.eater} fallbackSize={28} />
+                <span className="text-sm font-semibold">{displayName}</span>
+              </Link>
               <Badge
                 address={hotdog.eater}
                 fid={hotdog.eaterProfile?.fid}
@@ -232,96 +231,98 @@ export const HotdogCard: FC<Props> = ({
                 isDisqualified={hotdog.eaterProfile?.isDisqualified}
               />
             </div>
-            <div className="flex flex-col">
-              {showLoggedVia({
-                eater: hotdog.eater,
-                logger: hotdog.logger,
-              }) && (
-                <div className="flex items-center gap-1 text-xs opacity-75">
-                  <span>via</span>
-                  <Avatar address={hotdog.logger} size="16px" />
-                  <span>{loggerDisplayName}</span>
-                  <Badge
-                    address={hotdog.logger}
-                    fid={hotdog.loggerProfile?.fid}
-                    isKnownSpammer={hotdog.loggerProfile?.isKnownSpammer}
-                    isReportedForSpam={hotdog.loggerProfile?.isReportedForSpam}
-                    isDisqualified={hotdog.loggerProfile?.isDisqualified}
-                  />
-                </div>
-              )}
-            </div>
+            {showLoggedVia({ eater: hotdog.eater, logger: hotdog.logger }) && (
+              <div className="flex items-center gap-1 text-xs opacity-60">
+                <span>via</span>
+                <Avatar address={hotdog.logger} size="16px" />
+                <span>{loggerDisplayName}</span>
+                <Badge
+                  address={hotdog.logger}
+                  fid={hotdog.loggerProfile?.fid}
+                  isKnownSpammer={hotdog.loggerProfile?.isKnownSpammer}
+                  isReportedForSpam={hotdog.loggerProfile?.isReportedForSpam}
+                  isDisqualified={hotdog.loggerProfile?.isDisqualified}
+                />
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <EthCommentsModal logId={hotdog.logId} account={account} />
             <button
               onClick={shareOnX}
               className="btn btn-circle btn-ghost btn-xs w-fit px-2"
             >
-              <Image
-                src="/images/x.svg"
-                alt="Share on X"
-                width={16}
-                height={16}
-                className="dark:hidden"
-              />
-              <Image
-                src="/images/x-white.svg"
-                alt="Share on X"
-                width={16}
-                height={16}
-                className="hidden dark:block"
-              />
+              <Image src="/images/x.svg" alt="Share on X" width={16} height={16} className="dark:hidden" />
+              <Image src="/images/x-white.svg" alt="Share on X" width={16} height={16} className="hidden dark:block" />
             </button>
             <button
               onClick={shareOnFarcaster}
               className="btn btn-circle btn-ghost btn-xs w-fit px-2"
             >
-              <Image
-                src="/images/farcaster.svg"
-                alt="Share on Farcaster"
-                width={16}
-                height={16}
-              />
+              <Image src="/images/farcaster.svg" alt="Share on Farcaster" width={16} height={16} />
             </button>
             <Revoke hotdog={hotdog} onRevocation={onRefetch} />
           </div>
         </div>
 
-        {/* Image with duplicate badge overlay */}
-        <div className="relative">
-          {ImageComponent}
+        {/* Full-bleed photo with verdict stamp + countdown overlays */}
+        <div
+          className={`relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-base-300 ${
+            hotdog.duplicateOfLogId ? "opacity-60" : ""
+          }`}
+        >
+          {linkToDetail ? (
+            <Link href={`/dog/${hotdog.logId}`} className="block h-full w-full">
+              {Photo}
+            </Link>
+          ) : (
+            Photo
+          )}
+
           {hotdog.duplicateOfLogId && (
             <Link
               href={`/dog/${hotdog.duplicateOfLogId}`}
-              className="badge badge-warning absolute right-4 top-4"
+              className="badge badge-warning absolute right-3 top-3"
             >
               Duplicate Image
             </Link>
           )}
-        </div>
 
-        {/* Bottom section with attestation info and actions */}
-        <div className="flex w-full flex-row items-center justify-between opacity-50">
-          <div className="flex items-center gap-1 text-xs">
-            {hotdog.attestationPeriod ? (
-              <AttestationStatusBadge
+          {isResolved && hotdog.attestationPeriod && (
+            <VerdictStamp valid={hotdog.attestationPeriod.isValid} />
+          )}
+
+          {!isExpired && (
+            <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-base-100/80 px-2 py-1 backdrop-blur-sm">
+              <VotingCountdown
+                timestamp={hotdog.timestamp.toString()}
+                logId={hotdog.logId?.toString() ?? ""}
+                validAttestations={validAttestations}
+                invalidAttestations={invalidAttestations}
+                onResolutionComplete={onRefetch}
                 attestationPeriod={hotdog.attestationPeriod}
               />
-            ) : (
-              <>
-                <TagIcon className="h-4 w-4" />
-                {hotdog.logId.toString()}
-              </>
-            )}
-          </div>
-          <div className="flex items-center justify-end gap-2 text-xs">
-            {showAiJudgement && (
-              <AiJudgement
-                logId={hotdog.logId.toString()}
-                timestamp={hotdog.timestamp.toString()}
-              />
-            )}
+            </div>
+          )}
+        </div>
+
+        {/* THE vote control — primary, full-width */}
+        <VoteBar
+          logId={hotdog.logId}
+          chainId={chainId}
+          disabled={disabled}
+          isExpired={isExpired}
+          userAttested={userAttested}
+          userAttestation={userAttestation}
+          validAttestations={validAttestations}
+          invalidAttestations={invalidAttestations}
+          onAttestationMade={onRefetch}
+          onAttestationAffirmationRevoked={onRefetch}
+        />
+
+        {/* Expired-but-unresolved: surface the reward-moderators action */}
+        {isExpired && !isResolved && (
+          <div className="flex justify-center">
             <VotingCountdown
               timestamp={hotdog.timestamp.toString()}
               logId={hotdog.logId?.toString() ?? ""}
@@ -331,94 +332,84 @@ export const HotdogCard: FC<Props> = ({
               attestationPeriod={hotdog.attestationPeriod}
             />
           </div>
-          <div className="flex items-center justify-end gap-1">
-            <Comments
-              logId={hotdog.logId?.toString() ?? ""}
-              metadataUri={hotdog.metadataUri}
+        )}
+
+        {/* Metadata row: comments · season number */}
+        <div className="flex items-center justify-between text-sm">
+          <Comments
+            logId={hotdog.logId?.toString() ?? ""}
+            metadataUri={hotdog.metadataUri}
+          />
+          {showAiJudgement && (
+            <AiJudgement
+              logId={hotdog.logId.toString()}
+              timestamp={hotdog.timestamp.toString()}
             />
-            {!isExpired && (
-              <JudgeAttestation
-                disabled={disabled}
-                userAttested={userAttested}
-                userAttestation={userAttestation}
-                validAttestations={validAttestations}
-                invalidAttestations={invalidAttestations}
-                logId={hotdog.logId}
-                chainId={chainId}
-                onAttestationMade={onRefetch}
-                onAttestationAffirmationRevoked={onRefetch}
-              />
-            )}
-          </div>
+          )}
+          <span className="font-display text-base tracking-wide opacity-70">
+            🌭 #{hotdog.logId.toString()}
+          </span>
         </div>
 
-        {/* Zora coin trading and market info */}
-        {zoraCoinData?.address && (
-          <div className="flex w-full items-center justify-between text-xs opacity-50">
-            <div className="flex items-center gap-2">
-              <ZoraCoinTrading
-                referrer={hotdog.eater}
-                coinAddress={zoraCoinData.address}
-                logId={hotdog.logId}
-                onTradeComplete={noop}
-              />
-            </div>
-            {(Boolean(zoraCoinData.marketCap) ||
-              Boolean(zoraCoinData.volume24h)) && (
-              <Link
-                href={
-                  zoraCoinData.link ??
-                  `https://zora.co/coin/base:${zoraCoinData.address}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                {zoraCoinData.marketCap && (
-                  <div className="flex items-center gap-0.5">
-                    <CurrencyDollarIcon className="h-4 w-4" />
-                    MCAP $
-                    {formatAbbreviatedFiat(Number(zoraCoinData.marketCap))}
-                  </div>
-                )}
-                {zoraCoinData.volume24h && (
-                  <div className="flex items-center gap-0.5">
-                    <FireIcon className="h-4 w-4" />
-                    24H VOL $
-                    {formatAbbreviatedFiat(Number(zoraCoinData.volume24h))}
-                  </div>
-                )}
-                {!zoraCoinData.marketCap && !zoraCoinData.volume24h && (
-                  <div className="flex items-center gap-0.5">
-                    <span>View on Zora</span>
-                  </div>
-                )}
-              </Link>
-            )}
-          </div>
-        )}
-        {/* Show loading indicator if we have an address but no detailed data yet */}
-        {typeof hotdog.zoraCoin === "string" &&
-          hotdog.zoraCoin &&
-          !zoraCoinData && (
-            <div className="flex w-full items-center justify-between text-xs opacity-50">
+        {/* Market data — collapsed by default, for the crypto-curious */}
+        {zoraCoinAddress && (
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs opacity-50">
+              <span className="transition-transform group-open:rotate-180">⌄</span>
+              market data
+            </summary>
+            <div className="mt-2 flex w-full items-center justify-between text-xs opacity-70">
               <div className="flex items-center gap-2">
                 <ZoraCoinTrading
                   referrer={hotdog.eater}
-                  coinAddress={hotdog.zoraCoin}
+                  coinAddress={zoraCoinAddress}
                   logId={hotdog.logId}
                   onTradeComplete={noop}
                 />
               </div>
-              <div className="flex items-center gap-1">
-                <div className="loading loading-spinner loading-xs"></div>
-                <span>Loading market data...</span>
-              </div>
+              {zoraCoinData &&
+                (Boolean(zoraCoinData.marketCap) || Boolean(zoraCoinData.volume24h)) && (
+                  <Link
+                    href={
+                      zoraCoinData.link ??
+                      `https://zora.co/coin/base:${zoraCoinData.address}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    {zoraCoinData.marketCap && (
+                      <div className="flex items-center gap-0.5">
+                        <CurrencyDollarIcon className="h-4 w-4" />
+                        MCAP ${formatAbbreviatedFiat(Number(zoraCoinData.marketCap))}
+                      </div>
+                    )}
+                    {zoraCoinData.volume24h && (
+                      <div className="flex items-center gap-0.5">
+                        <FireIcon className="h-4 w-4" />
+                        24H VOL ${formatAbbreviatedFiat(Number(zoraCoinData.volume24h))}
+                      </div>
+                    )}
+                  </Link>
+                )}
+              {!zoraCoinData && (
+                <div className="flex items-center gap-1">
+                  <div className="loading loading-spinner loading-xs" />
+                  <span>Loading market data...</span>
+                </div>
+              )}
             </div>
-          )}
+          </details>
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 };
+
+// Memoized so that a re-render of the parent feed (e.g. the 30s
+// `clearExpiredPending` interval tick or pagination) doesn't re-render every
+// card. This relies on the parent passing a stable `onRefetch` callback.
+// See React rule `rerender-memo`.
+export const HotdogCard = memo(HotdogCardComponent);
 
 export default HotdogCard;

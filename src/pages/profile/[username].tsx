@@ -5,7 +5,6 @@ import { ProfileForm } from "~/components/Profile/Form";
 import { api } from "~/utils/api";
 import dynamic from "next/dynamic";
 import { client } from "~/providers/Thirdweb";
-import { CreateAttestation } from "~/components/Attestation/Create";
 import { useActiveAccount } from "thirdweb/react";
 import { UserListAttestations } from "~/components/Attestation/UserList";
 import { useSession } from "next-auth/react";
@@ -90,9 +89,6 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
               existingImgUrl={displayImage}
               existingUsername={displayUsername}
             />
-          )}
-          {isOwnProfile && (
-            <CreateAttestation />
           )}
           <UserListAttestations
             limit={4}

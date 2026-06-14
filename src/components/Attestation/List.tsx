@@ -1,4 +1,4 @@
-import { useEffect, type FC, useState, useMemo, useRef } from "react";
+import { useEffect, type FC, useState, useMemo, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
@@ -158,6 +158,55 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     return dogData?.hotdogs ? [...filteredPendingDogs, ...dogData.hotdogs] : pendingDogs;
   }, [dogData?.hotdogs, filteredPendingDogs, pendingDogs]);
 
+  // Stable callback so every memoized <HotdogCard> doesn't re-render when this
+  // list re-renders (e.g. the 30s expired-pending interval). `refetchDogData`
+  // from react-query is itself stable. See React rule `rerender-memo`.
+  const handleRefetch = useCallback(() => void refetchDogData(), [refetchDogData]);
+
+  // Build logId -> attestation lookup maps once per data change instead of on
+  // every render (the list re-renders on a 30s interval). See `js-index-maps`.
+  const attestationMaps = useMemo(() => {
+    const hotdogs = dogData?.hotdogs;
+    if (!hotdogs) {
+      return {
+        validMap: {} as Record<string, string>,
+        invalidMap: {} as Record<string, string>,
+        userAttestedMap: {} as Record<string, boolean>,
+        userAttestationMap: {} as Record<string, boolean>,
+      };
+    }
+    return {
+      validMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.validAttestations?.[i]])) as Record<string, string>,
+      invalidMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.invalidAttestations?.[i]])) as Record<string, string>,
+      userAttestedMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.userAttested?.[i]])) as Record<string, boolean>,
+      userAttestationMap: Object.fromEntries(hotdogs.map((h, i) => [h.logId, dogData.userAttestations?.[i]])) as Record<string, boolean>,
+    };
+  }, [dogData]);
+
+  // Helper to get attestation data for a hotdog. Stable across renders so it
+  // doesn't defeat the memoization above.
+  const getAttestationData = useCallback((hotdog: HotdogItem): {
+    validAttestations: string;
+    invalidAttestations: string;
+    userAttested: boolean;
+    userAttestation: boolean;
+  } => {
+    if ('isPending' in hotdog && hotdog.isPending) {
+      return {
+        validAttestations: "0",
+        invalidAttestations: "0",
+        userAttested: false,
+        userAttestation: false,
+      };
+    }
+    return {
+      validAttestations: attestationMaps.validMap[hotdog.logId] ?? "0",
+      invalidAttestations: attestationMaps.invalidMap[hotdog.logId] ?? "0",
+      userAttested: attestationMaps.userAttestedMap[hotdog.logId] ?? false,
+      userAttestation: attestationMaps.userAttestationMap[hotdog.logId] ?? false,
+    };
+  }, [attestationMaps]);
+
   // Mobile-safe scroll function
   const scrollToTop = () => {
     // Clear any pending scroll timeout
@@ -201,45 +250,26 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
 
 
-  // Show loading state while client-side query is fetching
+  // Show loading state while client-side query is fetching — grill-mark shimmer
+  // skeleton cards (REDESIGN §4 States).
   if (isLoadingHotdogs && !isPaginating) {
     return (
       <>
         <div id="top-of-list" className="invisible" />
         <div className="flex flex-col gap-4">
           {Array.from({ length: limitOrDefault }).map((_, index) => (
-            <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
-              <div className="flex gap-2 items-center">
-                <div className="h-10 w-10 bg-base-300 animate-pulse rounded-full" />
-                <div className="h-4 w-20 bg-base-300 animate-pulse rounded-lg" />
+            <div className="card overflow-hidden rounded-3xl bg-base-200 p-4 shadow-dog" key={index}>
+              <div className="flex items-center gap-2">
+                <div className="grill-skeleton h-10 w-10 animate-grill-shimmer rounded-full" />
+                <div className="grill-skeleton h-4 w-24 animate-grill-shimmer rounded-lg" />
               </div>
-              <div className="card-body p-4">
-                <div className="mx-auto w-56 h-56 bg-base-300 animate-pulse rounded-lg" />
-              </div>
-              <div className="flex flex-row w-full items-center justify-between">
-                <div className="text-xs flex items-center gap-1">
-                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-                  <div className="h-4 w-8 bg-base-300 animate-pulse rounded-lg" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 bg-base-300 animate-pulse rounded-full" />
-                  <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-16 h-4 bg-base-300 animate-pulse rounded-lg" />
-                </div>
-                <div className="flex justify-end items-center gap-2">
-                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-                  <div className="h-4 w-4 bg-base-300 animate-pulse rounded-full" />
-                </div>
+              <div className="grill-skeleton mt-3 aspect-[4/5] w-full animate-grill-shimmer rounded-2xl" />
+              <div className="mt-3 flex gap-2">
+                <div className="grill-skeleton h-10 flex-1 animate-grill-shimmer rounded-xl" />
+                <div className="grill-skeleton h-10 flex-1 animate-grill-shimmer rounded-xl" />
               </div>
             </div>
           ))}
-          <div className="join md:col-span-2 place-content-center">
-            <button className="join-item btn" disabled>«</button>
-            <button className="join-item btn">Page 1 of ...</button>
-            <button className="join-item btn" disabled>»</button>
-          </div>
         </div>
       </>
     );
@@ -250,50 +280,39 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     return (
       <>
         <div id="top-of-list" className="invisible" />
-        <div className="flex flex-col gap-4 items-center justify-center py-8">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">Unable to load hotdogs</h3>
-            <p className="text-sm text-base-content/70 mb-4">Please try refreshing the page</p>
-            <button 
-              className="btn btn-primary"
-              onClick={() => void refetchDogData()}
-            >
-              Retry
-            </button>
-          </div>
+        <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+          <span className="text-5xl">🧊</span>
+          <h3 className="font-display text-2xl tracking-wide">The grill went cold.</h3>
+          <p className="text-sm text-base-content/70">Couldn&apos;t load the dogs.</p>
+          <button className="btn btn-primary font-display tracking-wide" onClick={() => void refetchDogData()}>
+            Retry
+          </button>
         </div>
       </>
     );
   }
 
-  // Create maps to ensure correct attestation data is passed by logId
-  const validMap = dogData?.hotdogs && dogData.validAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.validAttestations[i]])) : {};
-  const invalidMap = dogData?.hotdogs && dogData.invalidAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.invalidAttestations[i]])) : {};
-  const userAttestedMap = dogData?.hotdogs && dogData.userAttested ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttested[i]])) : {};
-  const userAttestationMap = dogData?.hotdogs && dogData.userAttestations ? Object.fromEntries(dogData.hotdogs.map((h, i) => [h.logId, dogData.userAttestations[i]])) : {};
-
-  // Helper function to get attestation data for a hotdog
-  const getAttestationData = (hotdog: HotdogItem): {
-    validAttestations: string;
-    invalidAttestations: string;
-    userAttested: boolean;
-    userAttestation: boolean;
-  } => {
-    if ('isPending' in hotdog && hotdog.isPending) {
-      return {
-        validAttestations: "0",
-        invalidAttestations: "0", 
-        userAttested: false,
-        userAttestation: false,
-      };
-    }
-    return {
-      validAttestations: validMap[hotdog.logId] ?? "0",
-      invalidAttestations: invalidMap[hotdog.logId] ?? "0",
-      userAttested: userAttestedMap[hotdog.logId] ?? false,
-      userAttestation: userAttestationMap[hotdog.logId] ?? false,
-    };
-  };
+  // Empty feed — be the first to log.
+  if (isClient && !isLoadingHotdogs && allHotdogs.length === 0) {
+    return (
+      <>
+        <div id="top-of-list" className="invisible" />
+        <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+          <span className="text-6xl">🌭</span>
+          <h3 className="font-display text-2xl tracking-wide">No dogs yet today.</h3>
+          <p className="text-sm text-base-content/70">The grill is hot. 🔥 Be the first to log.</p>
+          <button
+            className="btn btn-primary font-display tracking-wide"
+            onClick={() =>
+              (document.getElementById("create_attestation_modal") as HTMLDialogElement | null)?.showModal()
+            }
+          >
+            Log a Dog
+          </button>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -339,7 +358,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
             userAttested={attestationData.userAttested}
             userAttestation={attestationData.userAttestation}
             chainId={DEFAULT_CHAIN.id}
-            onRefetch={() => void refetchDogData()}
+            onRefetch={handleRefetch}
             linkToDetail={true}
             showAiJudgement={false}
             disabled={isPending}

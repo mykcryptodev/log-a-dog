@@ -251,7 +251,7 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
 
       {/* Trade Modal */}
       <Portal>
-        <input type="checkbox" id={`trade-modal-${logId}`} className="modal-toggle" checked={showTradeModal} />
+        <input type="checkbox" id={`trade-modal-${logId}`} className="modal-toggle" checked={showTradeModal} readOnly />
         <div className="modal modal-bottom sm:modal-middle" role="dialog">
           <div className="modal-box relative card bg-opacity-65 backdrop-blur-lg shadow">
             <label onClick={() => void setShowTradeModal(false)} htmlFor={`trade-modal-${logId}`} className="btn btn-sm btn-ghost absolute right-4 top-4">✕</label>
