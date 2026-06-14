@@ -1,11 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { type FC, useContext, useEffect, useState, useCallback, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { QuestionMarkCircleIcon, XMarkIcon, GiftIcon } from "@heroicons/react/24/outline";
+import { type FC, useEffect, useState, useCallback, useRef } from "react";
+import { QuestionMarkCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Portal } from "~/components/utils/Portal";
-import { api } from "~/utils/api";
-import { toast } from "react-toastify";
-import { ATTESTATION_WINDOW_SECONDS, DEFAULT_CHAIN } from "~/constants";
+import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 
 // Shared interval manager to prevent multiple intervals
 class IntervalManager {
@@ -67,10 +63,6 @@ interface Props {
 export const VotingCountdown: FC<Props> = ({
   timestamp,
   logId,
-  // validAttestations,
-  // invalidAttestations,
-  onResolutionComplete,
-  attestationPeriod,
 }) => {
   const calculateTimeLeft = useCallback(() => {
     const end = Number(timestamp) + ATTESTATION_WINDOW_SECONDS;
@@ -88,22 +80,7 @@ export const VotingCountdown: FC<Props> = ({
   }, [timestamp]);
 
   const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft());
-  const [isRewardingModerators, setIsRewardingModerators] = useState(false);
   const componentId = useRef(`countdown-${logId ?? timestamp}-${Math.random()}`);
-  
-  const { data: session } = useSession();
-
-  const rewardModeratorsMutation = api.hotdog.rewardModerators.useMutation({
-    onSuccess: () => {
-      toast.success("Rewards are being distributed to moderators!");
-      setIsRewardingModerators(false);
-      onResolutionComplete?.();
-    },
-    onError: (error) => {
-      toast.error(`Failed to reward moderators: ${error.message}`);
-      setIsRewardingModerators(false);
-    },
-  });
 
   useEffect(() => {
     const manager = IntervalManager.getInstance();
@@ -124,49 +101,18 @@ export const VotingCountdown: FC<Props> = ({
   }, [calculateTimeLeft]);
 
   const isExpired = timeLeft === "Expired";
-  // Check if the attestation period is resolved using the cached data
-  // AttestationStatus enum: 0 = Active, 1 = Resolved, 2 = Disputed
-  const isResolved = attestationPeriod?.status === 1;
-  
-  const handleRewardModerators = () => {
-    if (!logId || !session?.user?.address || !DEFAULT_CHAIN.id) return;
-    
-    setIsRewardingModerators(true);
-    rewardModeratorsMutation.mutate({
-      chainId: DEFAULT_CHAIN.id,
-      logId,
-    });
-  };
+
+  if (isExpired) return null;
 
   return (
     <div className="flex items-center">
-      {!isExpired && (
-        <>
-          <label htmlFor={`${logId ?? timestamp}-voting-info`} className="btn btn-ghost btn-circle btn-xs">
-            <QuestionMarkCircleIcon className="w-3 h-3" />
-          </label>
-          <span className="font-mono text-xs opacity-50">
-            {timeLeft}
-          </span>
-        </>
-      )}
-      
-      {isExpired && !isResolved && logId && session?.user?.address && (
-        <>
-          <button
-            onClick={handleRewardModerators}
-            disabled={isRewardingModerators}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded transition-colors"
-          >
-            <GiftIcon className="w-3 h-3" />
-            {isRewardingModerators ? "Processing..." : "Reward Moderators"}
-          </button>
-          
-          <label htmlFor={`${logId}-reward-explanation`} className="btn btn-ghost btn-circle btn-xs">
-            <QuestionMarkCircleIcon className="w-4 h-4" />
-          </label>
-        </>
-      )}
+      <label htmlFor={`${logId ?? timestamp}-voting-info`} className="btn btn-ghost btn-circle btn-xs">
+        <QuestionMarkCircleIcon className="w-3 h-3" />
+      </label>
+      <span className="font-mono text-xs opacity-50">
+        {timeLeft}
+      </span>
+
       {/* Voting Info Modal */}
       <Portal>
         <input type="checkbox" id={`${logId ?? timestamp}-voting-info`} className="modal-toggle" />
@@ -186,43 +132,6 @@ export const VotingCountdown: FC<Props> = ({
           </div>
         </div>
       </Portal>
-
-      {/* Reward Moderators Explanation Modal */}
-      {logId && (
-        <Portal>
-          <input type="checkbox" id={`${logId}-reward-explanation`} className="modal-toggle" />
-          <div className="modal modal-bottom sm:modal-middle" role="dialog">
-            <div className="modal-box relative bg-base-100 bg-opacity-90 backdrop-blur-lg">
-              <label htmlFor={`${logId}-reward-explanation`} className="btn btn-ghost btn-circle btn-xs absolute top-4 right-4">
-                <XMarkIcon className="w-4 h-4" />
-              </label>
-              <h3 className="font-bold text-lg flex items-center gap-2">
-                <GiftIcon className="h-6 w-6" />
-                Reward Moderators
-              </h3>
-              <p className="py-2">
-                The voting period has ended! Click this button to finalize the results and distribute rewards to moderators.
-              </p>
-              <p className="py-2">
-                This action will:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Determine the final winner based on total staked votes</li>
-                <li>Distribute $HOTDOG rewards to correct voters proportionally</li>
-                <li>Slash 15% of incorrect voters&apos; stakes</li>
-                <li>Unlock all remaining staked tokens</li>
-                <li>Mark this submission as officially counted</li>
-              </ul>
-              <p className="py-2 text-sm text-base-content/70">
-                Anyone can trigger this action once the 48-hour voting period ends.
-              </p>
-              <div className="modal-action">
-                <label htmlFor={`${logId}-reward-explanation`} className="btn">Close</label>
-              </div>
-            </div>
-          </div>
-        </Portal>
-      )}
     </div>
   );
 };

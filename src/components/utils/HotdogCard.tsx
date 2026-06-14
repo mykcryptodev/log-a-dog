@@ -320,20 +320,6 @@ const HotdogCardComponent: FC<Props> = ({
           onAttestationAffirmationRevoked={onRefetch}
         />
 
-        {/* Expired-but-unresolved: surface the reward-moderators action */}
-        {isExpired && !isResolved && (
-          <div className="flex justify-center">
-            <VotingCountdown
-              timestamp={hotdog.timestamp.toString()}
-              logId={hotdog.logId?.toString() ?? ""}
-              validAttestations={validAttestations}
-              invalidAttestations={invalidAttestations}
-              onResolutionComplete={onRefetch}
-              attestationPeriod={hotdog.attestationPeriod}
-            />
-          </div>
-        )}
-
         {/* Metadata row: comments · season number */}
         <div className="flex items-center justify-between text-sm">
           <Comments
