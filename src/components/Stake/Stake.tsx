@@ -7,7 +7,7 @@ import {
   useActiveAccount,
 } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
-import { HOTDOG_TOKEN, STAKING } from "~/constants/addresses";
+import { HOTDOG_TOKEN, STAKING, STAKING_V1 } from "~/constants/addresses";
 import {
   stake,
   unstake,
@@ -27,14 +27,38 @@ type Props = {
 };
 
 const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
-  const [activeTab, setActiveTab] = useState<"stake" | "unstake">("stake");
+  const [activeTab, setActiveTab] = useState<"stake" | "unstake" | "legacy">("stake");
   const [amount, setAmount] = useState<string>("");
   const [percentage, setPercentage] = useState<number>(0);
   const [unstakeAmount, setUnstakeAmount] = useState<string>("");
   const [unstakePercentage, setUnstakePercentage] = useState<number>(0);
+  const [legacyUnstakeAmount, setLegacyUnstakeAmount] = useState<string>("");
+  const [legacyUnstakePercentage, setLegacyUnstakePercentage] = useState<number>(0);
   const [hasApproval, setHasApproval] = useState(false);
   const wallet = useActiveWallet();
   const account = useActiveAccount();
+  const stakingAddress = STAKING[DEFAULT_CHAIN.id]!;
+  const legacyStakingAddress = STAKING_V1[DEFAULT_CHAIN.id]!;
+  const hasSeparateLegacyStaking =
+    stakingAddress.toLowerCase() !== legacyStakingAddress.toLowerCase();
+  const stakingContract = useMemo(
+    () =>
+      getContract({
+        address: stakingAddress,
+        client,
+        chain: DEFAULT_CHAIN,
+      }),
+    [stakingAddress],
+  );
+  const legacyStakingContract = useMemo(
+    () =>
+      getContract({
+        address: legacyStakingAddress,
+        client,
+        chain: DEFAULT_CHAIN,
+      }),
+    [legacyStakingAddress],
+  );
 
   const { data: balance, isLoading: isLoadingBalance, refetch } = useWalletBalance({
     client,
@@ -50,15 +74,29 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
   }, [account?.address, refetch]);
 
   const { data: stakedAmount, isLoading: isLoadingStaked } = useReadContract({
-    contract: getContract({
-      address: STAKING[DEFAULT_CHAIN.id]!,
-      client,
-      chain: DEFAULT_CHAIN,
-    }),
+    contract: stakingContract,
     method: "function stakes(address user) view returns (uint256)",
     params: [account?.address ?? "0x0"],
     queryOptions: {
       enabled: !!account?.address,
+    },
+  });
+
+  const { data: legacyStakedAmount, isLoading: isLoadingLegacyStaked } = useReadContract({
+    contract: legacyStakingContract,
+    method: "function stakes(address user) view returns (uint256)",
+    params: [account?.address ?? "0x0"],
+    queryOptions: {
+      enabled: !!account?.address && hasSeparateLegacyStaking,
+    },
+  });
+
+  const { data: legacyAvailableStake } = useReadContract({
+    contract: legacyStakingContract,
+    method: "function getAvailableStake(address user) view returns (uint256)",
+    params: [account?.address ?? "0x0"],
+    queryOptions: {
+      enabled: !!account?.address && hasSeparateLegacyStaking,
     },
   });
 
@@ -80,14 +118,14 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
       const allowanceAmt = await allowance({
         contract: tokenContract,
         owner: wallet.getAccount()!.address,
-        spender: STAKING[DEFAULT_CHAIN.id]!,
+        spender: stakingAddress,
       });
 
       setHasApproval(allowanceAmt >= parseEther(amount));
     };
 
     void checkAllowance();
-  }, [wallet, amount]);
+  }, [wallet, amount, stakingAddress]);
 
   useEffect(() => {
     if (!balance?.displayValue) return;
@@ -101,6 +139,13 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
     const newUnstakeAmount = stakedDisplayValue * (unstakePercentage / 100);
     setUnstakeAmount(newUnstakeAmount.toString());
   }, [unstakePercentage, stakedAmount]);
+
+  useEffect(() => {
+    if (!legacyAvailableStake) return;
+    const legacyAvailableDisplayValue = Number(formatEther(legacyAvailableStake));
+    const newUnstakeAmount = legacyAvailableDisplayValue * (legacyUnstakePercentage / 100);
+    setLegacyUnstakeAmount(newUnstakeAmount.toString());
+  }, [legacyUnstakePercentage, legacyAvailableStake]);
 
   const balanceIsInsufficient = useMemo(() => {
     return BigInt(balance?.value ?? 0) < BigInt(MINIMUM_STAKE);
@@ -139,10 +184,30 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
     }
   }, [unstakeAmount, stakedAmount]);
 
+  const legacyUnstakeAmountExceedsAvailable = useMemo(() => {
+    if (!legacyUnstakeAmount || !legacyAvailableStake) return false;
+    try {
+      const unstakeAmountInWei = parseEther(legacyUnstakeAmount);
+      return unstakeAmountInWei > legacyAvailableStake;
+    } catch {
+      const availableDisplayValue = Number(formatEther(legacyAvailableStake ?? 0n));
+      return Number(legacyUnstakeAmount) > availableDisplayValue;
+    }
+  }, [legacyUnstakeAmount, legacyAvailableStake]);
+
   const invalidAmount = Number(amount) <= 0;
   const invalidUnstakeAmount = Number(unstakeAmount) <= 0;
+  const invalidLegacyUnstakeAmount = Number(legacyUnstakeAmount) <= 0;
   const showInsufficientBalance = balanceIsInsufficient && !invalidAmount;
   const hasStakedTokens = stakedAmount !== undefined && Number(formatEther(stakedAmount)) > 0;
+  const hasLegacyStakedTokens =
+    hasSeparateLegacyStaking &&
+    legacyStakedAmount !== undefined &&
+    Number(formatEther(legacyStakedAmount)) > 0;
+  const legacyLockedAmount =
+    (legacyStakedAmount ?? 0n) > (legacyAvailableStake ?? 0n)
+      ? (legacyStakedAmount ?? 0n) - (legacyAvailableStake ?? 0n)
+      : 0n;
 
   const handlePercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPercentage = Number(e.target.value);
@@ -156,8 +221,19 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
     setUnstakePercentage(newPercentage);
   };
 
+  const handleLegacyUnstakePercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPercentage = Number(e.target.value);
+    if (isNaN(newPercentage)) return;
+    setLegacyUnstakePercentage(newPercentage);
+  };
+
   const isDisabled = showInsufficientBalance || amountExceedsBalance || amountBelowMinimum || invalidAmount;
   const isUnstakeDisabled = !hasStakedTokens || unstakeAmountExceedsStaked || invalidUnstakeAmount;
+  const isLegacyUnstakeDisabled =
+    !hasLegacyStakedTokens ||
+    legacyUnstakeAmountExceedsAvailable ||
+    invalidLegacyUnstakeAmount ||
+    (legacyAvailableStake ?? 0n) === 0n;
 
   return (
     <div>
@@ -178,6 +254,14 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
         >
           Unstake
         </button>
+        {hasLegacyStakedTokens && (
+          <button
+            className={`tab tab-lg flex-1 ${activeTab === "legacy" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("legacy")}
+          >
+            V1 Exit
+          </button>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -297,11 +381,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 className="!btn !btn-primary !btn-block"
                 transaction={() =>
                   stake({
-                    contract: getContract({
-                      address: STAKING[DEFAULT_CHAIN.id]!,
-                      client,
-                      chain: DEFAULT_CHAIN,
-                    }),
+                    contract: stakingContract,
                     amount: parseEther(amount),
                   })
                 }
@@ -327,11 +407,11 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 disabled={isDisabled}
               >
                 {showInsufficientBalance
-                  ? "Insufficient balance (need 100+ tokens)"
+                  ? "Insufficient balance"
                   : amountExceedsBalance
                     ? "Amount exceeds balance"
                     : amountBelowMinimum
-                      ? "Minimum stake is 100 tokens"
+                      ? "Minimum stake is 300,000 tokens"
                       : "Stake"}
               </TransactionButton>
             ) : (
@@ -345,7 +425,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                       chain: DEFAULT_CHAIN,
                     }),
                     amount,
-                    spender: STAKING[DEFAULT_CHAIN.id]!,
+                    spender: stakingAddress,
                   })
                 }
                 onTransactionSent={() => toast.loading("Approving...")}
@@ -370,11 +450,11 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 disabled={isDisabled}
               >
                 {showInsufficientBalance
-                  ? "Insufficient balance (need 100+ tokens)"
+                  ? "Insufficient balance"
                   : amountExceedsBalance
                     ? "Amount exceeds balance"
                     : amountBelowMinimum
-                      ? "Minimum stake is 100 tokens"
+                      ? "Minimum stake is 300,000 tokens"
                       : "Approve"}
               </TransactionButton>
             )}
@@ -387,6 +467,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
             )}
           </>
         ) : (
+          activeTab === "unstake" ? (
           <>
             {/* Unstake Tab Content */}
             <div className="stats stats-vertical w-full max-w-full shadow md:stats-horizontal">
@@ -478,11 +559,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
               className="!btn !btn-secondary !btn-block"
               transaction={() =>
                 unstake({
-                  contract: getContract({
-                    address: STAKING[DEFAULT_CHAIN.id]!,
-                    client,
-                    chain: DEFAULT_CHAIN,
-                  }),
+                  contract: stakingContract,
                   amount: parseEther(unstakeAmount),
                 })
               }
@@ -516,6 +593,108 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                     : "Unstake"}
             </TransactionButton>
           </>
+          ) : (
+          <>
+            <div className="alert alert-info text-sm">
+              V1 stake only counts for the previous season. Unstake it here, then stake in the current season to judge new dogs.
+            </div>
+
+            {legacyLockedAmount > 0n && (
+              <div className="alert alert-warning text-sm">
+                {Number(formatEther(legacyLockedAmount)).toLocaleString()} $HOTDOG is still locked in old attestations and cannot be unstaked until those periods resolve.
+              </div>
+            )}
+
+            <div className="stats stats-vertical w-full max-w-full shadow md:stats-horizontal">
+              <div className="stat text-center">
+                <div className="stat-title">V1 Amount to Unstake</div>
+                <input
+                  type="number"
+                  className="stat-value w-full max-w-[12ch] bg-transparent text-center text-secondary focus:outline-none"
+                  value={legacyUnstakeAmount}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    if (value === "") {
+                      setLegacyUnstakeAmount("");
+                      return;
+                    }
+                    value = value.replace(/^0+(?=\d)/, "");
+                    setLegacyUnstakeAmount(value);
+                  }}
+                />
+                <div className="stat-desc">
+                  {isLoadingLegacyStaked
+                    ? "Loading legacy stake..."
+                    : `Available: ${Number(formatEther(legacyAvailableStake ?? 0n)).toLocaleString()} / Staked: ${Number(formatEther(legacyStakedAmount ?? 0n)).toLocaleString()}`}
+                </div>
+              </div>
+            </div>
+
+            {legacyUnstakeAmountExceedsAvailable && (
+              <div className="text-center text-sm text-error">
+                Amount exceeds available V1 stake
+              </div>
+            )}
+
+            <div>
+              <label
+                htmlFor="legacyUnstakePercentage"
+                className="mb-1 block text-sm font-medium"
+              >
+                Percentage of Available V1 Stake: {legacyUnstakePercentage}%
+              </label>
+              <input
+                id="legacyUnstakePercentage"
+                type="range"
+                min="0"
+                max="100"
+                value={legacyUnstakePercentage}
+                onChange={handleLegacyUnstakePercentageChange}
+                className="range range-secondary"
+                step="1"
+              />
+            </div>
+
+            <TransactionButton
+              className="!btn !btn-secondary !btn-block"
+              transaction={() =>
+                unstake({
+                  contract: legacyStakingContract,
+                  amount: parseEther(legacyUnstakeAmount),
+                })
+              }
+              onTransactionSent={() => toast.loading("Unstaking V1 tokens...")}
+              onTransactionConfirmed={() => {
+                toast.dismiss();
+                toast.success("V1 tokens unstaked!");
+                onStake?.(legacyUnstakeAmount);
+              }}
+              onError={(err) => {
+                toast.dismiss();
+                const formattedMessage = err.message.replace(/\b\d{19,}\b/g, (match) => {
+                  try {
+                    const tokenAmount = Number(formatEther(BigInt(match)));
+                    return `${tokenAmount.toLocaleString()} tokens`;
+                  } catch {
+                    return match;
+                  }
+                });
+                toast.error(`V1 unstaking failed: ${formattedMessage}`);
+              }}
+              disabled={isLegacyUnstakeDisabled}
+            >
+              {!hasLegacyStakedTokens
+                ? "No V1 tokens staked"
+                : (legacyAvailableStake ?? 0n) === 0n
+                  ? "V1 stake is locked"
+                  : legacyUnstakeAmountExceedsAvailable
+                    ? "Amount exceeds available stake"
+                    : invalidLegacyUnstakeAmount
+                      ? "Enter amount to unstake"
+                      : "Unstake V1"}
+            </TransactionButton>
+          </>
+          )
         )}
       </div>
     </div>

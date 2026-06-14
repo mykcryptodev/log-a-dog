@@ -1,8 +1,7 @@
 import { CONTEST_START_TIME, CONTEST_END_TIME } from "~/constants";
 
-// The current competitive season. Season 2 wrapped up before the contest
-// window was re-opened on CONTEST_START_TIME, so the live window is Season 3.
-export const CURRENT_SEASON = 3;
+// The current competitive season. Season 4 opens on CONTEST_START_TIME.
+export const CURRENT_SEASON = 4;
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 

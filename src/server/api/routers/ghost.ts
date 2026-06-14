@@ -1,6 +1,7 @@
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 import { type UserProfile, fetchUserProfiles } from "~/server/utils/profile";
+import { CONTEST_END_TIME, CONTEST_START_TIME } from "~/constants";
 import { DEFAULT_CHAIN } from "~/constants/chains";
 import { db } from "~/server/db";
 import { z } from "zod";
@@ -17,7 +18,9 @@ interface JudgeResult {
 export const ghostRouter = createTRPCRouter({
   getJudges: publicProcedure.query(async () => {
     const chainId = DEFAULT_CHAIN.id.toString();
-    const cacheKey = `judges:ranking:${chainId}`;
+    const contestStartTimestamp = BigInt(Math.floor(new Date(CONTEST_START_TIME).getTime() / 1000));
+    const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
+    const cacheKey = `judges:ranking:${chainId}:${CONTEST_START_TIME}`;
     
     return getOrSetCache(
       cacheKey,
@@ -25,6 +28,10 @@ export const ghostRouter = createTRPCRouter({
         const resolvedLogs = await db.dogEvent.findMany({
           where: {
             chainId,
+            timestamp: {
+              gte: contestStartTimestamp,
+              lte: contestEndTimestamp,
+            },
             attestationResolved: true,
             attestationValid: { not: null },
           },
@@ -110,15 +117,35 @@ export const ghostRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const voter = input.voter.toLowerCase();
       const chainId = DEFAULT_CHAIN.id.toString();
-      const cacheKey = `votes:${chainId}:${voter}`;
+      const contestStartTimestamp = BigInt(Math.floor(new Date(CONTEST_START_TIME).getTime() / 1000));
+      const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
+      const cacheKey = `votes:${chainId}:${voter}:${CONTEST_START_TIME}`;
 
       return getOrSetCache(
         cacheKey,
         async () => {
+          const seasonLogs = await db.dogEvent.findMany({
+            where: {
+              chainId,
+              timestamp: {
+                gte: contestStartTimestamp,
+                lte: contestEndTimestamp,
+              },
+            },
+            select: {
+              logId: true,
+            },
+          });
+          const logIds = seasonLogs.map((log) => log.logId);
+          if (logIds.length === 0) {
+            return {};
+          }
+
           const rows = await db.attestationVote.findMany({
             where: {
               chainId,
               voter,
+              logId: { in: logIds },
             },
             select: {
               logId: true,

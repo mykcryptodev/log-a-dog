@@ -3,7 +3,7 @@ import { parseEther } from "viem";
 export * from "./addresses";
 export * from "./chains";
 
-export const CONTEST_START_TIME = "2025-07-04T10:00:00-04:00"
+export const CONTEST_START_TIME = "2026-07-04T10:00:00-04:00"
 export const CONTEST_END_TIME = "2026-09-07T23:59:00-04:00"
 
 export const MINIMUM_STAKE = parseEther("300000");

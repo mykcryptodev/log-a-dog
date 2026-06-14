@@ -20,7 +20,8 @@
 import { db } from "~/server/db";
 import { redis } from "~/server/utils/redis";
 import { env } from "~/env";
-import { LOG_A_DOG, ATTESTATION_MANAGER } from "~/constants/addresses";
+import { CONTEST_START_TIME } from "~/constants";
+import { LOG_A_DOG, ATTESTATION_MANAGER, ATTESTATION_MANAGER_V1 } from "~/constants/addresses";
 import { sendTelegramMessage, formatDogLogMessage } from "~/lib/telegram";
 import { sendNotificationToUsers } from "~/lib/neynar";
 
@@ -39,11 +40,15 @@ const CDP_EVENTS_TABLE: Record<number, string> = {
 // scans safe.
 const BLOCK_OVERLAP = 100; // re-scan a few blocks back so nothing straddles the cursor
 
-const DEPLOYMENT_START_BLOCKS: Record<number, { logADog: number; attestationManager: number }> = {
+const DEPLOYMENT_START_BLOCKS: Record<
+  number,
+  { logADog: number; attestationManagerV1: number; attestationManagerV2: number }
+> = {
   // contracts/broadcast/Deploy.s.sol/8453/run-latest.json
   8453: {
     logADog: 32424776,
-    attestationManager: 32424776,
+    attestationManagerV1: 32424776,
+    attestationManagerV2: 47340122,
   },
 };
 
@@ -66,6 +71,34 @@ async function setCursor(key: string, block: number): Promise<void> {
   await redis.set(key, block);
 }
 
+function getAttestationSources(chainId: number): AttestationSource[] {
+  const startBlocks = DEPLOYMENT_START_BLOCKS[chainId];
+  const currentManager = ATTESTATION_MANAGER[chainId];
+  const legacyManager = ATTESTATION_MANAGER_V1[chainId];
+  const sources: AttestationSource[] = [];
+
+  if (currentManager) {
+    sources.push({
+      version: "v2",
+      address: currentManager.toLowerCase(),
+      startBlock: startBlocks?.attestationManagerV2 ?? 0,
+    });
+  }
+
+  if (
+    legacyManager &&
+    legacyManager.toLowerCase() !== currentManager?.toLowerCase()
+  ) {
+    sources.push({
+      version: "v1",
+      address: legacyManager.toLowerCase(),
+      startBlock: startBlocks?.attestationManagerV1 ?? 0,
+    });
+  }
+
+  return sources;
+}
+
 export interface IndexResult {
   chainId: number;
   ran: boolean; // false when skipped (lock held or unsupported chain)
@@ -77,6 +110,14 @@ export interface IndexResult {
 
 type IndexStage = "HotdogLogged" | "AttestationMade" | "AttestationPeriodResolved";
 type IndexProgressPhase = "start" | "page" | "complete" | "skip";
+
+type AttestationSourceVersion = "v1" | "v2";
+
+interface AttestationSource {
+  version: AttestationSourceVersion;
+  address: string;
+  startBlock: number;
+}
 
 export interface IndexProgress {
   chainId: number;
@@ -335,13 +376,12 @@ async function notifyNewLog(
 async function indexAttestationsResolved(
   chainId: number,
   table: string,
+  source: AttestationSource,
   onProgress?: ProgressReporter,
 ): Promise<number> {
-  const manager = ATTESTATION_MANAGER[chainId];
-  if (!manager) return 0;
-  const address = manager.toLowerCase();
-  const cursorKey = `indexer:cursor:attestations:${chainId}`;
-  const fallbackStartBlock = DEPLOYMENT_START_BLOCKS[chainId]?.attestationManager ?? 0;
+  const address = source.address;
+  const cursorKey = `indexer:cursor:${source.version}:attestations:${chainId}`;
+  const fallbackStartBlock = source.startBlock;
 
   const fromBlock = await getCursor(cursorKey, fallbackStartBlock);
   const total = await getPendingEventCount(table, address, "AttestationPeriodResolved", fromBlock);
@@ -358,7 +398,7 @@ async function indexAttestationsResolved(
     processed,
     total,
     percent: progressPercent(processed, total),
-    message: `AttestationPeriodResolved starting at block ${fromBlock}: 0/${total} (${progressPercent(processed, total)}%)`,
+    message: `${source.version} AttestationPeriodResolved starting at block ${fromBlock}: 0/${total} (${progressPercent(processed, total)}%)`,
   });
 
   for (;;) {
@@ -400,7 +440,7 @@ async function indexAttestationsResolved(
       processed,
       total,
       percent: progressPercent(processed, total),
-      message: `AttestationPeriodResolved ${processed}/${total} (${progressPercent(processed, total)}%)`,
+      message: `${source.version} AttestationPeriodResolved ${processed}/${total} (${progressPercent(processed, total)}%)`,
     });
 
     if (rows.length < pageSize) break;
@@ -415,7 +455,7 @@ async function indexAttestationsResolved(
     processed: total,
     total,
     percent: 100,
-    message: `AttestationPeriodResolved complete: ${updated} updated logs`,
+    message: `${source.version} AttestationPeriodResolved complete: ${updated} updated logs`,
   });
   return updated;
 }
@@ -423,13 +463,12 @@ async function indexAttestationsResolved(
 async function indexAttestationMade(
   chainId: number,
   table: string,
+  source: AttestationSource,
   onProgress?: ProgressReporter,
 ): Promise<number> {
-  const manager = ATTESTATION_MANAGER[chainId];
-  if (!manager) return 0;
-  const address = manager.toLowerCase();
-  const cursorKey = `indexer:cursor:votes:${chainId}`;
-  const fallbackStartBlock = DEPLOYMENT_START_BLOCKS[chainId]?.attestationManager ?? 0;
+  const address = source.address;
+  const cursorKey = `indexer:cursor:${source.version}:votes:${chainId}`;
+  const fallbackStartBlock = source.startBlock;
 
   const fromBlock = await getCursor(cursorKey, fallbackStartBlock);
   const total = await getPendingEventCount(table, address, "AttestationMade", fromBlock);
@@ -447,7 +486,7 @@ async function indexAttestationMade(
     processed,
     total,
     percent: progressPercent(processed, total),
-    message: `AttestationMade starting at block ${fromBlock}: 0/${total} (${progressPercent(processed, total)}%)`,
+    message: `${source.version} AttestationMade starting at block ${fromBlock}: 0/${total} (${progressPercent(processed, total)}%)`,
   });
 
   for (;;) {
@@ -493,7 +532,7 @@ async function indexAttestationMade(
       processed,
       total,
       percent: progressPercent(processed, total),
-      message: `AttestationMade ${processed}/${total} (${progressPercent(processed, total)}%)`,
+      message: `${source.version} AttestationMade ${processed}/${total} (${progressPercent(processed, total)}%)`,
     });
 
     if (rows.length < pageSize) break;
@@ -503,8 +542,12 @@ async function indexAttestationMade(
   if (maxBlock > fromBlock) await setCursor(cursorKey, maxBlock);
   if (touchedVoters.size > 0) {
     await redis.del(`judges:ranking:${chainId}`);
+    await redis.del(`judges:ranking:${chainId}:${CONTEST_START_TIME}`);
     await Promise.all(
-      [...touchedVoters].map((voter) => redis.del(`votes:${chainId}:${voter}`)),
+      [...touchedVoters].flatMap((voter) => [
+        redis.del(`votes:${chainId}:${voter}`),
+        redis.del(`votes:${chainId}:${voter}:${CONTEST_START_TIME}`),
+      ]),
     );
   }
   reportProgress(onProgress, {
@@ -514,7 +557,7 @@ async function indexAttestationMade(
     processed: total,
     total,
     percent: 100,
-    message: `AttestationMade complete: ${inserted} new votes`,
+    message: `${source.version} AttestationMade complete: ${inserted} new votes`,
   });
   return inserted;
 }
@@ -577,8 +620,15 @@ export async function indexChainEvents(
 
   try {
     const newLogs = await indexHotdogLogged(chainId, table, options.onProgress);
-    const newVotes = await indexAttestationMade(chainId, table, options.onProgress);
-    const updatedAttestations = await indexAttestationsResolved(chainId, table, options.onProgress);
+    const attestationSources = getAttestationSources(chainId);
+    let newVotes = 0;
+    let updatedAttestations = 0;
+
+    for (const source of attestationSources) {
+      newVotes += await indexAttestationMade(chainId, table, source, options.onProgress);
+      updatedAttestations += await indexAttestationsResolved(chainId, table, source, options.onProgress);
+    }
+
     return { chainId, ran: true, newLogs, newVotes, updatedAttestations };
   } finally {
     await redis.del(lockKey);

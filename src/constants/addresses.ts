@@ -7,13 +7,23 @@ export const LOG_A_DOG: ContractAddress = {
   [baseSepolia.id]: "0xa01Ee37F0A704221f5Bf3772a4207380090e1d32",
 }
 
-export const STAKING: ContractAddress = {
+export const STAKING_V1: ContractAddress = {
   [base.id]: "0x388aC132F45bB5d6810BC5a6412a14935a5B70D6",
   [baseSepolia.id]: "0x605150F6be3E9b81963Cd6d895b7C11D73e34874",
 }
 
-export const ATTESTATION_MANAGER: ContractAddress = {
+export const STAKING: ContractAddress = {
+  [base.id]: "0xD883D797F1B8501007C95318B1d998e35cA4B7F7",
+  [baseSepolia.id]: "0x605150F6be3E9b81963Cd6d895b7C11D73e34874",
+}
+
+export const ATTESTATION_MANAGER_V1: ContractAddress = {
   [base.id]: "0xcBf054aA8FEb4fd0484E45b766B502Bc045076B8",
+  [baseSepolia.id]: "0xC6073175c71Bd69dBb42aB92e024DD31BEE81f3A",
+}
+
+export const ATTESTATION_MANAGER: ContractAddress = {
+  [base.id]: "0x527cF86bEc47b8596571d1dF7bFDF1981435Fe31",
   [baseSepolia.id]: "0xC6073175c71Bd69dBb42aB92e024DD31BEE81f3A",
 }
 

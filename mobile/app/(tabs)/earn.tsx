@@ -72,7 +72,7 @@ export default function EarnScreen() {
         <InfoCard
           icon="🏆"
           title="Win the Contest"
-          body={`Season 3 runs until Labor Day 2026. The player with the most valid dogs wins the prize pool.`}
+          body={`Season 4 runs from July 4 through Labor Day 2026. The player with the most valid dogs wins the prize pool.`}
           action={{
             label: "View Leaderboard",
             onPress: () => openWebApp("/leaderboard"),
