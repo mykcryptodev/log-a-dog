@@ -17,6 +17,13 @@ const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
   { ssr: false }
 );
+
+const compactProfileButtonClassName =
+  "!btn !btn-ghost !h-auto !min-h-0 !w-16 !flex !flex-col !items-center !justify-center !gap-0.5 !border-0 !bg-transparent !px-0 !py-1 !font-display !text-[0.65rem] !font-normal !tracking-wide !text-base-content/60 !shadow-none !normal-case hover:!bg-transparent before:content-['👤'] before:text-xl before:leading-none";
+
+const compactProfileDropdownButtonClassName =
+  "btn btn-ghost h-auto min-h-0 w-16 flex-col gap-0.5 border-0 bg-transparent px-0 py-1 font-display text-[0.65rem] font-normal tracking-wide text-base-content/60 shadow-none hover:bg-transparent";
+
 type Props = {
   onProfileCreated?: (profile: {
     username: string;
@@ -82,12 +89,20 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     setCreatedProfileImgUrl(profile.imgUrl);
   }, [refetch, onProfileCreated]);
 
+  const isCompact = !!hideNameAndBadge;
+  const compactLabel = label ?? loginBtnLabel ?? "You";
+
   if (!account && !sessionData?.user?.id) return (
-    <div className="mr-4 flex items-center gap-2">
-      <Connect loginBtnLabel={loginBtnLabel} />
-      <div className="hidden md:block">
-        <SignInWithFarcaster />
-      </div>
+    <div className={isCompact ? "flex items-center justify-center" : "mr-4 flex items-center gap-2"}>
+      <Connect
+        loginBtnLabel={isCompact ? compactLabel : loginBtnLabel}
+        className={isCompact ? compactProfileButtonClassName : undefined}
+      />
+      {!isCompact && (
+        <div className="hidden md:block">
+          <SignInWithFarcaster />
+        </div>
+      )}
     </div>
   )
 
@@ -95,8 +110,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   // This prevents infinite refresh loops
   if (!account && sessionData?.user?.id) {
     return (
-      <div className="mr-4 flex items-center gap-2">
-        <Connect loginBtnLabel="Reconnect" />
+      <div className={isCompact ? "flex items-center justify-center" : "mr-4 flex items-center gap-2"}>
+        <Connect
+          loginBtnLabel={isCompact ? compactLabel : "Reconnect"}
+          className={isCompact ? compactProfileButtonClassName : undefined}
+        />
         <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={logout}>
           <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
         </button>
@@ -107,8 +125,9 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   if (account && wallet?.id !== 'inApp' && !sessionData?.user?.id) {
     return (
       <SignInWithEthereum 
-        btnLabel="I will play with honor"
+        btnLabel={isCompact ? compactLabel : "I will play with honor"}
         defaultOpen={true}
+        buttonClassName={isCompact ? compactProfileButtonClassName : undefined}
       />
     )
   }
@@ -116,11 +135,14 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
   if (!displayUsername) return (
     <>
       {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <div className="flex items-center gap-2">
-        <button className="btn" onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}>
-          {createProfileBtnLabel ?? 'Profile'}
+      <div className={isCompact ? "flex items-center justify-center" : "flex items-center gap-2"}>
+        <button
+          className={isCompact ? compactProfileButtonClassName : "btn"}
+          onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}
+        >
+          {isCompact ? compactLabel : createProfileBtnLabel ?? 'Profile'}
         </button>
-        <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={logout}>
+        <button className={`btn ${hideLogout || isCompact ? 'hidden' : ''}`} onClick={logout}>
           <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
         </button>
       </div>
@@ -137,15 +159,23 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           <ProfileForm
             onProfileSaved={handleProfileSaved}
           />
+          {isCompact && !hideLogout && (
+            <div className="modal-action justify-center">
+              <button className="btn btn-ghost gap-2" onClick={logout}>
+                <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </dialog>
     </>
   );
 
   return (
-    <div className="mr-4">
+    <div className={isCompact ? "" : "mr-4"}>
       <div className="dropdown dropdown-end dropdown-top">
-        <div tabIndex={0} role="button" className="btn btn-ghost">
+        <div tabIndex={0} role="button" className={isCompact ? compactProfileDropdownButtonClassName : "btn btn-ghost"}>
           <div className="flex items-center gap-2">
             {isLoading ? (
               <>
@@ -156,7 +186,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
               <>
               <div className="indicator">
                 {hasNoAvatar && <span className="indicator-item badge badge-accent"></span>}
-                <div className="flex flex-col gap-1 items-center">
+                <div className="flex flex-col gap-0.5 items-center">
                   <CustomMediaRenderer
                     src={imgSrc}
                     alt="Profile Pic"
@@ -173,7 +203,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
                       )}
                     </>
                   ) : (
-                    label && <span className="text-sm font-normal">{label}</span>
+                    label && <span className="font-display text-[0.65rem] font-normal tracking-wide">{label}</span>
                   )}
                 </div>
               </div>

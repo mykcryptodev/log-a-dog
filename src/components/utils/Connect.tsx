@@ -16,9 +16,10 @@ import useMounted from "~/hooks/useMounted";
 
 type Props = {
   loginBtnLabel?: string;
+  className?: string;
 };
 
-export const Connect: FC<Props> = ({ loginBtnLabel }) => {
+export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
   const { data: sessionData, status } = useSession();
   const mounted = useMounted();
   const userPrefersDarkMode = usePrefersDarkMode();
@@ -116,7 +117,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
   // Prevent hydration mismatch by not rendering ConnectButton until mounted
   if (!mounted) {
     return (
-      <button className="btn min-w-fit" disabled>
+      <button className={className ?? "btn min-w-fit"} disabled>
         {loginBtnLabel ?? "Login"}
       </button>
     );
@@ -130,7 +131,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel }) => {
       autoConnect={false}
       connectButton={{
         label: loginBtnLabel ?? "Login",
-        className: "!btn !min-w-fit",
+        className: className ?? "!btn !min-w-fit",
       }}
       onConnect={(wallet) => {
         void silentlySignIn(wallet);

@@ -9,8 +9,9 @@ import { DEFAULT_CHAIN } from '~/constants';
 type Props = {
   btnLabel?: string;
   defaultOpen?: boolean;
+  buttonClassName?: string;
 }
-const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
+const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false, buttonClassName }) => {
   const { data: sessionData, status } = useSession();
   const account = useActiveAccount();
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
@@ -68,7 +69,7 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false }) => {
   return (
     <>
     {/* Open the modal using document.getElementById('ID').showModal() method */}
-    <button className="btn" onClick={()=>(document.getElementById(`sign_in_modal`) as HTMLDialogElement).showModal()}>
+    <button className={buttonClassName ?? "btn"} onClick={()=>(document.getElementById(`sign_in_modal`) as HTMLDialogElement).showModal()}>
       {`${btnLabel ?? 'Vow to play with honor'}`}
     </button>
     <dialog id={`sign_in_modal`} className="modal">
