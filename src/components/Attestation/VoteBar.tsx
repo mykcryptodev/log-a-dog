@@ -39,6 +39,8 @@ export const VoteBar: FC<Props> = ({
   onAttestationAffirmationRevoked,
 }) => {
   const { data: sessionData } = useSession();
+  const utils = api.useUtils();
+  const { mutateAsync: refreshFeed } = api.indexer.refreshFeed.useMutation();
   const [optimisticValidCount, setOptimisticValidCount] = useState<string | undefined>(validAttestations);
   const [optimisticInvalidCount, setOptimisticInvalidCount] = useState<string | undefined>(invalidAttestations);
   const [optimisticUserAttested, setOptimisticUserAttested] = useState<boolean | undefined>(userAttested);
@@ -151,9 +153,24 @@ export const VoteBar: FC<Props> = ({
             { message: "Almost done...", duration: 2000 },
           ]}
           successMessage="Verdict confirmed!"
-          onResolved={(success) => {
+          onResolved={(success, transactionHash) => {
             setPendingTransactionId(null);
-            if (success) void onAttestationMade?.();
+            if (success) {
+              void (async () => {
+                try {
+                  if (transactionHash) {
+                    await refreshFeed({ chainId, transactionHash });
+                  }
+                } catch (error) {
+                  console.warn("Could not refresh indexed votes after verdict", error);
+                }
+                if (sessionData?.user?.address) {
+                  await utils.ghost.getUserVotes.invalidate({ voter: sessionData.user.address });
+                }
+                await utils.ghost.getJudges.invalidate();
+                void onAttestationMade?.();
+              })();
+            }
           }}
         />
       )}

@@ -7,6 +7,8 @@ export function useGhostVote(logId: string | undefined, voter: string | undefine
     {
       enabled: !!voter,
       staleTime: Infinity,
+      retry: false,
+      refetchOnWindowFocus: false,
     },
   );
 

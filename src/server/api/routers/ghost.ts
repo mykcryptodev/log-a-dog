@@ -1,30 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/no-inferrable-types */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { env } from "~/env";
 import { getOrSetCache, CACHE_DURATION } from "~/server/utils/redis";
 import { type UserProfile, fetchUserProfiles } from "~/server/utils/profile";
+import { DEFAULT_CHAIN } from "~/constants/chains";
+import { db } from "~/server/db";
 import { z } from "zod";
-
-interface Vote {
-  isValid: boolean;
-  logId: string;
-  voter: string;
-}
-
-interface DogLog {
-  id: string;
-  isValid: boolean;
-  invalidVotes: string;
-  validVotes: string;
-  status: number;
-}
-
-
 
 interface JudgeResult {
   voter: string;
@@ -35,174 +14,67 @@ interface JudgeResult {
   profile: UserProfile;
 }
 
-const QUERY = `query Judges($votesCursor: String, $logsCursor: String) {
-  votes(after: $votesCursor, limit: 100) {
-    items {
-      isValid
-      logId
-      voter
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-    }
-  }
-  dogLogs(after: $logsCursor, limit: 100, where: {status_not: 0}) {
-    items {
-      id
-      isValid
-      invalidVotes
-      validVotes
-      status
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-    }
-  }
-}`;
-
-const USER_VOTES_QUERY = `query Votes($voter: String!, $cursor: String) {
-  votes(where: {voter: $voter}, after: $cursor, limit: 100) {
-    items {
-      logId
-      isValid
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-    }
-  }
-}`;
-
-async function fetchWithExponentialBackoff(
-  url: string,
-  options: RequestInit,
-  maxRetries: number = 3
-): Promise<Response> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch(url, options);
-      
-      // If successful, return the response
-      if (response.ok) {
-        return response;
-      }
-      
-      // If it's a rate limit or server error, retry
-      if (response.status >= 500 || response.status === 429) {
-        if (attempt === maxRetries) {
-          throw new Error(`Ghost API request failed after ${maxRetries + 1} attempts: ${response.statusText}`);
-        }
-        
-        // Exponential backoff: 2s, 4s, 8s, 16s...
-        const delay = Math.pow(2, attempt + 1) * 1000;
-        console.log(`Ghost API request failed (${response.status}), retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-      
-      // For other errors (4xx except 429), don't retry
-      throw new Error(`Ghost API request failed: ${response.statusText}`);
-    } catch (error) {
-      // Network errors or other fetch errors
-      if (attempt === maxRetries) {
-        throw new Error(`Ghost API request failed after ${maxRetries + 1} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-      
-      const delay = Math.pow(2, attempt) * 1000;
-      console.log(`Ghost API network error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1}):`, error);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  
-  throw new Error('Unexpected error in fetchWithExponentialBackoff');
-}
-
-
-
 export const ghostRouter = createTRPCRouter({
-  getJudges: publicProcedure.query(async ({ ctx }) => {
-    const cacheKey = "judges:ranking";
+  getJudges: publicProcedure.query(async () => {
+    const chainId = DEFAULT_CHAIN.id.toString();
+    const cacheKey = `judges:ranking:${chainId}`;
     
     return getOrSetCache(
       cacheKey,
       async () => {
-        let votesCursor: string | null = null;
-        let logsCursor: string | null = null;
-        const votes: Vote[] = [];
-        const logs: DogLog[] = [];
+        const resolvedLogs = await db.dogEvent.findMany({
+          where: {
+            chainId,
+            attestationResolved: true,
+            attestationValid: { not: null },
+          },
+          select: {
+            logId: true,
+            attestationValid: true,
+          },
+        });
 
-        // Fetch all votes and logs from Ghost Protocol API
-        while (true) {
-          const response: Response = await fetchWithExponentialBackoff(
-            "https://api.ghostlogs.xyz/gg/pub/7a444b24-49f2-4960-8e2b-18eedc34ea4b/ghostgraph",
-            {
-              method: "POST",
-              headers: {
-                "X-GHOST-KEY": env.GHOST_PROTOCOL_API_KEY,
-                "content-type": "application/json",
-              },
-              body: JSON.stringify({
-                query: QUERY,
-                variables: { votesCursor, logsCursor },
-              }),
-            }
-          );
+        const resolvedByLogId = new Map(
+          resolvedLogs.map((log) => [log.logId, log.attestationValid]),
+        );
+        const logIds = [...resolvedByLogId.keys()];
 
-          const json = await response.json() as any;
-          const voteData = json.data?.votes;
-          const logData = json.data?.dogLogs;
-
-          if (voteData) {
-            votes.push(...(voteData.items as Vote[]));
-            votesCursor = voteData.pageInfo.hasNextPage
-              ? (voteData.pageInfo.endCursor as string)
-              : null;
-          }
-
-          if (logData) {
-            logs.push(...(logData.items as DogLog[]));
-            logsCursor = logData.pageInfo.hasNextPage
-              ? (logData.pageInfo.endCursor as string)
-              : null;
-          }
-
-          if (!votesCursor && !logsCursor) break;
+        if (logIds.length === 0) {
+          return [];
         }
 
-        // Process data to calculate judge rankings
-        const logMap = new Map<string, DogLog>();
-        for (const log of logs) {
-          logMap.set(log.id, log);
-        }
+        const votes = await db.attestationVote.findMany({
+          where: {
+            chainId,
+            logId: { in: logIds },
+          },
+          select: {
+            voter: true,
+            logId: true,
+            isValid: true,
+          },
+        });
 
         const judgeStats: Record<string, { correct: number; total: number }> = {};
+
         for (const vote of votes) {
-          const log = logMap.get(vote.logId);
-          if (!log) continue;
-          if (log.status === 0) continue; // still pending
-          
-          // Initialize judge stats if not exists
-          if (!judgeStats[vote.voter]) {
-            judgeStats[vote.voter] = { correct: 0, total: 0 };
-          }
-          
-          // Increment total votes
-          judgeStats[vote.voter]!.total += 1;
-          
-          // Check if vote was correct
-          const correct =
-            (vote.isValid && log.isValid) || (!vote.isValid && !log.isValid);
-          if (correct) {
-            judgeStats[vote.voter]!.correct += 1;
+          const resolvedValid = resolvedByLogId.get(vote.logId);
+          if (resolvedValid === null || resolvedValid === undefined) continue;
+
+          const voter = vote.voter.toLowerCase();
+          judgeStats[voter] ??= { correct: 0, total: 0 };
+          judgeStats[voter].total += 1;
+
+          if (vote.isValid === resolvedValid) {
+            judgeStats[voter].correct += 1;
           }
         }
 
-        // Get unique voter addresses
         const voterAddresses = Object.keys(judgeStats);
+        if (voterAddresses.length === 0) {
+          return [];
+        }
         
-        // Fetch user profiles for all voters
         const profileMap = await fetchUserProfiles(voterAddresses);
         
         const ranking: JudgeResult[] = Object.entries(judgeStats)
@@ -237,46 +109,27 @@ export const ghostRouter = createTRPCRouter({
     .input(z.object({ voter: z.string() }))
     .query(async ({ input }) => {
       const voter = input.voter.toLowerCase();
-      const cacheKey = `ghost:votes:${voter}`;
+      const chainId = DEFAULT_CHAIN.id.toString();
+      const cacheKey = `votes:${chainId}:${voter}`;
 
       return getOrSetCache(
         cacheKey,
         async () => {
-          let cursor: string | null = null;
-          const votes: Record<string, boolean> = {};
+          const rows = await db.attestationVote.findMany({
+            where: {
+              chainId,
+              voter,
+            },
+            select: {
+              logId: true,
+              isValid: true,
+            },
+          });
 
-          while (true) {
-            const response = await fetchWithExponentialBackoff(
-              "https://api.ghostlogs.xyz/gg/pub/7a444b24-49f2-4960-8e2b-18eedc34ea4b/ghostgraph",
-              {
-                method: "POST",
-                headers: {
-                  "X-GHOST-KEY": env.GHOST_PROTOCOL_API_KEY,
-                  "content-type": "application/json",
-                },
-                body: JSON.stringify({
-                  query: USER_VOTES_QUERY,
-                  variables: { voter, cursor },
-                }),
-              }
-            );
-
-            const json = (await response.json()) as any;
-            const voteData = json.data?.votes;
-
-            if (voteData) {
-              for (const item of voteData.items as { logId: string; isValid: boolean }[]) {
-                votes[item.logId] = item.isValid;
-              }
-              cursor = voteData.pageInfo.hasNextPage ? (voteData.pageInfo.endCursor as string) : null;
-            } else {
-              break;
-            }
-
-            if (!cursor) break;
-          }
-
-          return votes;
+          return rows.reduce<Record<string, boolean>>((votes, row) => {
+            votes[row.logId] = row.isValid;
+            return votes;
+          }, {});
         },
         CACHE_DURATION.MEDIUM
       );

@@ -4,9 +4,9 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { redis } from "~/server/utils/redis";
 import { indexChainEvents, indexAfterTransaction } from "~/server/utils/indexer";
 
-// Per-identity cooldown for the manual/auto refresh path. The Redis index lock
-// already coalesces concurrent scans; this stops a single client from issuing a
-// fresh CDP scan on every click.
+// Per-identity cooldown for manual refreshes. The Redis index lock already
+// coalesces concurrent scans; this stops a single client from issuing a fresh
+// CDP scan on every click.
 const REFRESH_COOLDOWN_SECONDS = 20;
 
 function clientIdentity(ctx: {
@@ -54,7 +54,9 @@ export const indexerRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await assertNotRateLimited(clientIdentity(ctx));
+      if (!input.transactionHash) {
+        await assertNotRateLimited(clientIdentity(ctx));
+      }
 
       const result = input.transactionHash
         ? await indexAfterTransaction(input.chainId, input.transactionHash)

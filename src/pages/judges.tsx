@@ -12,12 +12,25 @@ import { ATTESTATION_WINDOW_SECONDS, DEFAULT_CHAIN } from "~/constants";
 const JudgesPage: NextPage = () => {
   const isClient = typeof window !== "undefined";
 
-  const { data: dogData, isLoading: loadingDogs, refetch } = api.hotdog.getAll.useQuery(
+  const {
+    data: dogData,
+    isLoading: loadingDogs,
+    isError: dogsErrored,
+    refetch,
+  } = api.hotdog.getAll.useQuery(
     { chainId: DEFAULT_CHAIN.id, user: ZERO_ADDRESS, start: 0, limit: 50 },
-    { enabled: isClient, refetchOnWindowFocus: false },
+    { enabled: isClient, refetchOnWindowFocus: false, retry: 1 },
   );
 
-  const { data: judges = [], isLoading: loadingJudges } = api.ghost.getJudges.useQuery();
+  const {
+    data: judges = [],
+    isLoading: loadingJudges,
+    isError: judgesErrored,
+    refetch: refetchJudges,
+  } = api.ghost.getJudges.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
   // Dogs still inside their 48h voting window and not yet resolved.
   const queue = useMemo(() => {
@@ -48,11 +61,22 @@ const JudgesPage: NextPage = () => {
             <p className="mt-1 text-sm opacity-70">
               {loadingDogs
                 ? "Rounding up the suspects…"
-                : queue.length > 0
+                : dogsErrored
+                  ? "The jury queue could not load right now."
+                  : queue.length > 0
                   ? `${queue.length} dog${queue.length === 1 ? "" : "s"} await your verdict. Don't let the frauds win.`
                   : "No dogs awaiting a verdict right now. The jury rests. 🛏️"}
             </p>
           </div>
+
+          {dogsErrored && (
+            <div className="alert alert-warning">
+              <span>Could not load dogs for judging.</span>
+              <button className="btn btn-sm" onClick={() => void refetch()}>
+                Retry
+              </button>
+            </div>
+          )}
 
           {/* Voting queue — one dog at a time */}
           {current && (
@@ -93,6 +117,17 @@ const JudgesPage: NextPage = () => {
             <h2 className="mb-2 mt-4 font-display text-2xl tracking-wide">🏅 TOP JUDGES</h2>
             {loadingJudges ? (
               <div className="loading loading-spinner" />
+            ) : judgesErrored ? (
+              <div className="rounded-2xl bg-base-200/40 p-4 text-sm">
+                <p className="opacity-70">Could not load judge rankings right now.</p>
+                <button className="btn btn-ghost btn-sm mt-2" onClick={() => void refetchJudges()}>
+                  Retry rankings
+                </button>
+              </div>
+            ) : judges.length === 0 ? (
+              <div className="rounded-2xl bg-base-200/40 p-4 text-sm opacity-70">
+                Judge rankings are temporarily unavailable.
+              </div>
             ) : (
               <div className="overflow-x-auto rounded-2xl bg-base-200/40 p-2">
                 <table className="table w-full">

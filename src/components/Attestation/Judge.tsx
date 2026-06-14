@@ -33,6 +33,8 @@ export const JudgeAttestation: FC<Props> = ({
   onAttestationAffirmationRevoked,
 }) => {
   const { data: sessionData } = useSession();
+  const utils = api.useUtils();
+  const { mutateAsync: refreshFeed } = api.indexer.refreshFeed.useMutation();
   const [isLoadingValidAttestation, setIsLoadingValidAttestation] = useState<boolean>(false);
   const [isLoadingInvalidAttestation, setIsLoadingInvalidValidAttestation] = useState<boolean>(false);
   const [optimisticValidCount, setOptimisticValidCount] = useState<string | undefined>(validAttestations);
@@ -157,10 +159,23 @@ export const JudgeAttestation: FC<Props> = ({
             { message: "Almost done...", duration: 2000 }
           ]}
           successMessage="Attestation confirmed successfully!"
-          onResolved={(success) => {
+          onResolved={(success, transactionHash) => {
             setPendingTransactionId(null);
             if (success) {
-              void onAttestationMade?.();
+              void (async () => {
+                try {
+                  if (transactionHash) {
+                    await refreshFeed({ chainId, transactionHash });
+                  }
+                } catch (error) {
+                  console.warn("Could not refresh indexed votes after attestation", error);
+                }
+                if (sessionData?.user?.address) {
+                  await utils.ghost.getUserVotes.invalidate({ voter: sessionData.user.address });
+                }
+                await utils.ghost.getJudges.invalidate();
+                void onAttestationMade?.();
+              })();
             }
           }}
         />

@@ -13,7 +13,7 @@ type Props = {
   loadingMessages?: LoadingMessage[];
   successMessage?: string;
   errorMessage?: string;
-  onResolved?: (success: boolean) => void;
+  onResolved?: (success: boolean, transactionHash?: string) => void;
   onTransactionHash?: (transactionHash: string) => void;
 }
 
@@ -93,10 +93,12 @@ export const TransactionStatus: FC<Props> = ({
           toastId: `${transactionId}-mined`,
         });
         // Extract transaction hash from the data if available
+        let transactionHash: string | undefined;
         if (data && 'transactionHash' in data && typeof data.transactionHash === 'string') {
-          onTransactionHash?.(data.transactionHash);
+          transactionHash = data.transactionHash;
+          onTransactionHash?.(transactionHash);
         }
-        onResolved?.(true);
+        onResolved?.(true, transactionHash);
         break;
       case "FAILED":
         resolvedRef.current = true;

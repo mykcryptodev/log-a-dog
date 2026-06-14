@@ -202,8 +202,8 @@ async function getZoraCoinDetailsBatch(addresses: string[], chainId: number): Pr
     return coinDetailsMap;
   }
   
-  // Fetch uncached coins in chunks
-  const chunkSize = 50;
+  // Zora currently rejects batches over 20 coin ids.
+  const chunkSize = 20;
   for (let i = 0; i < uncachedAddresses.length; i += chunkSize) {
     const chunk = uncachedAddresses.slice(i, i + chunkSize);
     

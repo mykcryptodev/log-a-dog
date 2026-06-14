@@ -3,8 +3,8 @@
  *
  * This replaces the old Thirdweb Engine webhook push pipeline (the self-hosted
  * Engine on Railway is gone). Instead of being pushed events, we *pull* decoded
- * logs from CDP's `base.events` table and upsert them into the `DogEvent` table
- * (the same read-model the webhooks used to write).
+ * logs from CDP's `base.events` table and upsert them into Postgres read-models
+ * (`DogEvent` and `AttestationVote`).
  *
  * It is invoked from three places:
  *   1. The hourly safety-net cron (`/api/cron/index-chain`) — catches anything
@@ -35,8 +35,17 @@ const CDP_EVENTS_TABLE: Record<number, string> = {
 // We track how far we've indexed with an integer block-number cursor per
 // (chain, event) in Redis. Integer comparison avoids any SQL timestamp/timezone
 // dialect pitfalls. On a cold start (or if the cursor is ever lost) we re-scan
-// from 0 — idempotent upserts make that safe, just slightly more CDP queries once.
+// from the relevant contract deployment block — idempotent upserts make overlap
+// scans safe.
 const BLOCK_OVERLAP = 100; // re-scan a few blocks back so nothing straddles the cursor
+
+const DEPLOYMENT_START_BLOCKS: Record<number, { logADog: number; attestationManager: number }> = {
+  // contracts/broadcast/Deploy.s.sol/8453/run-latest.json
+  8453: {
+    logADog: 32424776,
+    attestationManager: 32424776,
+  },
+};
 
 // Only fire "new dog" notifications for events this fresh. Prevents a backfill /
 // missed-event sweep from spamming every user with old logs.
@@ -44,9 +53,13 @@ const NOTIFY_MAX_AGE_SECONDS = 2 * 60 * 60; // 2 hours
 
 const LOCK_TTL_SECONDS = 30;
 
-async function getCursor(key: string): Promise<number> {
+function withOverlap(block: number): number {
+  return Math.max(0, block - BLOCK_OVERLAP);
+}
+
+async function getCursor(key: string, fallbackStartBlock: number): Promise<number> {
   const v = await redis.get<number>(key);
-  return typeof v === "number" && v > BLOCK_OVERLAP ? v - BLOCK_OVERLAP : 0;
+  return typeof v === "number" ? withOverlap(v) : withOverlap(fallbackStartBlock);
 }
 
 async function setCursor(key: string, block: number): Promise<void> {
@@ -57,8 +70,28 @@ export interface IndexResult {
   chainId: number;
   ran: boolean; // false when skipped (lock held or unsupported chain)
   newLogs: number;
+  newVotes: number;
   updatedAttestations: number;
   reason?: string;
+}
+
+type IndexStage = "HotdogLogged" | "AttestationMade" | "AttestationPeriodResolved";
+type IndexProgressPhase = "start" | "page" | "complete" | "skip";
+
+export interface IndexProgress {
+  chainId: number;
+  stage: IndexStage | "indexer";
+  phase: IndexProgressPhase;
+  processed: number;
+  total: number;
+  percent: number;
+  message: string;
+}
+
+type ProgressReporter = (progress: IndexProgress) => void;
+
+interface IndexOptions {
+  onProgress?: ProgressReporter;
 }
 
 interface HotdogLoggedRow {
@@ -89,6 +122,19 @@ interface AttestationResolvedRow {
   };
 }
 
+interface AttestationMadeRow {
+  block_number: string;
+  block_timestamp: string; // ISO 8601
+  transaction_hash: string;
+  log_index: number;
+  parameters: {
+    logId: string;
+    attestor: string;
+    isValid: boolean;
+    stakeAmount: string;
+  };
+}
+
 async function runCdpQuery<T>(sql: string): Promise<T[]> {
   const res = await fetch(CDP_SQL_URL, {
     method: "POST",
@@ -105,17 +151,61 @@ async function runCdpQuery<T>(sql: string): Promise<T[]> {
   return json.result;
 }
 
-async function indexHotdogLogged(chainId: number, table: string): Promise<number> {
+async function getPendingEventCount(
+  table: string,
+  address: string,
+  eventName: string,
+  fromBlock: number,
+): Promise<number> {
+  const rows = await runCdpQuery<Record<string, unknown>>(
+    `SELECT COUNT(*) AS total
+      FROM ${table}
+      WHERE address = '${address}' AND event_name = '${eventName}' AND block_number > ${fromBlock}`,
+  );
+  return Number(rows[0]?.total ?? 0);
+}
+
+function reportProgress(
+  onProgress: ProgressReporter | undefined,
+  progress: IndexProgress,
+): void {
+  console.log(`[indexer] ${progress.message}`);
+  onProgress?.(progress);
+}
+
+function progressPercent(processed: number, total: number): number {
+  if (total === 0) return 100;
+  return Math.min(100, Number(((processed / total) * 100).toFixed(1)));
+}
+
+async function indexHotdogLogged(
+  chainId: number,
+  table: string,
+  onProgress?: ProgressReporter,
+): Promise<number> {
   const contract = LOG_A_DOG[chainId];
   if (!contract) return 0;
   const address = contract.toLowerCase();
   const cursorKey = `indexer:cursor:logs:${chainId}`;
+  const fallbackStartBlock = DEPLOYMENT_START_BLOCKS[chainId]?.logADog ?? 0;
 
-  const fromBlock = await getCursor(cursorKey);
+  const fromBlock = await getCursor(cursorKey, fallbackStartBlock);
+  const total = await getPendingEventCount(table, address, "HotdogLogged", fromBlock);
   let offset = 0;
   const pageSize = 1000;
   let newCount = 0;
   let maxBlock = fromBlock;
+  let processed = 0;
+
+  reportProgress(onProgress, {
+    chainId,
+    stage: "HotdogLogged",
+    phase: "start",
+    processed,
+    total,
+    percent: progressPercent(processed, total),
+    message: `HotdogLogged starting at block ${fromBlock}: 0/${total} (${progressPercent(processed, total)}%)`,
+  });
 
   for (;;) {
     const sql = `SELECT block_number, block_timestamp, transaction_hash, log_index, parameters
@@ -125,6 +215,7 @@ async function indexHotdogLogged(chainId: number, table: string): Promise<number
       LIMIT ${pageSize} OFFSET ${offset}`;
     const rows = await runCdpQuery<HotdogLoggedRow>(sql);
     if (rows.length === 0) break;
+    processed += rows.length;
 
     // Skip rows we already have, so we only insert (and notify) genuinely new logs.
     const hashes = rows.map((r) => r.transaction_hash);
@@ -141,11 +232,30 @@ async function indexHotdogLogged(chainId: number, table: string): Promise<number
       newCount += await insertHotdogLog(chainId, address, r);
     }
 
+    reportProgress(onProgress, {
+      chainId,
+      stage: "HotdogLogged",
+      phase: "page",
+      processed,
+      total,
+      percent: progressPercent(processed, total),
+      message: `HotdogLogged ${processed}/${total} (${progressPercent(processed, total)}%)`,
+    });
+
     if (rows.length < pageSize) break;
     offset += pageSize;
   }
 
   if (maxBlock > fromBlock) await setCursor(cursorKey, maxBlock);
+  reportProgress(onProgress, {
+    chainId,
+    stage: "HotdogLogged",
+    phase: "complete",
+    processed: total,
+    total,
+    percent: 100,
+    message: `HotdogLogged complete: ${newCount} new logs`,
+  });
   return newCount;
 }
 
@@ -225,17 +335,31 @@ async function notifyNewLog(
 async function indexAttestationsResolved(
   chainId: number,
   table: string,
+  onProgress?: ProgressReporter,
 ): Promise<number> {
   const manager = ATTESTATION_MANAGER[chainId];
   if (!manager) return 0;
   const address = manager.toLowerCase();
   const cursorKey = `indexer:cursor:attestations:${chainId}`;
+  const fallbackStartBlock = DEPLOYMENT_START_BLOCKS[chainId]?.attestationManager ?? 0;
 
-  const fromBlock = await getCursor(cursorKey);
+  const fromBlock = await getCursor(cursorKey, fallbackStartBlock);
+  const total = await getPendingEventCount(table, address, "AttestationPeriodResolved", fromBlock);
   let offset = 0;
   const pageSize = 1000;
   let updated = 0;
   let maxBlock = fromBlock;
+  let processed = 0;
+
+  reportProgress(onProgress, {
+    chainId,
+    stage: "AttestationPeriodResolved",
+    phase: "start",
+    processed,
+    total,
+    percent: progressPercent(processed, total),
+    message: `AttestationPeriodResolved starting at block ${fromBlock}: 0/${total} (${progressPercent(processed, total)}%)`,
+  });
 
   for (;;) {
     const sql = `SELECT block_number, block_timestamp, transaction_hash, parameters
@@ -245,6 +369,7 @@ async function indexAttestationsResolved(
       LIMIT ${pageSize} OFFSET ${offset}`;
     const rows = await runCdpQuery<AttestationResolvedRow>(sql);
     if (rows.length === 0) break;
+    processed += rows.length;
 
     for (const r of rows) {
       const block = Number(r.block_number);
@@ -268,27 +393,158 @@ async function indexAttestationsResolved(
       updated += res.count;
     }
 
+    reportProgress(onProgress, {
+      chainId,
+      stage: "AttestationPeriodResolved",
+      phase: "page",
+      processed,
+      total,
+      percent: progressPercent(processed, total),
+      message: `AttestationPeriodResolved ${processed}/${total} (${progressPercent(processed, total)}%)`,
+    });
+
     if (rows.length < pageSize) break;
     offset += pageSize;
   }
 
   if (maxBlock > fromBlock) await setCursor(cursorKey, maxBlock);
+  reportProgress(onProgress, {
+    chainId,
+    stage: "AttestationPeriodResolved",
+    phase: "complete",
+    processed: total,
+    total,
+    percent: 100,
+    message: `AttestationPeriodResolved complete: ${updated} updated logs`,
+  });
   return updated;
 }
 
+async function indexAttestationMade(
+  chainId: number,
+  table: string,
+  onProgress?: ProgressReporter,
+): Promise<number> {
+  const manager = ATTESTATION_MANAGER[chainId];
+  if (!manager) return 0;
+  const address = manager.toLowerCase();
+  const cursorKey = `indexer:cursor:votes:${chainId}`;
+  const fallbackStartBlock = DEPLOYMENT_START_BLOCKS[chainId]?.attestationManager ?? 0;
+
+  const fromBlock = await getCursor(cursorKey, fallbackStartBlock);
+  const total = await getPendingEventCount(table, address, "AttestationMade", fromBlock);
+  let offset = 0;
+  const pageSize = 1000;
+  let inserted = 0;
+  let maxBlock = fromBlock;
+  const touchedVoters = new Set<string>();
+  let processed = 0;
+
+  reportProgress(onProgress, {
+    chainId,
+    stage: "AttestationMade",
+    phase: "start",
+    processed,
+    total,
+    percent: progressPercent(processed, total),
+    message: `AttestationMade starting at block ${fromBlock}: 0/${total} (${progressPercent(processed, total)}%)`,
+  });
+
+  for (;;) {
+    const sql = `SELECT block_number, block_timestamp, transaction_hash, log_index, parameters
+      FROM ${table}
+      WHERE address = '${address}' AND event_name = 'AttestationMade' AND block_number > ${fromBlock}
+      ORDER BY block_number ASC, log_index ASC
+      LIMIT ${pageSize} OFFSET ${offset}`;
+    const rows = await runCdpQuery<AttestationMadeRow>(sql);
+    if (rows.length === 0) break;
+    processed += rows.length;
+
+    const voteRows = rows.map((r) => {
+      const block = Number(r.block_number);
+      if (block > maxBlock) maxBlock = block;
+
+      const voter = r.parameters.attestor.toLowerCase();
+      touchedVoters.add(voter);
+
+      return {
+        chainId: chainId.toString(),
+        logId: r.parameters.logId,
+        voter,
+        isValid: r.parameters.isValid,
+        stakeAmount: r.parameters.stakeAmount,
+        transactionHash: r.transaction_hash,
+        logIndex: r.log_index,
+        blockNumber: BigInt(r.block_number),
+        blockTimestamp: new Date(r.block_timestamp),
+      };
+    });
+
+    const result = await db.attestationVote.createMany({
+      data: voteRows,
+      skipDuplicates: true,
+    });
+    inserted += result.count;
+
+    reportProgress(onProgress, {
+      chainId,
+      stage: "AttestationMade",
+      phase: "page",
+      processed,
+      total,
+      percent: progressPercent(processed, total),
+      message: `AttestationMade ${processed}/${total} (${progressPercent(processed, total)}%)`,
+    });
+
+    if (rows.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  if (maxBlock > fromBlock) await setCursor(cursorKey, maxBlock);
+  if (touchedVoters.size > 0) {
+    await redis.del(`judges:ranking:${chainId}`);
+    await Promise.all(
+      [...touchedVoters].map((voter) => redis.del(`votes:${chainId}:${voter}`)),
+    );
+  }
+  reportProgress(onProgress, {
+    chainId,
+    stage: "AttestationMade",
+    phase: "complete",
+    processed: total,
+    total,
+    percent: 100,
+    message: `AttestationMade complete: ${inserted} new votes`,
+  });
+  return inserted;
+}
+
 /**
- * Pull new HotdogLogged + AttestationPeriodResolved events for `chainId` from
- * CDP and upsert them. A Redis lock ensures only one scan runs at a time;
- * concurrent callers return `{ ran: false }` because the in-flight scan already
- * covers their data.
+ * Pull new HotdogLogged + AttestationMade + AttestationPeriodResolved events
+ * for `chainId` from CDP and upsert them. A Redis lock ensures only one scan
+ * runs at a time; concurrent callers return `{ ran: false }` because the
+ * in-flight scan already covers their data.
  */
-export async function indexChainEvents(chainId: number): Promise<IndexResult> {
+export async function indexChainEvents(
+  chainId: number,
+  options: IndexOptions = {},
+): Promise<IndexResult> {
   const table = CDP_EVENTS_TABLE[chainId];
   if (!table) {
+    reportProgress(options.onProgress, {
+      chainId,
+      stage: "indexer",
+      phase: "skip",
+      processed: 0,
+      total: 0,
+      percent: 100,
+      message: `No CDP events table for chain ${chainId}`,
+    });
     return {
       chainId,
       ran: false,
       newLogs: 0,
+      newVotes: 0,
       updatedAttestations: 0,
       reason: `No CDP events table for chain ${chainId}`,
     };
@@ -300,33 +556,48 @@ export async function indexChainEvents(chainId: number): Promise<IndexResult> {
     ex: LOCK_TTL_SECONDS,
   });
   if (!gotLock) {
+    reportProgress(options.onProgress, {
+      chainId,
+      stage: "indexer",
+      phase: "skip",
+      processed: 0,
+      total: 0,
+      percent: 100,
+      message: "Indexer already running",
+    });
     return {
       chainId,
       ran: false,
       newLogs: 0,
+      newVotes: 0,
       updatedAttestations: 0,
       reason: "Indexer already running",
     };
   }
 
   try {
-    const newLogs = await indexHotdogLogged(chainId, table);
-    const updatedAttestations = await indexAttestationsResolved(chainId, table);
-    return { chainId, ran: true, newLogs, updatedAttestations };
+    const newLogs = await indexHotdogLogged(chainId, table, options.onProgress);
+    const newVotes = await indexAttestationMade(chainId, table, options.onProgress);
+    const updatedAttestations = await indexAttestationsResolved(chainId, table, options.onProgress);
+    return { chainId, ran: true, newLogs, newVotes, updatedAttestations };
   } finally {
     await redis.del(lockKey);
   }
 }
 
 /**
- * For the post-log trigger: wait until a specific transaction's HotdogLogged
- * event is queryable in CDP, then index. Base blocks are ~2s and CDP is <250ms
- * behind tip, so this usually resolves on the first or second poll.
+ * For post-transaction triggers: wait until the transaction's known app event is
+ * queryable in CDP, then index. Base blocks are ~2s and CDP is usually close to
+ * tip, so this usually resolves on the first or second poll.
  */
 export async function indexAfterTransaction(
   chainId: number,
   transactionHash: string,
-  { maxAttempts = 6, delayMs = 2000 }: { maxAttempts?: number; delayMs?: number } = {},
+  {
+    maxAttempts = 6,
+    delayMs = 2000,
+    onProgress,
+  }: { maxAttempts?: number; delayMs?: number; onProgress?: ProgressReporter } = {},
 ): Promise<IndexResult> {
   const table = CDP_EVENTS_TABLE[chainId];
   if (table) {
@@ -334,7 +605,8 @@ export async function indexAfterTransaction(
       const rows = await runCdpQuery<{ transaction_hash: string }>(
         `SELECT transaction_hash FROM ${table}
          WHERE transaction_hash = '${transactionHash.toLowerCase()}'
-         AND event_name = 'HotdogLogged' LIMIT 1`,
+         AND event_name IN ('HotdogLogged', 'AttestationMade', 'AttestationPeriodResolved')
+         LIMIT 1`,
       );
       if (rows.length > 0) break;
       if (attempt < maxAttempts - 1) {
@@ -342,5 +614,5 @@ export async function indexAfterTransaction(
       }
     }
   }
-  return indexChainEvents(chainId);
+  return indexChainEvents(chainId, { onProgress });
 }
