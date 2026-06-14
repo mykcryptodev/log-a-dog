@@ -13,7 +13,7 @@ interface LayoutProps {
 export const Layout: FC<LayoutProps> = ({ children }) => {
   // Compute on the client to avoid a hydration mismatch on the day counter.
   const mounted = useMounted();
-  const { season, day, isLive } = getSeasonInfo();
+  const { day, isLive } = getSeasonInfo();
 
   return (
     <div className="app-bg block min-h-screen">
@@ -47,9 +47,12 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               >
                 ?
               </Link>
-              <span className="rounded-full bg-base-200 px-2.5 py-1">
-                SEASON {season}
-              </span>
+              <Link
+                href="/earn"
+                className="rounded-full bg-base-200 px-2.5 py-1"
+              >
+                $HOTDOG
+              </Link>
               {mounted && (
                 <span className="rounded-full bg-primary/20 px-2.5 py-1 text-primary">
                   {isLive ? `DAY ${day}` : "OFFSEASON"}
