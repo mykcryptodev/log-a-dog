@@ -4,6 +4,7 @@ import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 import HotdogCard from "~/components/utils/HotdogCard";
+import { BackToTopButton } from "~/components/utils/BackToTopButton";
 import { DEFAULT_CHAIN } from "~/constants";
 
 // Types from hotdog router
@@ -312,6 +313,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
   return (
     <>
+      <BackToTopButton />
       <div id="top-of-list" className="invisible" />
       <div className="flex flex-col gap-4">
       <div className="flex justify-end">
