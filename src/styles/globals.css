@@ -5,7 +5,7 @@
 @font-face {
   font-family: 'Segment';
   src: url('/fonts/Segment/Segment-Medium.otf') format('opentype');
-  font-weight: 500;
+  font-weight: 400;
   font-style: normal;
 }
 
@@ -17,7 +17,8 @@
 }
 
 @layer base {
-  html {
+  html,
+  body {
     font-family: 'Segment', system-ui, sans-serif;
   }
 }

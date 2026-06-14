@@ -5,11 +5,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Chunky condensed display voice for ranks, counts, stamps, headers.
-        // Loaded via next/font (Anton) in _app.tsx as the --font-display var.
-        display: ["var(--font-display)", "Segment", "system-ui", "sans-serif"],
-        // Body / UI keeps the existing Segment face.
-        body: ["Segment", "Inter", "system-ui", "sans-serif"],
+        sans: ["Segment", "system-ui", "sans-serif"],
+        display: ["Segment", "system-ui", "sans-serif"],
+        body: ["Segment", "system-ui", "sans-serif"],
       },
       boxShadow: {
         // Warm condiment shadow instead of gray box-shadows.

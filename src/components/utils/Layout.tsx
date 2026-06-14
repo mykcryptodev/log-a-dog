@@ -1,4 +1,5 @@
 import { type FC, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { BottomNav } from "./BottomNav";
 import { ToastProvider } from "~/providers/Toast";
@@ -20,9 +21,23 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
         {/* Slim sticky scoreboard header — brand left, season/day right. */}
         <header className="sticky top-0 z-40 border-b border-base-content/10 bg-base-100/70 backdrop-blur-lg">
           <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-2">
-            <Link href="/" className="flex items-center gap-1.5 font-display tracking-wide">
-              <span className="text-xl">🌭</span>
-              <span className="text-lg leading-none">LOG A DOG</span>
+            <Link href="/" className="flex shrink-0 items-center">
+              <Image
+                src="/images/lockup.png"
+                alt="Log a Dog"
+                width={962}
+                height={240}
+                className="h-8 w-auto dark:hidden"
+                priority
+              />
+              <Image
+                src="/images/lockup-dark.png"
+                alt="Log a Dog"
+                width={961}
+                height={233}
+                className="hidden h-8 w-auto dark:block"
+                priority
+              />
             </Link>
             <div className="flex items-center gap-2 font-display text-xs tracking-wider">
               <Link
