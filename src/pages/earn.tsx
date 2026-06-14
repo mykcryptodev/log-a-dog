@@ -1,10 +1,10 @@
 import { type NextPage } from "next";
+import Head from "next/head";
 import { Stake } from "~/components/Stake/Stake";
 import ClaimRewards from "~/components/Stake/ClaimRewards";
 import ClaimProtocolRewards from "~/components/Zora/ClaimProtocolRewards";
 import { useState } from "react";
 import {
-  CurrencyDollarIcon,
   ShieldCheckIcon,
   ClockIcon,
   TrophyIcon,
@@ -34,358 +34,285 @@ const EarnPage: NextPage = () => {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
-            Earn <span className="text-secondary">$HOTDOG</span>
-          </h1>
-          <p className="mt-4 text-xl text-base-content/70">
-            Stake your tokens and moderate submissions to earn rewards
-          </p>
-          <p className="mb-2 mt-4 text-base-content/70">Need some $HOTDOG?</p>
-          <Buy />
-          <div className="mt-4">
-            <RelevantHolders />
-          </div>
-          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-base-content/50">
-            <span>{hotdogAddress}</span>
-            <button
-              aria-label="Copy contract address"
-              onClick={handleCopy}
-              className="btn btn-ghost btn-xs px-1"
-            >
-              {copied ? (
-                <CheckIcon className="h-4 w-4 text-success" />
-              ) : (
-                <ClipboardIcon className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-        </div>
+    <>
+      <Head>
+        <title>Earn $HOTDOG — Log a Dog</title>
+        <meta name="description" content="Stake $HOTDOG, judge submissions, and earn rewards." />
+      </Head>
+      <main className="flex flex-col items-center px-4 pt-6">
+        <div className="flex w-full max-w-xl flex-col gap-5">
 
-        <div className="grid w-full max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Staking Component */}
-          <div className="card bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
-            <div className="card-body">
-              <div role="tablist" className="tabs tabs-bordered mb-4">
-                <a
-                  role="tab"
-                  className={`tab ${stakeTab === "stake" ? "tab-active" : ""}`}
-                  onClick={() => setStakeTab("stake")}
-                >
-                  Stake
-                </a>
-                <a
-                  role="tab"
-                  className={`tab ${stakeTab === "claim" ? "tab-active" : ""}`}
-                  onClick={() => setStakeTab("claim")}
-                >
-                  Claim Rewards
-                </a>
-              </div>
-              {stakeTab === "stake" ? <Stake /> : <ClaimRewards />}
+          {/* Page header */}
+          <div className="text-center">
+            <h1 className="font-display text-4xl tracking-wide sm:text-5xl">
+              💰 EARN <span className="text-secondary">$HOTDOG</span>
+            </h1>
+            <p className="mt-2 text-sm opacity-70">Stake, judge, and collect.</p>
+          </div>
+
+          {/* Token acquisition */}
+          <div className="glass-card rounded-3xl p-5 text-center">
+            <p className="mb-3 text-sm opacity-70">Need some $HOTDOG?</p>
+            <Buy />
+            <div className="mt-3">
+              <RelevantHolders />
             </div>
-          </div>
-
-          {/* Information Panel */}
-          <div className="space-y-6">
-            {/* How It Works */}
-            <div className="card bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
-              <div className="card-body">
-                <h2 className="card-title mb-4 flex items-center gap-2 text-2xl">
-                  <CurrencyDollarIcon className="h-6 w-6" />
-                  How Earning Works
-                </h2>
-
-                <div>
-                  <Image
-                    src="/images/how.png"
-                    className="w-full h-auto rounded-xl shadow cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl"
-                    alt="How Earning Works"
-                    width={1000}
-                    height={1000}
-                    onClick={() => {
-                      const modal = document.getElementById('how-earning-modal') as HTMLDialogElement | null;
-                      if (modal) modal.showModal();
-                    }}
-                  />
-                  <dialog id="how-earning-modal" className="modal">
-                    <form method="dialog" className="modal-box p-0 bg-transparent shadow-none max-w-3xl">
-                      <Image
-                        src="/images/how.png"
-                        className="w-full h-auto rounded-xl shadow-lg"
-                        alt="How Earning Works (Large)"
-                        width={1600}
-                        height={1600}
-                        priority
-                      />
-                      <button
-                        className="btn btn-sm btn-circle absolute right-2 top-2"
-                        aria-label="Close"
-                        type="submit"
-                      >
-                        ✕
-                      </button>
-                    </form>
-                    <form method="dialog" className="modal-backdrop">
-                      <button aria-label="Close"></button>
-                    </form>
-                  </dialog>
-                </div>
-
-                <div role="tablist" className="tabs tabs-bordered mb-4">
-                  <a
-                    role="tab"
-                    className={`tab ${mode === "eat" ? "tab-active" : ""}`}
-                    onClick={() => setMode("eat")}
-                  >
-                    Eat To Earn
-                  </a>
-                  <a
-                    role="tab"
-                    className={`tab ${mode === "judge" ? "tab-active" : ""}`}
-                    onClick={() => setMode("judge")}
-                  >
-                    Judge To Earn
-                  </a>
-                </div>
-
-                {mode === "eat" ? (
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="badge badge-primary badge-lg">1</div>
-                      <div>
-                        <h3 className="font-semibold">Upload a pic</h3>
-                        <p className="text-sm text-base-content/70">
-                          Take a picture of you eating a hotdog as your proof
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="badge badge-primary badge-lg">2</div>
-                      <div>
-                        <h3 className="font-semibold">Earn rewards</h3>
-                        <p className="text-sm text-base-content/70">
-                          Your picture can be bought and sold by traders, you
-                          earn the trading fees!
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+            <div className="mt-3 flex items-center justify-center gap-1 text-xs text-base-content/50">
+              <span className="break-all font-mono text-[0.6rem]">{hotdogAddress}</span>
+              <button
+                aria-label="Copy contract address"
+                onClick={handleCopy}
+                className="btn btn-ghost btn-xs shrink-0 px-1"
+              >
+                {copied ? (
+                  <CheckIcon className="h-4 w-4 text-success" />
                 ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="badge badge-primary badge-lg">1</div>
-                      <div>
-                        <h3 className="font-semibold">Stake $HOTDOG</h3>
-                        <p className="text-sm text-base-content/70">
-                          Stake your $HOTDOG tokens to earn rewards (see current
-                          APY above)
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="badge badge-primary badge-lg">2</div>
-                      <div>
-                        <h3 className="font-semibold">Judge Submissions</h3>
-                        <p className="text-sm text-base-content/70">
-                          Vote on hotdog submissions to help maintain quality
-                          and earn additional rewards
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="badge badge-primary badge-lg">3</div>
-                      <div>
-                        <h3 className="font-semibold">Earn Rewards</h3>
-                        <p className="text-sm text-base-content/70">
-                          Win rewards from incorrect voters and earn staking
-                          yields
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <ClipboardIcon className="h-4 w-4" />
                 )}
-              </div>
+              </button>
             </div>
-
-            {/* Voting Guidelines */}
-            <div className="card bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
-              <div className="card-body">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="card-title flex items-center gap-2 text-2xl">
-                    <ShieldCheckIcon className="h-6 w-6" />
-                    Voting Guidelines
-                  </h2>
-                  <Link
-                    href="/judges"
-                    className="btn btn-outline btn-sm"
-                  >
-                    <TrophyIcon className="h-4 w-4" />
-                    View Judges
-                  </Link>
-                </div>
-                <div className="space-y-3">
-                  <div className="alert alert-error bg-error/10 text-base-content">
-                    <HandThumbDownIcon className="h-5 w-5" />
-                    <div>
-                      <h4 className="font-semibold">Downvote if:</h4>
-                      <ul className="mt-1 space-y-1 text-sm">
-                        <li>• Image is not someone eating a hotdog</li>
-                        <li>• Submission is a duplicate entry</li>
-                        <li>• Content violates competition spirit</li>
-                        <li>• Image is inappropriate or spam</li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="alert alert-success bg-success/10 text-base-content">
-                    <HandThumbUpIcon className="h-5 w-5" />
-                    <div>
-                      <h4 className="font-semibold">Upvote if:</h4>
-                      <ul className="mt-1 space-y-1 text-sm">
-                        <li>• Person is clearly eating a hotdog</li>
-                        <li>• Image is original and authentic</li>
-                        <li>• Submission follows all guidelines</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-        </div>
-      </div>
-
-      {/* Claim Creator Rewards */}
-      <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
-        <div className="card-body">
-          <h2 className="card-title mb-4 flex items-center gap-2 text-2xl">
-            <CurrencyDollarIcon className="h-6 w-6" />
-            Claim Trading Rewards
-          </h2>
-          <ClaimProtocolRewards />
-        </div>
-      </div>
-
-      {/* Airdrop */}
-      <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
-        <div className="card-body">
-          <h2 className="card-title flex items-center gap-2 text-2xl">
-            <CurrencyDollarIcon className="h-6 w-6" />
-            Airdrop
-          </h2>
-          <p className="text-sm text-base-content/70 mb-2">
-            Airdrop of 3M $HOTDOG for Glizzy Zone and Log a Dog Channel Followers
-          </p>
-          <div className="flex w-full items-center justify-center flex-col gap-2">
-            <AirdropChannel />
           </div>
-        </div>
-      </div>
 
-      {/* Airdrop */}
+          {/* Staking */}
+          <div className="glass-card rounded-3xl p-5">
+            <div role="tablist" className="tabs tabs-boxed mb-4 bg-base-200">
+              <a
+                role="tab"
+                className={`tab font-display tracking-wide ${stakeTab === "stake" ? "tab-active" : ""}`}
+                onClick={() => setStakeTab("stake")}
+              >
+                Stake
+              </a>
+              <a
+                role="tab"
+                className={`tab font-display tracking-wide ${stakeTab === "claim" ? "tab-active" : ""}`}
+                onClick={() => setStakeTab("claim")}
+              >
+                Claim Rewards
+              </a>
+            </div>
+            {stakeTab === "stake" ? <Stake /> : <ClaimRewards />}
+          </div>
 
-      {/* Voting Process */}
-      <div className="card w-full max-w-4xl bg-base-100 bg-opacity-50 shadow-xl backdrop-blur-lg">
-        <div className="card-body">
-            <h2 className="card-title mb-6 flex items-start gap-2 text-2xl">
-              <ClockIcon className="mt-1 h-6 w-6" />
-              Voting Process & Rewards
-            </h2>
+          {/* How Earning Works */}
+          <div className="glass-card rounded-3xl p-5">
+            <h2 className="mb-3 font-display text-2xl tracking-wide">💡 HOW IT WORKS</h2>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="text-center">
-                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <ShieldCheckIcon className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="mb-2 font-semibold">Vote with Stake</h3>
-                <p className="text-sm text-base-content/70">
-                  Stake minimum 30,000 $HOTDOG on your vote. Higher stakes = higher
-                  potential rewards.
-                </p>
-              </div>
+            <Image
+              src="/images/how.png"
+              className="mb-4 h-auto w-full cursor-pointer rounded-2xl shadow transition-transform hover:scale-[1.02]"
+              alt="How Earning Works"
+              width={1000}
+              height={1000}
+              onClick={() => {
+                (document.getElementById("how-earning-modal") as HTMLDialogElement | null)?.showModal();
+              }}
+            />
+            <dialog id="how-earning-modal" className="modal">
+              <form method="dialog" className="modal-box bg-transparent p-0 shadow-none" style={{ maxWidth: "48rem" }}>
+                <Image
+                  src="/images/how.png"
+                  className="h-auto w-full rounded-2xl shadow-lg"
+                  alt="How Earning Works"
+                  width={1600}
+                  height={1600}
+                  priority
+                />
+                <button className="btn btn-circle btn-sm absolute right-2 top-2" type="submit" aria-label="Close">
+                  ✕
+                </button>
+              </form>
+              <form method="dialog" className="modal-backdrop">
+                <button aria-label="Close" />
+              </form>
+            </dialog>
 
-              <div className="text-center">
-                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-warning/10">
-                  <ClockIcon className="h-8 w-8 text-warning" />
-                </div>
-                <h3 className="mb-2 font-semibold">48-Hour Window</h3>
-                <p className="text-sm text-base-content/70">
-                  Voting closes 48 hours after submission. Make sure to vote
-                  before the deadline!
-                </p>
-              </div>
-
-              <div className="text-center">
-                <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-                  <TrophyIcon className="h-8 w-8 text-success" />
-                </div>
-                <h3 className="mb-2 font-semibold">Majority Wins</h3>
-                <p className="text-sm text-base-content/70">
-                  Majority voters split 15% of the minority&apos;s staked tokens
-                  as rewards.
-                </p>
-              </div>
+            <div role="tablist" className="tabs tabs-boxed mb-4 bg-base-200">
+              <a
+                role="tab"
+                className={`tab font-display tracking-wide ${mode === "eat" ? "tab-active" : ""}`}
+                onClick={() => setMode("eat")}
+              >
+                Eat to Earn
+              </a>
+              <a
+                role="tab"
+                className={`tab font-display tracking-wide ${mode === "judge" ? "tab-active" : ""}`}
+                onClick={() => setMode("judge")}
+              >
+                Judge to Earn
+              </a>
             </div>
 
-            <div className="divider"></div>
+            {mode === "eat" ? (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="badge badge-primary badge-lg shrink-0">1</div>
+                  <div>
+                    <h3 className="font-semibold">Upload a pic</h3>
+                    <p className="text-sm text-base-content/70">
+                      Take a picture of you eating a hotdog as your proof
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="badge badge-primary badge-lg shrink-0">2</div>
+                  <div>
+                    <h3 className="font-semibold">Earn rewards</h3>
+                    <p className="text-sm text-base-content/70">
+                      Your picture can be bought and sold by traders — you earn the trading fees!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="badge badge-primary badge-lg shrink-0">1</div>
+                  <div>
+                    <h3 className="font-semibold">Stake $HOTDOG</h3>
+                    <p className="text-sm text-base-content/70">
+                      Stake your $HOTDOG tokens to participate in judging
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="badge badge-primary badge-lg shrink-0">2</div>
+                  <div>
+                    <h3 className="font-semibold">Judge Submissions</h3>
+                    <p className="text-sm text-base-content/70">
+                      Vote on hotdog submissions to maintain quality and earn rewards
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="badge badge-primary badge-lg shrink-0">3</div>
+                  <div>
+                    <h3 className="font-semibold">Earn Rewards</h3>
+                    <p className="text-sm text-base-content/70">
+                      Win rewards from incorrect voters and earn staking yields
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
-            <div className="rounded-lg bg-info/10 p-4">
-              <h4 className="mb-2 font-semibold text-info">
-                💡 Pro Tips for Maximizing Earnings
-              </h4>
+          {/* Judging Guidelines */}
+          <div className="glass-card rounded-3xl p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-2xl tracking-wide">🧑‍⚖️ JUDGING RULES</h2>
+              <Link href="/judges" className="btn btn-outline btn-sm font-display tracking-wide">
+                <TrophyIcon className="h-4 w-4" />
+                Judges
+              </Link>
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-2xl bg-error/10 p-3">
+                <div className="mb-2 flex items-center gap-2 font-semibold">
+                  <HandThumbDownIcon className="h-4 w-4 text-error" />
+                  Vote SUS if:
+                </div>
+                <ul className="space-y-1 pl-6 text-sm text-base-content/80">
+                  <li>• Image is not someone eating a hotdog</li>
+                  <li>• Submission is a duplicate entry</li>
+                  <li>• Content violates competition spirit</li>
+                  <li>• Image is inappropriate or spam</li>
+                </ul>
+              </div>
+              <div className="rounded-2xl bg-success/10 p-3">
+                <div className="mb-2 flex items-center gap-2 font-semibold">
+                  <HandThumbUpIcon className="h-4 w-4 text-success" />
+                  Vote VALID if:
+                </div>
+                <ul className="space-y-1 pl-6 text-sm text-base-content/80">
+                  <li>• Person is clearly eating a hotdog</li>
+                  <li>• Image is original and authentic</li>
+                  <li>• Submission follows all guidelines</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Voting Process */}
+          <div className="glass-card rounded-3xl p-5">
+            <h2 className="mb-4 font-display text-2xl tracking-wide">⚡ VOTING PROCESS</h2>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <ShieldCheckIcon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="mb-1 text-sm font-semibold">Stake to Vote</h3>
+                <p className="text-xs text-base-content/70">30,000 $HOTDOG minimum on your verdict</p>
+              </div>
+              <div>
+                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
+                  <ClockIcon className="h-6 w-6 text-warning" />
+                </div>
+                <h3 className="mb-1 text-sm font-semibold">48h Window</h3>
+                <p className="text-xs text-base-content/70">Voting closes 48 hours after submission</p>
+              </div>
+              <div>
+                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+                  <TrophyIcon className="h-6 w-6 text-success" />
+                </div>
+                <h3 className="mb-1 text-sm font-semibold">Majority Wins</h3>
+                <p className="text-xs text-base-content/70">Winners split 15% from the losing side</p>
+              </div>
+            </div>
+            <div className="divider" />
+            <div className="rounded-2xl bg-info/10 p-3">
+              <h4 className="mb-2 font-semibold text-info">💡 Pro Tips</h4>
               <ul className="space-y-1 text-sm">
                 <li>
-                  • <strong>Stake more:</strong> Higher stakes mean higher
-                  potential rewards from winning votes
+                  • <strong>Stake more</strong> — higher stakes mean higher potential rewards
                 </li>
                 <li>
-                  • <strong>Vote accurately:</strong> Consistent correct voting
-                  builds your reputation and earnings
+                  • <strong>Vote accurately</strong> — correct votes build your reputation
                 </li>
                 <li>
-                  • <strong>Vote early:</strong> Don&apos;t wait until the last
-                  minute - voting closes after 48 hours
+                  • <strong>Vote early</strong> — voting closes after 48 hours
                 </li>
                 <li>
-                  • <strong>Stay active:</strong> Regular participation in both
-                  staking and voting maximizes your $HOTDOG earnings
+                  • <strong>Stay active</strong> — regular participation maximizes earnings
                 </li>
               </ul>
             </div>
           </div>
-        </div>
 
-        {/* Risk Warning */}
-        <div className="alert alert-warning max-w-4xl">
-          <ExclamationTriangleIcon className="h-6 w-6" />
-          <div>
-            <h3 className="font-bold">Important Risk Notice</h3>
-          <div className="text-sm">
-            Voting incorrectly will result in losing 15% of your staked tokens
-            to the winning side. Only vote if you&apos;re confident in your
-            judgment. Your staked tokens remain locked during active votes.
+          {/* Claim Trading Rewards */}
+          <div className="glass-card rounded-3xl p-5">
+            <h2 className="mb-3 font-display text-2xl tracking-wide">🎁 TRADING REWARDS</h2>
+            <ClaimProtocolRewards />
           </div>
+
+          {/* Airdrop */}
+          <div className="glass-card rounded-3xl p-5">
+            <h2 className="mb-1 font-display text-2xl tracking-wide">🪂 AIRDROP</h2>
+            <p className="mb-3 text-sm opacity-70">
+              3M $HOTDOG for Glizzy Zone and Log a Dog Channel followers
+            </p>
+            <div className="flex w-full flex-col items-center gap-2">
+              <AirdropChannel />
+            </div>
+          </div>
+
+          {/* Risk Warning */}
+          <div className="alert alert-warning rounded-2xl">
+            <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
+            <div>
+              <h3 className="font-display tracking-wide">RISK NOTICE</h3>
+              <p className="text-sm">
+                Voting incorrectly results in losing 15% of your staked tokens to the winning side.
+                Only vote if you&apos;re confident in your judgment.
+              </p>
+            </div>
+          </div>
+
         </div>
-      </div>
-      <div className="mt-4 flex items-center justify-center gap-2 text-xs text-base-content/50">
-        <span>{hotdogAddress}</span>
-        <button
-          aria-label="Copy contract address"
-          onClick={handleCopy}
-          className="btn btn-ghost btn-xs px-1"
-        >
-          {copied ? (
-            <CheckIcon className="h-4 w-4 text-success" />
-          ) : (
-            <ClipboardIcon className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-    </div>
-  </main>
-);
+      </main>
+    </>
+  );
 };
 
 export default EarnPage;

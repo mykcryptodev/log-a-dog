@@ -114,9 +114,17 @@ const JudgesPage: NextPage = () => {
 
           {/* Top judges ranking */}
           <div className="w-full">
-            <h2 className="mb-2 mt-4 font-display text-2xl tracking-wide">🏅 TOP JUDGES</h2>
+            <h2 className="mb-3 mt-4 font-display text-2xl tracking-wide">🏅 TOP JUDGES</h2>
             {loadingJudges ? (
-              <div className="loading loading-spinner" />
+              <div className="space-y-2 rounded-2xl bg-base-200/40 p-3 backdrop-blur-sm">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-2xl bg-base-200/60 p-3">
+                    <div className="grill-skeleton h-5 w-8 animate-grill-shimmer rounded" />
+                    <div className="grill-skeleton h-10 w-10 animate-grill-shimmer rounded-full" />
+                    <div className="grill-skeleton h-4 w-32 animate-grill-shimmer rounded-lg" />
+                  </div>
+                ))}
+              </div>
             ) : judgesErrored ? (
               <div className="rounded-2xl bg-base-200/40 p-4 text-sm">
                 <p className="opacity-70">Could not load judge rankings right now.</p>
@@ -129,49 +137,41 @@ const JudgesPage: NextPage = () => {
                 Judge rankings are temporarily unavailable.
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-2xl bg-base-200/40 p-2">
-                <table className="table w-full">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Judge</th>
-                      <th>Votes</th>
-                      <th>Accuracy</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {judges.map((j, idx) => (
-                      <tr key={j.voter} className="hover">
-                        <td className="font-display text-lg tabular-nums text-secondary">{idx + 1}</td>
-                        <td>
-                          <div className="flex items-center gap-3">
-                            <div className="avatar">
-                              <div className="mask mask-squircle h-10 w-10">
-                                {j.profile.imgUrl ? (
-                                  <Image
-                                    src={getProxiedUrl(j.profile.imgUrl)}
-                                    alt={j.profile.username ?? "Judge"}
-                                    width={40}
-                                    height={40}
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center bg-base-300">
-                                    <span className="text-xs font-bold">{j.voter.slice(0, 2).toUpperCase()}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <span className="font-semibold">
-                              {j.profile.username ?? `${j.voter.slice(0, 6)}...${j.voter.slice(-4)}`}
-                            </span>
+              <div className="space-y-2 rounded-2xl bg-base-200/40 p-3 backdrop-blur-sm">
+                {judges.map((j, idx) => (
+                  <div
+                    key={j.voter}
+                    className="flex items-center justify-between gap-2 rounded-2xl bg-base-200/60 p-3 transition-colors hover:bg-base-300"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 text-center font-display text-xl tabular-nums text-secondary">
+                        {idx + 1}
+                      </span>
+                      <div className="h-10 w-10 overflow-hidden rounded-full bg-base-300">
+                        {j.profile.imgUrl ? (
+                          <Image
+                            src={getProxiedUrl(j.profile.imgUrl)}
+                            alt={j.profile.username ?? "Judge"}
+                            width={40}
+                            height={40}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs font-bold">
+                            {j.voter.slice(0, 2).toUpperCase()}
                           </div>
-                        </td>
-                        <td className="font-display tabular-nums">{j.total}</td>
-                        <td className="font-display tabular-nums">{j.accuracy.toFixed(1)}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        )}
+                      </div>
+                      <span className="font-semibold">
+                        {j.profile.username ?? `${j.voter.slice(0, 6)}...${j.voter.slice(-4)}`}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5 text-right">
+                      <span className="font-display tabular-nums">{j.total} votes</span>
+                      <span className="text-xs opacity-60">{j.accuracy.toFixed(1)}% accurate</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
