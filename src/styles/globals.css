@@ -36,7 +36,7 @@
 
   @media (prefers-color-scheme: dark) {
     .app-bg {
-      background-image: url("/images/background-dark.png");
+      background-image: url("/images/background-small-dark.png");
     }
   }
 
