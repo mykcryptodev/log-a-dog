@@ -204,12 +204,22 @@ const HotdogCardComponent: FC<Props> = ({
     />
   );
 
-  // Top accent colour: mustard = voting live, green = valid, red = sus, faded = pending/expired
-  const accentClass = (() => {
-    if (hotdog.isPending) return "bg-base-content/10";
-    if (isResolved) return hotdog.attestationPeriod?.isValid ? "bg-accent" : "bg-error";
-    if (!isExpired) return "bg-primary";
-    return "bg-base-content/15";
+  const totalVotes =
+    Number(validAttestations || "0") + Number(invalidAttestations || "0");
+  const validPct =
+    totalVotes > 0
+      ? Math.round((Number(validAttestations || "0") / totalVotes) * 100)
+      : 0;
+
+  // Scoreboard status: a broadcast-style state line + indicator dot.
+  const board = (() => {
+    if (hotdog.isPending) return { dot: "bg-base-content/40", label: "LOGGING…" };
+    if (isResolved)
+      return hotdog.attestationPeriod?.isValid
+        ? { dot: "bg-accent", label: "VALID · FINAL" }
+        : { dot: "bg-error", label: "SUS · FINAL" };
+    if (!isExpired) return { dot: "live-dot bg-error", label: "LIVE ON THE GRILL" };
+    return { dot: "bg-base-content/40", label: "FINAL" };
   })();
 
   return (
@@ -217,21 +227,28 @@ const HotdogCardComponent: FC<Props> = ({
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
-      className="card glass-card overflow-hidden rounded-3xl border-4 border-[#1a1a1a]/5"
+      className="card overflow-hidden rounded-2xl border border-base-content/10 bg-base-100 shadow-dog"
     >
-      {/* Verdict-state accent strip */}
-      <div className={`h-1 w-full shrink-0 ${accentClass}`} />
+      {/* Broadcast scoreboard strip */}
+      <div className="flex items-center justify-between bg-neutral px-3 py-1.5 font-display text-[0.7rem] uppercase tracking-wider text-neutral-content">
+        <span className="flex items-center gap-1.5">
+          <span className={`inline-block h-2 w-2 rounded-full ${board.dot}`} />
+          {board.label}
+        </span>
+        <span className="tabular-nums opacity-90">🌭 #{hotdog.logId.toString()}</span>
+      </div>
+
       <div className="flex flex-col gap-3 p-4">
         {/* Identity row */}
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col items-start">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-col items-start">
             <div className="flex w-fit items-center gap-1">
               <Link
                 href={`/profile/${hotdog.eater}`}
                 className="flex items-center gap-2"
               >
                 <Avatar address={hotdog.eater} fallbackSize={28} />
-                <span className="text-sm font-semibold">{displayName}</span>
+                <span className="truncate text-sm font-semibold">{displayName}</span>
               </Link>
               <Badge
                 address={hotdog.eater}
@@ -256,7 +273,7 @@ const HotdogCardComponent: FC<Props> = ({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <EthCommentsModal logId={hotdog.logId} account={account} />
             <button
               onClick={shareOnX}
@@ -275,9 +292,9 @@ const HotdogCardComponent: FC<Props> = ({
           </div>
         </div>
 
-        {/* Full-bleed photo with verdict stamp + countdown overlays */}
+        {/* The broadcast feed: photo + lower-third name plate + game clock. */}
         <div
-          className={`relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-base-300 ${
+          className={`relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-base-300 ${
             hotdog.duplicateOfLogId ? "opacity-60" : ""
           }`}
         >
@@ -288,6 +305,19 @@ const HotdogCardComponent: FC<Props> = ({
           ) : (
             Photo
           )}
+
+          {/* Lower-third name plate (broadcast graphic). */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent p-3 pt-10">
+            <div className="h-1 w-8 rounded-full bg-primary" />
+            <div className="mt-1 font-display text-lg leading-tight text-white drop-shadow">
+              {displayName}
+            </div>
+            {totalVotes > 0 && (
+              <div className="font-display text-xs uppercase tracking-wider text-white/80">
+                {validPct}% valid · {totalVotes} verdict{totalVotes === 1 ? "" : "s"}
+              </div>
+            )}
+          </div>
 
           {hotdog.duplicateOfLogId && (
             <Link
@@ -302,8 +332,9 @@ const HotdogCardComponent: FC<Props> = ({
             <VerdictStamp valid={hotdog.attestationPeriod.isValid} />
           )}
 
+          {/* Game clock */}
           {!isExpired && (
-            <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-base-100/80 px-2 py-1 backdrop-blur-sm">
+            <div className="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-black/75 px-2 py-1 font-display text-white">
               <VotingCountdown
                 timestamp={hotdog.timestamp.toString()}
                 logId={hotdog.logId?.toString() ?? ""}
@@ -316,21 +347,26 @@ const HotdogCardComponent: FC<Props> = ({
           )}
         </div>
 
-        {/* THE vote control — primary, full-width */}
-        <VoteBar
-          logId={hotdog.logId}
-          chainId={chainId}
-          disabled={disabled}
-          isExpired={isExpired}
-          userAttested={userAttested}
-          userAttestation={userAttestation}
-          validAttestations={validAttestations}
-          invalidAttestations={invalidAttestations}
-          onAttestationMade={onRefetch}
-          onAttestationAffirmationRevoked={onRefetch}
-        />
+        {/* THE vote control — the fan vote */}
+        <div>
+          <div className="mb-1 font-display text-[0.7rem] uppercase tracking-wider opacity-60">
+            Fan vote
+          </div>
+          <VoteBar
+            logId={hotdog.logId}
+            chainId={chainId}
+            disabled={disabled}
+            isExpired={isExpired}
+            userAttested={userAttested}
+            userAttestation={userAttestation}
+            validAttestations={validAttestations}
+            invalidAttestations={invalidAttestations}
+            onAttestationMade={onRefetch}
+            onAttestationAffirmationRevoked={onRefetch}
+          />
+        </div>
 
-        {/* Metadata row: comments · season number */}
+        {/* Metadata row: comments · AI take */}
         <div className="flex items-center justify-between text-sm">
           <Comments
             logId={hotdog.logId?.toString() ?? ""}
@@ -342,8 +378,8 @@ const HotdogCardComponent: FC<Props> = ({
               timestamp={hotdog.timestamp.toString()}
             />
           )}
-          <span className="font-display text-base tracking-wide opacity-70">
-            🌭 #{hotdog.logId.toString()}
+          <span className="font-display text-xs uppercase tracking-wider opacity-60">
+            replay ↗
           </span>
         </div>
 

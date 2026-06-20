@@ -256,16 +256,21 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         <div id="top-of-list" className="invisible" />
         <div className="flex flex-col gap-4">
           {Array.from({ length: limitOrDefault }).map((_, index) => (
-            <div className="card glass-card overflow-hidden rounded-3xl border-4 border-[#1a1a1a]/5 p-4" key={index}>
-       
-              <div className="flex items-center gap-2">
-                <div className="grill-skeleton h-10 w-10 animate-grill-shimmer rounded-full" />
-                <div className="grill-skeleton h-4 w-24 animate-grill-shimmer rounded-lg" />
+            <div className="card overflow-hidden rounded-2xl border border-base-content/10 bg-base-100 shadow-dog" key={index}>
+              <div className="flex items-center justify-between bg-neutral px-3 py-1.5">
+                <div className="h-3 w-28 rounded-full bg-neutral-content/30" />
+                <div className="h-3 w-10 rounded-full bg-neutral-content/30" />
               </div>
-              <div className="grill-skeleton mt-3 aspect-[4/5] w-full animate-grill-shimmer rounded-2xl" />
-              <div className="mt-3 flex gap-2">
-                <div className="grill-skeleton h-10 flex-1 animate-grill-shimmer rounded-xl" />
-                <div className="grill-skeleton h-10 flex-1 animate-grill-shimmer rounded-xl" />
+              <div className="p-4">
+                <div className="flex items-center gap-2">
+                  <div className="grill-skeleton h-10 w-10 animate-grill-shimmer rounded-full" />
+                  <div className="grill-skeleton h-4 w-24 animate-grill-shimmer rounded-lg" />
+                </div>
+                <div className="grill-skeleton mt-3 aspect-[4/5] w-full animate-grill-shimmer rounded-xl" />
+                <div className="mt-3 flex gap-2">
+                  <div className="grill-skeleton h-10 flex-1 animate-grill-shimmer rounded-xl" />
+                  <div className="grill-skeleton h-10 flex-1 animate-grill-shimmer rounded-xl" />
+                </div>
               </div>
             </div>
           ))}
