@@ -26,7 +26,7 @@ const LeaderboardPage: NextPage = () => {
             🏆 THE SCOREBOARD
           </h1>
 
-          <div role="tablist" className="tabs tabs-boxed bg-base-200">
+          <div role="tablist" className="tabs tabs-boxed border-2 border-base-content bg-base-200">
             {TABS.map((t) => (
               <a
                 key={t}
@@ -39,7 +39,7 @@ const LeaderboardPage: NextPage = () => {
             ))}
           </div>
 
-          <div className="w-full overflow-hidden rounded-2xl border border-base-content/10 bg-base-100/60 backdrop-blur-sm">
+          <div className="pop-card w-full overflow-hidden rounded-2xl bg-base-100">
             <LeaderboardBanner startDate={startDateObj} scrollSpeed={35} />
           </div>
 

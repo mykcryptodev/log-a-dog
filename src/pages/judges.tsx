@@ -104,7 +104,7 @@ const JudgesPage: NextPage = () => {
               </AnimatePresence>
               {queue.length > 1 && (
                 <div className="mt-3 flex justify-center">
-                  <button className="btn btn-ghost btn-sm font-display tracking-wide" onClick={next}>
+                  <button className="pop-btn rounded-lg bg-base-100 px-3 py-1.5 font-display text-sm tracking-wide" onClick={next}>
                     Skip to next dog →
                   </button>
                 </div>
@@ -116,9 +116,9 @@ const JudgesPage: NextPage = () => {
           <div className="w-full">
             <h2 className="mb-3 mt-4 font-display text-2xl font-bold tracking-tight">🏅 TOP JUDGES</h2>
             {loadingJudges ? (
-              <div className="space-y-2 rounded-2xl bg-base-200/40 p-3 backdrop-blur-sm">
+              <div className="pop-card space-y-2 rounded-2xl bg-base-100 p-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-2xl bg-base-200/60 p-3">
+                  <div key={i} className="flex items-center gap-3 rounded-xl border-2 border-base-content bg-base-100 p-3">
                     <div className="grill-skeleton h-5 w-8 animate-grill-shimmer rounded" />
                     <div className="grill-skeleton h-10 w-10 animate-grill-shimmer rounded-full" />
                     <div className="grill-skeleton h-4 w-32 animate-grill-shimmer rounded-lg" />
@@ -126,28 +126,28 @@ const JudgesPage: NextPage = () => {
                 ))}
               </div>
             ) : judgesErrored ? (
-              <div className="rounded-2xl bg-base-200/40 p-4 text-sm">
+              <div className="pop-card rounded-2xl bg-base-100 p-4 text-sm">
                 <p className="opacity-70">Could not load judge rankings right now.</p>
                 <button className="btn btn-ghost btn-sm mt-2" onClick={() => void refetchJudges()}>
                   Retry rankings
                 </button>
               </div>
             ) : judges.length === 0 ? (
-              <div className="rounded-2xl bg-base-200/40 p-4 text-sm opacity-70">
+              <div className="pop-card rounded-2xl bg-base-100 p-4 text-sm opacity-70">
                 Judge rankings are temporarily unavailable.
               </div>
             ) : (
-              <div className="space-y-2 rounded-2xl bg-base-200/40 p-3 backdrop-blur-sm">
+              <div className="pop-card space-y-2 rounded-2xl bg-base-100 p-3">
                 {judges.map((j, idx) => (
                   <div
                     key={j.voter}
-                    className="flex items-center justify-between gap-2 rounded-2xl bg-base-200/60 p-3 transition-colors hover:bg-base-300"
+                    className="flex items-center justify-between gap-2 rounded-xl border-2 border-base-content bg-base-100 p-3 transition-colors hover:bg-base-300"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="w-8 text-center font-display text-xl tabular-nums text-secondary">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 border-base-content bg-base-200 font-display text-base tabular-nums text-secondary">
                         {idx + 1}
                       </span>
-                      <div className="h-10 w-10 overflow-hidden rounded-full bg-base-300">
+                      <div className="pop-frame h-10 w-10 overflow-hidden rounded-full bg-base-300">
                         {j.profile.imgUrl ? (
                           <Image
                             src={getProxiedUrl(j.profile.imgUrl)}

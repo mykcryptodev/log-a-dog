@@ -85,7 +85,7 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
   }, [leaderboard?.users, profiles]);
 
   if (!leaderboard || !profiles)
-    return <div className="grill-skeleton w-full animate-grill-shimmer rounded-2xl" style={{ height }} />;
+    return <div className="pop-card grill-skeleton w-full animate-grill-shimmer rounded-2xl" style={{ height }} />;
 
   const addresses = leaderboard.users ?? [];
   const hotdogs = leaderboard.hotdogs ?? [];
@@ -128,18 +128,14 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
               <Link
                 key={address}
                 href={`/profile/address/${address}`}
-                className={`${style.order} flex flex-col items-center gap-1 rounded-3xl bg-base-200 p-3 ${style.glow} ${
-                  isFirst ? "pb-6" : ""
+                className={`${style.order} pop-card flex flex-col items-center gap-1 rounded-3xl p-3 ${
+                  isFirst ? "bg-primary pb-6 text-primary-content" : "bg-base-200"
                 }`}
               >
                 <span className="text-2xl">{style.medal}</span>
-                <motion.div
-                  className={`rounded-full ring-4 ${style.ring}`}
-                  animate={isFirst ? { boxShadow: ["0 0 0px #F5C518", "0 0 18px #F5C518", "0 0 0px #F5C518"] } : undefined}
-                  transition={isFirst ? { duration: 2.4, repeat: Infinity } : undefined}
-                >
+                <div className="pop-frame overflow-hidden rounded-full">
                   <LbAvatar profile={profile} address={address} size={isFirst ? 64 : 48} />
-                </motion.div>
+                </div>
                 <span className="max-w-full truncate text-xs font-semibold">
                   {nameFor(profile, address)}
                 </span>
@@ -153,16 +149,16 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
       )}
 
       <div
-        className="w-full space-y-2 overflow-y-auto rounded-2xl bg-base-200/40 p-3 backdrop-blur-sm"
+        className="pop-card w-full space-y-2 overflow-y-auto rounded-2xl bg-base-100 p-3"
         style={{ maxHeight: height }}
       >
         {currentUserRow && (
           <motion.div
             layout
-            className="flex items-center justify-between gap-2 rounded-2xl bg-primary/15 p-3 ring-1 ring-primary/40"
+            className="flex items-center justify-between gap-2 rounded-xl border-2 border-base-content bg-primary/25 p-3"
           >
             <Link href={`/profile/address/${currentUserRow.address}`} className="flex items-center gap-3">
-              <span className="w-10 text-center font-display text-2xl tabular-nums text-secondary">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-base-content bg-primary font-display text-base tabular-nums text-primary-content">
                 {currentUserRow.rank}
               </span>
               <LbAvatar profile={profileMap.get(currentUserRow.address.toLowerCase())} address={currentUserRow.address} size={28} />
@@ -184,10 +180,10 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
               key={address}
               layout
               transition={{ type: "spring", stiffness: 500, damping: 40 }}
-              className="flex items-center justify-between gap-2 rounded-2xl bg-base-200/60 p-3 transition-colors hover:bg-base-300"
+              className="flex items-center justify-between gap-2 rounded-xl border-2 border-base-content bg-base-100 p-3 transition-colors hover:bg-base-200"
             >
               <Link href={`/profile/address/${address}`} className="flex items-center gap-3">
-                <span className="w-10 text-center font-display text-2xl tabular-nums text-secondary">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-base-content bg-base-200 font-display text-base tabular-nums text-secondary">
                   {rank}
                 </span>
                 <LbAvatar profile={profile} address={address} size={28} />

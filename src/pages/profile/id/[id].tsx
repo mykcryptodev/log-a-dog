@@ -65,19 +65,21 @@ export const Profile: NextPage<{ id: string }> = ({ id }) => {
     <main className="flex flex-col items-center justify-center">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between mb-8">
+          <div className="pop-card mb-8 flex items-center justify-between gap-3 rounded-2xl bg-base-100 p-4">
             <div className="flex items-center gap-4">
-              <CustomMediaRenderer
-                src={displayImage ?? ""}
-                alt={displayUsername ?? ""}
-                className="rounded-full"
-                width={"48px"}
-                height={"48px"}
-                client={client}
-              />
-              <h1 className="text-2xl font-bold">{displayUsername}</h1>
+              <span className="pop-frame inline-flex overflow-hidden rounded-full">
+                <CustomMediaRenderer
+                  src={displayImage ?? ""}
+                  alt={displayUsername ?? ""}
+                  className="rounded-full"
+                  width={"48px"}
+                  height={"48px"}
+                  client={client}
+                />
+              </span>
+              <h1 className="font-display text-2xl tracking-wide">{displayUsername}</h1>
             </div>
-            <button className={`btn btn-ghost btn-xs ${isOwnProfile ? '' : 'hidden'}`} onClick={() => setShowProfileForm(!showProfileForm)}>
+            <button className={`pop-btn rounded-lg bg-base-100 px-3 py-1 font-display text-xs ${isOwnProfile ? '' : 'hidden'}`} onClick={() => setShowProfileForm(!showProfileForm)}>
               {showProfileForm ? 'Cancel Edit' : 'Edit Profile'}
             </button>
           </div>

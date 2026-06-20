@@ -51,7 +51,7 @@ const EarnPage: NextPage = () => {
           </div>
 
           {/* Token acquisition */}
-          <div className="glass-card rounded-3xl p-5 text-center">
+          <div className="pop-card rounded-3xl bg-base-100 p-5 text-center">
             <p className="mb-3 text-sm opacity-70">Need some $HOTDOG?</p>
             <Buy />
             <div className="mt-3">
@@ -74,8 +74,8 @@ const EarnPage: NextPage = () => {
           </div>
 
           {/* Staking */}
-          <div className="glass-card rounded-3xl p-5">
-            <div role="tablist" className="tabs tabs-boxed mb-4 bg-base-200">
+          <div className="pop-card rounded-3xl bg-base-100 p-5">
+            <div role="tablist" className="tabs tabs-boxed mb-4 border-2 border-base-content bg-base-200">
               <a
                 role="tab"
                 className={`tab font-display tracking-wide ${stakeTab === "stake" ? "tab-active" : ""}`}
@@ -95,7 +95,7 @@ const EarnPage: NextPage = () => {
           </div>
 
           {/* How Earning Works */}
-          <div className="glass-card rounded-3xl p-5">
+          <div className="pop-card rounded-3xl bg-base-100 p-5">
             <h2 className="mb-3 font-display text-2xl font-bold tracking-tight">💡 HOW IT WORKS</h2>
 
             <Image
@@ -127,7 +127,7 @@ const EarnPage: NextPage = () => {
               </form>
             </dialog>
 
-            <div role="tablist" className="tabs tabs-boxed mb-4 bg-base-200">
+            <div role="tablist" className="tabs tabs-boxed mb-4 border-2 border-base-content bg-base-200">
               <a
                 role="tab"
                 className={`tab font-display tracking-wide ${mode === "eat" ? "tab-active" : ""}`}
@@ -199,10 +199,10 @@ const EarnPage: NextPage = () => {
           </div>
 
           {/* Judging Guidelines */}
-          <div className="glass-card rounded-3xl p-5">
+          <div className="pop-card rounded-3xl bg-base-100 p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-2xl font-bold tracking-tight">🧑‍⚖️ JUDGING RULES</h2>
-              <Link href="/judges" className="btn btn-outline btn-sm font-display tracking-wide">
+              <Link href="/judges" className="pop-btn flex items-center gap-1 rounded-lg bg-base-100 px-3 py-1.5 font-display text-sm tracking-wide">
                 <TrophyIcon className="h-4 w-4" />
                 Judges
               </Link>
@@ -235,7 +235,7 @@ const EarnPage: NextPage = () => {
           </div>
 
           {/* Voting Process */}
-          <div className="glass-card rounded-3xl p-5">
+          <div className="pop-card rounded-3xl bg-base-100 p-5">
             <h2 className="mb-4 font-display text-2xl font-bold tracking-tight">⚡ VOTING PROCESS</h2>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
@@ -281,13 +281,13 @@ const EarnPage: NextPage = () => {
           </div>
 
           {/* Claim Trading Rewards */}
-          <div className="glass-card rounded-3xl p-5">
+          <div className="pop-card rounded-3xl bg-base-100 p-5">
             <h2 className="mb-3 font-display text-2xl font-bold tracking-tight">🎁 TRADING REWARDS</h2>
             <ClaimProtocolRewards />
           </div>
 
           {/* Airdrop */}
-          <div className="glass-card rounded-3xl p-5">
+          <div className="pop-card rounded-3xl bg-base-100 p-5">
             <h2 className="mb-1 font-display text-2xl font-bold tracking-tight">🪂 AIRDROP</h2>
             <p className="mb-3 text-sm opacity-70">
               3M $HOTDOG for Glizzy Zone and Log a Dog Channel followers

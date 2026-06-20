@@ -44,7 +44,7 @@ export const BottomNav: FC = () => {
           Log button below opens it. No inline trigger or FAB. */}
       <CreateAttestation showTriggers={false} />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-base-content/10 bg-base-100/80 backdrop-blur-lg">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t-[3px] border-base-content bg-base-100">
         <div className="mx-auto grid h-20 max-w-md grid-cols-5 items-center px-2 pb-2">
           <NavButton
             emoji="🌭"
@@ -67,7 +67,7 @@ export const BottomNav: FC = () => {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 12 }}
-              className="-mt-8 h-16 w-16 overflow-hidden rounded-full border-4 border-base-100 shadow-dog-lg"
+              className="pop-card -mt-8 h-16 w-16 overflow-hidden rounded-full"
             >
               <Image
                 src="/images/hotdog-icon.png"
