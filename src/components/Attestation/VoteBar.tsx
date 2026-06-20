@@ -12,20 +12,24 @@ type Props = {
   logId: string;
   chainId: number;
   disabled?: boolean;
-  /** Voting window closed — render a static result instead of buttons. */
+  /** Voting window closed — hide the buttons (the result meter lives on the
+   *  back of the card photo, shown only once voting closes). */
   isExpired?: boolean;
   userAttested: boolean | undefined;
   userAttestation: boolean | undefined;
-  validAttestations: string | undefined;
-  invalidAttestations: string | undefined;
+  // Kept on the type so callers can keep passing them; the live tally is no
+  // longer rendered here (it moved to the flipped card back).
+  validAttestations?: string | undefined;
+  invalidAttestations?: string | undefined;
   onAttestationMade?: () => void;
   onAttestationAffirmationRevoked?: () => void;
 };
 
-// The redesigned heart of the card: a primary, full-width vote control.
-// Two big buttons (VALID DOG / SUS), an animated valid/sus percentage bar, and
-// a condiment streak that wipes across on tap. Reuses the same on-chain
-// `hotdog.judge` mutation + optimistic logic as the legacy JudgeAttestation.
+// "Sticker Brutalism" vote control: two chunky blocky buttons whose hard offset
+// shadow collapses on press, plus a "you voted" confirmation. The valid/sus
+// tally meter has moved to the back of the card photo and is hidden while the
+// voting window is open. Same on-chain `hotdog.judge` mutation + optimistic
+// user-vote logic as before.
 export const VoteBar: FC<Props> = ({
   logId,
   chainId,
@@ -33,16 +37,12 @@ export const VoteBar: FC<Props> = ({
   isExpired = false,
   userAttested,
   userAttestation,
-  validAttestations,
-  invalidAttestations,
   onAttestationMade,
   onAttestationAffirmationRevoked,
 }) => {
   const { data: sessionData } = useSession();
   const utils = api.useUtils();
   const { mutateAsync: refreshFeed } = api.indexer.refreshFeed.useMutation();
-  const [optimisticValidCount, setOptimisticValidCount] = useState<string | undefined>(validAttestations);
-  const [optimisticInvalidCount, setOptimisticInvalidCount] = useState<string | undefined>(invalidAttestations);
   const [optimisticUserAttested, setOptimisticUserAttested] = useState<boolean | undefined>(userAttested);
   const [optimisticUserAttestation, setOptimisticUserAttestation] = useState<boolean | undefined>(userAttestation);
   const [isInsufficientStake, setIsInsufficientStake] = useState(false);
@@ -57,18 +57,8 @@ export const VoteBar: FC<Props> = ({
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   const effectiveUserAttestation = ghostVote !== null ? ghostVote : (optimisticUserAttestation ?? false);
 
-  const valid = Number(optimisticValidCount ?? 0);
-  const invalid = Number(optimisticInvalidCount ?? 0);
-  const total = valid + invalid;
-  const pct = total > 0 ? Math.round((valid / total) * 100) : 50;
-
   const judgeMutation = api.hotdog.judge.useMutation({
     onMutate: ({ isValid }) => {
-      if (isValid) {
-        setOptimisticValidCount((p) => (p ? (BigInt(p) + 1n).toString() : "1"));
-      } else {
-        setOptimisticInvalidCount((p) => (p ? (BigInt(p) + 1n).toString() : "1"));
-      }
       setOptimisticUserAttested(true);
       setOptimisticUserAttestation(isValid);
     },
@@ -81,8 +71,6 @@ export const VoteBar: FC<Props> = ({
       }
     },
     onError: (error) => {
-      setOptimisticValidCount(validAttestations);
-      setOptimisticInvalidCount(invalidAttestations);
       setOptimisticUserAttested(userAttested);
       setOptimisticUserAttestation(userAttestation);
       if (error.message.includes("Insufficient stake")) {
@@ -96,18 +84,11 @@ export const VoteBar: FC<Props> = ({
   const revoke = async (isValid: boolean) => {
     if (!sessionData?.user?.address) return;
     try {
-      if (isValid) {
-        setOptimisticValidCount((p) => (p ? (BigInt(p) - 1n).toString() : "0"));
-      } else {
-        setOptimisticInvalidCount((p) => (p ? (BigInt(p) - 1n).toString() : "0"));
-      }
       setOptimisticUserAttested(false);
       setOptimisticUserAttestation(undefined);
       await judgeMutation.mutateAsync({ chainId, logId, isValid, shouldRevoke: true });
       void onAttestationAffirmationRevoked?.();
     } catch {
-      setOptimisticValidCount(validAttestations);
-      setOptimisticInvalidCount(invalidAttestations);
       setOptimisticUserAttested(userAttested);
       setOptimisticUserAttestation(userAttestation);
     }
@@ -139,6 +120,20 @@ export const VoteBar: FC<Props> = ({
   const votedValid = effectiveUserAttested && effectiveUserAttestation === true;
   const votedSus = effectiveUserAttested && effectiveUserAttestation === false;
   const locked = (disabled ?? false) || busy !== null;
+
+  // Once voting closes there's nothing to act on here — the tally lives on the
+  // flipped card back. Still surface how *you* voted, if you did.
+  if (isExpired) {
+    return (votedValid || votedSus) ? (
+      <div
+        className={`flex w-full items-center justify-center gap-1.5 rounded-xl py-2 font-display text-sm tracking-wide ${
+          votedValid ? "bg-accent/20 text-accent" : "bg-error/20 text-error"
+        }`}
+      >
+        ✓ you voted {votedValid ? "VALID DOG" : "SUS"}
+      </div>
+    ) : null;
+  }
 
   return (
     <div className="w-full">
@@ -178,87 +173,50 @@ export const VoteBar: FC<Props> = ({
         />
       )}
 
-      {!isExpired && (
-        <div className="flex gap-2">
-          <motion.button
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 400, damping: 12 }}
-            disabled={locked}
-            onClick={() => void vote(true)}
-            className={`btn relative flex-1 overflow-hidden py-1 font-display tracking-wide ${
-              votedValid ? "btn-accent" : "btn-outline btn-accent"
-            }`}
-            style={{ height: "auto", minHeight: "2.75rem" }}
-          >
-            <AnimatePresence>
-              {streak === "valid" && (
-                <motion.span
-                  initial={{ x: "-110%" }}
-                  animate={{ x: "110%" }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="pointer-events-none absolute inset-0 bg-primary/60"
-                />
-              )}
-            </AnimatePresence>
-            <span className="text-sm">🥬 VALID DOG</span>
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 400, damping: 12 }}
-            disabled={locked}
-            onClick={() => void vote(false)}
-            className={`btn relative flex-1 overflow-hidden py-1 font-display tracking-wide ${
-              votedSus ? "btn-error" : "btn-outline btn-error"
-            }`}
-            style={{ height: "auto", minHeight: "2.75rem" }}
-          >
-            <AnimatePresence>
-              {streak === "invalid" && (
-                <motion.span
-                  initial={{ x: "-110%" }}
-                  animate={{ x: "110%" }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="pointer-events-none absolute inset-0 bg-secondary/60"
-                />
-              )}
-            </AnimatePresence>
-            <span className="text-sm">🔴 SUS</span>
-          </motion.button>
-        </div>
-      )}
-
-      {(votedValid || votedSus) && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl py-2 font-display text-sm font-semibold tracking-wide ${
-            votedValid
-              ? "bg-accent/15 text-accent"
-              : "bg-error/15 text-error"
+      <div className="flex gap-3">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          disabled={locked}
+          onClick={() => void vote(true)}
+          className={`pop-btn relative flex-1 overflow-hidden rounded-xl py-3 font-display text-sm tracking-wide text-accent-content ${
+            votedValid ? "bg-accent" : "bg-accent/85"
           }`}
         >
-          <span>✓</span>
-          <span>you voted {votedValid ? "VALID DOG" : "SUS"}</span>
-        </motion.div>
-      )}
-
-      {isExpired && (
-        <>
-          <div className={`h-3 w-full overflow-hidden rounded-full bg-error/20 ${(!votedValid && !votedSus) ? "" : "mt-2"}`}>
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-accent to-accent/80"
-              animate={{ width: `${pct}%` }}
-              transition={{ type: "spring", stiffness: 120, damping: 18 }}
-            />
-          </div>
-          <div className="mt-1 flex justify-between text-xs opacity-50">
-            <span>{valid} valid</span>
-            <span>{invalid} sus</span>
-          </div>
-        </>
-      )}
+          <AnimatePresence>
+            {streak === "valid" && (
+              <motion.span
+                initial={{ x: "-110%" }}
+                animate={{ x: "110%" }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="pointer-events-none absolute inset-0 bg-primary/70"
+              />
+            )}
+          </AnimatePresence>
+          <span className="relative">{votedValid ? "✓ " : ""}🥬 VALID DOG</span>
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          disabled={locked}
+          onClick={() => void vote(false)}
+          className={`pop-btn relative flex-1 overflow-hidden rounded-xl py-3 font-display text-sm tracking-wide text-white ${
+            votedSus ? "bg-error" : "bg-error/85"
+          }`}
+        >
+          <AnimatePresence>
+            {streak === "invalid" && (
+              <motion.span
+                initial={{ x: "-110%" }}
+                animate={{ x: "110%" }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="pointer-events-none absolute inset-0 bg-secondary/70"
+              />
+            )}
+          </AnimatePresence>
+          <span className="relative">{votedSus ? "✓ " : ""}🔴 SUS</span>
+        </motion.button>
+      </div>
     </div>
   );
 };

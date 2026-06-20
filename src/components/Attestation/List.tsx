@@ -256,7 +256,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         <div id="top-of-list" className="invisible" />
         <div className="flex flex-col gap-4">
           {Array.from({ length: limitOrDefault }).map((_, index) => (
-            <div className="card glass-card overflow-hidden rounded-3xl border-4 border-[#1a1a1a]/5 p-4" key={index}>
+            <div className="card pop-card overflow-hidden rounded-[1.75rem] bg-base-100 p-4" key={index}>
        
               <div className="flex items-center gap-2">
                 <div className="grill-skeleton h-10 w-10 animate-grill-shimmer rounded-full" />
