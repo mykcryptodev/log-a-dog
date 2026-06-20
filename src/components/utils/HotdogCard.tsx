@@ -1,9 +1,11 @@
-import { type FC, memo, useCallback, useContext } from "react";
+import { type FC, type MouseEvent, memo, useCallback, useContext, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import {
   CurrencyDollarIcon,
   FireIcon,
+  UsersIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { isAddressEqual } from "viem";
 import HotdogImage from "~/components/utils/HotdogImage";
@@ -109,6 +111,38 @@ type Props = {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
 
+// Rarity tiers, derived from engagement (verdicts cast) and market cap. Each
+// tier paints a different foil gradient on the card frame.
+const rarityFor = (totalVotes: number, marketCap: number) => {
+  if (totalVotes >= 50 || marketCap >= 10000)
+    return {
+      name: "LEGENDARY",
+      stars: 4,
+      foil: "linear-gradient(115deg,#ffd23f,#ff7b3a,#ffe88a,#ff4da6,#7b5bff,#3ad0ff,#ffd23f)",
+      chip: "bg-amber-300 text-black",
+    };
+  if (totalVotes >= 15 || marketCap >= 2000)
+    return {
+      name: "EPIC",
+      stars: 3,
+      foil: "linear-gradient(115deg,#a24bff,#ff7be0,#7b3aff,#ff9bf0,#a24bff)",
+      chip: "bg-fuchsia-400 text-black",
+    };
+  if (totalVotes >= 5)
+    return {
+      name: "RARE",
+      stars: 2,
+      foil: "linear-gradient(115deg,#3aa0ff,#7fe0ff,#2b7fff,#a0f0ff,#3aa0ff)",
+      chip: "bg-sky-300 text-black",
+    };
+  return {
+    name: "COMMON",
+    stars: 1,
+    foil: "linear-gradient(115deg,#c2ccd6,#eef2f6,#aab4bd,#dfe6eb,#c2ccd6)",
+    chip: "bg-slate-200 text-black",
+  };
+};
+
 const HotdogCardComponent: FC<Props> = ({
   hotdog,
   validAttestations,
@@ -122,6 +156,7 @@ const HotdogCardComponent: FC<Props> = ({
   disabled = false,
 }) => {
   const account = useActiveAccount();
+  const [flipped, setFlipped] = useState(false);
 
   const showLoggedVia = (hotdog: { eater: string; logger: string }) => {
     const loggerIsNotEater = !isAddressEqual(
@@ -204,199 +239,246 @@ const HotdogCardComponent: FC<Props> = ({
     />
   );
 
-  // Top accent colour: mustard = voting live, green = valid, red = sus, faded = pending/expired
-  const accentClass = (() => {
-    if (hotdog.isPending) return "bg-base-content/10";
-    if (isResolved) return hotdog.attestationPeriod?.isValid ? "bg-accent" : "bg-error";
-    if (!isExpired) return "bg-primary";
-    return "bg-base-content/15";
-  })();
+  const totalVotes =
+    Number(validAttestations || "0") + Number(invalidAttestations || "0");
+  const marketCap = zoraCoinData?.marketCap ? Number(zoraCoinData.marketCap) : 0;
+  const tier = rarityFor(totalVotes, marketCap);
+  const starStr = "★★★★".slice(0, tier.stars) + "☆☆☆☆".slice(0, 4 - tier.stars);
+
+  const flip = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFlipped((f) => !f);
+  };
 
   return (
     <motion.div
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
-      className="card glass-card overflow-hidden rounded-3xl border-4 border-[#1a1a1a]/5"
+      className="holo-frame rounded-[1.85rem] p-[3px] shadow-dog"
+      style={{ backgroundImage: tier.foil }}
     >
-      {/* Verdict-state accent strip */}
-      <div className={`h-1 w-full shrink-0 ${accentClass}`} />
-      <div className="flex flex-col gap-3 p-4">
-        {/* Identity row */}
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col items-start">
-            <div className="flex w-fit items-center gap-1">
-              <Link
-                href={`/profile/${hotdog.eater}`}
-                className="flex items-center gap-2"
-              >
-                <Avatar address={hotdog.eater} fallbackSize={28} />
-                <span className="text-sm font-semibold">{displayName}</span>
-              </Link>
-              <Badge
-                address={hotdog.eater}
-                fid={hotdog.eaterProfile?.fid}
-                isKnownSpammer={hotdog.eaterProfile?.isKnownSpammer}
-                isReportedForSpam={hotdog.eaterProfile?.isReportedForSpam}
-                isDisqualified={hotdog.eaterProfile?.isDisqualified}
-              />
-            </div>
-            {showLoggedVia({ eater: hotdog.eater, logger: hotdog.logger }) && (
-              <div className="flex items-center gap-1 text-xs opacity-60">
-                <span>via</span>
-                <Avatar address={hotdog.logger} size="16px" />
-                <span>{loggerDisplayName}</span>
+      <div className="overflow-hidden rounded-[1.7rem] bg-base-100">
+        <div className="flex flex-col gap-3 p-4">
+          {/* Identity row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-col items-start">
+              <div className="flex w-fit items-center gap-1">
+                <Link
+                  href={`/profile/${hotdog.eater}`}
+                  className="flex items-center gap-2"
+                >
+                  <Avatar address={hotdog.eater} fallbackSize={28} />
+                  <span className="truncate text-sm font-semibold">{displayName}</span>
+                </Link>
                 <Badge
-                  address={hotdog.logger}
-                  fid={hotdog.loggerProfile?.fid}
-                  isKnownSpammer={hotdog.loggerProfile?.isKnownSpammer}
-                  isReportedForSpam={hotdog.loggerProfile?.isReportedForSpam}
-                  isDisqualified={hotdog.loggerProfile?.isDisqualified}
+                  address={hotdog.eater}
+                  fid={hotdog.eaterProfile?.fid}
+                  isKnownSpammer={hotdog.eaterProfile?.isKnownSpammer}
+                  isReportedForSpam={hotdog.eaterProfile?.isReportedForSpam}
+                  isDisqualified={hotdog.eaterProfile?.isDisqualified}
                 />
               </div>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <EthCommentsModal logId={hotdog.logId} account={account} />
-            <button
-              onClick={shareOnX}
-              className="btn btn-circle btn-ghost btn-xs w-fit px-2"
-            >
-              <Image src="/images/x.svg" alt="Share on X" width={16} height={16} className="dark:hidden" />
-              <Image src="/images/x-white.svg" alt="Share on X" width={16} height={16} className="hidden dark:block" />
-            </button>
-            <button
-              onClick={shareOnFarcaster}
-              className="btn btn-circle btn-ghost btn-xs w-fit px-2"
-            >
-              <Image src="/images/farcaster.svg" alt="Share on Farcaster" width={16} height={16} />
-            </button>
-            <Revoke hotdog={hotdog} onRevocation={onRefetch} />
-          </div>
-        </div>
-
-        {/* Full-bleed photo with verdict stamp + countdown overlays */}
-        <div
-          className={`relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-base-300 ${
-            hotdog.duplicateOfLogId ? "opacity-60" : ""
-          }`}
-        >
-          {linkToDetail ? (
-            <Link href={`/dog/${hotdog.logId}`} className="block h-full w-full">
-              {Photo}
-            </Link>
-          ) : (
-            Photo
-          )}
-
-          {hotdog.duplicateOfLogId && (
-            <Link
-              href={`/dog/${hotdog.duplicateOfLogId}`}
-              className="badge badge-warning absolute right-3 top-3"
-            >
-              Duplicate Image
-            </Link>
-          )}
-
-          {isResolved && hotdog.attestationPeriod && (
-            <VerdictStamp valid={hotdog.attestationPeriod.isValid} />
-          )}
-
-          {!isExpired && (
-            <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-base-100/80 px-2 py-1 backdrop-blur-sm">
-              <VotingCountdown
-                timestamp={hotdog.timestamp.toString()}
-                logId={hotdog.logId?.toString() ?? ""}
-                validAttestations={validAttestations}
-                invalidAttestations={invalidAttestations}
-                onResolutionComplete={onRefetch}
-                attestationPeriod={hotdog.attestationPeriod}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* THE vote control — primary, full-width */}
-        <VoteBar
-          logId={hotdog.logId}
-          chainId={chainId}
-          disabled={disabled}
-          isExpired={isExpired}
-          userAttested={userAttested}
-          userAttestation={userAttestation}
-          validAttestations={validAttestations}
-          invalidAttestations={invalidAttestations}
-          onAttestationMade={onRefetch}
-          onAttestationAffirmationRevoked={onRefetch}
-        />
-
-        {/* Metadata row: comments · season number */}
-        <div className="flex items-center justify-between text-sm">
-          <Comments
-            logId={hotdog.logId?.toString() ?? ""}
-            metadataUri={hotdog.metadataUri}
-          />
-          {showAiJudgement && (
-            <AiJudgement
-              logId={hotdog.logId.toString()}
-              timestamp={hotdog.timestamp.toString()}
-            />
-          )}
-          <span className="font-display text-base tracking-wide opacity-70">
-            🌭 #{hotdog.logId.toString()}
-          </span>
-        </div>
-
-        {/* Market data — collapsed by default, for the crypto-curious */}
-        {zoraCoinAddress && (
-          <details className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs opacity-50">
-              <span className="transition-transform group-open:rotate-180">⌄</span>
-              market data
-            </summary>
-            <div className="mt-2 flex w-full items-center justify-between text-xs opacity-70">
-              <div className="flex items-center gap-2">
-                <ZoraCoinTrading
-                  referrer={hotdog.eater}
-                  coinAddress={zoraCoinAddress}
-                  logId={hotdog.logId}
-                  onTradeComplete={noop}
-                />
-              </div>
-              {zoraCoinData &&
-                (Boolean(zoraCoinData.marketCap) || Boolean(zoraCoinData.volume24h)) && (
-                  <Link
-                    href={
-                      zoraCoinData.link ??
-                      `https://zora.co/coin/base:${zoraCoinData.address}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2"
-                  >
-                    {zoraCoinData.marketCap && (
-                      <div className="flex items-center gap-0.5">
-                        <CurrencyDollarIcon className="h-4 w-4" />
-                        MCAP ${formatAbbreviatedFiat(Number(zoraCoinData.marketCap))}
-                      </div>
-                    )}
-                    {zoraCoinData.volume24h && (
-                      <div className="flex items-center gap-0.5">
-                        <FireIcon className="h-4 w-4" />
-                        24H VOL ${formatAbbreviatedFiat(Number(zoraCoinData.volume24h))}
-                      </div>
-                    )}
-                  </Link>
-                )}
-              {!zoraCoinData && (
-                <div className="flex items-center gap-1">
-                  <div className="loading loading-spinner loading-xs" />
-                  <span>Loading market data...</span>
+              {showLoggedVia({ eater: hotdog.eater, logger: hotdog.logger }) && (
+                <div className="flex items-center gap-1 text-xs opacity-60">
+                  <span>via</span>
+                  <Avatar address={hotdog.logger} size="16px" />
+                  <span>{loggerDisplayName}</span>
+                  <Badge
+                    address={hotdog.logger}
+                    fid={hotdog.loggerProfile?.fid}
+                    isKnownSpammer={hotdog.loggerProfile?.isKnownSpammer}
+                    isReportedForSpam={hotdog.loggerProfile?.isReportedForSpam}
+                    isDisqualified={hotdog.loggerProfile?.isDisqualified}
+                  />
                 </div>
               )}
             </div>
-          </details>
-        )}
+            <div className="flex shrink-0 items-center gap-1">
+              <EthCommentsModal logId={hotdog.logId} account={account} />
+              <button
+                onClick={shareOnX}
+                className="btn btn-circle btn-ghost btn-xs w-fit px-2"
+              >
+                <Image src="/images/x.svg" alt="Share on X" width={16} height={16} className="dark:hidden" />
+                <Image src="/images/x-white.svg" alt="Share on X" width={16} height={16} className="hidden dark:block" />
+              </button>
+              <button
+                onClick={shareOnFarcaster}
+                className="btn btn-circle btn-ghost btn-xs w-fit px-2"
+              >
+                <Image src="/images/farcaster.svg" alt="Share on Farcaster" width={16} height={16} />
+              </button>
+              <Revoke hotdog={hotdog} onRevocation={onRefetch} />
+            </div>
+          </div>
+
+          {/* Flip panel — front = photo (holo), back = market stats/trading. */}
+          <div className={`flip-3d aspect-[4/5] w-full ${hotdog.duplicateOfLogId ? "opacity-60" : ""}`}>
+            <div className={`flip-inner ${flipped ? "is-flipped" : ""}`}>
+              {/* FRONT */}
+              <div className="flip-face rounded-2xl bg-base-300">
+                {linkToDetail ? (
+                  <Link href={`/dog/${hotdog.logId}`} className="block h-full w-full">
+                    {Photo}
+                  </Link>
+                ) : (
+                  Photo
+                )}
+
+                {/* Holographic sheen sweep */}
+                <div className="holo-sheen pointer-events-none absolute inset-0" />
+
+                {/* Rarity chip */}
+                <span
+                  className={`absolute left-3 top-3 flex items-center gap-1 rounded-full px-2 py-0.5 font-display text-[0.65rem] tracking-wider shadow ${tier.chip}`}
+                >
+                  {tier.name}
+                  <span className="tracking-normal">{starStr}</span>
+                </span>
+
+                {hotdog.duplicateOfLogId && (
+                  <Link
+                    href={`/dog/${hotdog.duplicateOfLogId}`}
+                    className="badge badge-warning absolute bottom-3 left-3"
+                  >
+                    Duplicate Image
+                  </Link>
+                )}
+
+                {isResolved && hotdog.attestationPeriod && (
+                  <VerdictStamp valid={hotdog.attestationPeriod.isValid} />
+                )}
+
+                {!isExpired && (
+                  <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-base-100/80 px-2 py-1 backdrop-blur-sm">
+                    <VotingCountdown
+                      timestamp={hotdog.timestamp.toString()}
+                      logId={hotdog.logId?.toString() ?? ""}
+                      validAttestations={validAttestations}
+                      invalidAttestations={invalidAttestations}
+                      onResolutionComplete={onRefetch}
+                      attestationPeriod={hotdog.attestationPeriod}
+                    />
+                  </div>
+                )}
+
+                {/* Flip-to-stats button */}
+                <button
+                  onClick={flip}
+                  aria-label="Flip card for market stats"
+                  className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-base-100/85 px-2.5 py-1 text-xs font-semibold shadow backdrop-blur-sm"
+                >
+                  <ArrowPathIcon className="h-3.5 w-3.5" />
+                  stats
+                </button>
+              </div>
+
+              {/* BACK */}
+              <div className="flip-face flip-back flex flex-col gap-2 rounded-2xl bg-base-200 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-sm tracking-wide">📊 #{hotdog.logId.toString()} · stats</span>
+                  <button
+                    onClick={flip}
+                    aria-label="Flip card back"
+                    className="flex items-center gap-1 rounded-full bg-base-100 px-2.5 py-1 text-xs font-semibold shadow"
+                  >
+                    <ArrowPathIcon className="h-3.5 w-3.5" />
+                    back
+                  </button>
+                </div>
+
+                <div className={`flex items-center gap-1 rounded-lg px-2 py-1 font-display text-xs tracking-wider ${tier.chip}`}>
+                  {tier.name} {starStr}
+                </div>
+
+                {zoraCoinData ? (
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-xl bg-base-100 p-2">
+                      <CurrencyDollarIcon className="mx-auto h-4 w-4 opacity-60" />
+                      <div className="font-display text-sm tabular-nums">
+                        ${formatAbbreviatedFiat(Number(zoraCoinData.marketCap ?? 0))}
+                      </div>
+                      <div className="text-[0.6rem] opacity-60">MCAP</div>
+                    </div>
+                    <div className="rounded-xl bg-base-100 p-2">
+                      <FireIcon className="mx-auto h-4 w-4 opacity-60" />
+                      <div className="font-display text-sm tabular-nums">
+                        ${formatAbbreviatedFiat(Number(zoraCoinData.volume24h ?? 0))}
+                      </div>
+                      <div className="text-[0.6rem] opacity-60">24H VOL</div>
+                    </div>
+                    <div className="rounded-xl bg-base-100 p-2">
+                      <UsersIcon className="mx-auto h-4 w-4 opacity-60" />
+                      <div className="font-display text-sm tabular-nums">
+                        {zoraCoinData.uniqueHolders ?? 0}
+                      </div>
+                      <div className="text-[0.6rem] opacity-60">HOLDERS</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-1 items-center justify-center text-center text-xs opacity-60">
+                    {zoraCoinAddress ? "Loading market data…" : "No coin market yet."}
+                  </div>
+                )}
+
+                {zoraCoinAddress && (
+                  <div className="mt-auto flex items-center justify-between gap-2 text-xs">
+                    <ZoraCoinTrading
+                      referrer={hotdog.eater}
+                      coinAddress={zoraCoinAddress}
+                      logId={hotdog.logId}
+                      onTradeComplete={noop}
+                    />
+                    <Link
+                      href={
+                        zoraCoinData?.link ??
+                        `https://zora.co/coin/base:${zoraCoinAddress}?referrer=0x3dE0ba94A1F291A7c44bb029b765ADB2C487063F`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="link shrink-0 opacity-70"
+                    >
+                      Zora ↗
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* THE vote control — primary, full-width */}
+          <VoteBar
+            logId={hotdog.logId}
+            chainId={chainId}
+            disabled={disabled}
+            isExpired={isExpired}
+            userAttested={userAttested}
+            userAttestation={userAttestation}
+            validAttestations={validAttestations}
+            invalidAttestations={invalidAttestations}
+            onAttestationMade={onRefetch}
+            onAttestationAffirmationRevoked={onRefetch}
+          />
+
+          {/* Metadata row: comments · season number */}
+          <div className="flex items-center justify-between text-sm">
+            <Comments
+              logId={hotdog.logId?.toString() ?? ""}
+              metadataUri={hotdog.metadataUri}
+            />
+            {showAiJudgement && (
+              <AiJudgement
+                logId={hotdog.logId.toString()}
+                timestamp={hotdog.timestamp.toString()}
+              />
+            )}
+            <span className="font-display text-base tracking-wide opacity-70">
+              🌭 #{hotdog.logId.toString()}
+            </span>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
