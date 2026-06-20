@@ -2,6 +2,7 @@ import Head from "next/head";
 import { type NextPage } from "next";
 import { useState } from "react";
 import LeaderboardList from "~/components/LeaderboardList";
+import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { CONTEST_START_TIME } from "~/constants";
 
 const TABS = ["Season", "All-time"] as const;
@@ -21,7 +22,7 @@ const LeaderboardPage: NextPage = () => {
       </Head>
       <main className="flex flex-col items-center px-4 pt-6">
         <div className="flex w-full max-w-xl flex-col items-center gap-5">
-          <h1 className="font-display text-4xl tracking-wide sm:text-5xl">
+          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
             🏆 THE SCOREBOARD
           </h1>
 
@@ -36,6 +37,10 @@ const LeaderboardPage: NextPage = () => {
                 {t}
               </a>
             ))}
+          </div>
+
+          <div className="w-full overflow-hidden rounded-2xl border border-base-content/10 bg-base-100/60 backdrop-blur-sm">
+            <LeaderboardBanner startDate={startDateObj} scrollSpeed={35} />
           </div>
 
           <LeaderboardList

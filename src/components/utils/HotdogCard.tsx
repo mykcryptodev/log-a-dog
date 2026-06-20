@@ -204,6 +204,14 @@ const HotdogCardComponent: FC<Props> = ({
     />
   );
 
+  // Top accent colour: mustard = voting live, green = valid, red = sus, faded = pending/expired
+  const accentClass = (() => {
+    if (hotdog.isPending) return "bg-base-content/10";
+    if (isResolved) return hotdog.attestationPeriod?.isValid ? "bg-accent" : "bg-error";
+    if (!isExpired) return "bg-primary";
+    return "bg-base-content/15";
+  })();
+
   return (
     <motion.div
       initial={{ y: -16, opacity: 0 }}
@@ -211,6 +219,8 @@ const HotdogCardComponent: FC<Props> = ({
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
       className="card glass-card overflow-hidden rounded-3xl border-4 border-[#1a1a1a]/5"
     >
+      {/* Verdict-state accent strip */}
+      <div className={`h-1 w-full shrink-0 ${accentClass}`} />
       <div className="flex flex-col gap-3 p-4">
         {/* Identity row */}
         <div className="flex items-center justify-between">

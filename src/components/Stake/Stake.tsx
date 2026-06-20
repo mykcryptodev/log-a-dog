@@ -237,7 +237,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
 
   return (
     <div>
-      {!hideTitle && <h1 className="mb-4 text-2xl font-bold">Stake $HOTDOG</h1>}
+      {!hideTitle && <h1 className="mb-4 font-display text-2xl font-bold tracking-tight">Stake $HOTDOG</h1>}
       
       {/* Tabs */}
       <div className="tabs tabs-boxed mb-4 w-full">

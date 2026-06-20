@@ -182,9 +182,10 @@ export const VoteBar: FC<Props> = ({
             transition={{ type: "spring", stiffness: 400, damping: 12 }}
             disabled={locked}
             onClick={() => void vote(true)}
-            className={`btn relative flex-1 overflow-hidden font-display tracking-wide ${
+            className={`btn relative flex-1 overflow-hidden py-1 font-display tracking-wide ${
               votedValid ? "btn-accent" : "btn-outline btn-accent"
             }`}
+            style={{ height: "auto", minHeight: "2.75rem" }}
           >
             <AnimatePresence>
               {streak === "valid" && (
@@ -197,16 +198,22 @@ export const VoteBar: FC<Props> = ({
                 />
               )}
             </AnimatePresence>
-            <span className="relative">🥬 VALID DOG</span>
+            <span className="relative flex flex-col items-center gap-0 leading-tight">
+              <span className="text-sm">🥬 VALID DOG</span>
+              {total > 0 && (
+                <span className="font-mono text-xs font-normal opacity-60">{pct}%</span>
+              )}
+            </span>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.92 }}
             transition={{ type: "spring", stiffness: 400, damping: 12 }}
             disabled={locked}
             onClick={() => void vote(false)}
-            className={`btn relative flex-1 overflow-hidden font-display tracking-wide ${
+            className={`btn relative flex-1 overflow-hidden py-1 font-display tracking-wide ${
               votedSus ? "btn-error" : "btn-outline btn-error"
             }`}
+            style={{ height: "auto", minHeight: "2.75rem" }}
           >
             <AnimatePresence>
               {streak === "invalid" && (
@@ -219,21 +226,27 @@ export const VoteBar: FC<Props> = ({
                 />
               )}
             </AnimatePresence>
-            <span className="relative">🔴 SUS</span>
+            <span className="relative flex flex-col items-center gap-0 leading-tight">
+              <span className="text-sm">🔴 SUS</span>
+              {total > 0 && (
+                <span className="font-mono text-xs font-normal opacity-60">{100 - pct}%</span>
+              )}
+            </span>
           </motion.button>
         </div>
       )}
 
-      <div className={`h-3 w-full overflow-hidden rounded-full bg-error/30 ${isExpired ? "" : "mt-2"}`}>
+      <div className={`h-3 w-full overflow-hidden rounded-full bg-error/20 ${isExpired ? "" : "mt-2"}`}>
         <motion.div
-          className="h-full bg-accent"
+          className="h-full rounded-full bg-gradient-to-r from-accent to-accent/80"
           animate={{ width: `${pct}%` }}
           transition={{ type: "spring", stiffness: 120, damping: 18 }}
         />
       </div>
-      <p className="mt-1 text-center text-xs opacity-70">
-        {pct}% valid · {total} verdict{total === 1 ? "" : "s"}
-      </p>
+      <div className="mt-1 flex justify-between text-xs opacity-50">
+        <span>{valid} valid</span>
+        <span>{invalid} sus</span>
+      </div>
     </div>
   );
 };
