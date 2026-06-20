@@ -51,8 +51,11 @@ export const VoteBar: FC<Props> = ({
   const [streak, setStreak] = useState<null | "valid" | "invalid">(null);
 
   const ghostVote = useGhostVote(logId, sessionData?.user?.address);
-  const effectiveUserAttested = ghostVote ?? optimisticUserAttested;
-  const effectiveUserAttestation = ghostVote ?? optimisticUserAttestation;
+  // ghostVote is null (no vote), true (voted valid), or false (voted sus).
+  // ?? cannot be used here: `false ?? x` returns `x`, masking a SUS vote.
+  const effectiveUserAttested = ghostVote !== null || (optimisticUserAttested ?? false);
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  const effectiveUserAttestation = ghostVote !== null ? ghostVote : (optimisticUserAttestation ?? false);
 
   const valid = Number(optimisticValidCount ?? 0);
   const invalid = Number(optimisticInvalidCount ?? 0);
@@ -165,9 +168,9 @@ export const VoteBar: FC<Props> = ({
                   console.warn("Could not refresh indexed votes after verdict", error);
                 }
                 if (sessionData?.user?.address) {
-                  await utils.ghost.getUserVotes.invalidate({ voter: sessionData.user.address });
+                  await utils.hotdog.getUserVotes.invalidate({ voter: sessionData.user.address });
                 }
-                await utils.ghost.getJudges.invalidate();
+                await utils.hotdog.getJudges.invalidate();
                 void onAttestationMade?.();
               })();
             }
@@ -198,12 +201,7 @@ export const VoteBar: FC<Props> = ({
                 />
               )}
             </AnimatePresence>
-            <span className="relative flex flex-col items-center gap-0 leading-tight">
-              <span className="text-sm">🥬 VALID DOG</span>
-              {total > 0 && (
-                <span className="font-mono text-xs font-normal opacity-60">{pct}%</span>
-              )}
-            </span>
+            <span className="text-sm">🥬 VALID DOG</span>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.92 }}
@@ -226,27 +224,41 @@ export const VoteBar: FC<Props> = ({
                 />
               )}
             </AnimatePresence>
-            <span className="relative flex flex-col items-center gap-0 leading-tight">
-              <span className="text-sm">🔴 SUS</span>
-              {total > 0 && (
-                <span className="font-mono text-xs font-normal opacity-60">{100 - pct}%</span>
-              )}
-            </span>
+            <span className="text-sm">🔴 SUS</span>
           </motion.button>
         </div>
       )}
 
-      <div className={`h-3 w-full overflow-hidden rounded-full bg-error/20 ${isExpired ? "" : "mt-2"}`}>
+      {(votedValid || votedSus) && (
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-accent to-accent/80"
-          animate={{ width: `${pct}%` }}
-          transition={{ type: "spring", stiffness: 120, damping: 18 }}
-        />
-      </div>
-      <div className="mt-1 flex justify-between text-xs opacity-50">
-        <span>{valid} valid</span>
-        <span>{invalid} sus</span>
-      </div>
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl py-2 font-display text-sm font-semibold tracking-wide ${
+            votedValid
+              ? "bg-accent/15 text-accent"
+              : "bg-error/15 text-error"
+          }`}
+        >
+          <span>✓</span>
+          <span>you voted {votedValid ? "VALID DOG" : "SUS"}</span>
+        </motion.div>
+      )}
+
+      {isExpired && (
+        <>
+          <div className={`h-3 w-full overflow-hidden rounded-full bg-error/20 ${(!votedValid && !votedSus) ? "" : "mt-2"}`}>
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-accent to-accent/80"
+              animate={{ width: `${pct}%` }}
+              transition={{ type: "spring", stiffness: 120, damping: 18 }}
+            />
+          </div>
+          <div className="mt-1 flex justify-between text-xs opacity-50">
+            <span>{valid} valid</span>
+            <span>{invalid} sus</span>
+          </div>
+        </>
+      )}
     </div>
   );
 };

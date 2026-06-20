@@ -15,7 +15,7 @@ import {
 import { getContract } from "thirdweb";
 import { toast } from "react-toastify";
 import { DEFAULT_CHAIN, MINIMUM_STAKE } from "~/constants";
-import { parseEther, formatEther, InsufficientFundsError } from "viem";
+import { parseEther, formatEther } from "viem";
 import { allowance, approve } from "thirdweb/extensions/erc20";
 import { Buy } from "~/components/utils/Buy";
 import { api } from "~/utils/api";
@@ -147,10 +147,6 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
     setLegacyUnstakeAmount(newUnstakeAmount.toString());
   }, [legacyUnstakePercentage, legacyAvailableStake]);
 
-  const balanceIsInsufficient = useMemo(() => {
-    return BigInt(balance?.value ?? 0) < BigInt(MINIMUM_STAKE);
-  }, [balance]);
-
   const amountExceedsBalance = useMemo(() => {
     if (!amount || !balance?.value) return false;
     try {
@@ -198,7 +194,6 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
   const invalidAmount = Number(amount) <= 0;
   const invalidUnstakeAmount = Number(unstakeAmount) <= 0;
   const invalidLegacyUnstakeAmount = Number(legacyUnstakeAmount) <= 0;
-  const showInsufficientBalance = balanceIsInsufficient && !invalidAmount;
   const hasStakedTokens = stakedAmount !== undefined && Number(formatEther(stakedAmount)) > 0;
   const hasLegacyStakedTokens =
     hasSeparateLegacyStaking &&
@@ -227,7 +222,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
     setLegacyUnstakePercentage(newPercentage);
   };
 
-  const isDisabled = showInsufficientBalance || amountExceedsBalance || amountBelowMinimum || invalidAmount;
+  const isDisabled = amountExceedsBalance || amountBelowMinimum || invalidAmount;
   const isUnstakeDisabled = !hasStakedTokens || unstakeAmountExceedsStaked || invalidUnstakeAmount;
   const isLegacyUnstakeDisabled =
     !hasLegacyStakedTokens ||
@@ -406,13 +401,11 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 }}
                 disabled={isDisabled}
               >
-                {showInsufficientBalance
-                  ? "Insufficient balance"
-                  : amountExceedsBalance
-                    ? "Amount exceeds balance"
-                    : amountBelowMinimum
-                      ? "Minimum stake is 300,000 tokens"
-                      : "Stake"}
+                {amountExceedsBalance
+                  ? "Amount exceeds balance"
+                  : amountBelowMinimum
+                    ? "Minimum stake is 300,000 tokens"
+                    : "Stake"}
               </TransactionButton>
             ) : (
               <TransactionButton
@@ -449,22 +442,18 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 }}
                 disabled={isDisabled}
               >
-                {showInsufficientBalance
-                  ? "Insufficient balance"
-                  : amountExceedsBalance
-                    ? "Amount exceeds balance"
-                    : amountBelowMinimum
-                      ? "Minimum stake is 300,000 tokens"
-                      : "Approve"}
+                {amountExceedsBalance
+                  ? "Amount exceeds balance"
+                  : amountBelowMinimum
+                    ? "Minimum stake is 300,000 tokens"
+                    : "Approve"}
               </TransactionButton>
             )}
 
-            {InsufficientFundsError && (
-              <div className="flex flex-col gap-2">
-                <p className="text-center">Need some $HOTDOG?</p>
-                <Buy />
-              </div>
-            )}
+            <div className="flex flex-col gap-2">
+              <p className="text-center">Need some $HOTDOG?</p>
+              <Buy />
+            </div>
           </>
         ) : (
           activeTab === "unstake" ? (

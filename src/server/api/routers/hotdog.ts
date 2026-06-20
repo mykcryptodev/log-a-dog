@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { AI_AFFIRMATION, ATTESTATION_MANAGER, LOG_A_DOG, MODERATION, STAKING, MAKER_WALLET } from "~/constants/addresses";
 import { encode, getContract, getGasPrice, prepareTransaction } from "thirdweb";
-import { SUPPORTED_CHAINS } from "~/constants/chains";
+import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from "~/constants/chains";
 
 import {
   createTRPCRouter,
@@ -26,7 +26,7 @@ import { getUserAttestationsWithChoices } from "~/thirdweb/84532/0xfbc7552a4bc2e
 import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
 import { getDogEvents, getDogEventsByEater, getDogEventLeaderboard } from "~/server/api/dog-events";
 import { db } from "~/server/db";
-import { buildHotdogProfileMap } from "~/server/utils/profile";
+import { buildHotdogProfileMap, fetchUserProfiles } from "~/server/utils/profile";
 import { getUserOpGasFees } from "thirdweb/wallets/smart";
 import { abi } from "~/constants/abi/logadog";
 
@@ -1221,4 +1221,98 @@ export const hotdogRouter = createTRPCRouter({
         eater: dogEvent.eater,
       };
     }),
+
+  getUserVotes: publicProcedure
+    .input(z.object({ voter: z.string() }))
+    .query(async ({ input }) => {
+      const voter = input.voter.toLowerCase();
+      const chainId = DEFAULT_CHAIN.id.toString();
+      const contestStartTimestamp = BigInt(Math.floor(new Date(DOG_FEED_START_TIME).getTime() / 1000));
+      const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
+      const cacheKey = `votes:${chainId}:${voter}:${DOG_FEED_START_TIME}`;
+
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          const seasonLogs = await db.dogEvent.findMany({
+            where: {
+              chainId,
+              timestamp: { gte: contestStartTimestamp, lte: contestEndTimestamp },
+            },
+            select: { logId: true },
+          });
+          const logIds = seasonLogs.map((log) => log.logId);
+          if (logIds.length === 0) return {};
+
+          const rows = await db.attestationVote.findMany({
+            where: { chainId, voter, logId: { in: logIds } },
+            select: { logId: true, isValid: true },
+          });
+
+          return rows.reduce<Record<string, boolean>>((acc, row) => {
+            acc[row.logId] = row.isValid;
+            return acc;
+          }, {});
+        },
+        CACHE_DURATION.MEDIUM
+      );
+    }),
+
+  getJudges: publicProcedure.query(async () => {
+    const chainId = DEFAULT_CHAIN.id.toString();
+    const contestStartTimestamp = BigInt(Math.floor(new Date(DOG_FEED_START_TIME).getTime() / 1000));
+    const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
+    const cacheKey = `judges:ranking:${chainId}:${DOG_FEED_START_TIME}`;
+
+    return getOrSetCache(
+      cacheKey,
+      async () => {
+        const resolvedLogs = await db.dogEvent.findMany({
+          where: {
+            chainId,
+            timestamp: { gte: contestStartTimestamp, lte: contestEndTimestamp },
+            attestationResolved: true,
+            attestationValid: { not: null },
+          },
+          select: { logId: true, attestationValid: true },
+        });
+
+        const resolvedByLogId = new Map(resolvedLogs.map((log) => [log.logId, log.attestationValid]));
+        const logIds = [...resolvedByLogId.keys()];
+        if (logIds.length === 0) return [];
+
+        const votes = await db.attestationVote.findMany({
+          where: { chainId, logId: { in: logIds } },
+          select: { voter: true, logId: true, isValid: true },
+        });
+
+        const judgeStats: Record<string, { correct: number; total: number }> = {};
+        for (const vote of votes) {
+          const resolvedValid = resolvedByLogId.get(vote.logId);
+          if (resolvedValid === null || resolvedValid === undefined) continue;
+          const v = vote.voter.toLowerCase();
+          judgeStats[v] ??= { correct: 0, total: 0 };
+          judgeStats[v].total += 1;
+          if (vote.isValid === resolvedValid) judgeStats[v].correct += 1;
+        }
+
+        const voterAddresses = Object.keys(judgeStats);
+        if (voterAddresses.length === 0) return [];
+
+        const profileMap = await fetchUserProfiles(voterAddresses);
+
+        return Object.entries(judgeStats)
+          .map(([voter, stats]) => ({
+            voter,
+            correct: stats.correct,
+            incorrect: stats.total - stats.correct,
+            total: stats.total,
+            accuracy: stats.total > 0 ? (stats.correct / stats.total) * 100 : 0,
+            profile: profileMap.get(voter) ?? { username: "", imgUrl: "", metadata: "", address: voter },
+          }))
+          .sort((a, b) => b.correct - a.correct);
+      },
+      CACHE_DURATION.MEDIUM
+    );
+  }),
 });

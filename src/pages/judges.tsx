@@ -27,7 +27,7 @@ const JudgesPage: NextPage = () => {
     isLoading: loadingJudges,
     isError: judgesErrored,
     refetch: refetchJudges,
-  } = api.ghost.getJudges.useQuery(undefined, {
+  } = api.hotdog.getJudges.useQuery(undefined, {
     refetchOnWindowFocus: false,
     retry: 1,
   });

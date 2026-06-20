@@ -46,9 +46,11 @@ export const JudgeAttestation: FC<Props> = ({
 
   const ghostVote = useGhostVote(logId, sessionData?.user?.address);
 
-  // Derive the effective values during render instead of using useEffect
-  const effectiveUserAttested = ghostVote ?? optimisticUserAttested;
-  const effectiveUserAttestation = ghostVote ?? optimisticUserAttestation;
+  // ghostVote is null (no vote), true (voted valid), or false (voted sus).
+  // ?? cannot be used here: `false ?? x` returns `x`, masking a SUS vote.
+  const effectiveUserAttested = ghostVote !== null || (optimisticUserAttested ?? false);
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  const effectiveUserAttestation = ghostVote !== null ? ghostVote : (optimisticUserAttestation ?? false);
 
   const judgeMutation = api.hotdog.judge.useMutation({
     onMutate: async ({ isValid }) => {
@@ -171,9 +173,9 @@ export const JudgeAttestation: FC<Props> = ({
                   console.warn("Could not refresh indexed votes after attestation", error);
                 }
                 if (sessionData?.user?.address) {
-                  await utils.ghost.getUserVotes.invalidate({ voter: sessionData.user.address });
+                  await utils.hotdog.getUserVotes.invalidate({ voter: sessionData.user.address });
                 }
-                await utils.ghost.getJudges.invalidate();
+                await utils.hotdog.getJudges.invalidate();
                 void onAttestationMade?.();
               })();
             }
