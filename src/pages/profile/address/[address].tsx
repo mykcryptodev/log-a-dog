@@ -68,6 +68,13 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
   // Only use sessionData for display if this is the user's own profile AND sessionData has the info
   const displayUsername = (isOwnProfile && sessionData?.user?.username) ? sessionData.user.username : data?.username;
   const displayImage = (isOwnProfile && sessionData?.user?.image) ? sessionData.user.image : data?.imgUrl;
+  const hasNoAvatar = !displayImage || displayImage === '';
+
+  useEffect(() => {
+    if (isOwnProfile && hasNoAvatar && !isLoading) {
+      setShowProfileForm(true);
+    }
+  }, [isOwnProfile, hasNoAvatar, isLoading]);
 
   useEffect(() => {
     const loadMoreTarget = loadMoreRef.current;
@@ -204,7 +211,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
               className="btn btn-ghost btn-xs"
               onClick={() => setShowProfileForm(!showProfileForm)}
             >
-              {showProfileForm ? 'Cancel Edit' : 'Edit Profile'}
+              {showProfileForm ? 'Cancel' : hasNoAvatar ? 'Add Avatar' : 'Edit Profile'}
             </button>
           )}
         </div>

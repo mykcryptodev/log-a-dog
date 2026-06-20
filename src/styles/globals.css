@@ -34,10 +34,22 @@
     background-attachment: fixed;
   }
 
+  @media (prefers-color-scheme: dark) {
+    .app-bg {
+      background-image: url("/images/background-dark.png");
+    }
+  }
+
   @media (min-width: 1024px) {
     .app-bg {
       background-image: url("/images/background-dekstop.png");
       background-position: center center;
+    }
+  }
+
+  @media (min-width: 1024px) and (prefers-color-scheme: dark) {
+    .app-bg {
+      background-image: url("/images/background-dark.png");
     }
   }
 

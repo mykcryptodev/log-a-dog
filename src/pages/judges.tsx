@@ -27,7 +27,7 @@ const JudgesPage: NextPage = () => {
     isLoading: loadingJudges,
     isError: judgesErrored,
     refetch: refetchJudges,
-  } = api.ghost.getJudges.useQuery(undefined, {
+  } = api.hotdog.getJudges.useQuery(undefined, {
     refetchOnWindowFocus: false,
     retry: 1,
   });
@@ -57,7 +57,7 @@ const JudgesPage: NextPage = () => {
       <main className="flex flex-col items-center px-4 pt-6">
         <div className="flex w-full max-w-xl flex-col items-center gap-5">
           <div className="text-center">
-            <h1 className="font-display text-4xl tracking-wide sm:text-5xl">🧑‍⚖️ THE JURY</h1>
+            <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">🧑‍⚖️ THE JURY</h1>
             <p className="mt-1 text-sm opacity-70">
               {loadingDogs
                 ? "Rounding up the suspects…"
@@ -114,7 +114,7 @@ const JudgesPage: NextPage = () => {
 
           {/* Top judges ranking */}
           <div className="w-full">
-            <h2 className="mb-3 mt-4 font-display text-2xl tracking-wide">🏅 TOP JUDGES</h2>
+            <h2 className="mb-3 mt-4 font-display text-2xl font-bold tracking-tight">🏅 TOP JUDGES</h2>
             {loadingJudges ? (
               <div className="space-y-2 rounded-2xl bg-base-200/40 p-3 backdrop-blur-sm">
                 {Array.from({ length: 5 }).map((_, i) => (

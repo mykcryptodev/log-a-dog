@@ -44,7 +44,7 @@ const EarnPage: NextPage = () => {
 
           {/* Page header */}
           <div className="text-center">
-            <h1 className="font-display text-4xl tracking-wide sm:text-5xl">
+            <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
               💰 EARN <span className="text-secondary">$HOTDOG</span>
             </h1>
             <p className="mt-2 text-sm opacity-70">Stake, judge, and collect.</p>
@@ -96,7 +96,7 @@ const EarnPage: NextPage = () => {
 
           {/* How Earning Works */}
           <div className="glass-card rounded-3xl p-5">
-            <h2 className="mb-3 font-display text-2xl tracking-wide">💡 HOW IT WORKS</h2>
+            <h2 className="mb-3 font-display text-2xl font-bold tracking-tight">💡 HOW IT WORKS</h2>
 
             <Image
               src="/images/how.png"
@@ -201,7 +201,7 @@ const EarnPage: NextPage = () => {
           {/* Judging Guidelines */}
           <div className="glass-card rounded-3xl p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-2xl tracking-wide">🧑‍⚖️ JUDGING RULES</h2>
+              <h2 className="font-display text-2xl font-bold tracking-tight">🧑‍⚖️ JUDGING RULES</h2>
               <Link href="/judges" className="btn btn-outline btn-sm font-display tracking-wide">
                 <TrophyIcon className="h-4 w-4" />
                 Judges
@@ -236,7 +236,7 @@ const EarnPage: NextPage = () => {
 
           {/* Voting Process */}
           <div className="glass-card rounded-3xl p-5">
-            <h2 className="mb-4 font-display text-2xl tracking-wide">⚡ VOTING PROCESS</h2>
+            <h2 className="mb-4 font-display text-2xl font-bold tracking-tight">⚡ VOTING PROCESS</h2>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -282,13 +282,13 @@ const EarnPage: NextPage = () => {
 
           {/* Claim Trading Rewards */}
           <div className="glass-card rounded-3xl p-5">
-            <h2 className="mb-3 font-display text-2xl tracking-wide">🎁 TRADING REWARDS</h2>
+            <h2 className="mb-3 font-display text-2xl font-bold tracking-tight">🎁 TRADING REWARDS</h2>
             <ClaimProtocolRewards />
           </div>
 
           {/* Airdrop */}
           <div className="glass-card rounded-3xl p-5">
-            <h2 className="mb-1 font-display text-2xl tracking-wide">🪂 AIRDROP</h2>
+            <h2 className="mb-1 font-display text-2xl font-bold tracking-tight">🪂 AIRDROP</h2>
             <p className="mb-3 text-sm opacity-70">
               3M $HOTDOG for Glizzy Zone and Log a Dog Channel followers
             </p>

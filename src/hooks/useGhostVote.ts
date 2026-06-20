@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { api } from "~/utils/api";
 
 export function useGhostVote(logId: string | undefined, voter: string | undefined) {
-  const { data: votes } = api.ghost.getUserVotes.useQuery(
+  const { data: votes } = api.hotdog.getUserVotes.useQuery(
     { voter: voter ?? "" },
     {
       enabled: !!voter,
