@@ -1227,25 +1227,20 @@ export const hotdogRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const voter = input.voter.toLowerCase();
       const chainId = DEFAULT_CHAIN.id.toString();
-      const contestStartTimestamp = BigInt(Math.floor(new Date(DOG_FEED_START_TIME).getTime() / 1000));
-      const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
       const cacheKey = `votes:${chainId}:${voter}:${DOG_FEED_START_TIME}`;
 
       return getOrSetCache(
         cacheKey,
         async () => {
-          const seasonLogs = await db.dogEvent.findMany({
+          const rows = await db.attestationVote.findMany({
             where: {
               chainId,
-              timestamp: { gte: contestStartTimestamp, lte: contestEndTimestamp },
+              voter,
+              blockTimestamp: {
+                gte: new Date(DOG_FEED_START_TIME),
+                lte: new Date(CONTEST_END_TIME),
+              },
             },
-            select: { logId: true },
-          });
-          const logIds = seasonLogs.map((log) => log.logId);
-          if (logIds.length === 0) return {};
-
-          const rows = await db.attestationVote.findMany({
-            where: { chainId, voter, logId: { in: logIds } },
             select: { logId: true, isValid: true },
           });
 
