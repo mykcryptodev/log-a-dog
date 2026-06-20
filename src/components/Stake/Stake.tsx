@@ -259,7 +259,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
             className={`tab tab-lg flex-1 ${activeTab === "legacy" ? "tab-active" : ""}`}
             onClick={() => setActiveTab("legacy")}
           >
-            V1 Exit
+            Season 2
           </button>
         )}
       </div>
@@ -273,7 +273,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 <div className="stat-title">Amount to Stake</div>
                 <input
                   type="number"
-                  className="stat-value w-full max-w-[12ch] bg-transparent text-center text-primary focus:outline-none"
+                  className="stat-value mx-auto block w-full max-w-[12ch] bg-transparent text-center text-primary focus:outline-none [text-align-last:center] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   value={amount}
                   onChange={(e) => {
                     let value = e.target.value;
@@ -475,7 +475,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 <div className="stat-title">Amount to Unstake</div>
                 <input
                   type="number"
-                  className="stat-value w-full max-w-[12ch] bg-transparent text-center text-secondary focus:outline-none"
+                  className="stat-value mx-auto block w-full max-w-[12ch] bg-transparent text-center text-secondary focus:outline-none [text-align-last:center] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   value={unstakeAmount}
                   onChange={(e) => {
                     let value = e.target.value;
@@ -596,7 +596,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
           ) : (
           <>
             <div className="alert alert-info text-sm">
-              V1 stake only counts for the previous season. Unstake it here, then stake in the current season to judge new dogs.
+              Season 2 stake only counts for the previous season. Unstake it here, then stake in the current season to judge new dogs.
             </div>
 
             {legacyLockedAmount > 0n && (
@@ -607,10 +607,10 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
 
             <div className="stats stats-vertical w-full max-w-full shadow md:stats-horizontal">
               <div className="stat text-center">
-                <div className="stat-title">V1 Amount to Unstake</div>
+                <div className="stat-title">Season 2 Amount to Unstake</div>
                 <input
                   type="number"
-                  className="stat-value w-full max-w-[12ch] bg-transparent text-center text-secondary focus:outline-none"
+                  className="stat-value mx-auto block w-full max-w-[12ch] bg-transparent text-center text-secondary focus:outline-none [text-align-last:center] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [text-align-last:center]"
                   value={legacyUnstakeAmount}
                   onChange={(e) => {
                     let value = e.target.value;
@@ -632,7 +632,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
 
             {legacyUnstakeAmountExceedsAvailable && (
               <div className="text-center text-sm text-error">
-                Amount exceeds available V1 stake
+                Amount exceeds available Season 2 stake
               </div>
             )}
 
@@ -641,7 +641,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 htmlFor="legacyUnstakePercentage"
                 className="mb-1 block text-sm font-medium"
               >
-                Percentage of Available V1 Stake: {legacyUnstakePercentage}%
+                Percentage of Available Season 2 Stake: {legacyUnstakePercentage}%
               </label>
               <input
                 id="legacyUnstakePercentage"
@@ -663,10 +663,10 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                   amount: parseEther(legacyUnstakeAmount),
                 })
               }
-              onTransactionSent={() => toast.loading("Unstaking V1 tokens...")}
+              onTransactionSent={() => toast.loading("Unstaking Season 2 tokens...")}
               onTransactionConfirmed={() => {
                 toast.dismiss();
-                toast.success("V1 tokens unstaked!");
+                toast.success("Season 2 tokens unstaked!");
                 onStake?.(legacyUnstakeAmount);
               }}
               onError={(err) => {
@@ -679,19 +679,19 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                     return match;
                   }
                 });
-                toast.error(`V1 unstaking failed: ${formattedMessage}`);
+                toast.error(`Season 2 unstaking failed: ${formattedMessage}`);
               }}
               disabled={isLegacyUnstakeDisabled}
             >
               {!hasLegacyStakedTokens
-                ? "No V1 tokens staked"
+                ? "No Season 2 tokens staked"
                 : (legacyAvailableStake ?? 0n) === 0n
-                  ? "V1 stake is locked"
+                  ? "Season 2 stake is locked"
                   : legacyUnstakeAmountExceedsAvailable
                     ? "Amount exceeds available stake"
                     : invalidLegacyUnstakeAmount
                       ? "Enter amount to unstake"
-                      : "Unstake V1"}
+                      : "Unstake Season 2"}
             </TransactionButton>
           </>
           )

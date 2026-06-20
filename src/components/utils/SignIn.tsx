@@ -1,5 +1,5 @@
 import { CheckIcon } from '@heroicons/react/24/outline';
-import { getCsrfToken, signIn, useSession } from 'next-auth/react';
+import { getCsrfToken, signIn, signOut, useSession } from 'next-auth/react';
 import React, { type FC, useState, useEffect } from 'react';
 import { SiweMessage } from 'siwe';
 import { useActiveAccount } from 'thirdweb/react';
@@ -85,8 +85,8 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false, buttonCl
         <div className="flex items-center gap-1 text-center">
           <span>Log a dog is a game of integrity. Be honest. Play clean. Finish your dogs.</span>
         </div>
-        <div className="modal-action">
-          <button 
+        <div className="modal-action flex-col gap-3">
+          <button
             onClick={promptToSign}
             className="btn mx-auto"
             disabled={isSigningIn}
@@ -97,6 +97,12 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false, buttonCl
               <CheckIcon className="w-6 h-6" />
             )}
             I will play with honor
+          </button>
+          <button
+            className="btn btn-ghost btn-sm mx-auto text-base-content/50"
+            onClick={() => signOut()}
+          >
+            Log out &amp; use a different wallet
           </button>
         </div>
       </div>
