@@ -204,12 +204,15 @@ const HotdogCardComponent: FC<Props> = ({
     />
   );
 
-  // Top accent colour: mustard = voting live, green = valid, red = sus, faded = pending/expired
-  const accentClass = (() => {
-    if (hotdog.isPending) return "bg-base-content/10";
-    if (isResolved) return hotdog.attestationPeriod?.isValid ? "bg-accent" : "bg-error";
-    if (!isExpired) return "bg-primary";
-    return "bg-base-content/15";
+  // Status sticker text + colour: mustard = voting live, green = valid, red = sus.
+  const status = (() => {
+    if (hotdog.isPending) return { label: "LOGGING…", cls: "bg-base-300 text-base-content" };
+    if (isResolved)
+      return hotdog.attestationPeriod?.isValid
+        ? { label: "VALID DOG", cls: "bg-accent text-accent-content" }
+        : { label: "RULED SUS", cls: "bg-error text-white" };
+    if (!isExpired) return { label: "ON THE GRILL", cls: "bg-primary text-primary-content" };
+    return { label: "FINAL", cls: "bg-base-300 text-base-content" };
   })();
 
   return (
@@ -217,21 +220,23 @@ const HotdogCardComponent: FC<Props> = ({
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
-      className="card glass-card overflow-hidden rounded-3xl border-4 border-[#1a1a1a]/5"
+      className="card pop-card overflow-hidden rounded-[1.75rem] bg-base-100"
     >
-      {/* Verdict-state accent strip */}
-      <div className={`h-1 w-full shrink-0 ${accentClass}`} />
       <div className="flex flex-col gap-3 p-4">
         {/* Identity row */}
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col items-start">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-col items-start">
             <div className="flex w-fit items-center gap-1">
               <Link
                 href={`/profile/${hotdog.eater}`}
                 className="flex items-center gap-2"
               >
-                <Avatar address={hotdog.eater} fallbackSize={28} />
-                <span className="text-sm font-semibold">{displayName}</span>
+                <span className="pop-frame inline-flex overflow-hidden rounded-full">
+                  <Avatar address={hotdog.eater} fallbackSize={28} />
+                </span>
+                <span className="truncate font-display text-base tracking-wide">
+                  {displayName}
+                </span>
               </Link>
               <Badge
                 address={hotdog.eater}
@@ -256,7 +261,7 @@ const HotdogCardComponent: FC<Props> = ({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <EthCommentsModal logId={hotdog.logId} account={account} />
             <button
               onClick={shareOnX}
@@ -275,9 +280,10 @@ const HotdogCardComponent: FC<Props> = ({
           </div>
         </div>
 
-        {/* Full-bleed photo with verdict stamp + countdown overlays */}
+        {/* Full-bleed photo, framed in a thick ink border. Verdict stamp +
+            countdown + status sticker overlay it. */}
         <div
-          className={`relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-base-300 ${
+          className={`pop-frame relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-base-300 ${
             hotdog.duplicateOfLogId ? "opacity-60" : ""
           }`}
         >
@@ -289,10 +295,17 @@ const HotdogCardComponent: FC<Props> = ({
             Photo
           )}
 
+          {/* Status sticker, top-left, rotated like a slapped-on label. */}
+          <span
+            className={`sticker absolute left-3 top-3 -rotate-3 rounded-lg px-2 py-0.5 font-display text-xs tracking-wider ${status.cls}`}
+          >
+            {status.label}
+          </span>
+
           {hotdog.duplicateOfLogId && (
             <Link
               href={`/dog/${hotdog.duplicateOfLogId}`}
-              className="badge badge-warning absolute right-3 top-3"
+              className="badge badge-warning absolute right-3 bottom-3"
             >
               Duplicate Image
             </Link>
@@ -303,7 +316,7 @@ const HotdogCardComponent: FC<Props> = ({
           )}
 
           {!isExpired && (
-            <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-base-100/80 px-2 py-1 backdrop-blur-sm">
+            <div className="sticker absolute right-3 top-3 flex items-center gap-1 rounded-full bg-base-100 px-2 py-1">
               <VotingCountdown
                 timestamp={hotdog.timestamp.toString()}
                 logId={hotdog.logId?.toString() ?? ""}
@@ -330,7 +343,7 @@ const HotdogCardComponent: FC<Props> = ({
           onAttestationAffirmationRevoked={onRefetch}
         />
 
-        {/* Metadata row: comments · season number */}
+        {/* Metadata row: comments · season number sticker */}
         <div className="flex items-center justify-between text-sm">
           <Comments
             logId={hotdog.logId?.toString() ?? ""}
@@ -342,7 +355,7 @@ const HotdogCardComponent: FC<Props> = ({
               timestamp={hotdog.timestamp.toString()}
             />
           )}
-          <span className="font-display text-base tracking-wide opacity-70">
+          <span className="sticker -rotate-2 rounded-xl bg-primary px-2.5 py-1 font-display text-base tracking-wide text-primary-content">
             🌭 #{hotdog.logId.toString()}
           </span>
         </div>

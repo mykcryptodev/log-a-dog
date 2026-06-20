@@ -22,10 +22,10 @@ type Props = {
   onAttestationAffirmationRevoked?: () => void;
 };
 
-// The redesigned heart of the card: a primary, full-width vote control.
-// Two big buttons (VALID DOG / SUS), an animated valid/sus percentage bar, and
-// a condiment streak that wipes across on tap. Reuses the same on-chain
-// `hotdog.judge` mutation + optimistic logic as the legacy JudgeAttestation.
+// The heart of the card, "Sticker Brutalism" edition: two chunky blocky vote
+// buttons whose hard offset shadow collapses on press, plus a fat ink-outlined
+// tally meter with an oversized percentage. Same on-chain `hotdog.judge`
+// mutation + optimistic logic as before — only the chrome changed.
 export const VoteBar: FC<Props> = ({
   logId,
   chainId,
@@ -179,16 +179,14 @@ export const VoteBar: FC<Props> = ({
       )}
 
       {!isExpired && (
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <motion.button
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 400, damping: 12 }}
+            whileTap={{ scale: 0.95 }}
             disabled={locked}
             onClick={() => void vote(true)}
-            className={`btn relative flex-1 overflow-hidden py-1 font-display tracking-wide ${
-              votedValid ? "btn-accent" : "btn-outline btn-accent"
+            className={`pop-btn relative flex-1 overflow-hidden rounded-xl py-3 font-display text-sm tracking-wide text-accent-content ${
+              votedValid ? "bg-accent" : "bg-accent/85"
             }`}
-            style={{ height: "auto", minHeight: "2.75rem" }}
           >
             <AnimatePresence>
               {streak === "valid" && (
@@ -197,21 +195,19 @@ export const VoteBar: FC<Props> = ({
                   animate={{ x: "110%" }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="pointer-events-none absolute inset-0 bg-primary/60"
+                  className="pointer-events-none absolute inset-0 bg-primary/70"
                 />
               )}
             </AnimatePresence>
-            <span className="text-sm">🥬 VALID DOG</span>
+            <span className="relative">{votedValid ? "✓ " : ""}🥬 VALID DOG</span>
           </motion.button>
           <motion.button
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 400, damping: 12 }}
+            whileTap={{ scale: 0.95 }}
             disabled={locked}
             onClick={() => void vote(false)}
-            className={`btn relative flex-1 overflow-hidden py-1 font-display tracking-wide ${
-              votedSus ? "btn-error" : "btn-outline btn-error"
+            className={`pop-btn relative flex-1 overflow-hidden rounded-xl py-3 font-display text-sm tracking-wide text-white ${
+              votedSus ? "bg-error" : "bg-error/85"
             }`}
-            style={{ height: "auto", minHeight: "2.75rem" }}
           >
             <AnimatePresence>
               {streak === "invalid" && (
@@ -220,45 +216,33 @@ export const VoteBar: FC<Props> = ({
                   animate={{ x: "110%" }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="pointer-events-none absolute inset-0 bg-secondary/60"
+                  className="pointer-events-none absolute inset-0 bg-secondary/70"
                 />
               )}
             </AnimatePresence>
-            <span className="text-sm">🔴 SUS</span>
+            <span className="relative">{votedSus ? "✓ " : ""}🔴 SUS</span>
           </motion.button>
         </div>
       )}
 
-      {(votedValid || votedSus) && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl py-2 font-display text-sm font-semibold tracking-wide ${
-            votedValid
-              ? "bg-accent/15 text-accent"
-              : "bg-error/15 text-error"
-          }`}
-        >
-          <span>✓</span>
-          <span>you voted {votedValid ? "VALID DOG" : "SUS"}</span>
-        </motion.div>
-      )}
-
-      {isExpired && (
-        <>
-          <div className={`h-3 w-full overflow-hidden rounded-full bg-error/20 ${(!votedValid && !votedSus) ? "" : "mt-2"}`}>
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-accent to-accent/80"
-              animate={{ width: `${pct}%` }}
-              transition={{ type: "spring", stiffness: 120, damping: 18 }}
-            />
-          </div>
-          <div className="mt-1 flex justify-between text-xs opacity-50">
-            <span>{valid} valid</span>
-            <span>{invalid} sus</span>
-          </div>
-        </>
-      )}
+      {/* Fat ink-outlined tally meter with an oversized percentage. */}
+      <div className={`flex items-center gap-3 ${isExpired ? "" : "mt-3"}`}>
+        <div className="pop-frame relative h-6 flex-1 overflow-hidden rounded-full bg-error/25">
+          <motion.div
+            className="h-full bg-accent"
+            animate={{ width: `${pct}%` }}
+            transition={{ type: "spring", stiffness: 120, damping: 18 }}
+          />
+        </div>
+        <span className="font-display text-2xl leading-none tabular-nums">{pct}%</span>
+      </div>
+      <div className="mt-1 flex justify-between font-display text-xs tracking-wide">
+        <span className="text-accent">🥬 {valid} VALID</span>
+        {(votedValid || votedSus) && (
+          <span className="opacity-70">you voted {votedValid ? "VALID" : "SUS"}</span>
+        )}
+        <span className="text-error">{invalid} SUS 🔴</span>
+      </div>
     </div>
   );
 };
