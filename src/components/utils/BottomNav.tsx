@@ -57,25 +57,32 @@ export const BottomNav: FC = () => {
             onClick={() => void router.push("/leaderboard")}
           />
 
-          {/* Raised, ceremonial center Log action. */}
+          {/* Raised, ceremonial center Log action — the center of the party. */}
           <div className="flex justify-center">
-            <motion.button
-              onClick={openLogModal}
-              aria-label="Log a dog"
-              whileTap={{ scale: 0.9 }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 12 }}
-              className="-mt-8 h-16 w-16 overflow-hidden rounded-full border-4 border-base-100 shadow-dog-lg"
-            >
-              <Image
-                src="/images/hotdog-icon.png"
-                alt=""
-                width={64}
-                height={64}
-                className="h-full w-full object-cover"
-                priority
+            <div className="relative isolate -mt-8">
+              {/* Soft candy glow ring behind the button. */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0 -z-10 scale-[1.35] rounded-full bg-gradient-to-tr from-secondary via-primary to-accent opacity-70 blur-md"
               />
-            </motion.button>
+              <motion.button
+                onClick={openLogModal}
+                aria-label="Log a dog"
+                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400, damping: 12 }}
+                className="h-16 w-16 overflow-hidden rounded-full border-4 border-base-100 shadow-dog-lg"
+              >
+                <Image
+                  src="/images/hotdog-icon.png"
+                  alt=""
+                  width={64}
+                  height={64}
+                  className="h-full w-full object-cover"
+                  priority
+                />
+              </motion.button>
+            </div>
           </div>
 
           <NavButton

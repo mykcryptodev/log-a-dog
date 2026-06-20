@@ -34,20 +34,24 @@ export default {
     darkTheme: "logadog-night",
     themes: [
       {
+        // "Candy Pop" light — condiments kept as *semantic* accents (CTA / live /
+        // valid / sus), but the neutral + base layer is pulled from the pink
+        // candy-pop background so the frosted cards refract the gradient behind
+        // them instead of sitting on flat cream. See docs/REDESIGN.md §11.
         logadog: {
           primary: "#F5C518", // mustard — brand / primary CTAs
-          "primary-content": "#1E1A17",
+          "primary-content": "#2B1F3B",
           secondary: "#E23B2E", // ketchup — energy, rank #1, live
-          "secondary-content": "#FFF8EC",
+          "secondary-content": "#FFF1F6",
           accent: "#5BA84A", // relish — VALID DOG, streaks
-          "accent-content": "#FFF8EC",
-          neutral: "#1E1A17", // char — text, grill marks
-          "neutral-content": "#FFF8EC",
-          "base-100": "#FFF8EC", // bun — warm cream app background
-          "base-200": "#F4E7CE", // toasted bun — cards
-          "base-300": "#E8D5AE",
-          "base-content": "#1E1A17",
-          info: "#7FB7D9", // sky picnic — quiet metadata
+          "accent-content": "#FFF1F6",
+          neutral: "#2B1F3B", // deep plum — text, dark surfaces
+          "neutral-content": "#FFF1F6",
+          "base-100": "#FFF1F6", // soft pink-cream app background
+          "base-200": "#FBE0EC", // candy pink — cards
+          "base-300": "#F6CCE0",
+          "base-content": "#2B1F3B", // deep plum ink (matches navy confetti dots)
+          info: "#9B7BE0", // periwinkle — quiet metadata
           success: "#5BA84A",
           warning: "#F5C518",
           error: "#D7263D", // sus red — invalid verdicts
@@ -57,20 +61,23 @@ export default {
         },
       },
       {
+        // "Candy Pop" dark — the purple party twin of the pink light theme.
+        // Deep indigo-purple base matches the new purple background; condiments
+        // stay neon for energy.
         "logadog-night": {
           primary: "#FFD428", // neon mustard
-          "primary-content": "#16110D",
+          "primary-content": "#1A1140",
           secondary: "#FF4D3D", // bright ketchup
-          "secondary-content": "#16110D",
+          "secondary-content": "#1A1140",
           accent: "#6FCB5A", // bright relish
-          "accent-content": "#16110D",
-          neutral: "#2A211A",
-          "neutral-content": "#FFF8EC",
-          "base-100": "#16110D", // char — stadium at night
-          "base-200": "#221913",
-          "base-300": "#2F231A",
-          "base-content": "#F6ECD8",
-          info: "#7FB7D9",
+          "accent-content": "#1A1140",
+          neutral: "#3A2A6B", // purple — dark surfaces
+          "neutral-content": "#F3E9FF",
+          "base-100": "#1A1140", // deep indigo-purple — party at night
+          "base-200": "#271858", // purple — cards
+          "base-300": "#341E6E",
+          "base-content": "#F3E9FF", // soft lavender ink
+          info: "#A78BFA", // periwinkle
           success: "#6FCB5A",
           warning: "#FFD428",
           error: "#FF5C6E",

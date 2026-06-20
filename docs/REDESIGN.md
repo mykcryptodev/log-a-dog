@@ -437,3 +437,49 @@ import { motion, AnimatePresence } from "motion/react";
   <span className="font-display text-2xl tabular-nums">{hotdogCount} 🌭</span>
 </motion.div>
 ```
+
+---
+
+## 11. "Candy Pop" palette evolution
+
+> Status: **Implemented.** An evolution of the Condiment System (§3), not a replacement.
+
+The original Condiment System dressed the whole UI in warm ballpark tones (cream "bun"
+base, char text/dark-mode). But the app's actual background art (`app-bg`) is a **candy-pop /
+Memphis** aesthetic — soft pink/purple radial gradients, floating translucent bubbles,
+confetti squiggles. The chrome and the backdrop were telling two different stories. Candy
+Pop reconciles them.
+
+**Principle:** condiments stay *semantic*; the neutral/base layer goes *candy*.
+- **Keep** mustard = primary CTA, ketchup = live / rank #1, relish = VALID DOG, sus-red =
+  SUS. These carry meaning in `VoteBar`/leaderboard and must not change.
+- **Shift** `base-100/200/300`, `neutral`, and `base-content` from cream/char to the candy
+  palette: soft pink-cream in light, deep indigo-purple in dark. `info` → periwinkle.
+
+**Light/dark = a real pair.** The pink background (`background.png` /
+`background-dekstop.png`) is light mode; the purple twin is dark mode, wired into `app-bg`
+under `prefers-color-scheme: dark`. Dark mode is now a purple *party*, not a brown
+afterthought. The dark backdrop ships with a CSS radial-gradient fallback so it looks right
+before the art exists — drop `background-dark.png` + `background-dark-desktop.png` into
+`public/images/` to layer the floating bubbles/confetti on top.
+
+| Token | Light (logadog) | Dark (logadog-night) | Role |
+|---|---|---|---|
+| `base-100` | `#FFF1F6` soft pink-cream | `#1A1140` deep indigo-purple | App background |
+| `base-200` | `#FBE0EC` candy pink | `#271858` purple | Cards (via `glass-card`) |
+| `base-content` | `#2B1F3B` deep plum | `#F3E9FF` soft lavender | Ink |
+| `neutral` | `#2B1F3B` plum | `#3A2A6B` purple | Dark surfaces |
+| `info` | `#9B7BE0` periwinkle | `#A78BFA` periwinkle | Quiet metadata |
+| `primary`/`secondary`/`accent`/`error` | unchanged condiments | unchanged neon condiments | Semantic |
+
+**Glass surface.** `glass-card` traded the hard black border for a **1px white glass rim +
+soft colored shadow** and a lighter `blur(28px)`, so the candy gradient and bubbles
+*refract through* the frosted card — the single biggest visual lift, and it only works
+because the background now has color to refract. The per-card `border-4 border-[#1a1a1a]/5`
+overrides in `HotdogCard.tsx` / `List.tsx` were removed so the rim shows.
+
+**Other touches:** feed gap `4 → 6` (gradient peeks between cards); the raised center Log
+button gets a condiment-gradient glow ring (`BottomNav.tsx`).
+
+> Scope: web app (`src/`) only. The separate React Native app under `mobile/` still uses the
+> original cream/char tokens and was intentionally left untouched.

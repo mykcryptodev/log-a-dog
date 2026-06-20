@@ -253,9 +253,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     return (
       <>
         <div id="top-of-list" className="invisible" />
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
           {Array.from({ length: limitOrDefault }).map((_, index) => (
-            <div className="card glass-card overflow-hidden rounded-3xl border-4 border-[#1a1a1a]/5 p-4" key={index}>
+            <div className="card glass-card overflow-hidden rounded-3xl p-4" key={index}>
        
               <div className="flex items-center gap-2">
                 <div className="grill-skeleton h-10 w-10 animate-grill-shimmer rounded-full" />
@@ -316,7 +316,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     <>
       <BackToTopButton />
       <div id="top-of-list" className="invisible" />
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
       <div className="flex justify-end">
         <button
           className="btn btn-ghost btn-sm gap-2"
