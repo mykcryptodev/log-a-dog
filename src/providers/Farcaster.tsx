@@ -1,5 +1,5 @@
-import { AuthKitProvider } from "@farcaster/auth-kit";
 import {
+  type ComponentType,
   createContext,
   useCallback,
   useEffect,
@@ -10,9 +10,9 @@ import { optimism } from "thirdweb/chains";
 import { EIP1193 } from "thirdweb/wallets";
 import { env } from "~/env";
 import { client } from "~/providers/Thirdweb";
-import {
-  type FrameNotificationDetails,
-  type Context,
+import type {
+  Context,
+  FrameNotificationDetails,
 } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
 import { DEFAULT_CHAIN } from "~/constants";
@@ -30,6 +30,11 @@ const config = {
   rpcUrl: `https://${optimism.id}.rpc.thirdweb.com/${env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID}`,
   domain: url,
   siweUri: `${url}/login`,
+};
+
+type AuthKitProviderProps = {
+  config: typeof config;
+  children: React.ReactNode;
 };
 
 type FarcasterContextType = {
@@ -50,6 +55,8 @@ export const FarcasterProvider = ({
   children: React.ReactNode;
 }) => {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [AuthKitProvider, setAuthKitProvider] =
+    useState<ComponentType<AuthKitProviderProps> | null>(null);
   const [context, setContext] = useState<Context.FrameContext>();
   const [isMiniApp, setIsMiniApp] = useState(false);
   const [hasConnectedWallet, setHasConnectedWallet] = useState(false);
@@ -109,7 +116,13 @@ export const FarcasterProvider = ({
   useEffect(() => {
     const load = async () => {
       try {
-        const sdk = await getFarcasterSdk();
+        const [{ AuthKitProvider: LoadedAuthKitProvider }, sdk] =
+          await Promise.all([
+            import("@farcaster/auth-kit"),
+            getFarcasterSdk(),
+          ]);
+        setAuthKitProvider(() => LoadedAuthKitProvider);
+
         const frameContext = await sdk.context;
         setContext(frameContext);
         const mini = await sdk.isInMiniApp();
@@ -142,7 +155,11 @@ export const FarcasterProvider = ({
 
   return (
     <FarcasterContext.Provider value={value}>
-      <AuthKitProvider config={config}>{children}</AuthKitProvider>
+      {AuthKitProvider ? (
+        <AuthKitProvider config={config}>{children}</AuthKitProvider>
+      ) : (
+        children
+      )}
     </FarcasterContext.Provider>
   );
 };
