@@ -67,7 +67,7 @@ export const BottomNav: FC = () => {
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 12 }}
-              className="pop-card -mt-8 h-16 w-16 overflow-hidden rounded-full"
+              className="-mt-8 h-16 w-16 overflow-hidden rounded-full border-4 border-base-content"
             >
               <Image
                 src="/images/hotdog-icon.png"

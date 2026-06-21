@@ -319,7 +319,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       <div id="top-of-list" className="invisible" />
       <div className="flex flex-col gap-4">
       {/* Live scoreboard ticker — always shows all-time top dogs */}
-      <div className="overflow-hidden rounded-2xl border border-base-content/10 bg-base-100/60 backdrop-blur-sm">
+      <div className="pop-card w-full overflow-hidden rounded-2xl bg-base-100">
         <LeaderboardBanner scrollSpeed={40} />
       </div>
       <div className="flex justify-end">
