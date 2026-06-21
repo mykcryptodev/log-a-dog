@@ -4,7 +4,7 @@ import { useCallback, useContext, useMemo, useState, type FC } from "react";
 import { toast } from "react-toastify";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { api } from "~/utils/api";
-import { sdk } from "@farcaster/frame-sdk";
+import { getFarcasterSdk } from "~/utils/farcasterSdk";
 
 type Props = {
   className?: string;
@@ -81,6 +81,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
     
     if (!hasAddedMiniApp && checked) {
       try {
+        const sdk = await getFarcasterSdk();
         await sdk.actions.addFrame();
       } catch (error) {
         toast.error(`Failed to add mini app: ${error instanceof Error ? error.message : String(error)}`);
@@ -98,6 +99,7 @@ export const NotificationsSettings: FC<Props> = ({ className }) => {
 
   const handleAddMiniApp = useCallback(async () => {
     try {
+      const sdk = await getFarcasterSdk();
       await sdk.actions.addFrame();
       // Move to step 2 after successfully adding the mini app
       setCurrentStep(2);

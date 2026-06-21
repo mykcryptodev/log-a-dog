@@ -12,12 +12,12 @@ import { env } from "~/env";
 import { client } from "~/providers/Thirdweb";
 import {
   type FrameNotificationDetails,
-  sdk,
   type Context,
 } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import { toast } from "react-toastify";
+import { getFarcasterSdk } from "~/utils/farcasterSdk";
 
 type AddMiniAppResult = {
   notificationDetails?: FrameNotificationDetails;
@@ -57,6 +57,7 @@ export const FarcasterProvider = ({
 
   const connectWallet = useCallback(async () => {
     try {
+      const sdk = await getFarcasterSdk();
       await connect(async () => {
         // create a wallet instance from the Warpcast provider
         const wallet = EIP1193.fromProvider({
@@ -76,6 +77,7 @@ export const FarcasterProvider = ({
 
   const viewProfile = useCallback(async (fid: number) => {
     try {
+      const sdk = await getFarcasterSdk();
       await sdk.actions.viewProfile({ fid });
     } catch (err) {
       console.error("Failed to open Farcaster profile", err);
@@ -85,6 +87,7 @@ export const FarcasterProvider = ({
 
   const swapToken = useCallback(async (token: string, sellAmount?: string) => {
     try {
+      const sdk = await getFarcasterSdk();
       const CAIP19 = `eip155:${DEFAULT_CHAIN.id}/erc20:${token}`;
       await sdk.actions.swapToken({ buyToken: CAIP19, sellAmount });
     } catch (err) {
@@ -95,6 +98,7 @@ export const FarcasterProvider = ({
 
   const addMiniApp = useCallback(async () => {
     try {
+      const sdk = await getFarcasterSdk();
       return await sdk.actions.addMiniApp();
     } catch (err) {
       console.error("Failed to add mini app", err);
@@ -105,6 +109,7 @@ export const FarcasterProvider = ({
   useEffect(() => {
     const load = async () => {
       try {
+        const sdk = await getFarcasterSdk();
         const frameContext = await sdk.context;
         setContext(frameContext);
         const mini = await sdk.isInMiniApp();
@@ -118,7 +123,7 @@ export const FarcasterProvider = ({
         console.error("Failed to load SDK", err);
       }
     };
-    if (sdk && !isSDKLoaded) {
+    if (!isSDKLoaded) {
       setIsSDKLoaded(true);
       void load();
     }
