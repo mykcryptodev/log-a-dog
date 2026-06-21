@@ -30,7 +30,7 @@ const NavButton: FC<{
     <div className="relative flex items-center justify-center">
       <span className="text-xl leading-none">{emoji}</span>
     </div>
-    <span className="font-display text-[0.65rem] tracking-wide">{label}</span>
+    <span className="font-display text-[0.65rem] font-bold tracking-wide">{label}</span>
   </button>
 );
 

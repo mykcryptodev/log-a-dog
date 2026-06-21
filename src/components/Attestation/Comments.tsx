@@ -80,9 +80,9 @@ export const Comments: FC<Props> = ({ logId, metadataUri }) => {
 
   return (
     <>
-      <label htmlFor={`${logId}-comments`} className="btn btn-ghost btn-xs font-normal flex items-center gap-1">
-        <span className="font-semibold">{data?.conversation?.cast?.direct_replies.length}</span>
-        <ChatBubbleLeftRightIcon className="h-4 w-4" />
+      <label htmlFor={`${logId}-comments`} className="btn btn-ghost btn-xs font-bold flex items-center gap-1">
+        <span className="font-bold">{data?.conversation?.cast?.direct_replies.length}</span>
+        <ChatBubbleLeftRightIcon className="h-4 w-4 stroke-2" />
       </label>
 
       <Portal>

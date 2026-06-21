@@ -40,7 +40,7 @@ const RulesPage: NextPage = () => {
               >
                 <span className="text-6xl">{card.emoji}</span>
                 <h2 className="font-display text-3xl tracking-wide">{card.title}</h2>
-                <p className="opacity-80">{card.body}</p>
+                <p className="font-bold opacity-80">{card.body}</p>
               </motion.div>
             </AnimatePresence>
           </div>

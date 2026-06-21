@@ -248,7 +248,7 @@ const HotdogCardComponent: FC<Props> = ({
                 <span className="pop-frame inline-flex overflow-hidden rounded-full">
                   <Avatar address={hotdog.eater} fallbackSize={28} />
                 </span>
-                <span className="truncate font-display text-base tracking-wide">
+                <span className="truncate font-display text-base font-bold tracking-wide">
                   {displayName}
                 </span>
               </Link>
@@ -348,16 +348,9 @@ const HotdogCardComponent: FC<Props> = ({
             </div>
 
             {/* BACK */}
-            <div className="flip-face flip-back pop-frame flex flex-col gap-2 overflow-y-auto rounded-2xl bg-base-200 p-3">
-              <div className="flex items-center justify-between">
+            <div className="flip-face flip-back pop-frame relative flex flex-col gap-2 overflow-y-auto rounded-2xl bg-base-200 p-3">
+              <div className="flex items-center">
                 <span className="font-display text-sm tracking-wide">📊 #{hotdog.logId.toString()} STATS</span>
-                <button
-                  onClick={flip}
-                  aria-label="Flip card back"
-                  className="pop-btn rounded-lg bg-base-100 px-2 py-0.5 font-display text-xs tracking-wide"
-                >
-                  ↩ BACK
-                </button>
               </div>
 
               {/* Market data (moved here from the old bottom collapsible) */}
@@ -448,6 +441,15 @@ const HotdogCardComponent: FC<Props> = ({
                   </div>
                 )}
               </div>
+
+              {/* Back button — bottom-right, mirroring where STATS ⤺ is on the front */}
+              <button
+                onClick={flip}
+                aria-label="Flip card back"
+                className="pop-btn absolute bottom-3 right-3 rounded-lg bg-base-100 px-2.5 py-1 font-display text-xs tracking-wide"
+              >
+                ↩ BACK
+              </button>
             </div>
           </div>
         </div>
