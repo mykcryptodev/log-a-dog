@@ -20,10 +20,10 @@ import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
 import { ATTESTATION_WINDOW_SECONDS, MAKER_WALLET } from "~/constants";
 import { env } from "~/env";
 import Image from "next/image";
-import { sdk } from "@farcaster/frame-sdk";
 import { FarcasterContext } from "~/providers/Farcaster";
 import EthCommentsModal from "../EthCommentsModal";
 import { useActiveAccount } from "thirdweb/react";
+import { getFarcasterSdk } from "~/utils/farcasterSdk";
 
 // Types
 type AttestationPeriod = {
@@ -172,6 +172,7 @@ const HotdogCardComponent: FC<Props> = ({
   const shareOnFarcaster = useCallback(async () => {
     try {
       if (farcaster?.isMiniApp) {
+        const sdk = await getFarcasterSdk();
         await sdk.actions.composeCast({
           text: shareText,
           embeds: [shareUrl],

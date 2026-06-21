@@ -1,5 +1,5 @@
-import { AuthKitProvider } from "@farcaster/auth-kit";
 import {
+  type ComponentType,
   createContext,
   useCallback,
   useEffect,
@@ -10,14 +10,14 @@ import { optimism } from "thirdweb/chains";
 import { EIP1193 } from "thirdweb/wallets";
 import { env } from "~/env";
 import { client } from "~/providers/Thirdweb";
-import {
-  type FrameNotificationDetails,
-  sdk,
-  type Context,
+import type {
+  Context,
+  FrameNotificationDetails,
 } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import { toast } from "react-toastify";
+import { getFarcasterSdk } from "~/utils/farcasterSdk";
 
 type AddMiniAppResult = {
   notificationDetails?: FrameNotificationDetails;
@@ -30,6 +30,11 @@ const config = {
   rpcUrl: `https://${optimism.id}.rpc.thirdweb.com/${env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID}`,
   domain: url,
   siweUri: `${url}/login`,
+};
+
+type AuthKitProviderProps = {
+  config: typeof config;
+  children: React.ReactNode;
 };
 
 type FarcasterContextType = {
@@ -50,6 +55,8 @@ export const FarcasterProvider = ({
   children: React.ReactNode;
 }) => {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [AuthKitProvider, setAuthKitProvider] =
+    useState<ComponentType<AuthKitProviderProps> | null>(null);
   const [context, setContext] = useState<Context.FrameContext>();
   const [isMiniApp, setIsMiniApp] = useState(false);
   const [hasConnectedWallet, setHasConnectedWallet] = useState(false);
@@ -57,6 +64,7 @@ export const FarcasterProvider = ({
 
   const connectWallet = useCallback(async () => {
     try {
+      const sdk = await getFarcasterSdk();
       await connect(async () => {
         // create a wallet instance from the Warpcast provider
         const wallet = EIP1193.fromProvider({
@@ -76,6 +84,7 @@ export const FarcasterProvider = ({
 
   const viewProfile = useCallback(async (fid: number) => {
     try {
+      const sdk = await getFarcasterSdk();
       await sdk.actions.viewProfile({ fid });
     } catch (err) {
       console.error("Failed to open Farcaster profile", err);
@@ -85,6 +94,7 @@ export const FarcasterProvider = ({
 
   const swapToken = useCallback(async (token: string, sellAmount?: string) => {
     try {
+      const sdk = await getFarcasterSdk();
       const CAIP19 = `eip155:${DEFAULT_CHAIN.id}/erc20:${token}`;
       await sdk.actions.swapToken({ buyToken: CAIP19, sellAmount });
     } catch (err) {
@@ -95,6 +105,7 @@ export const FarcasterProvider = ({
 
   const addMiniApp = useCallback(async () => {
     try {
+      const sdk = await getFarcasterSdk();
       return await sdk.actions.addMiniApp();
     } catch (err) {
       console.error("Failed to add mini app", err);
@@ -105,6 +116,13 @@ export const FarcasterProvider = ({
   useEffect(() => {
     const load = async () => {
       try {
+        const [{ AuthKitProvider: LoadedAuthKitProvider }, sdk] =
+          await Promise.all([
+            import("@farcaster/auth-kit"),
+            getFarcasterSdk(),
+          ]);
+        setAuthKitProvider(() => LoadedAuthKitProvider);
+
         const frameContext = await sdk.context;
         setContext(frameContext);
         const mini = await sdk.isInMiniApp();
@@ -118,7 +136,7 @@ export const FarcasterProvider = ({
         console.error("Failed to load SDK", err);
       }
     };
-    if (sdk && !isSDKLoaded) {
+    if (!isSDKLoaded) {
       setIsSDKLoaded(true);
       void load();
     }
@@ -137,7 +155,11 @@ export const FarcasterProvider = ({
 
   return (
     <FarcasterContext.Provider value={value}>
-      <AuthKitProvider config={config}>{children}</AuthKitProvider>
+      {AuthKitProvider ? (
+        <AuthKitProvider config={config}>{children}</AuthKitProvider>
+      ) : (
+        children
+      )}
     </FarcasterContext.Provider>
   );
 };

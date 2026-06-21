@@ -9,7 +9,6 @@ import { api } from "~/utils/api";
 import { TransactionStatus } from '../utils/TransactionStatus';
 import { DEFAULT_CHAIN, DEFAULT_UPLOAD_PHRASE, LOG_A_DOG } from '~/constants';
 import { FarcasterContext } from "~/providers/Farcaster";
-import { sdk } from "@farcaster/frame-sdk";
 import { usePendingTransactionsStore } from "~/stores/pendingTransactions";
 import { logHotdog as logHotdogBase } from '~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974';
 import { getContract } from 'thirdweb';
@@ -17,6 +16,7 @@ import { client } from '~/providers/Thirdweb';
 import { upload } from 'thirdweb/storage';
 import { encodePoolConfig } from '~/server/utils/poolConfig';
 import { useStableAccount, useStableWallet } from '~/hooks/useStableAccount';
+import { getFarcasterSdk } from '~/utils/farcasterSdk';
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -235,6 +235,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
       const dogUrl = `https://logadog.xyz/dog/${dogEvent.logId}`;
       const shareText = lastLoggedDescription.trim() || 'Just logged a dog on Log a Dog!';
       
+      const sdk = await getFarcasterSdk();
       await sdk.actions.composeCast({
         text: shareText,
         embeds: [dogUrl],
