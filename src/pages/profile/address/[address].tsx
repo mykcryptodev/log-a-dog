@@ -185,7 +185,6 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
     </main>
   )
 
-  if (!data) return null;
   return (
     <main className="flex flex-col items-center px-4 pt-6">
       <div className="flex w-full max-w-xl flex-col gap-6">

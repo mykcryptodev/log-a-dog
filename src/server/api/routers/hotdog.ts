@@ -608,15 +608,18 @@ export const hotdogRouter = createTRPCRouter({
       });
       const totalPages = Math.ceil(totalEvents / limit);
 
-      const [redactedLogIds] = await Promise.all([
-        getRedactedLogIds({
+      let redactedLogIds: readonly bigint[] = [];
+      try {
+        redactedLogIds = await getRedactedLogIds({
           contract: getContract({
             address: MODERATION[chainId]!,
             client,
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
-        }),
-      ]);
+        });
+      } catch (error) {
+        console.error('Error fetching redacted log IDs:', error);
+      }
       const currentPage = Math.floor(start / limit) + 1;
       const hasNextPage = start + limit < totalEvents;
 
