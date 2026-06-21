@@ -36,7 +36,7 @@ const RulesPage: NextPage = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -40 }}
                 transition={{ type: "spring", stiffness: 260, damping: 26 }}
-                className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-3xl bg-base-200 p-8 text-center shadow-dog"
+                className="pop-card absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-3xl bg-base-200 p-8 text-center"
               >
                 <span className="text-6xl">{card.emoji}</span>
                 <h2 className="font-display text-3xl tracking-wide">{card.title}</h2>
@@ -57,11 +57,11 @@ const RulesPage: NextPage = () => {
           </div>
 
           {last ? (
-            <Link href="/" className="btn btn-primary font-display tracking-wide">
+            <Link href="/" className="pop-btn rounded-xl bg-primary px-5 py-3 font-display tracking-wide text-primary-content">
               START LOGGING 🌭
             </Link>
           ) : (
-            <button className="btn btn-primary font-display tracking-wide" onClick={() => setI((c) => c + 1)}>
+            <button className="pop-btn rounded-xl bg-primary px-5 py-3 font-display tracking-wide text-primary-content" onClick={() => setI((c) => c + 1)}>
               NEXT →
             </button>
           )}

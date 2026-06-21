@@ -112,7 +112,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const renderHotdogSkeletons = () => (
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
       {Array.from({ length: limit }).map((_, index) => (
-        <div className="card p-4 bg-base-200 bg-opacity-50" key={index}>
+        <div className="card pop-card bg-base-100 p-4" key={index}>
           <div className="flex gap-2 items-center">
             <div className="h-10 w-10 bg-base-300 animate-pulse rounded-full" />
             <div className="h-4 w-20 bg-base-300 animate-pulse rounded-lg" />
@@ -190,15 +190,17 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
     <main className="flex flex-col items-center px-4 pt-6">
       <div className="flex w-full max-w-xl flex-col gap-6">
         {/* Stat hero */}
-        <div className="flex flex-col items-center gap-3 rounded-3xl bg-base-200 p-6 text-center shadow-dog">
-          <CustomMediaRenderer
-            src={displayImage ?? ''}
-            alt={displayUsername ?? ''}
-            className="rounded-full ring-4 ring-primary/40"
-            width={"88px"}
-            height={"88px"}
-            client={client}
-          />
+        <div className="pop-card flex flex-col items-center gap-3 rounded-3xl bg-base-200 p-6 text-center">
+          <span className="pop-frame inline-flex overflow-hidden rounded-full">
+            <CustomMediaRenderer
+              src={displayImage ?? ''}
+              alt={displayUsername ?? ''}
+              className="rounded-full"
+              width={"88px"}
+              height={"88px"}
+              client={client}
+            />
+          </span>
           <h1 className="font-display text-3xl tracking-wide">{displayUsername ?? `${address.slice(0, 6)}...${address.slice(-4)}`}</h1>
           <div className="flex items-center gap-2">
             <span className="font-display text-4xl tabular-nums leading-none">
@@ -208,7 +210,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
           </div>
           {isOwnProfile && (
             <button
-              className="btn btn-ghost btn-xs"
+              className="pop-btn rounded-lg bg-base-100 px-3 py-1 font-display text-xs"
               onClick={() => setShowProfileForm(!showProfileForm)}
             >
               {showProfileForm ? 'Cancel' : hasNoAvatar ? 'Add Avatar' : 'Edit Profile'}

@@ -37,7 +37,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
           <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
         </Head>
         <main className="flex flex-col items-center justify-center">
-          <div className="w-64 h-64 bg-base-300 animate-pulse rounded-lg" />
+          <div className="pop-card w-64 h-64 bg-base-300 animate-pulse rounded-2xl" />
         </main>
       </>
     );
