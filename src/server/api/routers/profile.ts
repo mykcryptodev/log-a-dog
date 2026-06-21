@@ -16,10 +16,20 @@ export const profileRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { address, chainId } = input;
-      console.log({ address, chainId });
-      const profile = await getCachedProfile(address.toLowerCase(), chainId);
-      console.log({ profile });
-      return profile;
+      try {
+        const profile = await getCachedProfile(address.toLowerCase(), chainId);
+        return profile;
+      } catch (error) {
+        console.error('Error fetching profile by address:', error);
+        // Never fail the request: fall back to a minimal profile so the
+        // profile page can still render using just the address.
+        return {
+          username: '',
+          imgUrl: '',
+          metadata: '',
+          address: address.toLowerCase(),
+        };
+      }
     }),
   getByUsername: publicProcedure
     .input(z.object({

@@ -71,25 +71,29 @@ export async function getProfile(addressOrUsername: string): Promise<UserProfile
   }
 
   // Fall back to custom profile stored in our database
-  const dbUser = await db.user.findFirst({
-    where: {
-      address: addressOrUsername.toLowerCase(),
-    },
-    select: {
-      username: true,
-      image: true,
-      name: true,
-      fid: true,
-    },
-  });
+  try {
+    const dbUser = await db.user.findFirst({
+      where: {
+        address: addressOrUsername.toLowerCase(),
+      },
+      select: {
+        username: true,
+        image: true,
+        name: true,
+        fid: true,
+      },
+    });
 
-  if (dbUser?.username && dbUser?.image) {
-    return {
-      username: dbUser.username,
-      imgUrl: dbUser.image,
-      metadata: '',
-      address: addressOrUsername,
-    };
+    if (dbUser?.username && dbUser?.image) {
+      return {
+        username: dbUser.username,
+        imgUrl: dbUser.image,
+        metadata: '',
+        address: addressOrUsername,
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching profile from database:', error);
   }
 
   return {
