@@ -16,6 +16,16 @@ const CustomMediaRenderer = dynamic(
 );
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { username } = context.params as { username: string };
+
+  if (/^0x[a-fA-F0-9]{40}$/.test(username)) {
+    return {
+      redirect: {
+        destination: `/profile/address/${username}`,
+        permanent: false,
+      },
+    };
+  }
+
   return {
     props: {
       username,
