@@ -313,14 +313,14 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
           the primary Log action and renders this component with showTriggers=false. */}
       {showTriggers && (
         <button
-          className="btn btn-primary font-display tracking-wide"
+          className="pop-btn btn btn-primary font-display tracking-wide"
           onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
         >
           Log a Dog
         </button>
       )}
       <dialog id="create_attestation_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box max-h-[92vh] overflow-y-auto">
+        <div className="modal-box max-h-[92vh] overflow-y-auto border-[3px] border-base-content bg-base-100">
           <h3 className="mb-1 font-display text-3xl tracking-wide">LOG A DOG 🌭</h3>
           <p className="mb-4 text-sm opacity-70">Show us the evidence.</p>
           <div className="flex flex-col gap-3">
@@ -342,7 +342,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
             <p className="text-center text-xs opacity-40">
               Photos are public and count toward the global leaderboard
             </p>
-            <div className="collapse collapse-arrow w-full rounded-2xl bg-base-200/50">
+            <div className="collapse collapse-arrow w-full rounded-2xl border-2 border-base-content bg-base-200">
               <input type="checkbox" />
               <div className="collapse-title text-sm font-medium opacity-70">
                 Advanced options
@@ -381,7 +381,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
               <ConnectButton client={client} />
             ) : payOwnGas ? (
               <TransactionButton
-                className="!btn !btn-primary font-display tracking-wide"
+                className="pop-btn !btn !btn-primary font-display tracking-wide"
                 transaction={getTx}
                 onTransactionConfirmed={handleOnSuccess}
                 disabled={!imgUri}
@@ -390,7 +390,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
               </TransactionButton>
             ) : (
               <button
-                className="btn btn-primary font-display tracking-wide"
+                className="pop-btn btn btn-primary font-display tracking-wide"
                 onClick={logDog}
                 disabled={isDisabled}
               >
@@ -420,14 +420,14 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
         />
       )}
       <dialog id="share_cast_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
+        <div className="modal-box border-[3px] border-base-content bg-base-100">
           <h3 className="font-display text-2xl tracking-wide">Share the dog? 🌭</h3>
           <p className="py-3 text-sm opacity-70">Cast it on Farcaster and get the people talking.</p>
           <div className="modal-action">
             <form method="dialog">
               <button className="btn btn-ghost">Skip</button>
             </form>
-            <button className="btn btn-primary font-display tracking-wide" onClick={shareOnFarcaster}>
+            <button className="pop-btn btn btn-primary font-display tracking-wide" onClick={shareOnFarcaster}>
               CAST IT
             </button>
           </div>

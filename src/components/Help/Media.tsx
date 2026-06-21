@@ -8,7 +8,7 @@ export const Media: FC = () => {
       <div className="flex flex-col gap-4">
         <h3 className="text-2xl font-bold mx-auto">Media</h3>
         <div className="w-full justify-center flex flex-col gap-2 items-center">
-          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+          <div className="max-w-xl collapse collapse-arrow w-full border-2 border-base-content bg-base-200">
             <input type="checkbox" />
             <div className="collapse-title font-bold">
               Season 2 Award Ceremony
@@ -28,7 +28,7 @@ export const Media: FC = () => {
               </div>
             </div>
           </div>
-          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+          <div className="max-w-xl collapse collapse-arrow w-full border-2 border-base-content bg-base-200">
             <input type="checkbox" />
             <div className="collapse-title font-bold">
               Podcast Episode
@@ -48,7 +48,7 @@ export const Media: FC = () => {
               </p>
             </div>
           </div>
-          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+          <div className="max-w-xl collapse collapse-arrow w-full border-2 border-base-content bg-base-200">
             <input type="checkbox" /> 
             <div className="collapse-title font-bold">
               Interview with Season 1 Winner: Cool Beans!

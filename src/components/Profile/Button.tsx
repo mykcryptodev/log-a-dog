@@ -148,7 +148,7 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
       </div>
 
       <dialog id="create_profile_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box relative">
+        <div className="modal-box relative border-[3px] border-base-content bg-base-100">
           <button 
             className="btn btn-circle btn-sm btn-ghost absolute top-4 right-4"
             onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).close()}

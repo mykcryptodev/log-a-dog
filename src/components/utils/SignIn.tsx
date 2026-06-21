@@ -73,7 +73,7 @@ const SignInWithEthereum: FC<Props> = ({ btnLabel, defaultOpen = false, buttonCl
       {`${btnLabel ?? 'Vow to play with honor'}`}
     </button>
     <dialog id={`sign_in_modal`} className="modal">
-      <div className="modal-box relative">
+      <div className="modal-box relative border-[3px] border-base-content bg-base-100">
         <button 
           className="btn btn-circle btn-sm btn-ghost absolute top-4 right-4"
           onClick={()=>(document.getElementById(`sign_in_modal`) as HTMLDialogElement).close()}

@@ -63,7 +63,7 @@ export const ClaimRewards: FC = () => {
         <span className="font-mono text-sm">{reward} $HOTDOG</span>
       </div>
       <TransactionButton
-        className="!btn !btn-primary !btn-block"
+        className="pop-btn !btn !btn-primary !btn-block"
         transaction={() =>
           claimRewards({
             contract: stakingContract,
@@ -93,7 +93,7 @@ export const ClaimRewards: FC = () => {
             These rewards are from the previous staking contract and do not count toward the current season.
           </p>
           <TransactionButton
-            className="!btn !btn-outline !btn-block"
+            className="pop-btn !btn !btn-outline !btn-block"
             transaction={() =>
               claimRewards({
                 contract: legacyStakingContract,

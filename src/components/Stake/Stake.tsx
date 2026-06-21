@@ -235,7 +235,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
       {!hideTitle && <h1 className="mb-4 font-display text-2xl font-bold tracking-tight">Stake $HOTDOG</h1>}
       
       {/* Tabs */}
-      <div className="tabs tabs-boxed mb-4 w-full">
+      <div className="tabs tabs-boxed mb-4 w-full border-2 border-base-content">
         <button
           className={`tab tab-lg flex-1 ${activeTab === "stake" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("stake")}
@@ -373,7 +373,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
               </div>
             ) : hasApproval ? (
               <TransactionButton
-                className="!btn !btn-primary !btn-block"
+                className="pop-btn !btn !btn-primary !btn-block"
                 transaction={() =>
                   stake({
                     contract: stakingContract,
@@ -409,7 +409,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
               </TransactionButton>
             ) : (
               <TransactionButton
-                className="!btn !btn-primary !btn-block"
+                className="pop-btn !btn !btn-primary !btn-block"
                 transaction={() =>
                   approve({
                     contract: getContract({

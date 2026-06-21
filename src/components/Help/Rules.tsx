@@ -7,7 +7,7 @@ export const Rules: FC = () => {
     <div className="flex flex-col gap-4 w-full max-w-xl">
       <div className="flex flex-col gap-2">
         <h3 className="text-2xl font-bold mx-auto">Rules and FAQs</h3>
-        <div className="collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+        <div className="collapse collapse-arrow w-full border-2 border-base-content bg-base-200">
           <input type="checkbox" /> 
           <div className="collapse-title font-bold">
             What is Log a Dog?
@@ -35,7 +35,7 @@ export const Rules: FC = () => {
             </ul>
           </div>
         </div>
-        <div className="collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+        <div className="collapse collapse-arrow w-full border-2 border-base-content bg-base-200">
           <input type="checkbox" /> 
           <div className="collapse-title font-bold">
             What constitutes a hotdog?
@@ -92,7 +92,7 @@ export const Rules: FC = () => {
             </ul>
           </div>
         </div>
-        <div className="collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+        <div className="collapse collapse-arrow w-full border-2 border-base-content bg-base-200">
           <input type="checkbox" /> 
           <div className="collapse-title font-bold">
             How do I earn from eating hotdogs?
@@ -129,7 +129,7 @@ export const Rules: FC = () => {
             </ul>
           </div>
         </div>
-        <div className="collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
+        <div className="collapse collapse-arrow w-full border-2 border-base-content bg-base-200">
           <input type="checkbox" /> 
           <div className="collapse-title font-bold">
             Why does this exist?
