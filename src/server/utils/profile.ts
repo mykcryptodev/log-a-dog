@@ -1,7 +1,38 @@
 import { getProfile as getZoraProfile } from '@zoralabs/coins-sdk';
+import { createThirdwebClient } from 'thirdweb';
+import { isAddress } from 'thirdweb/utils';
+import { resolveName, resolveAvatar } from 'thirdweb/extensions/ens';
 import { neynarClient } from '~/lib/neynar';
+import { env } from '~/env';
 import { db } from '~/server/db';
 import { getOrSetCache, CACHE_DURATION } from '~/server/utils/redis';
+
+const thirdwebServerClient = createThirdwebClient({
+  secretKey: env.THIRDWEB_SECRET_KEY,
+});
+
+/** Resolve a primary ENS name + avatar for an address (mainnet reverse record). */
+async function getEnsProfileData(address: string): Promise<UserProfile | null> {
+  if (!isAddress(address)) {
+    return null;
+  }
+  try {
+    const name = await resolveName({ client: thirdwebServerClient, address });
+    if (!name) {
+      return null;
+    }
+    const avatar = await resolveAvatar({ client: thirdwebServerClient, name });
+    return {
+      username: name,
+      imgUrl: avatar ?? '',
+      metadata: '',
+      address,
+    };
+  } catch (error) {
+    console.error('Error fetching ENS profile:', error);
+    return null;
+  }
+}
 
 export interface UserProfile {
   username: string;
@@ -40,7 +71,7 @@ async function getZoraProfileData(addressOrUsername: string): Promise<UserProfil
   }
 }
 
-export async function getProfile(addressOrUsername: string): Promise<UserProfile> {
+async function resolveBaseProfile(addressOrUsername: string): Promise<UserProfile> {
   // Always prefer external profiles (Zora or Neynar) over custom data
 
   // Attempt to fetch Zora profile first
@@ -98,6 +129,26 @@ export async function getProfile(addressOrUsername: string): Promise<UserProfile
     metadata: '',
     address: addressOrUsername,
   };
+}
+
+export async function getProfile(addressOrUsername: string): Promise<UserProfile> {
+  const base = await resolveBaseProfile(addressOrUsername);
+
+  // Zora/Neynar/DB can match an address but still leave the image (or name)
+  // empty. Backfill any missing field from the address's ENS record so users
+  // with an ENS avatar get it auto-populated.
+  if (!base.imgUrl || !base.username) {
+    const ens = await getEnsProfileData(addressOrUsername);
+    if (ens) {
+      return {
+        ...base,
+        username: base.username || ens.username,
+        imgUrl: base.imgUrl || ens.imgUrl,
+      };
+    }
+  }
+
+  return base;
 }
 
 export async function getCachedProfile(address: string, chainId?: number): Promise<UserProfile> {
