@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { ListAttestations } from "~/components/Attestation/List";
+import { Seo } from "~/components/utils/Seo";
 
 const miniAppMetadata = {
   version: "next",
@@ -28,12 +29,12 @@ export const getStaticProps = async () => {
 export default function Home() {
   return (
     <>
+      <Seo
+        title="Log a Dog — the internet's summer hotdog-eating sport"
+        exactTitle
+        description="The internet's summer hotdog-eating sport. Log a dog, get judged onchain, climb the board."
+      />
       <Head>
-        <title>Log a Dog — the internet&apos;s summer hotdog-eating sport</title>
-        <meta
-          name="description"
-          content="The internet's summer hotdog-eating sport. Log a dog, get judged, climb the board."
-        />
         <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
         <link rel="icon" href="/favicon.ico" />
       </Head>

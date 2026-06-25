@@ -4,6 +4,7 @@ import { useState } from "react";
 import LeaderboardList from "~/components/LeaderboardList";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { CONTEST_START_TIME } from "~/constants";
+import { Seo, SITE_URL } from "~/components/utils/Seo";
 
 const TABS = ["Season", "All-time"] as const;
 type Tab = (typeof TABS)[number];
@@ -15,9 +16,12 @@ const LeaderboardPage: NextPage = () => {
 
   return (
     <>
+      <Seo
+        title="Leaderboard 🏆"
+        description="The Log a Dog stadium scoreboard. See who's eating the most hotdogs this season — then knock them off the top spot."
+        url={`${SITE_URL}/leaderboard`}
+      />
       <Head>
-        <title>Leaderboard - Log a Dog</title>
-        <meta name="description" content="The Log a Dog stadium scoreboard." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex flex-col items-center px-4 pt-6">

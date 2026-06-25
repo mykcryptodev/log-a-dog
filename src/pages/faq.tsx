@@ -3,13 +3,17 @@ import { type NextPage } from "next";
 import Instructions from "~/components/Help/Instructions";
 import Rules from "~/components/Help/Rules";
 import Media from "~/components/Help/Media";
+import { Seo, SITE_URL } from "~/components/utils/Seo";
 
 const FAQPage: NextPage = () => {
   return (
     <>
+      <Seo
+        title="FAQ & Instructions"
+        description="Frequently asked questions, rules, and instructions for the Log a Dog competition."
+        url={`${SITE_URL}/faq`}
+      />
       <Head>
-        <title>FAQ - Log a Dog</title>
-        <meta name="description" content="Frequently asked questions, rules, and instructions for Log a Dog competition" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
