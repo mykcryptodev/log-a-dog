@@ -10,7 +10,7 @@ export const SITE_URL = "https://logadog.xyz";
 const DEFAULTS = {
   title: "Log a Dog",
   description:
-    "The internet's summer hotdog-eating sport. Log a dog, get judged onchain, climb the board.",
+    "The internet's summer hotdog-eating competition. Log a dog, get judged onchain, climb the board.",
   image: `${SITE_URL}/images/og-image.png`,
   imageWidth: 1200,
   imageHeight: 600,

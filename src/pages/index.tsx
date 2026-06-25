@@ -30,9 +30,9 @@ export default function Home() {
   return (
     <>
       <Seo
-        title="Log a Dog — the internet's summer hotdog-eating sport"
+        title="Log a Dog — the internet's summer hotdog-eating competition"
         exactTitle
-        description="The internet's summer hotdog-eating sport. Log a dog, get judged onchain, climb the board."
+        description="The internet's summer hotdog-eating competition. Log a dog, get judged onchain, climb the board."
       />
       <Head>
         <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />

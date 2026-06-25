@@ -20,13 +20,13 @@ const RulesPage: NextPage = () => {
     <>
       <Seo
         title="How it works"
-        description="Eat a dog, log it onchain, get judged, climb the board. The rules of the internet's summer hotdog-eating sport."
+        description="Eat a dog, log it onchain, get judged, climb the board. The rules of the internet's summer hotdog-eating competition."
         url={`${SITE_URL}/rules`}
       />
       <main className="flex flex-col items-center px-4 pt-10">
         <div className="flex w-full max-w-md flex-col items-center gap-6">
           <p className="text-center font-display text-xl tracking-wide opacity-70">
-            The internet&apos;s summer hotdog-eating sport
+            The internet&apos;s summer hotdog-eating competition
           </p>
 
           <div className="relative h-72 w-full">
