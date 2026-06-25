@@ -399,7 +399,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         // for real) to avoid collisions on duplicate images / concurrent logs.
         const justLanded = !isPending && pendingImageUris.has(hotdog.imageUri);
         const key = isPending
-          ? `pending-${(hotdog as PendingDogEvent).transactionId}`
+          ? `pending-${hotdog.transactionId}`
           : hotdog.logId;
 
         return (
