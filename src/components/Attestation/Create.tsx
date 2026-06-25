@@ -119,16 +119,16 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
     return initialUrlsRef.current;
   }, [imgUri]);
 
-  // Query for dog event when we have a transaction hash
+  // Query for dog event when we have a transaction hash. We intentionally do NOT
+  // remove the pending (optimistic) card here: removing it the instant the tx is
+  // indexed races the feed refetch and makes the card vanish then pop back in.
+  // The feed now dedupes the pending card against real data by imageUri and
+  // removes it from the store only once the real row is present, so the swap is
+  // seamless. This query is still needed to drive the Farcaster share modal.
   const { data: dogEvent } = api.hotdog.getDogEventByTransactionHash.useQuery(
     { transactionHash: transactionHash! },
     {
       enabled: !!transactionHash && isTransactionIdResolved,
-      onSuccess: () => {
-        if (transactionId) {
-          removePendingDog(transactionId);
-        }
-      },
     }
   );
 

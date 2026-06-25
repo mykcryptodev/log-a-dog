@@ -104,6 +104,7 @@ type Props = {
   linkToDetail?: boolean; // Whether to link the image to the detail page
   showAiJudgement?: boolean; // Whether to show AI judgement
   disabled?: boolean; // Whether judgement is disabled (for pending)
+  animateEntrance?: boolean; // Drop-in animation on mount; off for cards that just replaced an optimistic one
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -120,6 +121,7 @@ const HotdogCardComponent: FC<Props> = ({
   linkToDetail = false,
   showAiJudgement = false,
   disabled = false,
+  animateEntrance = true,
 }) => {
   const account = useActiveAccount();
   const [flipped, setFlipped] = useState(false);
@@ -232,7 +234,7 @@ const HotdogCardComponent: FC<Props> = ({
 
   return (
     <motion.div
-      initial={{ y: -16, opacity: 0 }}
+      initial={animateEntrance ? { y: -16, opacity: 0 } : false}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
       className="card pop-card overflow-hidden rounded-[1.75rem] bg-base-100"
@@ -301,7 +303,7 @@ const HotdogCardComponent: FC<Props> = ({
           <div className={`flip-inner ${flipped ? "is-flipped" : ""}`}>
             {/* FRONT */}
             <div className="flip-face pop-frame rounded-2xl bg-base-300">
-              {linkToDetail ? (
+              {linkToDetail && !hotdog.isPending ? (
                 <Link href={`/dog/${hotdog.logId}`} className="block h-full w-full">
                   {Photo}
                 </Link>

@@ -82,7 +82,7 @@ type Props = {
 export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
   const isClient = typeof window !== 'undefined';
-  const { getPendingDogsForChain, clearExpiredPending } = usePendingTransactionsStore();
+  const { getPendingDogsForChain, clearExpiredPending, removePendingDog } = usePendingTransactionsStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -171,18 +171,70 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
     return dogData?.pages.flatMap((page) => page.hotdogs) ?? [];
   }, [dogData?.pages]);
 
-  // Smart deduplication: only filter out optimistic data when real data with same logId exists
+  // Match optimistic cards to real rows by imageUri, not the temporary logId.
+  // The optimistic logId is the tx id (a "weird id") which never equals the real
+  // on-chain numeric logId, so a logId-based match never fired and the card only
+  // disappeared via a timer/explicit removal — causing the jarring gap. imageUri
+  // is byte-identical across the round-trip (raw ipfs:// upload → on-chain arg →
+  // DB → getAll), so it's a reliable key.
+  const realImageUris = useMemo(
+    () => new Set(loadedHotdogs.map(h => h.imageUri)),
+    [loadedHotdogs],
+  );
+
+  // Raw pending imageUris (before dedup) — used to spot a real row that just
+  // replaced an optimistic card so we can suppress its entrance animation.
+  const pendingImageUris = useMemo(
+    () => new Set(pendingDogs.map((p: PendingDogEvent) => p.imageUri)),
+    [pendingDogs],
+  );
+
+  // Smart deduplication: drop an optimistic card the moment its real row appears.
   const filteredPendingDogs = useMemo(() => {
-    const realLogIds = new Set(loadedHotdogs.map(h => h.logId));
-    return pendingDogs.filter(pending => {
-      const hasRealData = realLogIds.has(pending.logId);
-      return !hasRealData;
-    });
-  }, [loadedHotdogs, pendingDogs]);
+    return pendingDogs.filter((pending: PendingDogEvent) => !realImageUris.has(pending.imageUri));
+  }, [pendingDogs, realImageUris]);
+
+  // Infer the next on-chain logId so the optimistic card shows "#<next>" instead
+  // of the tx id. max(loaded)+1 doesn't exist yet, so any logId-driven child
+  // query returns empty (no wrong data) and it self-corrects when the real row
+  // lands. Display only — never used as a React key or for navigation.
+  const nextLogIdBase = useMemo(() => {
+    let max = 0n;
+    for (const h of loadedHotdogs) {
+      try {
+        const id = BigInt(h.logId);
+        if (id > max) max = id;
+      } catch {
+        // non-numeric (shouldn't happen for real rows) — skip
+      }
+    }
+    return max;
+  }, [loadedHotdogs]);
+
+  // Optimistic cards rendered newest-first; give the newest the highest inferred id.
+  const displayPendingDogs = useMemo(() => {
+    const len = filteredPendingDogs.length;
+    return filteredPendingDogs.map((pending: PendingDogEvent, i: number) => ({
+      ...pending,
+      logId: (nextLogIdBase + BigInt(len - i)).toString(),
+    }));
+  }, [filteredPendingDogs, nextLogIdBase]);
 
   const allHotdogs: HotdogItem[] = useMemo(() => {
-    return loadedHotdogs.length > 0 ? [...filteredPendingDogs, ...loadedHotdogs] : pendingDogs;
-  }, [filteredPendingDogs, loadedHotdogs, pendingDogs]);
+    return loadedHotdogs.length > 0 ? [...displayPendingDogs, ...loadedHotdogs] : displayPendingDogs;
+  }, [displayPendingDogs, loadedHotdogs]);
+
+  // Remove an optimistic entry from the store once its real row is present. This
+  // tracks reality (the dedup above is the *visual* removal); the 30s expiry
+  // sweep stays only as a failsafe for txs that never index.
+  useEffect(() => {
+    if (loadedHotdogs.length === 0) return;
+    pendingDogs.forEach((pending: PendingDogEvent) => {
+      if (realImageUris.has(pending.imageUri)) {
+        removePendingDog(pending.transactionId);
+      }
+    });
+  }, [realImageUris, pendingDogs, removePendingDog, loadedHotdogs.length]);
 
   // Stable callback so every memoized <HotdogCard> doesn't re-render when this
   // list re-renders (e.g. the 30s expired-pending interval). `refetchDogData`
@@ -340,10 +392,19 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       {allHotdogs.map((hotdog) => {
         const attestationData = getAttestationData(hotdog);
         const isPending = 'isPending' in hotdog && hotdog.isPending;
-        
+        // A real row whose imageUri is still in the pending store is one that
+        // just replaced an optimistic card. Render it without the drop-in
+        // entrance animation so it settles in place instead of looking like a
+        // second card dropping in. Keys stay unique (tx id for pending, logId
+        // for real) to avoid collisions on duplicate images / concurrent logs.
+        const justLanded = !isPending && pendingImageUris.has(hotdog.imageUri);
+        const key = isPending
+          ? `pending-${hotdog.transactionId}`
+          : hotdog.logId;
+
         return (
           <HotdogCard
-            key={hotdog.logId}
+            key={key}
             hotdog={hotdog}
             validAttestations={attestationData.validAttestations}
             invalidAttestations={attestationData.invalidAttestations}
@@ -354,6 +415,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
             linkToDetail={true}
             showAiJudgement={false}
             disabled={isPending}
+            animateEntrance={!justLanded}
           />
         );
       })}
