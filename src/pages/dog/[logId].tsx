@@ -35,7 +35,7 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   return (
     <>
       <Seo
-        title="Is this a real dog? 🌭"
+        title="This dog has been logged! 🌭"
         exactTitle
         description="Someone logged a hotdog onchain. Judge it VALID or SUS — then log your own and climb the leaderboard."
         image={imageUrl}
