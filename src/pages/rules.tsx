@@ -36,7 +36,14 @@ const RulesPage: NextPage = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -40 }}
                 transition={{ type: "spring", stiffness: 260, damping: 26 }}
-                className="pop-card absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-3xl bg-base-200 p-8 text-center"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -50 && i < CARDS.length - 1) setI((c) => c + 1);
+                  if (info.offset.x > 50 && i > 0) setI((c) => c - 1);
+                }}
+                className="pop-card absolute inset-0 flex cursor-grab flex-col items-center justify-center gap-4 rounded-3xl bg-base-200 p-8 text-center active:cursor-grabbing"
               >
                 <span className="text-6xl">{card.emoji}</span>
                 <h2 className="font-display text-3xl tracking-wide">{card.title}</h2>

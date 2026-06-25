@@ -50,8 +50,8 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
       <Head>
         <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
       </Head>
-      <main className="flex flex-col items-center justify-center">
-        <div className="container flex flex-col items-center gap-6 px-4 py-8">
+      <main className="flex flex-col items-center px-4 py-8">
+        <div className="w-full max-w-xl">
           <HotdogCard
             hotdog={hotdog}
             validAttestations={validAttestations ?? "0"}
