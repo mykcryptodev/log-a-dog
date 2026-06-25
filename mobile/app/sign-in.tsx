@@ -187,7 +187,7 @@ export default function SignInScreen() {
             LOG A DOG
           </Text>
           <Text className="text-neutral/60 text-center text-base">
-            The internet's summer hotdog-eating sport
+            The internet's summer hotdog-eating competition
           </Text>
         </View>
 

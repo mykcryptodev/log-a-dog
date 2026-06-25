@@ -1,5 +1,5 @@
 import { type NextPage } from "next";
-import Head from "next/head";
+import { Seo, SITE_URL } from "~/components/utils/Seo";
 import { Stake } from "~/components/Stake/Stake";
 import ClaimRewards from "~/components/Stake/ClaimRewards";
 import ClaimProtocolRewards from "~/components/Zora/ClaimProtocolRewards";
@@ -35,10 +35,11 @@ const EarnPage: NextPage = () => {
 
   return (
     <>
-      <Head>
-        <title>Earn $HOTDOG — Log a Dog</title>
-        <meta name="description" content="Stake $HOTDOG, judge submissions, and earn rewards." />
-      </Head>
+      <Seo
+        title="Earn $HOTDOG"
+        description="Stake $HOTDOG, judge submissions, and earn rewards for keeping the game honest."
+        url={`${SITE_URL}/earn`}
+      />
       <main className="flex flex-col items-center px-4 pt-6">
         <div className="flex w-full max-w-xl flex-col gap-5">
 

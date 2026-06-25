@@ -9,6 +9,7 @@ import { useActiveAccount, ConnectButton } from "thirdweb/react";
 import { useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import HotdogCard from "~/components/utils/HotdogCard";
+import { Seo, SITE_URL } from "~/components/utils/Seo";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -105,6 +106,20 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
 
   const totalHotdogs = dogData?.pages[0]?.totalCount ?? 0;
 
+  // `address` comes from getServerSideProps so this is in the SSR HTML. The
+  // profile's username/avatar are fetched client-side and aren't available to
+  // crawlers, so the card falls back to a shortened address.
+  const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const seo = (
+    <Seo
+      title={`${shortAddress} on Log a Dog`}
+      exactTitle
+      description={`See how many hotdogs ${shortAddress} has logged onchain — then log your own and climb the leaderboard.`}
+      url={`${SITE_URL}/profile/address/${address}`}
+      type="profile"
+    />
+  );
+
   const handleRefetchDogData = () => {
     void refetchDogData();
   };
@@ -173,20 +188,25 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
   };
 
   if (isLoading) return (
-    <main className="flex flex-col items-center justify-center">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-bold">
-            <div className="loading loading-spinner mr-2" />
-            Loading...
-          </h1>
+    <>
+      {seo}
+      <main className="flex flex-col items-center justify-center">
+        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-xl font-bold">
+              <div className="loading loading-spinner mr-2" />
+              Loading...
+            </h1>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   )
 
-  if (!data) return null;
+  if (!data) return seo;
   return (
+    <>
+    {seo}
     <main className="flex flex-col items-center px-4 pt-6">
       <div className="flex w-full max-w-xl flex-col gap-6">
         {/* Stat hero */}
@@ -239,6 +259,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
           </div>
         </div>
     </main>
+    </>
   );
 };
 
