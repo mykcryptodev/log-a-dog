@@ -203,15 +203,12 @@ function buildResolvedSnap(
 function buildVotingSnap(
   imageUri: string,
   logId: string,
-  validCount: string,
-  invalidCount: string,
+  _validCount: string,
+  _invalidCount: string,
   alreadyVoted?: boolean,
   userVote?: boolean
 ): SnapResponse {
-  const validNum = Number(validCount);
-  const invalidNum = Number(invalidCount);
-  const total = validNum + invalidNum || 1;
-
+  // Vote counts are hidden while voting is open — revealed only after it ends.
   const statusText = alreadyVoted
     ? `You voted: ${userVote ? "✅ Valid" : "❌ Not a Dog"}`
     : "Vote on this dog!";
@@ -225,7 +222,7 @@ function buildVotingSnap(
         page: {
           type: "stack",
           props: { direction: "vertical", gap: "sm" },
-          children: ["dog_image", "status_text", "vote_chart", "vote_row"],
+          children: ["dog_image", "status_text", "vote_row"],
         },
         dog_image: {
           type: "image",
@@ -238,16 +235,6 @@ function buildVotingSnap(
         status_text: {
           type: "text",
           props: { content: statusText, weight: "bold", align: "center" },
-        },
-        vote_chart: {
-          type: "bar_chart",
-          props: {
-            bars: [
-              { label: `Valid (${validNum})`, value: (validNum / total) * 100, color: "green" },
-              { label: `Not a dog (${invalidNum})`, value: (invalidNum / total) * 100, color: "red" },
-            ],
-            max: 100,
-          },
         },
         vote_row: {
           type: "stack",
@@ -351,13 +338,10 @@ function buildConfirmationSnap(
   imageUri: string,
   logId: string,
   isValid: boolean,
-  validCount: string,
-  invalidCount: string
+  _validCount: string,
+  _invalidCount: string
 ): SnapResponse {
-  const validNum = Number(validCount);
-  const invalidNum = Number(invalidCount);
-  const total = validNum + invalidNum || 1;
-
+  // Vote counts are hidden while voting is open — revealed only after it ends.
   return {
     version: "2.0",
     theme: { accent: "green" },
@@ -367,7 +351,7 @@ function buildConfirmationSnap(
         page: {
           type: "stack",
           props: { direction: "vertical", gap: "sm" },
-          children: ["dog_image", "confirm_text", "vote_chart", "view_btn"],
+          children: ["dog_image", "confirm_text", "hidden_note", "view_btn"],
         },
         dog_image: {
           type: "image",
@@ -381,14 +365,12 @@ function buildConfirmationSnap(
             align: "center",
           },
         },
-        vote_chart: {
-          type: "bar_chart",
+        hidden_note: {
+          type: "text",
           props: {
-            bars: [
-              { label: `Valid (${validNum})`, value: (validNum / total) * 100, color: "green" },
-              { label: `Not a dog (${invalidNum})`, value: (invalidNum / total) * 100, color: "red" },
-            ],
-            max: 100,
+            content: "Results are hidden until voting ends.",
+            size: "sm",
+            align: "center",
           },
         },
         view_btn: {
@@ -409,13 +391,10 @@ function buildConfirmationSnap(
 function buildPendingVerdictSnap(
   imageUri: string,
   logId: string,
-  validCount: string,
-  invalidCount: string
+  _validCount: string,
+  _invalidCount: string
 ): SnapResponse {
-  const validNum = Number(validCount);
-  const invalidNum = Number(invalidCount);
-  const total = validNum + invalidNum || 1;
-
+  // Counts still hidden while awaiting on-chain resolution.
   return {
     version: "2.0",
     theme: { accent: "amber" },
@@ -425,7 +404,7 @@ function buildPendingVerdictSnap(
         page: {
           type: "stack",
           props: { direction: "vertical", gap: "sm" },
-          children: ["dog_image", "pending_text", "vote_chart", "view_btn"],
+          children: ["dog_image", "pending_text", "view_btn"],
         },
         dog_image: {
           type: "image",
@@ -437,16 +416,6 @@ function buildPendingVerdictSnap(
             content: "⏳ Voting ended — verdict pending resolution",
             weight: "bold",
             align: "center",
-          },
-        },
-        vote_chart: {
-          type: "bar_chart",
-          props: {
-            bars: [
-              { label: `Valid (${validNum})`, value: (validNum / total) * 100, color: "green" },
-              { label: `Not a dog (${invalidNum})`, value: (invalidNum / total) * 100, color: "red" },
-            ],
-            max: 100,
           },
         },
         view_btn: {
