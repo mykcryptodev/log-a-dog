@@ -29,6 +29,7 @@
     "@farcaster/auth-client": "^0.6.0",
     "@farcaster/auth-kit": "^0.6.1",
     "@farcaster/frame-sdk": "^0.0.63",
+    "@farcaster/snap": "^2.10.0",
     "@heroicons/react": "^2.2.0",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@neynar/nodejs-sdk": "^2.46.0",

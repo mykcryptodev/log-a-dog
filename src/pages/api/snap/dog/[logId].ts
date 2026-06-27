@@ -1,5 +1,6 @@
 import { type NextApiRequest, type NextApiResponse } from "next";
 import { z } from "zod";
+import { parseRequest } from "@farcaster/snap/server";
 import { getContract } from "thirdweb";
 import { base } from "thirdweb/chains";
 import {
@@ -17,8 +18,10 @@ import { env } from "~/env";
 const SNAP_CONTENT_TYPE = "application/vnd.farcaster.snap+json";
 const CHAIN_ID = base.id; // 8453
 
-// Fetch the user's primary verified ETH address from Neynar by FID
-async function resolveAddressFromFid(fid: number): Promise<string | null> {
+// Fetch ALL of the user's ETH addresses (verified + custody) from Neynar by FID.
+// The user may have staked from any of them, so eligibility is checked across
+// all, not just the first verified address.
+async function resolveAddressesFromFid(fid: number): Promise<string[]> {
   try {
     const response = await fetch(
       `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
@@ -29,7 +32,7 @@ async function resolveAddressFromFid(fid: number): Promise<string | null> {
         },
       }
     );
-    if (!response.ok) return null;
+    if (!response.ok) return [];
     const data = await response.json() as {
       users?: Array<{
         verified_addresses?: { eth_addresses?: string[] };
@@ -37,16 +40,24 @@ async function resolveAddressFromFid(fid: number): Promise<string | null> {
       }>;
     };
     const user = data.users?.[0];
-    if (!user) return null;
-    // Prefer verified addresses, fall back to custody address
-    return (
-      user.verified_addresses?.eth_addresses?.[0] ??
-      user.custody_address ??
-      null
-    );
+    if (!user) return [];
+    const addrs = [
+      ...(user.verified_addresses?.eth_addresses ?? []),
+      ...(user.custody_address ? [user.custody_address] : []),
+    ].map((a) => a.toLowerCase());
+    return [...new Set(addrs)];
   } catch {
-    return null;
+    return [];
   }
+}
+
+// Read the raw POST body (bodyParser is disabled so the JFS envelope arrives intact).
+async function readRawBody(req: NextApiRequest): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : (chunk as Buffer));
+  }
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 type AttestationPeriod = {
@@ -455,6 +466,10 @@ function buildPendingVerdictSnap(
 
 const logIdSchema = z.string().regex(/^\d+$/);
 
+// Disable Next's body parser so POST receives the raw JFS envelope (a signed
+// header.payload.signature string), not parsed/mangled JSON.
+export const config = { api: { bodyParser: false } };
+
 // Next's res.json() forces Content-Type: application/json, which a snap client
 // does not recognize — the spec requires application/vnd.farcaster.snap+json.
 // Serialize manually so the snap media type sticks on the response.
@@ -522,42 +537,63 @@ export default async function handler(
     const voteParam = req.query.vote as string | undefined;
     const isValid = voteParam === "valid";
 
-    // Parse FID from the snap POST body
-    const body = req.body as {
-      fid?: number;
-      user?: { fid?: number };
-    };
-    const fid = body?.user?.fid ?? body?.fid;
+    // Verify the JFS-signed payload before voting. The server wallet casts the
+    // vote on the user's behalf, so an unverified FID would be spoofable.
+    // parseRequest checks the signature, that the signing key is an active
+    // signer for the FID (via Farcaster hub), and the audience + timestamp.
+    const rawBody = await readRawBody(req);
+    const parsed = await parseRequest(
+      new Request(`${APP_URL}/api/snap/dog/${logId}`, {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: rawBody,
+      }),
+      { requestOrigin: APP_URL },
+    );
 
-    if (!fid) {
-      // Anonymous — show need-stake guide as fallback
+    if (!parsed.success) {
+      console.warn("Snap vote rejected:", parsed.error.type);
+      return sendSnap(res, buildNeedStakeSnap(logId));
+    }
+    // @farcaster/snap infers action types via zod 4; this repo is on zod 3, so
+    // the inferred type degrades to `unknown`. Narrow to the fields we use.
+    const action = parsed.action as { type: string; user: { fid: number } };
+    if (action.type !== "post") {
+      console.warn("Snap vote rejected: unexpected action", action.type);
       return sendSnap(res, buildNeedStakeSnap(logId));
     }
 
-    const userAddress = await resolveAddressFromFid(fid);
-    if (!userAddress) {
-      return sendSnap(res, buildNeedStakeSnap(logId));
-    }
+    const fid = action.user.fid;
 
-    // Check stake eligibility
+    // Check stake eligibility across ALL the user's addresses (verified + custody).
     const attestationContract = getContract({
       address: ATTESTATION_MANAGER[CHAIN_ID]!,
       client,
       chain: base,
     });
+    const stakingContract = getContract({
+      address: STAKING[CHAIN_ID]!,
+      client,
+      chain: base,
+    });
     const minimumStake = await MINIMUM_ATTESTATION_STAKE({ contract: attestationContract });
 
-    const canVote = await canParticipateInAttestation({
-      contract: getContract({
-        address: STAKING[CHAIN_ID]!,
-        client,
-        chain: base,
-      }),
-      user: userAddress,
-      requiredStake: minimumStake,
-    });
+    const addresses = await resolveAddressesFromFid(fid);
+    let eligibleAddress: string | undefined;
+    for (const addr of addresses) {
+      const canVote = await canParticipateInAttestation({
+        contract: stakingContract,
+        user: addr,
+        requiredStake: minimumStake,
+      });
+      if (canVote) {
+        eligibleAddress = addr;
+        break;
+      }
+    }
 
-    if (!canVote) {
+    if (!eligibleAddress) {
+      console.warn(`Snap vote: fid ${fid} not eligible (${addresses.length} addresses checked)`);
       return sendSnap(res, buildNeedStakeSnap(logId));
     }
 
@@ -566,7 +602,7 @@ export default async function handler(
       const transaction = attestToLogOnBehalf({
         contract: attestationContract,
         logId: BigInt(logId),
-        attestor: userAddress,
+        attestor: eligibleAddress,
         isValid,
         stakeAmount: minimumStake,
       });

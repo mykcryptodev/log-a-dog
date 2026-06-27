@@ -22,7 +22,7 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
-  transpilePackages: ['react-tweet', '@farcaster/frame-sdk'],
+  transpilePackages: ['react-tweet', '@farcaster/frame-sdk', '@farcaster/snap'],
   images: {
     remotePatterns: [
       {
