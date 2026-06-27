@@ -161,7 +161,9 @@ const HotdogCardComponent: FC<Props> = ({
   const isResolved = hotdog.attestationPeriod?.status === 1;
 
   const shareUrl = `${env.NEXT_PUBLIC_APP_URL}/dog/${hotdog.logId}`;
-  const snapUrl = `${env.NEXT_PUBLIC_APP_URL}/api/snap/dog/${hotdog.logId}`;
+  // Embed the snap from the www host: apex (logadog.xyz) 308-redirects to www,
+  // and a redirect on the snap URL breaks snap delivery in-feed.
+  const snapUrl = `${env.NEXT_PUBLIC_APP_URL.replace("://logadog.xyz", "://www.logadog.xyz")}/api/snap/dog/${hotdog.logId}`;
   const shareText = `be like ${displayName}, log your dogs! 🌭`;
 
   const shareOnX = useCallback(() => {

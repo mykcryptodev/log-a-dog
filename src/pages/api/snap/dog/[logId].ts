@@ -160,7 +160,11 @@ type SnapResponse = {
   };
 };
 
-const APP_URL = env.NEXT_PUBLIC_APP_URL;
+// Force the www host. The apex (logadog.xyz) issues a Vercel platform 308 → www,
+// and a redirect on the snap path breaks snap delivery (the snap server must be
+// reached directly). Serving the snap + its in-snap POST/open_url targets from
+// www avoids the 308 entirely. No-op on vercel.app / localhost.
+const APP_URL = env.NEXT_PUBLIC_APP_URL.replace("://logadog.xyz", "://www.logadog.xyz");
 
 function buildResolvedSnap(
   imageUri: string,
@@ -580,19 +584,13 @@ export default async function handler(
   }
   const logId = logIdParse.data;
 
-  // Content negotiation. Snap-capable clients send this Accept header and get
-  // the interactive snap JSON. Everything else — browsers, link crawlers, the
-  // Farcaster cast-preview scraper — is redirected to the canonical dog page,
-  // which serves fc:frame + og meta for a rich preview. Per the snap spec we
-  // must NOT return 406; doing so caused the blank preview + "Not Acceptable".
-  // POSTs (vote submissions) may omit the header, so only redirect GETs.
-  const accept = req.headers.accept ?? "";
-  const isSnapClient = accept.includes(SNAP_CONTENT_TYPE);
-  if (!isSnapClient && req.method === "GET") {
-    res.setHeader("Vary", "Accept");
-    return res.redirect(302, `${APP_URL}/dog/${logId}`);
-  }
-
+  // Serve the snap JSON on every GET — including plain (non-snap-Accept)
+  // requests. Farcaster's cast scraper hits this endpoint WITHOUT the snap
+  // Accept header (it followed our old 308 and got the 406), so it decides the
+  // embed type from this plain-GET response. Per spec, a snap URL "must be
+  // discoverable on a plain GET" and a client receiving Content-Type
+  // application/vnd.farcaster.snap+json MUST render it as a snap. Redirecting
+  // here (to the dog page's fc:frame) is what made it render as a Mini App.
   res.setHeader("Content-Type", SNAP_CONTENT_TYPE);
   res.setHeader("Vary", "Accept");
   res.setHeader("Access-Control-Allow-Origin", "*");
