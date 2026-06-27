@@ -12,7 +12,7 @@ import { db } from "~/server/db";
 import { client, serverWallet } from "~/server/utils";
 import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { canParticipateInAttestation } from "~/thirdweb/84532/0xe6b5534390596422d0e882453deed2afc74dae25";
-import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
+import { getAttestationCounts, hasUserAttested, userAttestationChoices } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3b656e01dce03e9ec3";
 import { env } from "~/env";
 
 const SNAP_CONTENT_TYPE = "application/vnd.farcaster.snap+json";
@@ -564,6 +564,31 @@ export default async function handler(
     if (!eligibleAddress) {
       console.warn(`Snap vote: fid ${fid} not eligible (${addresses.length} addresses checked)`);
       return sendSnap(res, buildNeedStakeSnap(logId));
+    }
+
+    // Check if the user has already voted on this dog.
+    // If they have, show their existing vote instead of double-submitting.
+    const attestationCountsContract = getContract({
+      address: ATTESTATION_MANAGER[CHAIN_ID]!,
+      client,
+      chain: base,
+    });
+    // We reuse attestationContract (same address); just import the helpers from 0xc470f55c
+    // which shares the same ATTESTATION_MANAGER address.
+    const alreadyVoted = await hasUserAttested({
+      contract: attestationCountsContract,
+      logId: BigInt(logId),
+      user: eligibleAddress,
+    });
+
+    if (alreadyVoted) {
+      const existingChoice = await userAttestationChoices({
+        contract: attestationCountsContract,
+        arg_0: eligibleAddress,
+        arg_1: BigInt(logId),
+      });
+      console.log(`Snap vote: fid ${fid} already voted (${existingChoice ? 'valid' : 'invalid'}) on logId ${logId}`);
+      return sendSnap(res, buildConfirmationSnap(imageUri, logId, existingChoice, counts.valid, counts.invalid));
     }
 
     // Submit vote via server wallet (same path as hotdog.judge)
