@@ -161,6 +161,7 @@ const HotdogCardComponent: FC<Props> = ({
   const isResolved = hotdog.attestationPeriod?.status === 1;
 
   const shareUrl = `${env.NEXT_PUBLIC_APP_URL}/dog/${hotdog.logId}`;
+  const snapUrl = `${env.NEXT_PUBLIC_APP_URL}/api/snap/dog/${hotdog.logId}`;
   const shareText = `be like ${displayName}, log your dogs! 🌭`;
 
   const shareOnX = useCallback(() => {
@@ -177,18 +178,19 @@ const HotdogCardComponent: FC<Props> = ({
         const sdk = await getFarcasterSdk();
         await sdk.actions.composeCast({
           text: shareText,
-          embeds: [shareUrl],
+          // Embed the snap URL so voters can judge directly from the feed
+          embeds: [snapUrl],
         });
       } else {
         const url =
           `https://farcaster.xyz/~/compose?text=${encodeURIComponent(shareText)}` +
-          `&embeds[]=${encodeURIComponent(shareUrl)}`;
+          `&embeds[]=${encodeURIComponent(snapUrl)}`;
         window.open(url, "_blank");
       }
     } catch (err) {
       console.error("Failed to compose cast", err);
     }
-  }, [shareUrl, shareText, farcaster]);
+  }, [snapUrl, shareText, farcaster]);
 
   // Handle zoraCoin being either an object or string
   const zoraCoinData =
