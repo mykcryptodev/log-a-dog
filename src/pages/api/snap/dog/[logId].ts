@@ -612,7 +612,11 @@ export default async function handler(
     return res.status(404).json({ error: "Dog not found" });
   }
 
-  const imageUri = dogEvent.imageUri;
+  // Snap image elements require an HTTPS url; dog images are stored as ipfs://.
+  // Mirror the gateway conversion used by the OG endpoint (src/pages/api/og).
+  const imageUri = dogEvent.imageUri.startsWith("ipfs://")
+    ? `https://ipfs.io/ipfs/${dogEvent.imageUri.slice("ipfs://".length)}`
+    : dogEvent.imageUri;
 
   const [period, counts] = await Promise.all([
     fetchAttestationPeriod(logId),
