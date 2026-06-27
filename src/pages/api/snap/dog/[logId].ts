@@ -1,6 +1,5 @@
 import { type NextApiRequest, type NextApiResponse } from "next";
 import { z } from "zod";
-import { encodeFunctionData, parseUnits } from "viem";
 import { getContract } from "thirdweb";
 import { base } from "thirdweb/chains";
 import {
@@ -17,44 +16,6 @@ import { env } from "~/env";
 
 const SNAP_CONTENT_TYPE = "application/vnd.farcaster.snap+json";
 const CHAIN_ID = base.id; // 8453
-
-// Minimum stake: 300,000 HOTDOG
-const MINIMUM_STAKE_AMOUNT = parseUnits("300000", 18);
-
-// ERC20 approve ABI fragment
-const ERC20_APPROVE_ABI = {
-  name: "approve",
-  type: "function",
-  inputs: [
-    { name: "spender", type: "address" },
-    { name: "amount", type: "uint256" },
-  ],
-} as const;
-
-// HotdogStaking stake ABI fragment
-const STAKING_STAKE_ABI = {
-  name: "stake",
-  type: "function",
-  inputs: [{ name: "amount", type: "uint256" }],
-} as const;
-
-// Encode approve calldata: approve(stakingContract, MINIMUM_STAKE)
-function encodeApproveCalldata(): `0x${string}` {
-  return encodeFunctionData({
-    abi: [ERC20_APPROVE_ABI],
-    functionName: "approve",
-    args: [STAKING[CHAIN_ID] as `0x${string}`, MINIMUM_STAKE_AMOUNT],
-  });
-}
-
-// Encode stake calldata: stake(MINIMUM_STAKE)
-function encodeStakeCalldata(): `0x${string}` {
-  return encodeFunctionData({
-    abi: [STAKING_STAKE_ABI],
-    functionName: "stake",
-    args: [MINIMUM_STAKE_AMOUNT],
-  });
-}
 
 // Fetch the user's primary verified ETH address from Neynar by FID
 async function resolveAddressFromFid(fid: number): Promise<string | null> {
@@ -308,50 +269,38 @@ function buildVotingSnap(
 }
 
 function buildNeedStakeSnap(logId: string): SnapResponse {
-  const approveCalldata = encodeApproveCalldata();
-  const stakeCalldata = encodeStakeCalldata();
   const hotdogAddress = HOTDOG_TOKEN[CHAIN_ID]!;
-  const stakingAddress = STAKING[CHAIN_ID]!;
 
+  // Snaps support swap_token in-feed, but NOT arbitrary contract calls — there
+  // is no send_transaction action, so ERC20 approve + stake() cannot run in the
+  // feed. The "Get HOTDOG" swap works inline; approve + stake happen in the
+  // mini app (full wallet) via open_mini_app → /earn.
   return {
     version: "2.0",
     theme: { accent: "amber" },
     ui: {
-      root: "pager",
+      root: "page",
       elements: {
-        pager: {
-          type: "paginator",
-          props: {
-            initialPage: 0,
-            showIndicators: true,
-            showControls: true,
-            controlsPosition: "bottom",
-            transition: "slide",
-          },
-          children: ["step0", "step1", "step2"],
-        },
-
-        // Step 0 — get HOTDOG
-        step0: {
+        page: {
           type: "stack",
           props: { direction: "vertical", gap: "md" },
-          children: ["step0_title", "step0_body", "get_hotdog_btn", "step0_next"],
+          children: ["title", "body", "get_hotdog_btn", "stake_btn", "back_to_vote_btn"],
         },
-        step0_title: {
+        title: {
           type: "text",
           props: { content: "You need staked $HOTDOG to vote", weight: "bold", align: "center" },
         },
-        step0_body: {
+        body: {
           type: "text",
           props: {
-            content: "Minimum: 300,000 HOTDOG staked. Step 1 of 3: swap ETH for HOTDOG.",
+            content: "Voting requires 300,000 HOTDOG staked. Get HOTDOG below, then stake in the app to unlock voting.",
             size: "sm",
             align: "center",
           },
         },
         get_hotdog_btn: {
           type: "button",
-          props: { label: "🌭 Get HOTDOG", variant: "primary" },
+          props: { label: "🌭 Get HOTDOG", variant: "secondary" },
           on: {
             press: {
               action: "swap_token",
@@ -362,81 +311,13 @@ function buildNeedStakeSnap(logId: string): SnapResponse {
             },
           },
         },
-        step0_next: {
-          type: "button",
-          props: { label: "I have HOTDOG →", variant: "secondary" },
-          on: { press: { action: "paginator_next", params: {} } },
-        },
-
-        // Step 1 — approve
-        step1: {
-          type: "stack",
-          props: { direction: "vertical", gap: "md" },
-          children: ["step1_title", "step1_body", "approve_btn", "step1_next"],
-        },
-        step1_title: {
-          type: "text",
-          props: { content: "Step 2: Approve HOTDOG spending", weight: "bold", align: "center" },
-        },
-        step1_body: {
-          type: "text",
-          props: {
-            content: "Allow the staking contract to receive your HOTDOG.",
-            size: "sm",
-            align: "center",
-          },
-        },
-        approve_btn: {
-          type: "button",
-          props: { label: "Approve 300K HOTDOG", variant: "primary" },
-          on: {
-            press: {
-              action: "send_transaction",
-              params: {
-                chainId: "eip155:8453",
-                address: hotdogAddress,
-                data: approveCalldata,
-                value: "0x0",
-              },
-            },
-          },
-        },
-        step1_next: {
-          type: "button",
-          props: { label: "Approved →", variant: "secondary" },
-          on: { press: { action: "paginator_next", params: {} } },
-        },
-
-        // Step 2 — stake
-        step2: {
-          type: "stack",
-          props: { direction: "vertical", gap: "md" },
-          children: ["step2_title", "step2_body", "stake_btn", "back_to_vote_btn"],
-        },
-        step2_title: {
-          type: "text",
-          props: { content: "Step 3: Stake HOTDOG", weight: "bold", align: "center" },
-        },
-        step2_body: {
-          type: "text",
-          props: {
-            content: "Stake 300,000 HOTDOG to unlock voting. You can unstake after 1 hour.",
-            size: "sm",
-            align: "center",
-          },
-        },
         stake_btn: {
           type: "button",
-          props: { label: "Stake 300K HOTDOG", variant: "primary" },
+          props: { label: "Stake to vote →", variant: "primary" },
           on: {
             press: {
-              action: "send_transaction",
-              params: {
-                chainId: "eip155:8453",
-                address: stakingAddress,
-                data: stakeCalldata,
-                value: "0x0",
-              },
+              action: "open_mini_app",
+              params: { target: `${APP_URL}/earn` },
             },
           },
         },
