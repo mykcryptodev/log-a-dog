@@ -178,7 +178,9 @@ const HotdogCardComponent: FC<Props> = ({
         const sdk = await getFarcasterSdk();
         await sdk.actions.composeCast({
           text: shareText,
-          // Embed the snap URL so voters can judge directly from the feed
+          // Embed the snap URL so snap-capable clients render the interactive
+          // in-feed card. Non-snap clients/crawlers are redirected by the
+          // endpoint to the dog page (fc:frame meta) for a rich preview.
           embeds: [snapUrl],
         });
       } else {

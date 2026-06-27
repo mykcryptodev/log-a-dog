@@ -574,20 +574,24 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Content negotiation — only serve snaps when client requests it
-  const accept = req.headers.accept ?? "";
-  const isSnapClient = accept.includes(SNAP_CONTENT_TYPE);
-
-  // Allow curl testing without the header in dev
-  if (!isSnapClient && process.env.NODE_ENV === "production") {
-    return res.status(406).json({ error: "Not Acceptable" });
-  }
-
   const logIdParse = logIdSchema.safeParse(req.query.logId);
   if (!logIdParse.success) {
     return res.status(400).json({ error: "Invalid logId" });
   }
   const logId = logIdParse.data;
+
+  // Content negotiation. Snap-capable clients send this Accept header and get
+  // the interactive snap JSON. Everything else — browsers, link crawlers, the
+  // Farcaster cast-preview scraper — is redirected to the canonical dog page,
+  // which serves fc:frame + og meta for a rich preview. Per the snap spec we
+  // must NOT return 406; doing so caused the blank preview + "Not Acceptable".
+  // POSTs (vote submissions) may omit the header, so only redirect GETs.
+  const accept = req.headers.accept ?? "";
+  const isSnapClient = accept.includes(SNAP_CONTENT_TYPE);
+  if (!isSnapClient && req.method === "GET") {
+    res.setHeader("Vary", "Accept");
+    return res.redirect(302, `${APP_URL}/dog/${logId}`);
+  }
 
   res.setHeader("Content-Type", SNAP_CONTENT_TYPE);
   res.setHeader("Vary", "Accept");
