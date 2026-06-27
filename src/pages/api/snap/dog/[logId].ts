@@ -190,7 +190,7 @@ function buildResolvedSnap(
           props: { label: "View on Log a Dog", variant: "secondary" },
           on: {
             press: {
-              action: "open_url",
+              action: "open_mini_app",
               params: { target: `${APP_URL}/dog/${logId}` },
             },
           },
@@ -324,7 +324,7 @@ function buildNeedStakeSnap(logId: string): SnapResponse {
           props: { label: "← Back to dog", variant: "secondary" },
           on: {
             press: {
-              action: "open_url",
+              action: "open_mini_app",
               params: { target: `${APP_URL}/dog/${logId}` },
             },
           },
@@ -378,7 +378,7 @@ function buildConfirmationSnap(
           props: { label: "View on Log a Dog", variant: "secondary" },
           on: {
             press: {
-              action: "open_url",
+              action: "open_mini_app",
               params: { target: `${APP_URL}/dog/${logId}` },
             },
           },
@@ -423,7 +423,7 @@ function buildPendingVerdictSnap(
           props: { label: "View on Log a Dog", variant: "secondary" },
           on: {
             press: {
-              action: "open_url",
+              action: "open_mini_app",
               params: { target: `${APP_URL}/dog/${logId}` },
             },
           },
