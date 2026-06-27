@@ -73,7 +73,7 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
     }
   }, [account?.address, refetch]);
 
-  const { data: stakedAmount, isLoading: isLoadingStaked } = useReadContract({
+  const { data: stakedAmount, isLoading: isLoadingStaked, refetch: refetchStaked } = useReadContract({
     contract: stakingContract,
     method: "function stakes(address user) view returns (uint256)",
     params: [account?.address ?? "0x0"],
@@ -384,6 +384,8 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
                 onTransactionConfirmed={() => {
                   toast.dismiss();
                   toast.success("Staked!");
+                  void refetchStaked();
+                  void refetch();
                   onStake?.(amount);
                 }}
                 onError={(err) => {
@@ -556,6 +558,8 @@ const StakeComponent: FC<Props> = ({ onStake, hideTitle = false }) => {
               onTransactionConfirmed={() => {
                 toast.dismiss();
                 toast.success("Unstaked!");
+                void refetchStaked();
+                void refetch();
                 onStake?.(unstakeAmount);
               }}
               onError={(err) => {
