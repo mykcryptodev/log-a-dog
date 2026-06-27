@@ -574,6 +574,16 @@ function buildPendingVerdictSnap(
 
 const logIdSchema = z.string().regex(/^\d+$/);
 
+// Next's res.json() forces Content-Type: application/json, which a snap client
+// does not recognize — the spec requires application/vnd.farcaster.snap+json.
+// Serialize manually so the snap media type sticks on the response.
+function sendSnap(res: NextApiResponse, snap: SnapResponse) {
+  res.setHeader("Content-Type", SNAP_CONTENT_TYPE);
+  res.setHeader("Vary", "Accept");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  return res.status(200).send(JSON.stringify(snap));
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -591,9 +601,7 @@ export default async function handler(
   // discoverable on a plain GET" and a client receiving Content-Type
   // application/vnd.farcaster.snap+json MUST render it as a snap. Redirecting
   // here (to the dog page's fc:frame) is what made it render as a Mini App.
-  res.setHeader("Content-Type", SNAP_CONTENT_TYPE);
-  res.setHeader("Vary", "Accept");
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // All snap responses go through sendSnap(), which sets the snap media type.
 
   // Load dog from DB
   const dogEvent = await db.dogEvent.findFirst({
@@ -615,15 +623,13 @@ export default async function handler(
 
   // Branch 1: Resolved
   if (period && period.status !== 0) {
-    return res.status(200).json(buildResolvedSnap(imageUri, logId, period));
+    return sendSnap(res, buildResolvedSnap(imageUri, logId, period));
   }
 
   // Branch 2/3: Voting period open or closed but unresolved
   const votingEnded = period && Number(period.endTime) > 0 && Number(period.endTime) < now;
   if (votingEnded) {
-    return res.status(200).json(
-      buildPendingVerdictSnap(imageUri, logId, counts.valid, counts.invalid)
-    );
+    return sendSnap(res, buildPendingVerdictSnap(imageUri, logId, counts.valid, counts.invalid));
   }
 
   // ---- POST: handle a vote submission ----
@@ -640,12 +646,12 @@ export default async function handler(
 
     if (!fid) {
       // Anonymous — show need-stake guide as fallback
-      return res.status(200).json(buildNeedStakeSnap(logId));
+      return sendSnap(res, buildNeedStakeSnap(logId));
     }
 
     const userAddress = await resolveAddressFromFid(fid);
     if (!userAddress) {
-      return res.status(200).json(buildNeedStakeSnap(logId));
+      return sendSnap(res, buildNeedStakeSnap(logId));
     }
 
     // Check stake eligibility
@@ -667,7 +673,7 @@ export default async function handler(
     });
 
     if (!canVote) {
-      return res.status(200).json(buildNeedStakeSnap(logId));
+      return sendSnap(res, buildNeedStakeSnap(logId));
     }
 
     // Submit vote via server wallet (same path as hotdog.judge)
@@ -693,13 +699,9 @@ export default async function handler(
       ? (Number(counts.invalid) + 1).toString()
       : counts.invalid;
 
-    return res.status(200).json(
-      buildConfirmationSnap(imageUri, logId, isValid, updatedValid, updatedInvalid)
-    );
+    return sendSnap(res, buildConfirmationSnap(imageUri, logId, isValid, updatedValid, updatedInvalid));
   }
 
   // GET — voting is open, show vote buttons (stake check happens on POST)
-  return res.status(200).json(
-    buildVotingSnap(imageUri, logId, counts.valid, counts.invalid)
-  );
+  return sendSnap(res, buildVotingSnap(imageUri, logId, counts.valid, counts.invalid));
 }
