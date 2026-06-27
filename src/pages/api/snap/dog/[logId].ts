@@ -143,12 +143,6 @@ async function fetchAttestationCounts(logId: string): Promise<{ valid: string; i
   }
 }
 
-function formatStake(wei: string): string {
-  const num = Number(BigInt(wei) / BigInt(1e15)) / 1e3; // to millions with 3 decimals
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}T`;
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}B`;
-  return `${num.toFixed(1)}M`;
-}
 
 type SnapElement = {
   type: string;
@@ -581,7 +575,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   // Content negotiation — only serve snaps when client requests it
-  const accept = req.headers["accept"] ?? "";
+  const accept = req.headers.accept ?? "";
   const isSnapClient = accept.includes(SNAP_CONTENT_TYPE);
 
   // Allow curl testing without the header in dev
