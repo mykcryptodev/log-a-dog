@@ -143,7 +143,7 @@ function buildResolvedSnap(
   logId: string,
   period: NonNullable<AttestationPeriod>
 ): SnapResponse {
-  const verdict = period.isValid ? "✅ Valid Dog" : "❌ Not a Dog";
+  const verdict = period.isValid ? "🥬 VALID DOG" : "🔴 SUS";
   const validNum = Number(BigInt(period.totalValidStake) / BigInt(1e18));
   const invalidNum = Number(BigInt(period.totalInvalidStake) / BigInt(1e18));
   const total = validNum + invalidNum || 1;
@@ -210,7 +210,7 @@ function buildVotingSnap(
 ): SnapResponse {
   // Vote counts are hidden while voting is open — revealed only after it ends.
   const statusText = alreadyVoted
-    ? `You voted: ${userVote ? "✅ Valid" : "❌ Not a Dog"}`
+    ? `You voted: ${userVote ? "🥬 VALID DOG" : "🔴 SUS"}`
     : "Vote on this dog!";
 
   return {
@@ -243,7 +243,7 @@ function buildVotingSnap(
         },
         valid_btn: {
           type: "button",
-          props: { label: "✅ Valid Dog", variant: "primary" },
+          props: { label: "🥬 VALID DOG", variant: "primary" },
           on: {
             press: {
               action: "submit",
@@ -253,7 +253,7 @@ function buildVotingSnap(
         },
         invalid_btn: {
           type: "button",
-          props: { label: "❌ Not a Dog", variant: "secondary" },
+          props: { label: "🔴 SUS", variant: "secondary" },
           on: {
             press: {
               action: "submit",
@@ -360,7 +360,7 @@ function buildConfirmationSnap(
         confirm_text: {
           type: "text",
           props: {
-            content: isValid ? "✅ Voted: Valid Dog!" : "❌ Voted: Not a Dog!",
+            content: isValid ? "🥬 Voted: VALID DOG!" : "🔴 Voted: SUS!",
             weight: "bold",
             align: "center",
           },
