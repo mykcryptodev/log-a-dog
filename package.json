@@ -87,7 +87,7 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "@zoralabs/protocol-deployments": "0.6.1"
+    "@zoralabs/protocol-deployments": "0.7.6"
   },
   "ct3aMetadata": {
     "initVersion": "7.27.0"
