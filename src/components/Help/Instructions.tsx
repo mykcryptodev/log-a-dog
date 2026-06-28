@@ -16,7 +16,7 @@ export const Instructions: FC = () => {
           <li className="step">
             <div className="grid grid-rows-2">
               <span className="font-bold text-start md:text-center">Climb the leaderboard</span>
-              <span className="text-xs">Whoever eats the most hotdogs this summer, wins!</span>
+              <span className="text-xs">Keep logging — creative dogs get rewarded throughout the summer.</span>
             </div>
           </li>
         </ul>

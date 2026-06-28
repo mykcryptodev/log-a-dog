@@ -8,7 +8,7 @@ const CARDS = [
   { emoji: "🌭", title: "1. EAT A DOG", body: "Eat a hotdog. Any hotdog. The grill is always hot." },
   { emoji: "📷", title: "2. LOG IT", body: "Snap a pic of you eating it and log it onchain. Tap the 🌭 button." },
   { emoji: "🧑‍⚖️", title: "3. GET JUDGED", body: "Other players have 48 hours to rule your dog VALID or SUS." },
-  { emoji: "🏆", title: "4. CLIMB THE BOARD", body: "Valid dogs count toward the leaderboard. Winner takes the pot." },
+  { emoji: "🏆", title: "4. CLIMB THE BOARD", body: "Valid dogs count toward the leaderboard. Creative dogs get rewarded throughout the summer." },
 ];
 
 const RulesPage: NextPage = () => {

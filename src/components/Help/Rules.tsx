@@ -21,7 +21,7 @@ export const Rules: FC = () => {
               <li>Record each hotdog that you eat by uploading a pic of you eating it.</li>
               <li>Compete against participants from all around the world.</li>
               <li>Rate the truthfulness of other submissions.</li>
-              <li>Win by being the one who logged the most dogs this summer.</li>
+              <li>Compete throughout the summer — creative and dedicated loggers get rewarded along the way.</li>
             </ul>
             <br />
             <p className="font-bold">
@@ -104,7 +104,7 @@ export const Rules: FC = () => {
             <ul style={{listStyleType: 'circle'}} className="ml-5">
               <li>Upload a pic of you eating a hotdog (one pic per dog).</li> 
               <li>Your pic is now a tradeable onchain token where you earn trading fees.</li>
-              <li>There will be prizes for the people who eat the most hotdogs throughout the competition.</li>
+              <li>There will be rewards throughout the summer for creative and standout logged dogs.</li>
             </ul>
             <br />
             <p className="font-bold">
