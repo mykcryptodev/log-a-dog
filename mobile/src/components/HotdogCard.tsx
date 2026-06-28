@@ -59,8 +59,7 @@ export function HotdogCard({
   const isValid = hotdog.attestationPeriod?.isValid ?? false;
 
   return (
-    <Pressable
-      onPress={() => router.push(`/dog/${hotdog.logId}` as never)}
+    <View
       className="mb-4 mx-4 rounded-3xl overflow-hidden bg-base-200"
       style={{
         shadowColor: "#E23B2E",
@@ -70,55 +69,58 @@ export function HotdogCard({
         elevation: 4,
       }}
     >
-      {/* Header */}
-      <View className="flex-row items-center p-3 gap-2">
-        <ProfileAvatar
-          image={hotdog.eaterProfile?.image}
-          address={hotdog.eater}
-          size={38}
-        />
-        <View className="flex-1">
-          <View className="flex-row items-center gap-1">
-            <Text className="font-bold text-neutral text-sm" numberOfLines={1}>
-              {eaterName}
-            </Text>
-            <ProfileBadge profile={hotdog.eaterProfile} />
+      {/* Header + Image — tapping navigates to dog detail page */}
+      <Pressable onPress={() => router.push(`/dog/${hotdog.logId}` as never)}>
+        {/* Header */}
+        <View className="flex-row items-center p-3 gap-2">
+          <ProfileAvatar
+            image={hotdog.eaterProfile?.image}
+            address={hotdog.eater}
+            size={38}
+          />
+          <View className="flex-1">
+            <View className="flex-row items-center gap-1">
+              <Text className="font-bold text-neutral text-sm" numberOfLines={1}>
+                {eaterName}
+              </Text>
+              <ProfileBadge profile={hotdog.eaterProfile} />
+            </View>
+            {showVia && (
+              <Text className="text-xs text-neutral/50" numberOfLines={1}>
+                via {loggerName}
+              </Text>
+            )}
           </View>
-          {showVia && (
-            <Text className="text-xs text-neutral/50" numberOfLines={1}>
-              via {loggerName}
-            </Text>
+          <Text className="text-xs text-neutral/40">
+            {formatTimestamp(hotdog.timestamp)}
+          </Text>
+        </View>
+
+        {/* Image */}
+        <View style={{ width: cardWidth, height: imageHeight }}>
+          {imageUri ? (
+            <Image
+              source={{ uri: imageUri }}
+              style={{ flex: 1 }}
+              contentFit="cover"
+              transition={300}
+              placeholder={hotdog.zoraCoin?.mediaContent?.previewImage?.blurhash}
+            />
+          ) : (
+            <View className="flex-1 bg-base-300 items-center justify-center">
+              <Text className="text-5xl">🌭</Text>
+            </View>
+          )}
+          {isResolved && <VerdictStamp isValid={isValid} />}
+          {hotdog.duplicateOfLogId && (
+            <View className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1">
+              <Text className="text-white text-xs">♻ Duplicate</Text>
+            </View>
           )}
         </View>
-        <Text className="text-xs text-neutral/40">
-          {formatTimestamp(hotdog.timestamp)}
-        </Text>
-      </View>
+      </Pressable>
 
-      {/* Image */}
-      <View style={{ width: cardWidth, height: imageHeight }}>
-        {imageUri ? (
-          <Image
-            source={{ uri: imageUri }}
-            style={{ flex: 1 }}
-            contentFit="cover"
-            transition={300}
-            placeholder={hotdog.zoraCoin?.mediaContent?.previewImage?.blurhash}
-          />
-        ) : (
-          <View className="flex-1 bg-base-300 items-center justify-center">
-            <Text className="text-5xl">🌭</Text>
-          </View>
-        )}
-        {isResolved && <VerdictStamp isValid={isValid} />}
-        {hotdog.duplicateOfLogId && (
-          <View className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1">
-            <Text className="text-white text-xs">♻ Duplicate</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Vote bar */}
+      {/* Vote bar — outside navigation pressable so taps register correctly */}
       <VoteBar
         logId={hotdog.logId}
         validCount={validCount}
@@ -140,6 +142,6 @@ export function HotdogCard({
           </Text>
         )}
       </View>
-    </Pressable>
+    </View>
   );
 }
