@@ -5,6 +5,7 @@ import { BottomNav } from "./BottomNav";
 import { ToastProvider } from "~/providers/Toast";
 import useMounted from "~/hooks/useMounted";
 import { getSeasonInfo } from "~/helpers/season";
+import { PreseasonBanner } from "./PreseasonBanner";
 
 interface LayoutProps {
   children: ReactNode;
@@ -61,6 +62,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
 
+        <PreseasonBanner />
         <ToastProvider />
         {children}
         <BottomNav />
