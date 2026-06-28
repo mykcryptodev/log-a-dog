@@ -23,6 +23,15 @@ const config = {
     defaultLocale: "en",
   },
   transpilePackages: ['react-tweet', '@farcaster/frame-sdk', '@farcaster/snap'],
+  webpack: (config) => {
+    // rpc-websockets ships with uuid@14 which has no CJS export.
+    // Alias uuid to the top-level uuid@9 dist/index.js which has a proper CJS entry.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      uuid: new URL('node_modules/uuid/dist/index.js', import.meta.url).pathname,
+    };
+    return config;
+  },
   images: {
     remotePatterns: [
       {

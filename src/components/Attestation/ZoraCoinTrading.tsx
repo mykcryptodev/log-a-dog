@@ -114,15 +114,14 @@ export const ZoraCoinTrading: FC<Props> = ({ coinAddress: _coinAddress, logId, r
       };
 
       // Execute the buy using new SDK API
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
       const receipt = await tradeCoin({
         tradeParameters,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         walletClient: walletClient as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         account: walletClient.account as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         publicClient: publicClient as any,
-      }) as { transactionHash: string, hash: string };
+      }) as unknown as { transactionHash: string, hash: string };
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 
       // Invalidate cache after successful buy
       try {

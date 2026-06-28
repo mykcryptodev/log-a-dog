@@ -1,9 +1,7 @@
 import { type NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import Image from "next/image";
 import {
-  TrophyIcon,
   CameraIcon,
   ShareIcon,
   CurrencyDollarIcon,
@@ -74,7 +72,7 @@ const PoidhPage: NextPage = () => {
               POIDH <span className="text-secondary">CAMPAIGN</span>
             </h1>
             <p className="mt-2 text-sm opacity-70">
-              Log a Dog meets "Pics or it didn&apos;t happen"
+              Log a Dog meets &quot;Pics or it didn&apos;t happen&quot;
             </p>
           </div>
 
@@ -97,7 +95,7 @@ const PoidhPage: NextPage = () => {
           <div className="pop-card rounded-3xl bg-base-100 p-5">
             <h2 className="mb-3 font-display text-2xl font-bold tracking-tight">🐸 WHAT IS POIDH?</h2>
             <p className="text-sm text-base-content/80 leading-relaxed">
-              <strong>POIDH</strong> stands for <strong>"Pics or it didn&apos;t happen"</strong> — a
+              <strong>POIDH</strong> stands for <strong>&quot;Pics or it didn&apos;t happen&quot;</strong> — a
               decentralized bounty protocol where community voting validates photo proof claims
               and awards prizes. For this campaign, POIDH is the prize layer on top of Log a Dog.
             </p>
