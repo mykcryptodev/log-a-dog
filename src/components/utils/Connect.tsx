@@ -91,7 +91,10 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
         }
       }
 
-      if (wallet.id !== "inApp") {
+      // Auto-sign-in for inApp wallets and injected EIP-1193 wallets (e.g. Farcaster mini app).
+      // Skip for external wallets that require explicit user action (MetaMask, Coinbase, etc.).
+      const skipIds = ["io.metamask", "com.coinbase.wallet", "me.rainbow", "walletConnect"];
+      if (skipIds.some(id => wallet.id.startsWith(id))) {
         return;
       }
       try {

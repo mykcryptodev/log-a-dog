@@ -128,7 +128,7 @@ export const FarcasterProvider = ({
         const mini = await sdk.isInMiniApp();
         setIsMiniApp(mini);
         await sdk.actions.ready({});
-        if (sdk.wallet && !hasConnectedWallet) {
+        if (mini && sdk.wallet && !hasConnectedWallet) {
           await connectWallet();
           setHasConnectedWallet(true);
         }
