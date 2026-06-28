@@ -1,5 +1,5 @@
 import { type FC, useEffect, useCallback, useRef } from "react";
-import { ConnectButton, useActiveAccount } from "thirdweb/react";
+import { ConnectButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import {
   createWallet,
@@ -24,6 +24,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
   const mounted = useMounted();
   const userPrefersDarkMode = usePrefersDarkMode();
   const account = useActiveAccount();
+  const activeWallet = useActiveWallet();
   const sessionDataRef = useRef<typeof sessionData>(null);
   const statusRef = useRef<typeof status>("loading");
 
@@ -116,6 +117,14 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
     },
     [createPayload, message],
   ); // Stable dependencies only
+
+  // Auto-sign-in via next-auth when a wallet is already connected but no
+  // next-auth session exists yet (e.g. Farcaster mini-app auto-connect).
+  useEffect(() => {
+    if (account && activeWallet && !sessionData?.user?.id && status !== "loading") {
+      void silentlySignIn(activeWallet);
+    }
+  }, [account, activeWallet, sessionData?.user?.id, status, silentlySignIn]);
 
   // Prevent hydration mismatch by not rendering ConnectButton until mounted
   if (!mounted) {
