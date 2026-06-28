@@ -13,7 +13,7 @@ const STEPS = [
   {
     emoji: "🌭",
     title: "Eat a hotdog",
-    body: "It must be a real dog — 4.8+ inches, in a bun. Grill marks encouraged.",
+    body: "It must be a real dog — 4.8+ inches, in a bun.",
     icon: null,
   },
   {
@@ -59,6 +59,8 @@ const PoidhPage: NextPage = () => {
           content="Win $50 ETH daily July 4–6. Log a hotdog, share it, claim your prize on POIDH."
         />
         <link rel="icon" href="/favicon.ico" />
+        <meta property="og:image" content="https://logadog.xyz/images/og-image.png" />
+        <meta property="twitter:image" content="https://logadog.xyz/images/og-image.png" />
       </Head>
       <main className="flex flex-col items-center px-4 pt-6 pb-10">
         <div className="flex w-full max-w-xl flex-col gap-5">

@@ -57,11 +57,11 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
                 href="/poidh"
                 className="rounded-full border-2 border-base-content bg-secondary px-2.5 py-1 text-secondary-content"
               >
-                POIDH 🐸
+                POIDH
               </Link>
-              {mounted && (
+              {mounted && isLive && (
                 <span className="rounded-full border-2 border-base-content bg-primary px-2.5 py-1 text-primary-content">
-                  {isLive ? `DAY ${day}` : "PRE-SEASON"}
+                  DAY {day}
                 </span>
               )}
             </div>

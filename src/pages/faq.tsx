@@ -11,6 +11,8 @@ const FAQPage: NextPage = () => {
         <title>FAQ - Log a Dog</title>
         <meta name="description" content="Frequently asked questions, rules, and instructions for Log a Dog competition" />
         <link rel="icon" href="/favicon.ico" />
+        <meta property="og:image" content="https://logadog.xyz/images/og-image.png" />
+        <meta property="twitter:image" content="https://logadog.xyz/images/og-image.png" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="container flex flex-col items-center justify-center gap-6 px-4 pt-16 pb-8">
