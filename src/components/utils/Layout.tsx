@@ -53,6 +53,12 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               >
                 $HOTDOG
               </Link>
+              <Link
+                href="/poidh"
+                className="rounded-full border-2 border-base-content bg-secondary px-2.5 py-1 text-secondary-content"
+              >
+                POIDH 🐸
+              </Link>
               {mounted && (
                 <span className="rounded-full border-2 border-base-content bg-primary px-2.5 py-1 text-primary-content">
                   {isLive ? `DAY ${day}` : "PRE-SEASON"}
