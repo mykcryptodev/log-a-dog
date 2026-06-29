@@ -2,10 +2,16 @@ import { useState, type FC } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
+import { getContract, sendTransaction } from "thirdweb";
+import { useActiveWallet } from "thirdweb/react";
+import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { api } from "~/utils/api";
+import { client } from "~/providers/Thirdweb";
+import { ATTESTATION_MANAGER } from "~/constants/addresses";
+import { SUPPORTED_CHAINS } from "~/constants/chains";
+import { attestToLog } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { InsufficientStake } from "../Stake/InsufficientStake";
 import { Portal } from "../utils/Portal";
-import { TransactionStatus } from "../utils/TransactionStatus";
 import { useGhostVote } from "~/hooks/useGhostVote";
 
 type Props = {
@@ -38,15 +44,14 @@ export const VoteBar: FC<Props> = ({
   userAttested,
   userAttestation,
   onAttestationMade,
-  onAttestationAffirmationRevoked,
 }) => {
   const { data: sessionData } = useSession();
+  const wallet = useActiveWallet();
   const utils = api.useUtils();
   const { mutateAsync: refreshFeed } = api.indexer.refreshFeed.useMutation();
   const [optimisticUserAttested, setOptimisticUserAttested] = useState<boolean | undefined>(userAttested);
   const [optimisticUserAttestation, setOptimisticUserAttestation] = useState<boolean | undefined>(userAttestation);
   const [isInsufficientStake, setIsInsufficientStake] = useState(false);
-  const [pendingTransactionId, setPendingTransactionId] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "valid" | "invalid">(null);
   const [streak, setStreak] = useState<null | "valid" | "invalid">(null);
 
@@ -57,61 +62,95 @@ export const VoteBar: FC<Props> = ({
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   const effectiveUserAttestation = ghostVote !== null ? ghostVote : (optimisticUserAttestation ?? false);
 
-  const judgeMutation = api.hotdog.judge.useMutation({
-    onMutate: ({ isValid }) => {
-      setOptimisticUserAttested(true);
-      setOptimisticUserAttestation(isValid);
-    },
-    onSuccess: (data) => {
-      if (data) {
-        setPendingTransactionId(data);
-      } else {
-        toast.success("Verdict cast!");
-        void onAttestationMade?.();
-      }
-    },
-    onError: (error) => {
-      setOptimisticUserAttested(userAttested);
-      setOptimisticUserAttestation(userAttestation);
-      if (error.message.includes("Insufficient stake")) {
-        setIsInsufficientStake(true);
-      } else {
-        toast.error(`Operation failed: ${error.message}`);
-      }
-    },
-  });
+  // Submit the attestation from the user's own wallet. thirdweb Engine is gone,
+  // so we mirror Revoke.tsx: build the user-callable `attestToLog`, then prefer
+  // a gasless EIP-5792 `sendCalls` through the thirdweb paymaster, falling back
+  // to a normal `sendTransaction` for wallets without 5792 capabilities.
+  const submitVote = async (isValid: boolean) => {
+    if (!wallet) throw new Error("No wallet connected");
+    const account = wallet.getAccount();
+    if (!account) throw new Error("No wallet connected");
 
-  const revoke = async (isValid: boolean) => {
-    if (!sessionData?.user?.address) return;
-    try {
-      setOptimisticUserAttested(false);
-      setOptimisticUserAttestation(undefined);
-      await judgeMutation.mutateAsync({ chainId, logId, isValid, shouldRevoke: true });
-      void onAttestationAffirmationRevoked?.();
-    } catch {
-      setOptimisticUserAttested(userAttested);
-      setOptimisticUserAttestation(userAttestation);
+    const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId)!;
+    const attestationContract = getContract({
+      address: ATTESTATION_MANAGER[chainId]!,
+      client,
+      chain,
+    });
+
+    // Pre-flight: required stake + eligibility (was done in the server mutation).
+    const stakeInfo = await utils.hotdog.getAttestationStakeInfo.fetch({
+      chainId,
+      user: account.address,
+    });
+    if (!stakeInfo.canParticipate) {
+      throw new Error("Insufficient stake");
+    }
+
+    const transaction = attestToLog({
+      contract: attestationContract,
+      logId: BigInt(logId),
+      isValid,
+      stakeAmount: BigInt(stakeInfo.minimumStake),
+    });
+
+    const chainIdAsHex = chainId.toString(16) as unknown as number;
+    const walletCapabilities = await getCapabilities({ wallet }).catch(() => null);
+    if (walletCapabilities?.[chainIdAsHex]) {
+      await sendCalls({
+        chain,
+        wallet,
+        calls: [transaction],
+        capabilities: {
+          paymasterService: {
+            url: `https://${chainId}.bundler.thirdweb.com/${client.clientId}`,
+          },
+        },
+      });
+    } else {
+      await sendTransaction({ account, transaction });
     }
   };
 
   const vote = async (isValid: boolean) => {
     if ((disabled ?? false) || isExpired) return;
-    if (!sessionData?.user?.address) {
+    if (!sessionData?.user?.address || !wallet) {
       toast.error("You must login to judge dogs!");
       return;
     }
+    // The contract has no revoke; re-voting the same way is a no-op on-chain.
+    if (effectiveUserAttested && effectiveUserAttestation === isValid) {
+      return;
+    }
+
     setBusy(isValid ? "valid" : "invalid");
     setStreak(isValid ? "valid" : "invalid");
     setTimeout(() => setStreak(null), 350);
 
-    // Toggle off if re-voting the same way.
-    if (effectiveUserAttested && effectiveUserAttestation === isValid) {
-      await revoke(isValid);
-      setBusy(null);
-      return;
-    }
+    // Optimistic update.
+    setOptimisticUserAttested(true);
+    setOptimisticUserAttestation(isValid);
+
     try {
-      await judgeMutation.mutateAsync({ chainId, logId, isValid, shouldRevoke: false });
+      await submitVote(isValid);
+      toast.success("Verdict cast!");
+      try {
+        await refreshFeed({ chainId });
+      } catch (error) {
+        console.warn("Could not refresh indexed votes after verdict", error);
+      }
+      await utils.hotdog.getUserVotes.invalidate({ voter: sessionData.user.address });
+      await utils.hotdog.getJudges.invalidate();
+      void onAttestationMade?.();
+    } catch (error) {
+      setOptimisticUserAttested(userAttested);
+      setOptimisticUserAttestation(userAttestation);
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("Insufficient stake")) {
+        setIsInsufficientStake(true);
+      } else {
+        toast.error(`Operation failed: ${message}`);
+      }
     } finally {
       setBusy(null);
     }
@@ -142,36 +181,6 @@ export const VoteBar: FC<Props> = ({
           <InsufficientStake isOpen={isInsufficientStake} onClose={() => setIsInsufficientStake(false)} />
         )}
       </Portal>
-      {pendingTransactionId && (
-        <TransactionStatus
-          transactionId={pendingTransactionId}
-          loadingMessages={[
-            { message: "Casting your verdict...", duration: 2000 },
-            { message: "Confirming on blockchain...", duration: 3000 },
-            { message: "Almost done...", duration: 2000 },
-          ]}
-          successMessage="Verdict confirmed!"
-          onResolved={(success, transactionHash) => {
-            setPendingTransactionId(null);
-            if (success) {
-              void (async () => {
-                try {
-                  if (transactionHash) {
-                    await refreshFeed({ chainId, transactionHash });
-                  }
-                } catch (error) {
-                  console.warn("Could not refresh indexed votes after verdict", error);
-                }
-                if (sessionData?.user?.address) {
-                  await utils.hotdog.getUserVotes.invalidate({ voter: sessionData.user.address });
-                }
-                await utils.hotdog.getJudges.invalidate();
-                void onAttestationMade?.();
-              })();
-            }
-          }}
-        />
-      )}
 
       <div className="flex gap-3">
         <motion.button

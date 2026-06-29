@@ -1169,6 +1169,42 @@ export const hotdogRouter = createTRPCRouter({
         throw error;
       }
     }),
+  // Client-side voting reads the user's stake eligibility + the required
+  // stake amount, then calls `attestToLog` directly from the user's wallet
+  // (see VoteBar). thirdweb Engine is gone, so the old server-wallet
+  // `attestToLogOnBehalf` enqueue path is dead; this read replaces the
+  // pre-flight checks the `judge` mutation used to do server-side.
+  getAttestationStakeInfo: publicProcedure
+    .input(z.object({
+      chainId: z.number(),
+      user: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const { chainId, user } = input;
+
+      const attestationContract = getContract({
+        address: ATTESTATION_MANAGER[chainId]!,
+        client,
+        chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+      });
+
+      const minimumStake = await MINIMUM_ATTESTATION_STAKE({ contract: attestationContract });
+
+      const canParticipate = await canParticipateInAttestation({
+        contract: getContract({
+          address: STAKING[chainId]!,
+          client,
+          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
+        }),
+        user,
+        requiredStake: minimumStake,
+      });
+
+      return {
+        minimumStake: minimumStake.toString(),
+        canParticipate,
+      };
+    }),
   rewardModerators: protectedProcedure
     .input(z.object({
       chainId: z.number(),
