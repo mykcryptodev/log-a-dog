@@ -112,6 +112,18 @@ export const VoteBar: FC<Props> = ({
     }
   };
 
+  // Bust every read that feeds the voted/locked state. getById (dog page) is
+  // Redis-cached per-user and would otherwise serve a stale `userAttested`,
+  // leaving the buttons unlocked and re-votes reverting on-chain.
+  const invalidateVoteState = async () => {
+    const voter = sessionData?.user?.address;
+    await Promise.all([
+      voter ? utils.hotdog.getUserVotes.invalidate({ voter }) : Promise.resolve(),
+      utils.hotdog.getJudges.invalidate(),
+      utils.hotdog.getById.invalidate({ logId }),
+    ]);
+  };
+
   const vote = async (isValid: boolean) => {
     if ((disabled ?? false) || isExpired) return;
     if (!sessionData?.user?.address || !wallet) {
@@ -137,15 +149,25 @@ export const VoteBar: FC<Props> = ({
       try {
         await refreshFeed({ chainId });
       } catch (error) {
+        // The CDP-backed indexer can be down (e.g. 401); the vote is already
+        // on-chain, so don't surface this to the user — the on-chain reads
+        // below still reflect the verdict.
         console.warn("Could not refresh indexed votes after verdict", error);
       }
-      await utils.hotdog.getUserVotes.invalidate({ voter: sessionData.user.address });
-      await utils.hotdog.getJudges.invalidate();
+      await invalidateVoteState();
       void onAttestationMade?.();
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // The contract reverts if you've already attested to this log. That means
+      // our local state was stale (e.g. a cached getById), not a real failure —
+      // keep the optimistic "voted" state, lock the buttons, and refresh truth.
+      if (/already attested/i.test(message)) {
+        await invalidateVoteState();
+        void onAttestationMade?.();
+        return;
+      }
       setOptimisticUserAttested(userAttested);
       setOptimisticUserAttestation(userAttestation);
-      const message = error instanceof Error ? error.message : String(error);
       if (message.includes("Insufficient stake")) {
         setIsInsufficientStake(true);
       } else {

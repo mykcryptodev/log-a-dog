@@ -722,14 +722,23 @@ export const hotdogRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { chainId, user, logId } = input;
 
+      // Per-user attestation state (userAttested/userAttestation) must always be
+      // live: caching it meant the dog page kept showing "not voted" after a
+      // vote, so the buttons never locked and re-votes reverted on-chain with
+      // "Already attested". Only serve the cache for anonymous reads, where the
+      // user-specific fields are false anyway. (The feed's getAll is likewise
+      // uncached for this reason.)
       const cacheKey = `hotdog:${chainId}:${logId}:${user}`;
-      const cachedData = await getCachedData<{
-        hotdog: ProcessedHotdog;
-        validAttestations: string;
-        invalidAttestations: string;
-        userAttested: boolean;
-        userAttestation: boolean;
-      }>(cacheKey);
+      const canUseCache = isZeroAddress(user);
+      const cachedData = canUseCache
+        ? await getCachedData<{
+            hotdog: ProcessedHotdog;
+            validAttestations: string;
+            invalidAttestations: string;
+            userAttested: boolean;
+            userAttestation: boolean;
+          }>(cacheKey)
+        : null;
       if (cachedData) {
         return cachedData;
       }
@@ -839,7 +848,9 @@ export const hotdogRouter = createTRPCRouter({
         userAttestation: processedResponse.userAttestations[0],
       };
 
-      await setCachedData(cacheKey, response);
+      if (canUseCache) {
+        await setCachedData(cacheKey, response);
+      }
 
       return response;
     }),

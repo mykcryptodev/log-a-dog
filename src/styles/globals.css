@@ -141,12 +141,70 @@
     transform: rotateY(180deg);
   }
 
+  /* Sticker-brutalist toasts: opaque surface, thick ink outline, hard offset
+     shadow, display font, and a chunky left accent bar coloured per type. */
+  .pop-toast {
+    --ink: #1e1a17;
+    --toast-accent: var(--ink);
+    position: relative;
+    min-height: 0;
+    margin-bottom: 0.75rem;
+    padding: 0.85rem 1rem 0.85rem 1.15rem;
+    border-radius: 0.9rem;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 0 var(--ink);
+    background: oklch(var(--b1));
+    color: var(--ink);
+    overflow: hidden;
+  }
+  .pop-toast::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: var(--toast-accent);
+  }
+  .pop-toast .Toastify__toast-body {
+    font-family: "Segment", system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 0;
+    margin: 0;
+    color: var(--ink);
+  }
+  .pop-toast .Toastify__close-button {
+    color: var(--ink);
+    opacity: 0.65;
+    align-self: center;
+  }
+  .pop-toast .Toastify__close-button:hover {
+    opacity: 1;
+  }
+  .pop-toast--success {
+    --toast-accent: oklch(var(--a));
+  }
+  .pop-toast--error {
+    --toast-accent: oklch(var(--er));
+  }
+  .pop-toast--info {
+    --toast-accent: oklch(var(--in));
+  }
+  .pop-toast--warning {
+    --toast-accent: oklch(var(--wa));
+  }
+
   @media (prefers-color-scheme: dark) {
     .pop-card,
     .pop-frame,
     .sticker,
-    .pop-btn {
+    .pop-btn,
+    .pop-toast {
       --ink: #fff1e6;
+    }
+    .pop-toast {
+      background: #2a2320;
     }
   }
 }
