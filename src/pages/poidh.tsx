@@ -35,7 +35,7 @@ const STEPS = [
     icon: ShareIcon,
   },
   {
-    emoji: "🐸",
+    emoji: "🕹️",
     title: "Submit your claim on POIDH",
     body: "Paste your social post link as a bounty claim at poidh.xyz. That's your entry.",
     icon: null,
@@ -68,7 +68,7 @@ const PoidhPage: NextPage = () => {
           {/* Hero */}
           <div className="text-center">
             <div className="mb-2 flex items-center justify-center gap-3 font-display text-5xl">
-              🌭 <span className="text-base-content/40">×</span> 🐸
+              🌭 <span className="text-base-content/40">×</span> 🕹️
             </div>
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
               POIDH <span className="text-secondary">CAMPAIGN</span>
@@ -95,7 +95,7 @@ const PoidhPage: NextPage = () => {
 
           {/* What is POIDH */}
           <div className="pop-card rounded-3xl bg-base-100 p-5">
-            <h2 className="mb-3 font-display text-2xl font-bold tracking-tight">🐸 WHAT IS POIDH?</h2>
+            <h2 className="mb-3 font-display text-2xl font-bold tracking-tight">🕹️ WHAT IS POIDH?</h2>
             <p className="text-sm text-base-content/80 leading-relaxed">
               <strong>POIDH</strong> stands for <strong>&quot;Pics or it didn&apos;t happen&quot;</strong> — a
               decentralized bounty protocol where community voting validates photo proof claims
@@ -166,7 +166,7 @@ const PoidhPage: NextPage = () => {
               </div>
               <div className="rounded-2xl bg-base-200 p-4">
                 <div className="mb-1 flex items-center gap-2">
-                  <span className="text-2xl">🐸</span>
+                  <span className="text-2xl">🕹️</span>
                   <h3 className="font-display font-bold tracking-wide">POIDH</h3>
                 </div>
                 <p className="text-sm text-base-content/70">
@@ -212,7 +212,7 @@ const PoidhPage: NextPage = () => {
               className="pop-btn flex items-center justify-center gap-2 rounded-2xl border-[3px] border-base-content bg-base-100 px-5 py-4 font-display tracking-wide"
             >
               <CurrencyDollarIcon className="h-5 w-5" />
-              SUBMIT CLAIM ON POIDH 🐸
+              SUBMIT CLAIM ON POIDH 🕹️
             </a>
           </div>
 
