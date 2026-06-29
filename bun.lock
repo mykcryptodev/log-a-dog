@@ -26,7 +26,8 @@
         "@upstash/redis": "^1.38.0",
         "@vercel/og": "^0.6.8",
         "@wagmi/core": "^2.22.1",
-        "@zoralabs/coins-sdk": "0.2.8",
+        "@zoralabs/coins-sdk": "0.7.1",
+        "@zoralabs/protocol-deployments": "0.7.6",
         "cross-fetch": "^4.1.0",
         "csv-parser": "^3.2.1",
         "dotenv": "^16.6.1",
@@ -71,7 +72,7 @@
     },
   },
   "overrides": {
-    "@zoralabs/protocol-deployments": "0.6.1",
+    "@zoralabs/protocol-deployments": "0.7.6",
   },
   "packages": {
     "@adraffy/ens-normalize": ["@adraffy/ens-normalize@1.10.1", "", {}, ""],
@@ -812,9 +813,9 @@
 
     "@yr/monotone-cubic-spline": ["@yr/monotone-cubic-spline@1.0.3", "", {}, ""],
 
-    "@zoralabs/coins-sdk": ["@zoralabs/coins-sdk@0.2.8", "", { "dependencies": { "@hey-api/client-fetch": "^0.8.3", "@zoralabs/protocol-deployments": "^0.6.1" }, "peerDependencies": { "abitype": "^1.0.8", "viem": "^2.21.55" } }, "sha512-vni9qcdS6/9HUOue7SDir2wHn+SSSDmxfZhBcCzQWdK9NaW/+E5jCWXuQGFgBzKpLc4FN5ktJz36v92BADQE3g=="],
+    "@zoralabs/coins-sdk": ["@zoralabs/coins-sdk@0.7.1", "", { "dependencies": { "@hey-api/client-fetch": "^0.8.3", "@zoralabs/protocol-deployments": "^0.7.6" }, "peerDependencies": { "abitype": "^1.0.8", "viem": "2.53.1" } }, "sha512-hkVsulBFh4yxFxq7jOGQKp5Y6TbZxHmcU4jYpW1S50HLhe0RbVicNFLCKBdRyh9ssX0TbGbHRbXf02CsCfezsQ=="],
 
-    "@zoralabs/protocol-deployments": ["@zoralabs/protocol-deployments@0.6.1", "", {}, "sha512-iDO5EhLrqDw0keudRq9omuSdvHG852de5/apY2p7QLBDxitQuJ/6/jOaq2WB4B6GPVUh2fTd5+CdoSsbJhJv5g=="],
+    "@zoralabs/protocol-deployments": ["@zoralabs/protocol-deployments@0.7.6", "", {}, "sha512-E8hkSFkpqxttSoH+GQJbcTvjnVQGL+Nlo2WXA3YSkEvzB7Xfv6JOaUxsVZ5ahj0HWD2dwTSw3AucXciIPnTWQQ=="],
 
     "abitype": ["abitype@1.2.3", "", { "peerDependencies": { "typescript": ">=5.0.4", "zod": "^3.22.0 || ^4.0.0" }, "optionalPeers": ["typescript", "zod"] }, "sha512-Ofer5QUnuUdTFsBRwARMoWKOH1ND5ehwYhJ3OJ/BQO+StkwQjHw0XyVh4vDttzHB7QOFhPHa/o413PJ82gU/Tg=="],
 

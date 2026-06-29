@@ -8,9 +8,11 @@ import { api } from "~/utils/api";
 import { getProxiedUrl } from "~/utils/imageProxy";
 import HotdogCard from "~/components/utils/HotdogCard";
 import { ATTESTATION_WINDOW_SECONDS, DEFAULT_CHAIN } from "~/constants";
+import { useVoterAddress } from "~/hooks/useVoterAddress";
 
 const JudgesPage: NextPage = () => {
   const isClient = typeof window !== "undefined";
+  const voterAddress = useVoterAddress();
 
   const {
     data: dogData,
@@ -18,7 +20,7 @@ const JudgesPage: NextPage = () => {
     isError: dogsErrored,
     refetch,
   } = api.hotdog.getAll.useQuery(
-    { chainId: DEFAULT_CHAIN.id, user: ZERO_ADDRESS, start: 0, limit: 50 },
+    { chainId: DEFAULT_CHAIN.id, user: ZERO_ADDRESS, voter: voterAddress ?? ZERO_ADDRESS, start: 0, limit: 50 },
     { enabled: isClient, refetchOnWindowFocus: false, retry: 1 },
   );
 

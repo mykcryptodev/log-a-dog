@@ -358,12 +358,15 @@ export const hotdogRouter = createTRPCRouter({
     .input(z.object({ 
       chainId: z.number(),
       user: z.string(),
+      /** Optional voter address for per-user attestation state without filtering the feed. */
+      voter: z.string().optional(),
       start: z.number().optional(),
       cursor: z.number().optional(),
       limit: z.number(),
     }))
     .query(async ({ input }) => {
       const { chainId, user, limit } = input;
+      const voter = input.voter ?? user;
       const start = input.cursor ?? input.start ?? 0;
       console.log('GET ALL')
       // Generate cache key for this query
@@ -424,7 +427,7 @@ export const hotdogRouter = createTRPCRouter({
             chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
           }),
         }),
-        isZeroAddress(user)
+        isZeroAddress(voter)
           ? Promise.resolve([[], []] as [bigint[], boolean[]])
           : getUserAttestationsWithChoices({
               contract: getContract({
@@ -432,7 +435,7 @@ export const hotdogRouter = createTRPCRouter({
                 client,
                 chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
               }),
-              user,
+              user: voter,
             })
       ]);
 

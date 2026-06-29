@@ -8,6 +8,7 @@ import { InsufficientStake } from "../Stake/InsufficientStake";
 import { Portal } from "../utils/Portal";
 import { TransactionStatus } from "../utils/TransactionStatus";
 import { useGhostVote } from "~/hooks/useGhostVote";
+import { useVoterAddress } from "~/hooks/useVoterAddress";
 
 type Props = {
   disabled?: boolean;
@@ -33,6 +34,7 @@ export const JudgeAttestation: FC<Props> = ({
   onAttestationAffirmationRevoked,
 }) => {
   const { data: sessionData } = useSession();
+  const voterAddress = useVoterAddress();
   const utils = api.useUtils();
   const { mutateAsync: refreshFeed } = api.indexer.refreshFeed.useMutation();
   const [isLoadingValidAttestation, setIsLoadingValidAttestation] = useState<boolean>(false);
@@ -44,7 +46,7 @@ export const JudgeAttestation: FC<Props> = ({
   const [isInsufficientStake, setIsInsufficientStake] = useState<boolean>(false);
   const [pendingTransactionId, setPendingTransactionId] = useState<string | null>(null);
 
-  const ghostVote = useGhostVote(logId, sessionData?.user?.address);
+  const ghostVote = useGhostVote(logId, voterAddress);
 
   // ghostVote is null (no vote), true (voted valid), or false (voted sus).
   // ?? cannot be used here: `false ?? x` returns `x`, masking a SUS vote.
@@ -172,8 +174,8 @@ export const JudgeAttestation: FC<Props> = ({
                 } catch (error) {
                   console.warn("Could not refresh indexed votes after attestation", error);
                 }
-                if (sessionData?.user?.address) {
-                  await utils.hotdog.getUserVotes.invalidate({ voter: sessionData.user.address });
+                if (voterAddress) {
+                  await utils.hotdog.getUserVotes.invalidate({ voter: voterAddress });
                 }
                 await utils.hotdog.getJudges.invalidate();
                 void onAttestationMade?.();

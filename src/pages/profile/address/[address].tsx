@@ -9,6 +9,7 @@ import { useActiveAccount, ConnectButton } from "thirdweb/react";
 import { useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import HotdogCard from "~/components/utils/HotdogCard";
+import { useVoterAddress } from "~/hooks/useVoterAddress";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -26,6 +27,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const acccount = useActiveAccount();
   const { data: sessionData } = useSession();
+  const voterAddress = useVoterAddress();
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
     address,
     chainId: DEFAULT_CHAIN.id,
@@ -58,6 +60,11 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
       refetchOnMount: false,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     });
+
+  const { data: userVotes } = api.hotdog.getUserVotes.useQuery(
+    { voter: voterAddress ?? "" },
+    { enabled: !!voterAddress, refetchOnWindowFocus: false },
+  );
 
   // Check if this is the user's own profile
   const isOwnProfile = useMemo(() => {
@@ -141,21 +148,26 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
     return (
       <>
         <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-          {loadedHotdogs.map(({ hotdog, validAttestations, invalidAttestations }, index) => (
+          {loadedHotdogs.map(({ hotdog, validAttestations, invalidAttestations }, index) => {
+            const vote = userVotes?.[hotdog.logId];
+            const userAttested = vote !== undefined;
+            const userAttestation = vote ?? false;
+
+            return (
             <HotdogCard
               key={`${hotdog.logId}-${index}`}
               hotdog={hotdog}
               validAttestations={validAttestations?.toString() ?? "0"}
               invalidAttestations={invalidAttestations?.toString() ?? "0"}
-              userAttested={false}
-              userAttestation={false}
+              userAttested={userAttested}
+              userAttestation={userAttestation}
               chainId={DEFAULT_CHAIN.id}
               onRefetch={handleRefetchDogData}
               linkToDetail={true}
               showAiJudgement={false}
               disabled={false}
             />
-          ))}
+          )})}
         </div>
 
         <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center">
