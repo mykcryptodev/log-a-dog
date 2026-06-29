@@ -28,12 +28,24 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
   const activeWallet = useActiveWallet();
   const sessionDataRef = useRef<typeof sessionData>(null);
   const statusRef = useRef<typeof status>("loading");
+  const signInInFlightRef = useRef(false);
 
   // Update refs when session data changes
   useEffect(() => {
     sessionDataRef.current = sessionData;
     statusRef.current = status;
   }, [sessionData, status]);
+
+  const hasMatchingSession = useCallback(() => {
+    const sessionAddress = sessionDataRef.current?.user?.address?.toLowerCase();
+    const accountAddress = account?.address?.toLowerCase();
+    return Boolean(
+      sessionDataRef.current?.user?.id &&
+        sessionAddress &&
+        accountAddress &&
+        sessionAddress === accountAddress,
+    );
+  }, [account?.address]);
 
   const cryptoWallets = [
     createWallet("io.metamask"),
@@ -78,7 +90,8 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
       // Check session state using refs to avoid dependency issues
       if (
         (sessionDataRef.current?.user?.id ?? false) ||
-        statusRef.current === "loading"
+        statusRef.current === "loading" ||
+        signInInFlightRef.current
       ) {
         return;
       }
@@ -99,6 +112,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
       if (skipIds.some(id => wallet.id.startsWith(id))) {
         return;
       }
+      signInInFlightRef.current = true;
       try {
         const walletAddress = wallet.getAccount()!.address;
         const payload = await createPayload({ address: walletAddress });
@@ -114,6 +128,8 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
         });
       } catch (error) {
         console.error("Error signing in with wallet:", error);
+      } finally {
+        signInInFlightRef.current = false;
       }
     },
     [createPayload, message],
@@ -122,10 +138,11 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
   // Auto-sign-in via next-auth when a wallet is already connected but no
   // next-auth session exists yet (e.g. Farcaster mini-app auto-connect).
   useEffect(() => {
-    if (account && activeWallet && !sessionData?.user?.id && status !== "loading") {
-      void silentlySignIn(activeWallet);
+    if (!account || !activeWallet || status === "loading" || hasMatchingSession()) {
+      return;
     }
-  }, [account, activeWallet, sessionData?.user?.id, status, silentlySignIn]);
+    void silentlySignIn(activeWallet);
+  }, [account, activeWallet, sessionData?.user?.id, sessionData?.user?.address, status, silentlySignIn, hasMatchingSession]);
 
   // Prevent hydration mismatch by not rendering ConnectButton until mounted
   if (!mounted) {

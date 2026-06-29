@@ -15,9 +15,6 @@ import type {
   FrameNotificationDetails,
 } from "@farcaster/frame-sdk";
 import { useConnect } from "thirdweb/react";
-import { type Wallet } from "thirdweb/wallets";
-import { signMessage } from "thirdweb/utils";
-import { signIn, getCsrfToken, useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import { toast } from "react-toastify";
 import { getFarcasterSdk } from "~/utils/farcasterSdk";
@@ -64,12 +61,10 @@ export const FarcasterProvider = ({
   const [isMiniApp, setIsMiniApp] = useState(false);
   const [hasConnectedWallet, setHasConnectedWallet] = useState(false);
   const { connect } = useConnect();
-  const { data: sessionData } = useSession();
 
   const connectWallet = useCallback(async () => {
     try {
       const sdk = await getFarcasterSdk();
-      let connectedWallet: Wallet | null = null;
       await connect(async () => {
         // create a wallet instance from the Warpcast provider
         const wallet = EIP1193.fromProvider({
@@ -78,35 +73,18 @@ export const FarcasterProvider = ({
 
         // trigger the connection
         await wallet.connect({ client, chain: DEFAULT_CHAIN });
-        connectedWallet = wallet;
 
         // return the wallet to the app context
         return wallet;
       });
 
-      // Establish a next-auth session immediately after wallet connects.
-      // ConnectButton's onConnect fires only for UI-driven connects — this
-      // auto-connect bypasses it, so we do the SIWE flow here instead.
-      if (connectedWallet && !sessionData?.user?.id) {
-        const account = (connectedWallet as Wallet).getAccount();
-        if (account) {
-          const nonce = await getCsrfToken();
-          if (nonce) {
-            const message = "Sign into Log a Dog";
-            const signature = await signMessage({ message, account });
-            await signIn("ethereum", {
-              message,
-              signature,
-              address: account.address,
-              redirect: false,
-            });
-          }
-        }
-      }
+      // Session sign-in is handled by Connect.tsx once NextAuth has finished
+      // loading the existing session cookie — signing here raced ahead of that
+      // check and prompted for a new signature on every mini-app open.
     } catch (err) {
       console.error("Failed to connect wallet", err);
     }
-  }, [connect, sessionData?.user?.id]);
+  }, [connect]);
 
   const viewProfile = useCallback(async (fid: number) => {
     try {
