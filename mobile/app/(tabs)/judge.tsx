@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { trpc } from "~/utils/trpc";
 import { CHAIN_ID, ZERO_ADDRESS } from "~/constants";
+import { useAuth } from "~/providers/AuthProvider";
 import { VoteBar } from "~/components/VoteBar";
 import { VerdictStamp } from "~/components/VerdictStamp";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
@@ -21,26 +22,45 @@ const PAGE_SIZE = 20;
 export default function JudgeScreen() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const { width } = useWindowDimensions();
+  const { session } = useAuth();
+  const voterAddress = session?.address;
 
   const query = trpc.hotdog.getAll.useQuery(
     {
       chainId: CHAIN_ID,
       user: ZERO_ADDRESS,
+      voter: voterAddress ?? ZERO_ADDRESS,
       start: 0,
       limit: PAGE_SIZE,
     },
     { staleTime: 60_000 },
   );
 
-  const pending = ((query.data?.hotdogs ?? []) as ProcessedHotdog[]).filter(
-    (h) =>
-      h.attestationPeriod &&
-      h.attestationPeriod.status === 0 &&
-      isInAttestationWindow(
-        h.attestationPeriod.startTime,
-        h.attestationPeriod.endTime,
-      ),
+  const { data: userVotes } = trpc.hotdog.getUserVotes.useQuery(
+    { voter: voterAddress ?? "" },
+    { enabled: !!voterAddress, staleTime: 60_000 },
   );
+
+  const pending = useMemo(() => {
+    const hotdogs = (query.data?.hotdogs ?? []) as ProcessedHotdog[];
+    const userAttested = query.data?.userAttested ?? [];
+    return hotdogs
+      .map((h, i) => ({ h, i }))
+      .filter(({ h, i }) => {
+        const inWindow =
+          h.attestationPeriod &&
+          h.attestationPeriod.status === 0 &&
+          isInAttestationWindow(
+            h.attestationPeriod.startTime,
+            h.attestationPeriod.endTime,
+          );
+        const alreadyVoted =
+          voterAddress &&
+          ((userAttested[i] ?? false) || userVotes?.[h.logId] !== undefined);
+        return inWindow && !alreadyVoted;
+      })
+      .map(({ h }) => h);
+  }, [query.data?.hotdogs, query.data?.userAttested, userVotes, voterAddress]);
 
   const validCounts = query.data?.validAttestations ?? [];
   const invalidCounts = query.data?.invalidAttestations ?? [];

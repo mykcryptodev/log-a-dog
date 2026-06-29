@@ -34,17 +34,25 @@ const JudgesPage: NextPage = () => {
     retry: 1,
   });
 
-  // Dogs still inside their 48h voting window and not yet resolved.
+  const { data: userVotes } = api.hotdog.getUserVotes.useQuery(
+    { voter: voterAddress ?? "" },
+    { enabled: !!voterAddress, refetchOnWindowFocus: false, retry: 1 },
+  );
+
+  // Dogs still inside their 48h voting window, not yet resolved, and awaiting this user's vote.
   const queue = useMemo(() => {
     const hotdogs = dogData?.hotdogs ?? [];
     return hotdogs
       .map((h, i) => ({ h, i }))
-      .filter(({ h }) => {
+      .filter(({ h, i }) => {
         const open = Number(h.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 > Date.now();
         const unresolved = h.attestationPeriod?.status !== 1;
-        return open && unresolved;
+        const alreadyVoted =
+          voterAddress &&
+          ((dogData?.userAttested?.[i] ?? false) || userVotes?.[h.logId] !== undefined);
+        return open && unresolved && !alreadyVoted;
       });
-  }, [dogData?.hotdogs]);
+  }, [dogData?.hotdogs, dogData?.userAttested, userVotes, voterAddress]);
 
   const [cursor, setCursor] = useState(0);
   const current = queue[Math.min(cursor, queue.length - 1)];
