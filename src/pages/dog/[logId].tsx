@@ -1,6 +1,7 @@
 import { type GetServerSideProps, type NextPage } from 'next';
 import dynamic from 'next/dynamic';
-import Head from "next/head";
+import { MiniAppMeta } from "~/components/MiniAppMeta";
+import { buildMiniAppEmbedMetadata } from "~/constants/miniapp";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { logId } = context.params as { logId: string };
@@ -10,26 +11,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 const DogPageComponent = dynamic(() => import('./DogPageComponent'), { ssr: false });
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
-  const miniAppMetadata = {
-    version: "next",
-    imageUrl: `https://logadog.xyz/api/og/${logId}`,
-    button: {
-      title: "🌭 Log a Dog",
-      action: {
-        type: "launch_frame",
-        name: "Log a Dog",
-        url: `https://logadog.xyz/dog/${logId}`,
-        splashImageUrl: "https://logadog.xyz/images/logo.png",
-        splashBackgroundColor: "#faf8f7",
-      },
-    },
-  };
+  const miniAppMetadata = buildMiniAppEmbedMetadata({
+    imageUrl: `https://www.logadog.xyz/api/og/${logId}`,
+    launchUrl: `https://www.logadog.xyz/dog/${logId}`,
+  });
 
   return (
     <>
-      <Head>
-        <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
-      </Head>
+      <MiniAppMeta metadata={miniAppMetadata} />
       <DogPageComponent logId={logId} />
     </>
   );

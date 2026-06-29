@@ -1,5 +1,4 @@
 import { type NextPage } from "next";
-import Head from "next/head";
 import { useActiveAccount } from "thirdweb/react";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
@@ -9,21 +8,6 @@ import { DEFAULT_CHAIN } from "~/constants";
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   const account = useActiveAccount();
 
-  const miniAppMetadata = {
-    version: "next",
-    imageUrl: `https://logadog.xyz/api/og/${logId}`,
-    button: {
-      title: "🌭 Log a Dog",
-      action: {
-        type: "launch_frame",
-        name: "Log a Dog",
-        url: `https://logadog.xyz/dog/${logId}`,
-        splashImageUrl: "https://logadog.xyz/images/logo.png",
-        splashBackgroundColor: "#faf8f7",
-      },
-    },
-  };
-
   const { data, isLoading, refetch } = api.hotdog.getById.useQuery({
     chainId: DEFAULT_CHAIN.id,
     user: account?.address ?? ZERO_ADDRESS,
@@ -32,25 +16,16 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
 
   if (isLoading || !data) {
     return (
-      <>
-        <Head>
-          <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
-        </Head>
-        <main className="flex flex-col items-center justify-center">
+      <main className="flex flex-col items-center justify-center">
           <div className="pop-card w-64 h-64 bg-base-300 animate-pulse rounded-2xl" />
-        </main>
-      </>
+      </main>
     );
   }
 
   const { hotdog, validAttestations, invalidAttestations, userAttested, userAttestation } = data;
 
   return (
-    <>
-      <Head>
-        <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
-      </Head>
-      <main className="flex flex-col items-center px-4 py-8">
+    <main className="flex flex-col items-center px-4 py-8">
         <div className="w-full max-w-xl">
           <HotdogCard
             hotdog={hotdog}
@@ -66,7 +41,6 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
           />
         </div>
       </main>
-    </>
   );
 };
 

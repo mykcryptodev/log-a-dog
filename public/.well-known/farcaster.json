@@ -5,7 +5,7 @@
       "version": "1",
       "iconUrl": "https://logadog.xyz/images/logo.png",
       "homeUrl": "https://logadog.xyz",
-      "imageUrl": "https://logadog.xyz/images/logo.png",
+      "imageUrl": "https://www.logadog.xyz/api/og/home",
       "buttonTitle": "Log a Dog",
       "splashImageUrl": "https://www.logadog.xyz/images/logo.png",
       "splashBackgroundColor": "#faf8f7",

@@ -1,20 +1,15 @@
 import Head from "next/head";
 import { ListAttestations } from "~/components/Attestation/List";
+import { MiniAppMeta } from "~/components/MiniAppMeta";
+import {
+  buildMiniAppEmbedMetadata,
+  MINIAPP_HOME_IMAGE_URL,
+} from "~/constants/miniapp";
 
-const miniAppMetadata = {
-  version: "next",
-  imageUrl: "https://logadog.xyz/images/og-image.png",
-  button: {
-    title: "🌭 Log a Dog",
-    action: {
-      type: "launch_frame",
-      name: "Log a Dog",
-      url: `https://logadog.xyz`,
-      splashImageUrl: "https://logadog.xyz/images/logo.png",
-      splashBackgroundColor: "#faf8f7",
-    },
-  },
-};
+const miniAppMetadata = buildMiniAppEmbedMetadata({
+  imageUrl: MINIAPP_HOME_IMAGE_URL,
+  launchUrl: "https://www.logadog.xyz",
+});
 
 // This generates the page at build time with ISR (recommended for better performance)
 export const getStaticProps = async () => {
@@ -28,13 +23,13 @@ export const getStaticProps = async () => {
 export default function Home() {
   return (
     <>
+      <MiniAppMeta metadata={miniAppMetadata} />
       <Head>
         <title>Log a Dog — the internet&apos;s summer hotdog-eating sport</title>
         <meta
           name="description"
           content="The internet's summer hotdog-eating sport. Log a dog, get judged, climb the board."
         />
-        <meta name="fc:frame" content={JSON.stringify(miniAppMetadata)} />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       {/* Feed-first: the first paint is a dog, not a press release. */}
