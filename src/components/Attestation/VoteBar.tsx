@@ -158,7 +158,10 @@ export const VoteBar: FC<Props> = ({
 
   const votedValid = effectiveUserAttested && effectiveUserAttestation === true;
   const votedSus = effectiveUserAttested && effectiveUserAttestation === false;
-  const locked = (disabled ?? false) || busy !== null;
+  const hasVoted = votedValid || votedSus;
+  // Attestations are final on-chain (the contract has no revoke/update and
+  // reverts on a second attest), so once you've voted the buttons lock.
+  const locked = (disabled ?? false) || busy !== null || hasVoted;
 
   // Once voting closes there's nothing to act on here — the tally lives on the
   // flipped card back. Still surface how *you* voted, if you did.
@@ -174,6 +177,19 @@ export const VoteBar: FC<Props> = ({
     ) : null;
   }
 
+  // After voting, the un-chosen side dims and goes flat so it's obvious the
+  // verdict is locked; the chosen side stays solid with a clear ✓ marker.
+  const validBtnClass = hasVoted
+    ? votedValid
+      ? "bg-accent ring-2 ring-accent ring-offset-1 ring-offset-base-100"
+      : "bg-accent/20 text-accent-content/40 grayscale"
+    : "bg-accent/85";
+  const susBtnClass = hasVoted
+    ? votedSus
+      ? "bg-error ring-2 ring-error ring-offset-1 ring-offset-base-100"
+      : "bg-error/20 text-white/40 grayscale"
+    : "bg-error/85";
+
   return (
     <div className="w-full">
       <Portal>
@@ -182,13 +198,19 @@ export const VoteBar: FC<Props> = ({
         )}
       </Portal>
 
+      {hasVoted && (
+        <div className="mb-2 flex items-center justify-center gap-1.5 rounded-lg bg-base-200/70 py-1 font-display text-xs tracking-wide opacity-80">
+          ✓ you voted {votedValid ? "VALID DOG" : "SUS"} — verdict locked
+        </div>
+      )}
+
       <div className="flex gap-3">
         <motion.button
-          whileTap={{ scale: 0.95 }}
+          whileTap={locked ? undefined : { scale: 0.95 }}
           disabled={locked}
           onClick={() => void vote(true)}
-          className={`pop-btn relative flex-1 overflow-hidden rounded-xl py-3 font-display text-sm tracking-wide text-accent-content ${
-            votedValid ? "bg-accent" : "bg-accent/85"
+          className={`pop-btn relative flex-1 overflow-hidden rounded-xl py-3 font-display text-sm tracking-wide text-accent-content ${validBtnClass} ${
+            locked ? "cursor-default" : ""
           }`}
         >
           <AnimatePresence>
@@ -205,11 +227,11 @@ export const VoteBar: FC<Props> = ({
           <span className="relative">{votedValid ? "✓ " : ""}🥬 VALID DOG</span>
         </motion.button>
         <motion.button
-          whileTap={{ scale: 0.95 }}
+          whileTap={locked ? undefined : { scale: 0.95 }}
           disabled={locked}
           onClick={() => void vote(false)}
-          className={`pop-btn relative flex-1 overflow-hidden rounded-xl py-3 font-display text-sm tracking-wide text-white ${
-            votedSus ? "bg-error" : "bg-error/85"
+          className={`pop-btn relative flex-1 overflow-hidden rounded-xl py-3 font-display text-sm tracking-wide text-white ${susBtnClass} ${
+            locked ? "cursor-default" : ""
           }`}
         >
           <AnimatePresence>
