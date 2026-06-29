@@ -10,6 +10,7 @@ import {
 import { useSession, signIn, getCsrfToken, signOut } from "next-auth/react";
 import { env } from "~/env";
 import { signMessage } from "thirdweb/utils";
+import { createLoginMessage } from "~/helpers/createLoginMessage";
 import { DEFAULT_CHAIN } from "~/constants";
 import usePrefersDarkMode from "~/hooks/usePrefersDarkMode";
 import useMounted from "~/hooks/useMounted";
@@ -158,8 +159,11 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
           return false;
         },
         doLogin: async (params) => {
+          // Build the exact EIP-4361 string that the wallet signed so
+          // verifySignature on the server can verify it correctly.
+          const loginMessage = createLoginMessage(params.payload);
           await signIn("ethereum", {
-            message,
+            message: loginMessage,
             signature: params.signature,
             address: params.payload.address,
             redirect: false,
