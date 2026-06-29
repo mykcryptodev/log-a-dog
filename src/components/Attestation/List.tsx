@@ -7,6 +7,7 @@ import HotdogCard from "~/components/utils/HotdogCard";
 import { BackToTopButton } from "~/components/utils/BackToTopButton";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { DEFAULT_CHAIN } from "~/constants";
+import { useVoterAddress } from "~/hooks/useVoterAddress";
 
 // Types from hotdog router
 type AttestationPeriod = {
@@ -82,6 +83,7 @@ type Props = {
 export const ListAttestations: FC<Props> = ({ limit }) => {
   const limitOrDefault = limit ?? 4;
   const isClient = typeof window !== 'undefined';
+  const voterAddress = useVoterAddress();
   const { getPendingDogsForChain, clearExpiredPending, removePendingDog } = usePendingTransactionsStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -90,6 +92,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   const queryParams = {
     chainId: DEFAULT_CHAIN.id,
     user: ZERO_ADDRESS, // Always use zero address to get ALL hotdogs for the homepage feed
+    voter: voterAddress ?? ZERO_ADDRESS,
     limit: limitOrDefault,
   };
 

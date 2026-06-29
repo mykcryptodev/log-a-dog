@@ -1,7 +1,6 @@
-import { useState, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "react-toastify";
-import { useSession } from "next-auth/react";
 import { getContract, sendTransaction } from "thirdweb";
 import { useActiveWallet } from "thirdweb/react";
 import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
@@ -13,6 +12,7 @@ import { attestToLog } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72
 import { InsufficientStake } from "../Stake/InsufficientStake";
 import { Portal } from "../utils/Portal";
 import { useGhostVote } from "~/hooks/useGhostVote";
+import { useVoterAddress } from "~/hooks/useVoterAddress";
 
 type Props = {
   logId: string;
@@ -45,7 +45,7 @@ export const VoteBar: FC<Props> = ({
   userAttestation,
   onAttestationMade,
 }) => {
-  const { data: sessionData } = useSession();
+  const voterAddress = useVoterAddress();
   const wallet = useActiveWallet();
   const utils = api.useUtils();
   const { mutateAsync: refreshFeed } = api.indexer.refreshFeed.useMutation();
@@ -55,12 +55,25 @@ export const VoteBar: FC<Props> = ({
   const [busy, setBusy] = useState<null | "valid" | "invalid">(null);
   const [streak, setStreak] = useState<null | "valid" | "invalid">(null);
 
-  const ghostVote = useGhostVote(logId, sessionData?.user?.address);
+  const ghostVote = useGhostVote(logId, voterAddress);
   // ghostVote is null (no vote), true (voted valid), or false (voted sus).
   // ?? cannot be used here: `false ?? x` returns `x`, masking a SUS vote.
   const effectiveUserAttested = ghostVote !== null || (optimisticUserAttested ?? false);
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   const effectiveUserAttestation = ghostVote !== null ? ghostVote : (optimisticUserAttestation ?? false);
+
+  // Keep the locked/highlighted state in sync when server props or indexed votes load.
+  useEffect(() => {
+    if (ghostVote !== null) {
+      setOptimisticUserAttested(true);
+      setOptimisticUserAttestation(ghostVote);
+      return;
+    }
+    if (userAttested) {
+      setOptimisticUserAttested(true);
+      setOptimisticUserAttestation(userAttestation ?? false);
+    }
+  }, [ghostVote, userAttested, userAttestation]);
 
   // Submit the attestation from the user's own wallet. thirdweb Engine is gone,
   // so we mirror Revoke.tsx: build the user-callable `attestToLog`, then prefer
@@ -116,7 +129,7 @@ export const VoteBar: FC<Props> = ({
   // Redis-cached per-user and would otherwise serve a stale `userAttested`,
   // leaving the buttons unlocked and re-votes reverting on-chain.
   const invalidateVoteState = async () => {
-    const voter = sessionData?.user?.address;
+    const voter = voterAddress;
     await Promise.all([
       voter ? utils.hotdog.getUserVotes.invalidate({ voter }) : Promise.resolve(),
       utils.hotdog.getJudges.invalidate(),
@@ -126,7 +139,7 @@ export const VoteBar: FC<Props> = ({
 
   const vote = async (isValid: boolean) => {
     if ((disabled ?? false) || isExpired) return;
-    if (!sessionData?.user?.address || !wallet) {
+    if (!voterAddress || !wallet) {
       toast.error("You must login to judge dogs!");
       return;
     }
@@ -162,6 +175,8 @@ export const VoteBar: FC<Props> = ({
       // our local state was stale (e.g. a cached getById), not a real failure —
       // keep the optimistic "voted" state, lock the buttons, and refresh truth.
       if (/already attested/i.test(message)) {
+        setOptimisticUserAttested(true);
+        setOptimisticUserAttestation(isValid);
         await invalidateVoteState();
         void onAttestationMade?.();
         return;
