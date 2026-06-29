@@ -1,53 +1,45 @@
-import { createConfig, getPublicClient, http } from "@wagmi/core";
-import { type Address, isAddress, isAddressEqual, verifyMessage, zeroAddress } from 'viem';
-import type { Chain } from "wagmi/chains";
+import { type Address } from "viem";
+import { verifySignature as thirdwebVerifySignature } from "thirdweb/auth";
 
-import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from "~/constants";
-import { env } from "~/env";
+import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from "~/constants/chains";
+import { client } from "~/server/utils";
 
-const verifySignature = async(
+/**
+ * Verifies an Ethereum signature for SIWE login.
+ *
+ * Uses thirdweb's verifier, which handles:
+ *  - EOA signatures (ECDSA recover)
+ *  - ERC-1271 smart contract wallet signatures (deployed)
+ *  - ERC-6492 smart contract wallet signatures (undeployed / counterfactual)
+ *
+ * Critically, this reuses the singleton thirdweb `client` and its HTTP RPC
+ * instead of constructing a fresh `@wagmi/core` config + transport on every
+ * call. Farcaster wallets are smart-contract wallets, so every mini-app
+ * sign-in took the contract-verification path; the old per-call `createConfig`
+ * leaked file descriptors and eventually crashed the warm lambda with
+ * `EMFILE: too many open files`.
+ */
+const verifySignature = async (
   message: string,
   signature: string,
   address: Address,
   chainId: number = DEFAULT_CHAIN.id,
 ): Promise<boolean> => {
-  // First, try standard EOA signature verification
+  const chain =
+    SUPPORTED_CHAINS.find((c) => c.id === chainId) ?? DEFAULT_CHAIN;
+
   try {
-    return await verifyMessage({
+    return await thirdwebVerifySignature({
       message,
-      address,
       signature: signature as `0x${string}`,
+      address,
+      client,
+      chain,
     });
   } catch (error) {
-    console.warn("Not an EOA signature, trying EIP-1271...", error);
+    console.error("verifySignature failed:", error);
+    return false;
   }
-
-  // If EOA verification fails, try EIP-1271 verification
-  if (isAddress(address) && !isAddressEqual(address, zeroAddress)) {
-    try {
-      const chain = SUPPORTED_CHAINS.find(c => c.id === chainId);
-      if (!chain) {
-        throw new Error(`Chain ID ${chainId} not supported`);
-      }
-      const config = createConfig({ 
-        chains: [chain as unknown as Chain],
-        transports: { 
-          [chain.id]: http(`https://${chain.id}.rpc.thirdweb.com/${env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID}`),
-        }, 
-      });
-      const client = getPublicClient(config);
-      const isValid = await client?.verifyMessage({
-        address, 
-        message, 
-        signature: signature as `0x${string}`,
-      });
-      return isValid ?? false;
-    } catch (error) {
-      console.error("EIP-1271 verification failed:", error)
-    }
-  }
-
-  return false
-}
+};
 
 export default verifySignature;
