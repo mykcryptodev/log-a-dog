@@ -9,6 +9,8 @@ import {
   StarIcon,
 } from "@heroicons/react/24/outline";
 
+const POIDH_BOUNTY_URL = "https://poidh.xyz/base/bounty/1265";
+
 const STEPS = [
   {
     emoji: "🌭",
@@ -85,6 +87,14 @@ const PoidhPage: NextPage = () => {
                 <p className="font-display text-xs tracking-widest opacity-80">JULY 4 – 6, 2026</p>
                 <h2 className="font-display text-2xl font-bold tracking-tight">THREE DAYS. THREE WINNERS.</h2>
                 <p className="mt-1 text-sm opacity-80">One winner picked per day by the organizers.</p>
+                <a
+                  href={POIDH_BOUNTY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-sm font-semibold underline underline-offset-2 opacity-90 hover:opacity-100"
+                >
+                  View bounty on POIDH →
+                </a>
               </div>
               <div className="shrink-0 text-center">
                 <div className="font-display text-4xl font-bold">$50</div>
@@ -206,7 +216,7 @@ const PoidhPage: NextPage = () => {
               LOG YOUR DOG 🌭
             </Link>
             <a
-              href="https://poidh.xyz"
+              href={POIDH_BOUNTY_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="pop-btn flex items-center justify-center gap-2 rounded-2xl border-[3px] border-base-content bg-base-100 px-5 py-4 font-display tracking-wide"
