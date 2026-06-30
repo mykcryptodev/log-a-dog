@@ -1,6 +1,7 @@
 import { type NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
+import { useCallback, useContext } from "react";
 import {
   CameraIcon,
   ShareIcon,
@@ -8,6 +9,8 @@ import {
   CheckCircleIcon,
   StarIcon,
 } from "@heroicons/react/24/outline";
+import { FarcasterContext } from "~/providers/Farcaster";
+import { openMiniApp } from "~/utils/farcasterSdk";
 
 const POIDH_BOUNTY_URL = "https://poidh.xyz/base/bounty/1265";
 
@@ -52,6 +55,24 @@ const WINNING_CRITERIA = [
 ];
 
 const PoidhPage: NextPage = () => {
+  const farcaster = useContext(FarcasterContext);
+  const isMiniApp = farcaster?.isMiniApp ?? false;
+
+  const openPoidh = useCallback(
+    async (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!isMiniApp) return;
+
+      e.preventDefault();
+      try {
+        await openMiniApp(POIDH_BOUNTY_URL);
+      } catch (err) {
+        console.error("Failed to open POIDH mini app", err);
+        window.open(POIDH_BOUNTY_URL, "_blank");
+      }
+    },
+    [isMiniApp],
+  );
+
   return (
     <>
       <Head>
@@ -89,8 +110,9 @@ const PoidhPage: NextPage = () => {
                 <p className="mt-1 text-sm opacity-80">One winner picked per day by the organizers.</p>
                 <a
                   href={POIDH_BOUNTY_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target={isMiniApp ? undefined : "_blank"}
+                  rel={isMiniApp ? undefined : "noopener noreferrer"}
+                  onClick={openPoidh}
                   className="mt-2 inline-block text-sm font-semibold underline underline-offset-2 opacity-90 hover:opacity-100"
                 >
                   View bounty on POIDH →
@@ -217,8 +239,9 @@ const PoidhPage: NextPage = () => {
             </Link>
             <a
               href={POIDH_BOUNTY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              target={isMiniApp ? undefined : "_blank"}
+              rel={isMiniApp ? undefined : "noopener noreferrer"}
+              onClick={openPoidh}
               className="pop-btn flex items-center justify-center gap-2 rounded-2xl border-[3px] border-base-content bg-base-100 px-5 py-4 font-display tracking-wide"
             >
               <CurrencyDollarIcon className="h-5 w-5" />
