@@ -1,21 +1,11 @@
 import { useMemo, useSyncExternalStore } from "react";
+import {
+  PENDING_DOG_EXPIRY_MS,
+  filterExpiredPendingDogs,
+  type PendingDogBase,
+} from "@shared/pending";
 
-export interface PendingDog {
-  transactionId: string;
-  logId: string;
-  imageUri: string;
-  eater: string;
-  logger: string;
-  timestamp: string;
-  chainId: string;
-  isPending: true;
-  createdAt: number;
-}
-
-// Failsafe expiry for logs that never index. The feed removes a pending card the
-// moment its real on-chain row appears (dedup by imageUri), so this only needs
-// to catch stuck/failed txs — keep it generous.
-const EXPIRY_MS = 10 * 60 * 1000;
+export type PendingDog = PendingDogBase;
 
 let dogs: PendingDog[] = [];
 const listeners = new Set<() => void>();
@@ -44,8 +34,7 @@ export const pendingDogsStore = {
     }
   },
   clearExpired() {
-    const now = Date.now();
-    const next = dogs.filter((d) => now - d.createdAt < EXPIRY_MS);
+    const next = filterExpiredPendingDogs(dogs);
     if (next.length !== dogs.length) {
       dogs = next;
       emit();

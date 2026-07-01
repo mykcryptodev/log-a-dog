@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
@@ -18,6 +18,9 @@ import { VoteBar } from "~/components/VoteBar";
 import { AiJudgement } from "~/components/AiJudgement";
 import { VotingCountdown } from "~/components/VotingCountdown";
 import { Comments } from "~/components/Comments";
+import { ShareDogButton } from "~/components/ShareDogButton";
+import { RevokeButton } from "~/components/RevokeButton";
+import { ZoraStatsFlip } from "~/components/ZoraStatsFlip";
 import { COLORS } from "~/constants/colors";
 import { formatAbbreviatedFiat } from "@shared/format";
 import {
@@ -30,6 +33,7 @@ import { useHotdog } from "~/hooks/useHotdogs";
 
 export default function DogDetailScreen() {
   const { logId } = useLocalSearchParams<{ logId: string }>();
+  const router = useRouter();
   const { session } = useAuth();
   const { width } = useWindowDimensions();
 
@@ -112,24 +116,53 @@ export default function DogDetailScreen() {
               {formatTimestamp(hotdog.timestamp)}
             </Text>
           </View>
+          <View className="flex-row gap-2 items-center">
+            <ShareDogButton logId={hotdog.logId} />
+            <RevokeButton
+              logId={hotdog.logId}
+              eater={hotdog.eater}
+              onRevoked={refetch}
+            />
+          </View>
         </View>
 
-        {/* Image */}
-        <View style={{ width, height: imageHeight }}>
-          {imageUri ? (
-            <Image
-              source={{ uri: imageUri }}
-              style={{ flex: 1 }}
-              contentFit="cover"
-              transition={300}
-            />
-          ) : (
-            <View className="flex-1 bg-base-300 items-center justify-center">
-              <Text className="text-7xl">🌭</Text>
-            </View>
-          )}
-          {isResolved && <VerdictStamp isValid={isValid} />}
-        </View>
+        {hotdog.duplicateOfLogId && (
+          <Pressable
+            onPress={() =>
+              router.push(`/dog/${hotdog.duplicateOfLogId}` as never)
+            }
+            className="mx-4 mb-2 bg-secondary/10 rounded-xl px-3 py-2"
+          >
+            <Text className="text-secondary text-xs font-bold">
+              ♻ Duplicate of log #{hotdog.duplicateOfLogId} — tap to view original
+            </Text>
+          </Pressable>
+        )}
+
+        {/* Image / Zora flip */}
+        {hotdog.zoraCoin ? (
+          <ZoraStatsFlip
+            imageUri={imageUri}
+            zoraCoin={hotdog.zoraCoin}
+            blurhash={hotdog.zoraCoin.mediaContent?.previewImage?.blurhash}
+          />
+        ) : (
+          <View style={{ width, height: imageHeight }}>
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={{ flex: 1 }}
+                contentFit="cover"
+                transition={300}
+              />
+            ) : (
+              <View className="flex-1 bg-base-300 items-center justify-center">
+                <Text className="text-7xl">🌭</Text>
+              </View>
+            )}
+            {isResolved && <VerdictStamp isValid={isValid} />}
+          </View>
+        )}
 
         {/* Vote bar */}
         <VoteBar
@@ -247,13 +280,17 @@ export default function DogDetailScreen() {
             </View>
           )}
 
-          {/* Duplicate warning */}
           {hotdog.duplicateOfLogId && (
-            <View className="bg-secondary/10 border border-secondary/30 rounded-xl px-4 py-3">
+            <Pressable
+              onPress={() =>
+                router.push(`/dog/${hotdog.duplicateOfLogId}` as never)
+              }
+              className="bg-secondary/10 border border-secondary/30 rounded-xl px-4 py-3"
+            >
               <Text className="text-secondary font-bold text-sm">
-                ♻ Duplicate of #{hotdog.duplicateOfLogId}
+                ♻ Duplicate of #{hotdog.duplicateOfLogId} — tap to view
               </Text>
-            </View>
+            </Pressable>
           )}
         </View>
 

@@ -25,7 +25,10 @@ function TRPCInner({ children }: { children: React.ReactNode }) {
 
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {children as any}
+      </QueryClientProvider>
     </trpc.Provider>
   );
 }

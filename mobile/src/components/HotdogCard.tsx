@@ -132,9 +132,14 @@ export function HotdogCard({
           )}
           {isResolved && <VerdictStamp isValid={isValid} />}
           {hotdog.duplicateOfLogId && (
-            <View className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1">
-              <Text className="text-white text-xs">♻ Duplicate</Text>
-            </View>
+            <Pressable
+              onPress={() =>
+                router.push(`/dog/${hotdog.duplicateOfLogId}` as never)
+              }
+              className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1"
+            >
+              <Text className="text-white text-xs">♻ Dup #{hotdog.duplicateOfLogId}</Text>
+            </Pressable>
           )}
         </View>
       </Pressable>

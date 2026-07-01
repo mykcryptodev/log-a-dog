@@ -11,6 +11,7 @@ export type {
   HotdogMetadata,
   ProcessedHotdog,
   GetAllResponse,
+  GetAllForUserResponse,
   LeaderboardProfile,
   LeaderboardResponse,
   LeaderboardEntry,

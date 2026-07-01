@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": ["shared", "mobile"],
   "scripts": {
     "build": "next build",
     "db:push": "prisma db push",

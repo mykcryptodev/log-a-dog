@@ -9,6 +9,7 @@ import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LogModal } from "~/components/LogModal";
 import { COLORS } from "~/constants/colors";
+import { useRulesOnboarding } from "~/hooks/useRulesOnboarding";
 
 interface TabBarProps {
   state: { index: number; routes: { key: string; name: string }[] };
@@ -122,6 +123,7 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
 }
 
 export default function TabLayout() {
+  useRulesOnboarding();
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...(props as unknown as TabBarProps)} />}

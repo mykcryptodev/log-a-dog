@@ -20,6 +20,7 @@ import { CHAIN_ID } from "~/constants";
 import { COLORS } from "~/constants/colors";
 import { uploadImageToIPFS, uploadMetadataToIPFS } from "~/utils/upload";
 import { pendingDogsStore } from "~/stores/pendingDogs";
+import { normalizeImageUri } from "~/utils/image";
 
 interface Props {
   visible: boolean;
@@ -85,7 +86,8 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
+      const normalized = await normalizeImageUri(result.assets[0].uri);
+      setImageUri(normalized);
     }
   }, []);
 

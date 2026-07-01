@@ -1,12 +1,14 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   ScrollView,
   Text,
   View,
   useWindowDimensions,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -22,6 +24,7 @@ import { convertIpfsToHttps, formatTimestamp, getDisplayName } from "~/utils/for
 import { isJudgeable } from "@shared/time";
 import { useJudges, useUserVotes } from "~/hooks/useHotdogs";
 import type { ProcessedHotdog } from "~/types";
+import * as Haptics from "expo-haptics";
 
 const PAGE_SIZE = 50;
 
@@ -139,6 +142,38 @@ export default function JudgeScreen() {
     }, 800);
   }, [query, pending.length]);
 
+  const judgeMutation = trpc.hotdog.judge.useMutation({
+    onSuccess: () => void handleVoteSuccess(),
+  });
+
+  const swipeX = useRef(new Animated.Value(0)).current;
+
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      swipeX.setValue(e.translationX);
+    })
+    .onEnd((e) => {
+      if (!dog || !session) return;
+      if (e.translationX > 80) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        judgeMutation.mutate({
+          chainId: CHAIN_ID,
+          logId: dog.logId,
+          isValid: true,
+          shouldRevoke: false,
+        });
+      } else if (e.translationX < -80) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        judgeMutation.mutate({
+          chainId: CHAIN_ID,
+          logId: dog.logId,
+          isValid: false,
+          shouldRevoke: false,
+        });
+      }
+      Animated.spring(swipeX, { toValue: 0, useNativeDriver: true }).start();
+    });
+
   if (query.isLoading) {
     return (
       <SafeAreaView
@@ -187,17 +222,19 @@ export default function JudgeScreen() {
               )}
             </View>
 
-            {/* Dog card */}
+            {/* Dog card — swipe right = VALID, left = SUS */}
             {dog && (
-              <View
-                className="mx-4 bg-base-200 rounded-3xl overflow-hidden"
+              <GestureDetector gesture={panGesture}>
+              <Animated.View
                 style={{
+                  transform: [{ translateX: swipeX }],
                   shadowColor: COLORS.secondary,
                   shadowOffset: { width: 0, height: 8 },
                   shadowOpacity: 0.12,
                   shadowRadius: 20,
                   elevation: 4,
                 }}
+                className="mx-4 bg-base-200 rounded-3xl overflow-hidden"
               >
                 {/* Header */}
                 <View className="flex-row items-center p-3 gap-2">
@@ -250,7 +287,11 @@ export default function JudgeScreen() {
                   <AiJudgement logId={dog.logId} timestamp={dog.timestamp} />
                   <VotingCountdown timestamp={dog.timestamp} />
                 </View>
-              </View>
+                <Text className="text-center text-neutral/40 text-xs pb-2">
+                  Swipe → VALID · ← SUS
+                </Text>
+              </Animated.View>
+              </GestureDetector>
             )}
           </>
         )}

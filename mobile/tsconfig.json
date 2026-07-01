@@ -15,6 +15,9 @@
       ],
       "@apiTypes/*": [
         "./api-types/*"
+      ],
+      "@airdrop/*": [
+        "../airdrop/*"
       ]
     },
     "skipLibCheck": true

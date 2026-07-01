@@ -1,35 +1,46 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
-import * as WebBrowser from "expo-web-browser";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { getContract, prepareContractCall, sendTransaction, waitForReceipt } from "thirdweb";
+import { base, baseSepolia } from "thirdweb/chains";
+import { COMMENT_MANAGER_ADDRESS, CommentManagerABI } from "@ecp.eth/sdk";
+import {
+  dogCommentTargetUri,
+  commentCreatedAtToUnixSeconds,
+  type CommentItem,
+  type CommentsPage,
+} from "@shared/comments";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
-import { API_URL } from "~/constants";
+import { API_URL, CHAIN_ID } from "~/constants";
 import { COLORS } from "~/constants/colors";
 import { formatAddress, formatTimestamp } from "@shared/format";
-
-interface CommentAuthor {
-  address: string;
-  ens?: { name?: string; avatarUrl?: string };
-  farcaster?: { pfpUrl?: string };
-}
-
-interface CommentItem {
-  id: string;
-  content: string;
-  author: CommentAuthor;
-  createdAt: string;
-}
+import { useActiveWallet, useActiveAccount } from "~/providers/WalletProvider";
+import { useWallet } from "~/providers/WalletProvider";
+import { trpc } from "~/utils/trpc";
+import { getThirdwebClient } from "~/utils/thirdweb";
 
 interface Props {
   logId: string;
 }
 
-// Comments are posted on-chain from a user wallet (ECP.eth), which the mobile
-// app doesn't hold — writes go through the server wallet. So mobile shows the
-// conversation read-only and hands posting off to the web app.
 export function Comments({ logId }: Props) {
-  const targetUri = `https://logadog.xyz/dog/${logId}`;
+  const targetUri = dogCommentTargetUri(logId);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newComment, setNewComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const account = useActiveAccount();
+  const wallet = useActiveWallet();
+  const { connectExternalWallet } = useWallet();
+
+  const prepareComment = trpc.comments.prepareComment.useMutation();
+  const bustCache = trpc.comments.bustCache.useMutation();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,11 +48,11 @@ export function Comments({ logId }: Props) {
       const params = new URLSearchParams({ targetUri, limit: "50" });
       const res = await fetch(`${API_URL}/api/comments?${params.toString()}`);
       if (res.ok) {
-        const json = (await res.json()) as { results?: CommentItem[] };
+        const json = (await res.json()) as CommentsPage;
         setComments(json.results ?? []);
       }
     } catch {
-      // network error — leave list empty
+      // network error
     } finally {
       setLoading(false);
     }
@@ -51,23 +62,88 @@ export function Comments({ logId }: Props) {
     void load();
   }, [load]);
 
-  const openWebToComment = () => {
-    void WebBrowser.openBrowserAsync(`${API_URL}/dog/${logId}`);
-  };
+  const submitComment = async () => {
+    if (!newComment.trim()) return;
+    if (!account?.address || !wallet) {
+      const ok = await connectExternalWallet();
+      if (!ok) return;
+    }
+    const signer = wallet?.getAccount();
+    if (!signer) {
+      Alert.alert("Wallet required", "Connect a wallet to post comments on-chain.");
+      return;
+    }
 
-  const toUnixSeconds = (iso: string) =>
-    String(Math.floor(new Date(iso).getTime() / 1000));
+    setSubmitting(true);
+    try {
+      const prepared = await prepareComment.mutateAsync({
+        author: signer.address,
+        targetUri,
+        text: newComment.trim(),
+        chainId: CHAIN_ID,
+      });
+
+      const chain = CHAIN_ID === 8453 ? base : baseSepolia;
+      const client = getThirdwebClient();
+      const contract = getContract({
+        client,
+        chain,
+        address: COMMENT_MANAGER_ADDRESS,
+        abi: CommentManagerABI,
+      });
+
+      const transaction = prepareContractCall({
+        contract,
+        method: "postComment",
+        params: [prepared.commentData, prepared.appSignature],
+      });
+
+      const result = await sendTransaction({ transaction, account: signer });
+      await waitForReceipt({ client, chain, transactionHash: result.transactionHash });
+
+      setNewComment("");
+      try {
+        await bustCache.mutateAsync({ targetUri });
+      } catch {
+        // ignore
+      }
+      await load();
+    } catch (err) {
+      Alert.alert("Error", err instanceof Error ? err.message : "Failed to post comment");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View className="px-4 pt-2 pb-8">
-      <View className="flex-row items-center justify-between mb-3">
-        <Text className="font-display text-neutral text-lg tracking-wide">
-          💬 Comments
-        </Text>
-        <Pressable onPress={openWebToComment} className="bg-base-200 rounded-full px-3 py-1.5">
-          <Text className="text-neutral/70 text-xs font-bold">Add a comment</Text>
-        </Pressable>
-      </View>
+      <Text className="font-display text-neutral text-lg tracking-wide mb-3">
+        💬 Comments
+      </Text>
+
+      {account && (
+        <View className="bg-base-200 rounded-2xl p-3 mb-4">
+          <TextInput
+            value={newComment}
+            onChangeText={setNewComment}
+            placeholder="Share your thoughts..."
+            multiline
+            className="text-neutral text-sm min-h-[60px] mb-2"
+            placeholderTextColor="#999"
+          />
+          <Pressable
+            onPress={() => void submitComment()}
+            disabled={submitting || !newComment.trim()}
+            className="bg-primary rounded-xl py-2 items-center self-end px-6"
+          >
+            {submitting ? (
+              <ActivityIndicator color={COLORS.neutral} size="small" />
+            ) : (
+              <Text className="font-bold text-neutral text-sm">Post</Text>
+            )}
+          </Pressable>
+        </View>
+      )}
 
       {loading ? (
         <View className="py-8 items-center">
@@ -77,7 +153,7 @@ export function Comments({ logId }: Props) {
         <View className="py-8 items-center">
           <Text className="text-3xl mb-2">💬</Text>
           <Text className="text-neutral/50 text-sm text-center">
-            No comments yet. Be the first to share your thoughts!
+            No comments yet. Be the first!
           </Text>
         </View>
       ) : (
@@ -100,12 +176,10 @@ export function Comments({ logId }: Props) {
                       {name}
                     </Text>
                     <Text className="text-neutral/40 text-xs">
-                      {formatTimestamp(toUnixSeconds(c.createdAt))}
+                      {formatTimestamp(commentCreatedAtToUnixSeconds(c.createdAt))}
                     </Text>
                   </View>
-                  <Text className="text-neutral/80 text-sm mt-0.5">
-                    {c.content}
-                  </Text>
+                  <Text className="text-neutral/80 text-sm mt-0.5">{c.content}</Text>
                 </View>
               </View>
             );
