@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { Linking } from "react-native";
+import { AppState, Linking } from "react-native";
 import { createAppClient, viemConnector } from "@farcaster/auth-client";
 import { inAppWallet, type Account } from "thirdweb/wallets";
 import {
@@ -92,6 +92,27 @@ async function postToMobileAuth(
     );
   }
   return { sessionToken: payload.sessionToken, user: payload.user };
+}
+
+/**
+ * Resolves once this app is in the foreground. Right after a WalletConnect
+ * pairing is approved the user is still inside their wallet app; firing the
+ * SIWE sign request while we're backgrounded means the OS blocks the deep
+ * link back into the wallet and the signature prompt never appears.
+ */
+async function waitForAppForeground(): Promise<void> {
+  if (AppState.currentState !== "active") {
+    await new Promise<void>((resolve) => {
+      const sub = AppState.addEventListener("change", (state) => {
+        if (state === "active") {
+          sub.remove();
+          resolve();
+        }
+      });
+    });
+    // Let the app-switch transition settle before deep-linking back out.
+    await new Promise((resolve) => setTimeout(resolve, 750));
+  }
 }
 
 async function openFarcasterAuthUrl(url: string) {
@@ -254,7 +275,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithWallet = useCallback(
     async (account: Account) => {
-      await signInWithAccount(account);
+      // External wallets sign over WalletConnect: wait until we're back in the
+      // foreground so the personal_sign request can deep-link to the wallet.
+      await waitForAppForeground();
+      try {
+        await signInWithAccount(account);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.includes("Failed to open URI")) {
+          throw new Error(
+            "We couldn't reopen your wallet automatically. Open your wallet app, approve the pending sign-in request, then return here and try again.",
+          );
+        }
+        throw err;
+      }
     },
     [signInWithAccount],
   );

@@ -65,7 +65,7 @@ export default function SignInScreen() {
       const account = wallet?.getAccount();
       if (!account) return;
 
-      setLoadingLabel("Signing in…");
+      setLoadingLabel("Confirm sign-in in your wallet…");
       await signInWithWallet(account);
       navigate();
     } catch (err) {

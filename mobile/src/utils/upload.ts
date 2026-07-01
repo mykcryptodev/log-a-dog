@@ -1,17 +1,17 @@
-import { upload } from "thirdweb/storage";
+import { uploadMobile } from "thirdweb/storage";
 import { getThirdwebClient } from "~/utils/thirdweb";
 
-export async function uploadImageToIPFS(localUri: string): Promise<string> {
-  const response = await fetch(localUri);
-  const blob = await response.blob();
+// thirdweb's `upload()` only supports browser/node and throws
+// "Please, use the uploadMobile function in mobile environments." in React
+// Native, so both helpers must go through `uploadMobile`.
 
-  // thirdweb/storage `upload` supports Blob/File in React Native via the adapter
-  const uris = await upload({
+export async function uploadImageToIPFS(localUri: string): Promise<string> {
+  const uris = await uploadMobile({
     client: getThirdwebClient(),
-    files: [new File([blob], "hotdog.jpg", { type: "image/jpeg" })],
+    files: [{ name: "hotdog.jpg", type: "image/jpeg", uri: localUri }],
   });
 
-  const uri = Array.isArray(uris) ? uris[0] : uris;
+  const uri = uris[0];
   if (!uri) throw new Error("Upload returned no URI");
   return uri;
 }
@@ -21,12 +21,12 @@ export async function uploadMetadataToIPFS(metadata: {
   description: string;
   image: string;
 }): Promise<string> {
-  const uris = await upload({
+  const uris = await uploadMobile({
     client: getThirdwebClient(),
     files: [metadata],
   });
 
-  const uri = Array.isArray(uris) ? uris[0] : uris;
+  const uri = uris[0];
   if (!uri) throw new Error("Metadata upload returned no URI");
   return uri;
 }

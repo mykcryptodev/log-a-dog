@@ -82,9 +82,12 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
                     transform: [{ scale: pressed ? 0.9 : 1 }],
                   })}
                 >
+                  {/* Rounded on the image itself: expo-image is a native view
+                      that the container's overflow:hidden doesn't reliably
+                      clip, which rendered the FAB as a square. */}
                   <Image
                     source={require("../../assets/icon.png")}
-                    style={{ width: 60, height: 60 }}
+                    style={{ width: 56, height: 56, borderRadius: 28 }}
                     contentFit="cover"
                   />
                 </Pressable>
