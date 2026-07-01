@@ -78,10 +78,20 @@ export default function EarnScreen() {
 
         <Pressable
           onPress={() => router.push("/faq")}
-          className="mb-6 bg-base-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
+          className="mb-3 bg-base-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
         >
           <Text className="text-neutral font-bold text-sm">
             📖 How it works · Rules & FAQ
+          </Text>
+          <Text className="text-neutral/40">→</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/poidh")}
+          className="mb-6 bg-secondary/10 border border-secondary/30 rounded-xl px-4 py-3 flex-row items-center justify-between"
+        >
+          <Text className="text-neutral font-bold text-sm">
+            🕹️ POIDH Campaign · Win $50 ETH/day
           </Text>
           <Text className="text-neutral/40">→</Text>
         </Pressable>

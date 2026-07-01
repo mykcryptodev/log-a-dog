@@ -90,6 +90,18 @@ export default function RootLayout() {
                 },
               }}
             />
+            <Stack.Screen
+              name="poidh"
+              options={{
+                headerTitle: "POIDH Campaign",
+                headerStyle: { backgroundColor: "#FFF8EC" },
+                headerTintColor: "#1E1A17",
+                headerTitleStyle: {
+                  fontFamily: "Anton_400Regular",
+                  letterSpacing: 1,
+                },
+              }}
+            />
           </Stack>
         </TRPCProvider>
       </AuthProvider>
