@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { trpc } from "~/utils/trpc";
@@ -10,6 +10,7 @@ import type { GetAllResponse, ProcessedHotdog } from "~/types";
 import { buildAttestationMaps, getAttestationData } from "@shared/feed";
 import { useAuth } from "~/providers/AuthProvider";
 import { COLORS } from "~/constants/colors";
+import { usePendingDogs, pendingDogsStore } from "~/stores/pendingDogs";
 
 const PAGE_SIZE = 10;
 
@@ -23,6 +24,7 @@ export function HotdogFeed({ userAddress, header }: Props) {
   const voter = session?.address ?? ZERO_ADDRESS;
   const isMainFeed = !userAddress;
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const pending = usePendingDogs(String(CHAIN_ID));
 
   const query = trpc.hotdog.getAll.useInfiniteQuery(
     {
@@ -35,6 +37,9 @@ export function HotdogFeed({ userAddress, header }: Props) {
       keepPreviousData: true,
       getNextPageParam: (lastPage: GetAllResponse) => lastPage.nextCursor,
       refetchOnWindowFocus: false,
+      // While an optimistic card is in flight, poll so the real on-chain row
+      // lands and replaces it.
+      refetchInterval: isMainFeed && pending.length > 0 ? 6000 : false,
     },
   );
 
@@ -47,6 +52,47 @@ export function HotdogFeed({ userAddress, header }: Props) {
     () => pages.flatMap((p) => p.hotdogs),
     [pages],
   );
+
+  const loadedImageUris = useMemo(
+    () => new Set(hotdogs.map((h) => h.imageUri)),
+    [hotdogs],
+  );
+
+  // Optimistic pending cards (main feed only), deduped against real rows.
+  const pendingCards = useMemo<ProcessedHotdog[]>(() => {
+    if (!isMainFeed) return [];
+    return pending
+      .filter((p) => !loadedImageUris.has(p.imageUri))
+      .map((p) => ({
+        logId: p.logId,
+        imageUri: p.imageUri,
+        metadataUri: "",
+        timestamp: p.timestamp,
+        eater: p.eater,
+        logger: p.logger,
+        zoraCoin: null,
+        metadata: null,
+        attestationPeriod: undefined,
+        duplicateOfLogId: null,
+        eaterProfile: null,
+        loggerProfile: null,
+      }));
+  }, [isMainFeed, pending, loadedImageUris]);
+
+  const data = useMemo<ProcessedHotdog[]>(
+    () => (pendingCards.length ? [...pendingCards, ...hotdogs] : hotdogs),
+    [pendingCards, hotdogs],
+  );
+
+  // Expire stuck pending cards and drop any whose real row has now indexed.
+  useEffect(() => {
+    pendingDogsStore.clearExpired();
+    for (const p of pending) {
+      if (loadedImageUris.has(p.imageUri)) {
+        pendingDogsStore.remove(p.transactionId);
+      }
+    }
+  }, [pending, loadedImageUris]);
 
   // Build logId -> attestation lookup maps once per data change (shared helper).
   const attestationMaps = useMemo(() => buildAttestationMaps(pages), [pages]);
@@ -139,9 +185,10 @@ export function HotdogFeed({ userAddress, header }: Props) {
 
   return (
     <FlashList
-      data={hotdogs}
+      data={data}
       keyExtractor={(item) => item.logId}
       renderItem={({ item }) => {
+        const isPending = item.logId.startsWith("pending-");
         const a = getAttestationData(item.logId, attestationMaps);
         return (
           <HotdogCard
@@ -151,6 +198,7 @@ export function HotdogFeed({ userAddress, header }: Props) {
             userHasVoted={a.userAttested}
             userVotedValid={a.userAttestation}
             onVoteSuccess={refetch}
+            pending={isPending}
           />
         );
       }}
