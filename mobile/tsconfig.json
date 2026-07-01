@@ -6,6 +6,12 @@
     "paths": {
       "~/*": [
         "./src/*"
+      ],
+      "@shared": [
+        "../shared/index.ts"
+      ],
+      "@shared/*": [
+        "../shared/*"
       ]
     },
     "skipLibCheck": true
