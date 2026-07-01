@@ -3,7 +3,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import { useSession } from "next-auth/react";
-import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
+import { Blobbie } from "thirdweb/react";
 import { getProxiedUrl } from "~/utils/imageProxy";
 import Image from "next/image";
 
@@ -52,8 +52,7 @@ const LbAvatar: FC<{ profile?: ProfileData; address: string; size: number }> = (
     );
   }
   return (
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    <Jazzicon diameter={size} seed={jsNumberForAddress(address)} />
+    <Blobbie address={address} size={size} className="shrink-0 rounded-full" />
   );
 };
 
