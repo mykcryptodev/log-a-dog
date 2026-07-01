@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -20,7 +20,6 @@ export default function EarnScreen() {
   const { session } = useAuth();
   const router = useRouter();
   const season = getSeasonInfo();
-  const [tab, setTab] = useState<"stake" | "claim">("stake");
   // The stake/claim/airdrop panels create a Thirdweb client at render time,
   // which throws if the build is missing the public client ID — guard so a
   // misconfigured build degrades to a message instead of crashing the tab.
@@ -73,35 +72,13 @@ export default function EarnScreen() {
         <RelevantHolders />
 
         {walletReady ? (
+          // Every earn action is a self-titled card; stacking them avoids the
+          // ambiguous stake/claim page toggle that read as action buttons.
           <>
-            <View className="flex-row gap-2 mb-4">
-              {(["stake", "claim"] as const).map((t) => (
-                <Pressable
-                  key={t}
-                  onPress={() => setTab(t)}
-                  className={`flex-1 rounded-xl py-2 items-center ${tab === t ? "bg-primary" : "bg-base-200"}`}
-                  style={{ borderWidth: 2.5, borderColor: INK }}
-                >
-                  <Text
-                    className={`font-display text-sm capitalize tracking-wide ${tab === t ? "text-neutral" : "text-neutral/60"}`}
-                  >
-                    {t}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-
-            {tab === "stake" ? (
-              <>
-                <StakePanel />
-                <AirdropPanel />
-              </>
-            ) : (
-              <>
-                <ClaimRewardsPanel />
-                <ClaimProtocolRewardsPanel />
-              </>
-            )}
+            <StakePanel />
+            <AirdropPanel />
+            <ClaimRewardsPanel />
+            <ClaimProtocolRewardsPanel />
           </>
         ) : (
           <View className="bg-error/10 border border-error/30 rounded-2xl p-4 mb-4">

@@ -12,6 +12,10 @@ import { COLORS } from "~/constants/colors";
 // (globals.css): thick ink outlines + hard offset shadows with no blur.
 // React Native can't render blur-free offset box-shadows cross-platform, so
 // the shadow is a solid ink layer positioned behind the bordered content.
+// The shadow layer is pinned with edge insets rather than width/height
+// percentages: percentage sizes on absolute children of shrink-wrapped
+// (auto-width) parents mis-resolve on the new architecture and can paint a
+// full-screen ink band (seen behind centered buttons like "Buy $HOTDOG").
 
 export const INK = COLORS.neutral;
 
@@ -44,8 +48,8 @@ export function PopCard({
           position: "absolute",
           top: offset,
           left: offset,
-          width: "100%",
-          height: "100%",
+          right: -offset,
+          bottom: -offset,
           borderRadius: radius,
           backgroundColor: INK,
         }}
@@ -89,8 +93,8 @@ export function PopSticker({
           position: "absolute",
           top: offset,
           left: offset,
-          width: "100%",
-          height: "100%",
+          right: -offset,
+          bottom: -offset,
           borderRadius: radius,
           backgroundColor: INK,
         }}
@@ -143,8 +147,8 @@ export function PopButton({
           position: "absolute",
           top: offset,
           left: offset,
-          width: "100%",
-          height: "100%",
+          right: -offset,
+          bottom: -offset,
           borderRadius: radius,
           backgroundColor: INK,
           opacity: disabled ? 0.35 : 1,
