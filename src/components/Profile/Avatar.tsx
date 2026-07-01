@@ -1,11 +1,17 @@
 import { type FC, memo } from "react";
-import { MediaRenderer } from "thirdweb/react";
+import { Blobbie, MediaRenderer } from "thirdweb/react";
 import { client } from "~/providers/Thirdweb";
 import { api } from "~/utils/api";
-import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
 import { ZERO_ADDRESS } from "thirdweb";
 import { DEFAULT_CHAIN } from "~/constants";
 import { getProxiedUrl } from "~/utils/imageProxy";
+
+function avatarPixelSize(size?: string, fallbackSize?: number): number {
+  if (fallbackSize != null) return fallbackSize;
+  if (!size) return 32;
+  const parsed = Number.parseInt(size, 10);
+  return Number.isFinite(parsed) ? parsed : 32;
+}
 
 const AvatarComponent: FC<{ address: string; fallbackSize?: number; size?: string }> = ({ address, fallbackSize, size }) => {
   const { data: profile, isLoading } = api.profile.getByAddress.useQuery({
@@ -18,6 +24,7 @@ const AvatarComponent: FC<{ address: string; fallbackSize?: number; size?: strin
   });
 
   const dimension = size ?? "32px";
+  const pixelSize = avatarPixelSize(size, fallbackSize);
 
   if (isLoading) {
     return (
@@ -29,26 +36,22 @@ const AvatarComponent: FC<{ address: string; fallbackSize?: number; size?: strin
   }
   if (profile?.imgUrl === "") {
     return (
-      <div className={'mt-1.5'}>
-        <Jazzicon
-          diameter={fallbackSize ?? 16}
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-          seed={jsNumberForAddress(address)}
-        />
-      </div>
+      <Blobbie
+        address={address}
+        size={pixelSize}
+        className="shrink-0 rounded-full"
+      />
     );
   }
 
   if (!profile) {
     return (
-      <div className={'mt-1.5'}>
-        <Jazzicon
-          diameter={fallbackSize ?? 16}
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-          seed={jsNumberForAddress(ZERO_ADDRESS)}
-        />
-      </div>
-    )
+      <Blobbie
+        address={ZERO_ADDRESS}
+        size={pixelSize}
+        className="shrink-0 rounded-full"
+      />
+    );
   }
 
   return (

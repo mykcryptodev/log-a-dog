@@ -4,7 +4,7 @@ import Link from "next/link";
 import styles from "./LeaderboardBanner.module.css";
 import useLeaderboardData from "~/hooks/useLeaderboardData";
 import usePrefersReducedMotion from "~/hooks/usePrefersReducedMotion";
-import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
+import { Blobbie } from "thirdweb/react";
 import { getProxiedUrl } from "~/utils/imageProxy";
 import Image from "next/image";
 
@@ -43,11 +43,7 @@ const TickerPill: FC<{ item: TickerItem }> = ({ item }) => (
         className="h-5 w-5 rounded-full object-cover"
       />
     ) : (
-      <Jazzicon
-        diameter={20}
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-        seed={jsNumberForAddress(item.address)}
-      />
+      <Blobbie address={item.address} size={20} className="shrink-0 rounded-full" />
     )}
     <span className="font-medium">{item.name}</span>
     <Badge
