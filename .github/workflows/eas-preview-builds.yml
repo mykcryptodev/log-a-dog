@@ -52,6 +52,7 @@ jobs:
       - name: Submit EAS build
         working-directory: mobile
         env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_API_URL: https://logadog.xyz
           EXPO_PUBLIC_CHAIN_ID: "8453"
         run: eas build --platform ${{ matrix.platform }} --profile ${{ matrix.profile }} --non-interactive --no-wait
