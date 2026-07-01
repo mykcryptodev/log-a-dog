@@ -13,12 +13,18 @@ import { StakePanel } from "~/components/earn/StakePanel";
 import { ClaimRewardsPanel } from "~/components/earn/ClaimRewardsPanel";
 import { ClaimProtocolRewardsPanel } from "~/components/earn/ClaimProtocolRewardsPanel";
 import { AirdropPanel } from "~/components/earn/AirdropPanel";
+import { isThirdwebConfigured } from "~/utils/thirdweb";
+import { INK, PopButton } from "~/components/ui/Pop";
 
 export default function EarnScreen() {
   const { session } = useAuth();
   const router = useRouter();
   const season = getSeasonInfo();
   const [tab, setTab] = useState<"stake" | "claim">("stake");
+  // The stake/claim/airdrop panels create a Thirdweb client at render time,
+  // which throws if the build is missing the public client ID — guard so a
+  // misconfigured build degrades to a message instead of crashing the tab.
+  const walletReady = isThirdwebConfigured();
 
   const { data: apy } = trpc.staking.getApy.useQuery(
     { chainId: CHAIN_ID },
@@ -31,22 +37,29 @@ export default function EarnScreen() {
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
       >
-        <Text className="font-display text-neutral text-2xl mb-1 tracking-wider">
-          EARN $HOTDOG
+        {/* Page header (web: centered "💰 EARN $HOTDOG" + subtitle) */}
+        <Text className="font-display text-neutral text-3xl mb-1 tracking-wide text-center">
+          💰 EARN <Text className="text-secondary">$HOTDOG</Text>
         </Text>
-        <Text className="text-neutral/60 text-sm mb-4">
-          Stake tokens to vote and earn rewards for accurate verdicts.
+        <Text className="text-neutral/70 text-sm mb-5 text-center">
+          Stake, judge, and collect.
         </Text>
 
         <View className="flex-row gap-3 mb-4">
-          <View className="flex-1 bg-accent/10 rounded-2xl p-4">
+          <View
+            className="flex-1 bg-base-100 rounded-2xl p-4"
+            style={{ borderWidth: 3, borderColor: INK }}
+          >
             <Text className="text-neutral/50 text-xs mb-1">Staking APY</Text>
             <Text className="font-display text-accent text-2xl">
               {typeof apy === "number" ? `${apy.toFixed(1)}%` : "—"}
             </Text>
           </View>
-          <View className="flex-1 bg-primary/10 rounded-2xl p-4">
-            <Text className="text-neutral/50 text-xs mb-1">
+          <View
+            className="flex-1 bg-primary rounded-2xl p-4"
+            style={{ borderWidth: 3, borderColor: INK }}
+          >
+            <Text className="text-neutral/60 text-xs mb-1">
               Season {season.season}
             </Text>
             <Text className="font-display text-neutral text-2xl">
@@ -55,41 +68,57 @@ export default function EarnScreen() {
           </View>
         </View>
 
-        <ConnectWalletPrompt />
+        {walletReady && <ConnectWalletPrompt />}
         <BuyHotdog />
         <RelevantHolders />
 
-        <View className="flex-row gap-2 mb-4">
-          {(["stake", "claim"] as const).map((t) => (
-            <Pressable
-              key={t}
-              onPress={() => setTab(t)}
-              className={`flex-1 rounded-xl py-2 items-center ${tab === t ? "bg-primary" : "bg-base-200"}`}
-            >
-              <Text
-                className={`font-bold text-sm capitalize ${tab === t ? "text-neutral" : "text-neutral/60"}`}
-              >
-                {t}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {tab === "stake" ? (
+        {walletReady ? (
           <>
-            <StakePanel />
-            <AirdropPanel />
+            <View className="flex-row gap-2 mb-4">
+              {(["stake", "claim"] as const).map((t) => (
+                <Pressable
+                  key={t}
+                  onPress={() => setTab(t)}
+                  className={`flex-1 rounded-xl py-2 items-center ${tab === t ? "bg-primary" : "bg-base-200"}`}
+                  style={{ borderWidth: 2.5, borderColor: INK }}
+                >
+                  <Text
+                    className={`font-display text-sm capitalize tracking-wide ${tab === t ? "text-neutral" : "text-neutral/60"}`}
+                  >
+                    {t}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {tab === "stake" ? (
+              <>
+                <StakePanel />
+                <AirdropPanel />
+              </>
+            ) : (
+              <>
+                <ClaimRewardsPanel />
+                <ClaimProtocolRewardsPanel />
+              </>
+            )}
           </>
         ) : (
-          <>
-            <ClaimRewardsPanel />
-            <ClaimProtocolRewardsPanel />
-          </>
+          <View className="bg-error/10 border border-error/30 rounded-2xl p-4 mb-4">
+            <Text className="font-bold text-neutral mb-1">
+              Wallet features unavailable
+            </Text>
+            <Text className="text-neutral/60 text-sm">
+              This build is missing its Thirdweb client ID, so staking and
+              claiming are disabled. Please update the app or contact support.
+            </Text>
+          </View>
         )}
 
         <Pressable
           onPress={() => router.push("/faq")}
-          className="mb-3 bg-base-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
+          className="mb-3 bg-base-100 rounded-xl px-4 py-3 flex-row items-center justify-between"
+          style={{ borderWidth: 2.5, borderColor: INK }}
         >
           <Text className="text-neutral font-bold text-sm">
             📖 How judging works · Rules & FAQ
@@ -99,17 +128,19 @@ export default function EarnScreen() {
 
         <Pressable
           onPress={() => router.push("/(tabs)/judge")}
-          className="mb-3 bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 flex-row items-center justify-between"
+          className="mb-3 bg-accent/10 rounded-xl px-4 py-3 flex-row items-center justify-between"
+          style={{ borderWidth: 2.5, borderColor: INK }}
         >
           <Text className="text-neutral font-bold text-sm">
-            ⚖️ Open Judge Queue
+            🧑‍⚖️ Open Judge Queue
           </Text>
           <Text className="text-neutral/40">→</Text>
         </Pressable>
 
         <Pressable
           onPress={() => router.push("/poidh")}
-          className="mb-6 bg-secondary/10 border border-secondary/30 rounded-xl px-4 py-3 flex-row items-center justify-between"
+          className="mb-6 bg-secondary/10 rounded-xl px-4 py-3 flex-row items-center justify-between"
+          style={{ borderWidth: 2.5, borderColor: INK }}
         >
           <Text className="text-neutral font-bold text-sm">
             🕹️ POIDH Campaign · Win $50 ETH/day
@@ -118,17 +149,21 @@ export default function EarnScreen() {
         </Pressable>
 
         {!session && (
-          <View className="bg-primary/10 border border-primary/30 rounded-2xl p-4 mt-2">
+          <View
+            className="bg-base-100 rounded-2xl p-4 mt-2"
+            style={{ borderWidth: 3, borderColor: INK }}
+          >
             <Text className="font-bold text-neutral mb-1">Sign in to earn</Text>
-            <Text className="text-neutral/60 text-sm">
+            <Text className="text-neutral/60 text-sm mb-3">
               Connect with Farcaster to log dogs and earn $HOTDOG tokens.
             </Text>
-            <Pressable
+            <PopButton
               onPress={() => router.push("/sign-in")}
-              className="mt-3 bg-primary rounded-xl py-2.5 items-center"
+              radius={12}
+              contentStyle={{ paddingVertical: 10, alignItems: "center" }}
             >
-              <Text className="font-bold text-neutral">Sign In</Text>
-            </Pressable>
+              <Text className="font-display text-neutral tracking-wide">Sign In</Text>
+            </PopButton>
           </View>
         )}
       </ScrollView>

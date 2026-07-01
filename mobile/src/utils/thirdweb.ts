@@ -5,6 +5,15 @@ type ThirdwebClient = ReturnType<typeof createThirdwebClient>;
 
 let client: ThirdwebClient | null = null;
 
+/**
+ * Whether a public Thirdweb client ID was baked into this build. Components
+ * that need the client at render time must check this first — calling
+ * `getThirdwebClient()` without it throws, which crashes the whole screen.
+ */
+export function isThirdwebConfigured(): boolean {
+  return Boolean(THIRDWEB_CLIENT_ID);
+}
+
 export function getThirdwebClient() {
   if (!THIRDWEB_CLIENT_ID) {
     throw new Error(

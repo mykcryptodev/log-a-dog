@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Text, View } from "react-native";
 import { getContract, prepareContractCall, readContract } from "thirdweb";
 import { toEther } from "thirdweb/utils";
 import { useActiveWallet } from "~/providers/WalletProvider";
@@ -9,6 +9,8 @@ import { STAKING, STAKING_V1 } from "~/constants/addresses";
 import { getActiveChain } from "~/constants/chains";
 import { getThirdwebClient } from "~/utils/thirdweb";
 import { CHAIN_ID } from "~/constants";
+import { COLORS } from "~/constants/colors";
+import { PopButton } from "~/components/ui/Pop";
 
 export function ClaimRewardsPanel() {
   const wallet = useActiveWallet();
@@ -80,19 +82,24 @@ export function ClaimRewardsPanel() {
   };
 
   return (
-    <View className="bg-base-200 rounded-2xl p-4 mb-4">
+    <View
+      className="bg-base-100 rounded-3xl p-4 mb-4"
+      style={{ borderWidth: 3, borderColor: COLORS.neutral }}
+    >
       <Text className="font-display text-neutral text-lg mb-2">Claim Rewards</Text>
       <View className="flex-row justify-between mb-3">
         <Text className="text-neutral/70">Current season</Text>
         <Text className="font-mono text-neutral">{Number(toEther(pending)).toFixed(4)} $HOTDOG</Text>
       </View>
-      <Pressable
+      <PopButton
         onPress={() => void claim(false)}
         disabled={!wallet || busy || pending === 0n}
-        className="bg-primary rounded-xl py-3 items-center mb-3"
+        radius={12}
+        style={{ marginBottom: 8 }}
+        contentStyle={{ paddingVertical: 12, alignItems: "center" }}
       >
-        {busy ? <ActivityIndicator color="#1E1A17" /> : <Text className="font-bold text-neutral">Claim</Text>}
-      </Pressable>
+        {busy ? <ActivityIndicator color="#1E1A17" /> : <Text className="font-display text-neutral tracking-wide">Claim</Text>}
+      </PopButton>
 
       {hasLegacy && (
         <>
@@ -100,13 +107,15 @@ export function ClaimRewardsPanel() {
             <Text className="text-neutral/70">Legacy season</Text>
             <Text className="font-mono text-neutral">{Number(toEther(legacyPending)).toFixed(4)} $HOTDOG</Text>
           </View>
-          <Pressable
+          <PopButton
             onPress={() => void claim(true)}
             disabled={!wallet || busy || legacyPending === 0n}
-            className="bg-base-100 border border-base-300 rounded-xl py-3 items-center"
+            backgroundColor={COLORS.base200}
+            radius={12}
+            contentStyle={{ paddingVertical: 12, alignItems: "center" }}
           >
-            <Text className="font-bold text-neutral">Claim Legacy</Text>
-          </Pressable>
+            <Text className="font-display text-neutral tracking-wide">Claim Legacy</Text>
+          </PopButton>
         </>
       )}
     </View>

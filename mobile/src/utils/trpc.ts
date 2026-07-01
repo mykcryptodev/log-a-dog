@@ -16,6 +16,20 @@ export function buildTRPCClient(sessionToken?: string | null) {
     links: [
       httpBatchLink({
         url: `${API_URL}/api/trpc`,
+        // Infra errors (413 Request Entity Too Large, 502 HTML pages, …) come
+        // back as plain text; without this guard they surface as a cryptic
+        // "JSON Parse error: Unexpected character".
+        async fetch(url, options) {
+          const res = await fetch(url as RequestInfo, options as RequestInit);
+          const contentType = res.headers.get("content-type") ?? "";
+          if (!res.ok && !contentType.includes("application/json")) {
+            const body = await res.text().catch(() => "");
+            throw new Error(
+              `The server returned an unexpected response (${res.status} ${res.statusText || "error"}). ${body.slice(0, 140)}`.trim(),
+            );
+          }
+          return res;
+        },
         headers() {
           const headers: Record<string, string> = {};
           if (sessionToken) {

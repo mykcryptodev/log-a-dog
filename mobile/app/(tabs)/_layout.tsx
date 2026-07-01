@@ -1,10 +1,5 @@
 import React, { useState } from "react";
-import {
-  Animated,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { Tabs } from "expo-router";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,11 +13,12 @@ interface TabBarProps {
   navigation: { emit: (event: { type: string; target: string; canPreventDefault: boolean }) => { defaultPrevented: boolean }; navigate: (name: string) => void };
 }
 
+// Mirrors the web BottomNav: Feed · Leaderboard · [raised Log button] · Judge · You
 const TAB_CONFIG = [
   { name: "index", icon: "🌭", label: "Feed" },
-  { name: "leaderboard", icon: "🏆", label: "Board" },
+  { name: "leaderboard", icon: "🏆", label: "Leaderboard" },
   { name: "_log", icon: "🌭", label: "Log", isFab: true },
-  { name: "judge", icon: "⚖️", label: "Judge" },
+  { name: "judge", icon: "🧑‍⚖️", label: "Judge" },
   { name: "profile", icon: "👤", label: "You" },
 ];
 
@@ -32,18 +28,19 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
 
   return (
     <>
+      {/* Web BottomNav: border-t-[3px] border-base-content bg-base-100 */}
       <View
         style={{
           flexDirection: "row",
-          backgroundColor: "#FFF8EC",
-          borderTopWidth: 1,
-          borderTopColor: "#E8D5AE",
+          backgroundColor: COLORS.base100,
+          borderTopWidth: 3,
+          borderTopColor: COLORS.neutral,
           paddingBottom: insets.bottom + 4,
           paddingTop: 8,
           paddingHorizontal: 8,
         }}
       >
-        {TAB_CONFIG.map((tab, idx) => {
+        {TAB_CONFIG.map((tab) => {
           const routeIdx = tab.isFab ? -1 : state.routes.findIndex((r) => r.name === tab.name);
           const isFocused = !tab.isFab && state.index === routeIdx;
 
@@ -65,29 +62,29 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
           };
 
           if (tab.isFab) {
+            // Raised, ceremonial center Log action (web: -mt-8 rounded-full
+            // border-4 border-base-content).
             return (
               <View key="log-fab" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                 <Pressable
                   onPress={onPress}
-                  style={{
-                    width: 58,
-                    height: 58,
-                    borderRadius: 29,
+                  style={({ pressed }) => ({
+                    width: 64,
+                    height: 64,
+                    borderRadius: 32,
+                    borderWidth: 4,
+                    borderColor: COLORS.neutral,
                     backgroundColor: COLORS.primary,
                     alignItems: "center",
                     justifyContent: "center",
                     overflow: "hidden",
-                    marginBottom: 8,
-                    shadowColor: COLORS.secondary,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 8,
-                    elevation: 6,
-                  }}
+                    marginTop: -28,
+                    transform: [{ scale: pressed ? 0.9 : 1 }],
+                  })}
                 >
                   <Image
                     source={require("../../assets/icon.png")}
-                    style={{ width: 58, height: 58 }}
+                    style={{ width: 60, height: 60 }}
                     contentFit="cover"
                   />
                 </Pressable>
@@ -101,17 +98,18 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
               onPress={onPress}
               style={{ flex: 1, alignItems: "center", paddingVertical: 4 }}
             >
-              <Text style={{ fontSize: 22, opacity: isFocused ? 1 : 0.45 }}>
+              <Text style={{ fontSize: 20, opacity: isFocused ? 1 : 0.5 }}>
                 {tab.icon}
               </Text>
               <Text
                 style={{
                   fontSize: 10,
-                  fontWeight: "700",
-                  color: isFocused ? COLORS.neutral : COLORS.neutral + "70",
+                  fontFamily: "Segment-Bold",
+                  color: isFocused ? COLORS.primary : COLORS.neutral + "99",
                   marginTop: 2,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0.4,
                 }}
+                numberOfLines={1}
               >
                 {tab.label}
               </Text>
@@ -128,24 +126,45 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
   );
 }
 
+// Web header: brand lockup on a slim bar over a 3px ink rule.
+const headerWithInkRule = () => (
+  <View
+    style={{
+      flex: 1,
+      backgroundColor: COLORS.base100,
+      borderBottomWidth: 3,
+      borderBottomColor: COLORS.neutral,
+    }}
+  />
+);
+
+const LockupTitle = () => (
+  <Image
+    source={require("../../assets/images/lockup.png")}
+    style={{ width: 128, height: 32 }}
+    contentFit="contain"
+  />
+);
+
 export default function TabLayout() {
   useRulesOnboarding();
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...(props as unknown as TabBarProps)} />}
       screenOptions={{
-        headerStyle: { backgroundColor: COLORS.base100 },
+        headerBackground: headerWithInkRule,
         headerTintColor: COLORS.neutral,
+        headerShadowVisible: false,
         headerTitleStyle: {
-          fontFamily: "Anton_400Regular",
-          letterSpacing: 1.5,
-          fontSize: 18,
+          fontFamily: "Segment-Bold",
+          letterSpacing: 1,
+          fontSize: 17,
         },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ headerTitle: "LOG A DOG" }}
+        options={{ headerTitle: () => <LockupTitle /> }}
       />
       <Tabs.Screen
         name="leaderboard"
