@@ -166,6 +166,13 @@ export default async function handler(req: NextRequest) {
     {
       width: 1200,
       height: 800,
+      headers: {
+        // The judged image is effectively immutable per logId, so let CDNs and
+        // social crawlers cache the card instead of re-running the contract +
+        // social-profile + font fetches on every scrape.
+        'Cache-Control':
+          'public, immutable, no-transform, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+      },
       fonts: [
         {
           name: 'Segment',
@@ -176,4 +183,4 @@ export default async function handler(req: NextRequest) {
       ],
     }
   );
-} 
+}

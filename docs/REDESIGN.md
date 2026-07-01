@@ -1,6 +1,6 @@
 # Log a Dog — Redesign
 
-*The official home of the internet's summer hotdog-eating sport.*
+*The official home of the internet's summer hotdog-eating competition.*
 
 > Status: **Implemented** (Phases 0–6) on branch `react-best-practices-and-image-fixes`.
 > This was the design + implementation blueprint; the app now ships the condiment theme,
@@ -223,7 +223,7 @@ from the action row; verdict shown as a *stamp on the photo*, not a tiny badge. 
 
 | Place | Copy |
 |---|---|
-| Tagline | "The internet's summer hotdog-eating sport." (`APP_DESCRIPTION` is "Earn money eating hotdogs" — keep as secondary hook) |
+| Tagline | "The internet's summer hotdog-eating competition." (`APP_DESCRIPTION` is "Earn money eating hotdogs" — keep as secondary hook) |
 | Empty feed | "No dogs yet today. The grill is hot. 🔥 Be the first." |
 | Log button | "LOG A DOG" → mid-flow: "SLAP IT ON THE GRILL" |
 | Post-log stamp | "DOG LOGGED. Dog #1,402 this season." |

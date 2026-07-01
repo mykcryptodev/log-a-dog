@@ -1,6 +1,6 @@
 import { type NextPage } from "next";
-import Head from "next/head";
 import Link from "next/link";
+import { Seo, SITE_URL } from "~/components/utils/Seo";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -18,14 +18,15 @@ const RulesPage: NextPage = () => {
 
   return (
     <>
-      <Head>
-        <title>How it works - Log a Dog</title>
-        <meta name="description" content="The internet's summer hotdog-eating sport — the rules." />
-      </Head>
+      <Seo
+        title="How it works"
+        description="Eat a dog, log it onchain, get judged, climb the board. The rules of the internet's summer hotdog-eating competition."
+        url={`${SITE_URL}/rules`}
+      />
       <main className="flex flex-col items-center px-4 pt-10">
         <div className="flex w-full max-w-md flex-col items-center gap-6">
           <p className="text-center font-display text-xl tracking-wide opacity-70">
-            The internet&apos;s summer hotdog-eating sport
+            The internet&apos;s summer hotdog-eating competition
           </p>
 
           <div className="relative h-72 w-full">

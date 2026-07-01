@@ -1,5 +1,5 @@
 import { type NextPage } from "next";
-import Head from "next/head";
+import { Seo, SITE_URL } from "~/components/utils/Seo";
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
@@ -51,9 +51,11 @@ const JudgesPage: NextPage = () => {
 
   return (
     <>
-      <Head>
-        <title>Judge - Log a Dog</title>
-      </Head>
+      <Seo
+        title="The Jury 🧑‍⚖️"
+        description="Real dog or sus? Judge the latest hotdog submissions, keep the game honest, and earn rewards."
+        url={`${SITE_URL}/judges`}
+      />
       <main className="flex flex-col items-center px-4 pt-6">
         <div className="flex w-full max-w-xl flex-col items-center gap-5">
           <div className="text-center">

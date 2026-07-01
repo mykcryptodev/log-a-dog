@@ -9,6 +9,7 @@ import { useActiveAccount } from "thirdweb/react";
 import { UserListAttestations } from "~/components/Attestation/UserList";
 import { useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
+import { Seo, SITE_URL } from "~/components/utils/Seo";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -46,6 +47,18 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
   });
   const [showProfileForm, setShowProfileForm] = useState<boolean>(false);
 
+  // `username` comes from getServerSideProps, so this metadata is present in the
+  // SSR HTML that crawlers read (the profile data itself is fetched client-side).
+  const seo = (
+    <Seo
+      title={`@${username} on Log a Dog`}
+      exactTitle
+      description={`See how many hotdogs @${username} has logged onchain — then log your own and climb the leaderboard.`}
+      url={`${SITE_URL}/profile/${username}`}
+      type="profile"
+    />
+  );
+
   // Check if this is the user's own profile
   const isOwnProfile = useMemo(() => {
     return acccount?.address.toLowerCase() === data?.address.toLowerCase() ||
@@ -57,20 +70,25 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
   const displayImage = (isOwnProfile && sessionData?.user?.image) ? sessionData.user.image : data?.imgUrl;
 
   if (isLoading) return (
-    <main className="flex flex-col items-center justify-center">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-bold">
-            <div className="loading loading-spinner mr-2" />
-            Loading...
-          </h1>
+    <>
+      {seo}
+      <main className="flex flex-col items-center justify-center">
+        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-xl font-bold">
+              <div className="loading loading-spinner mr-2" />
+              Loading...
+            </h1>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   )
 
-  if (!data) return null;
+  if (!data) return seo;
   return (
+    <>
+    {seo}
     <main className="flex flex-col items-center justify-center">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
         <div className="flex flex-col gap-2">
@@ -109,6 +127,7 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
         </div>
       </div>
     </main>
+    </>
   );
 };
 

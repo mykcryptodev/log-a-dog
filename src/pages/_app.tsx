@@ -8,6 +8,7 @@ import { ThirdwebProviderWithActiveChain } from "~/providers/Thirdweb";
 import { Layout } from "~/components/utils/Layout";
 import '@farcaster/auth-kit/styles.css';
 import { FarcasterProvider } from "~/providers/Farcaster";
+import { Seo } from "~/components/utils/Seo";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -15,6 +16,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   return (
     <SessionProvider session={session}>
+      {/* Site-wide default share metadata. Every tag carries a stable key so
+          per-page <Seo>/<Head> overrides deduplicate cleanly. */}
+      <Seo />
       <ThirdwebProviderWithActiveChain>
         <FarcasterProvider>
           {/* reducedMotion="user" makes every motion component fall back to
