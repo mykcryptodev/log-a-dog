@@ -11,6 +11,8 @@ import { createAppClient, viemConnector } from "@farcaster/auth-client";
 import { inAppWallet, type Account } from "thirdweb/wallets";
 import {
   API_URL,
+  APP_DOMAIN,
+  APP_URL,
   CHAIN_ID,
   FARCASTER_DOMAIN,
   FARCASTER_RELAY_URL,
@@ -40,16 +42,18 @@ const AuthContext = createContext<AuthContextValue>({
   signOut: async () => {},
 });
 
+type AuthProfile = Pick<Session, "fid" | "username" | "image" | "name">;
+
 async function createSiweMessage(address: string): Promise<string> {
   const nonce = Math.random().toString(36).slice(2);
   const issuedAt = new Date().toISOString();
   return [
-    `${FARCASTER_DOMAIN} wants you to sign in with your Ethereum account:`,
+    `${APP_DOMAIN} wants you to sign in with your Ethereum account:`,
     address,
     "",
     "Sign in to Log a Dog",
     "",
-    `URI: ${FARCASTER_SIWE_URI}`,
+    `URI: ${APP_URL}/login`,
     "Version: 1",
     `Chain ID: ${CHAIN_ID}`,
     `Nonce: ${nonce}`,
@@ -57,38 +61,37 @@ async function createSiweMessage(address: string): Promise<string> {
   ].join("\n");
 }
 
-async function postToNextAuth(
+async function postToMobileAuth(
   address: string,
   message: string,
   signature: string,
-): Promise<string> {
-  const csrfRes = await fetch(`${API_URL}/api/auth/csrf`);
-  if (!csrfRes.ok) throw new Error("Failed to fetch CSRF token");
-  const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
-
-  const signInRes = await fetch(`${API_URL}/api/auth/callback/credentials`, {
+  profile?: AuthProfile,
+): Promise<{ sessionToken: string; user: AuthProfile & { address: string } }> {
+  const signInRes = await fetch(`${API_URL}/api/mobile/auth/siwe`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      csrfToken,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
       address,
       signature,
       message,
-      json: "true",
-    }).toString(),
-    redirect: "manual",
+      profile,
+    }),
   });
 
-  const rawCookies = signInRes.headers.get("set-cookie") ?? "";
-  const sessionTokenMatch = rawCookies.match(/next-auth\.session-token=([^;]+)/);
-  const sessionToken = sessionTokenMatch?.[1];
+  const payload = (await signInRes.json().catch(() => null)) as
+    | {
+        sessionToken?: string;
+        user?: AuthProfile & { address: string };
+        error?: string;
+      }
+    | null;
 
-  if (!sessionToken) {
+  if (!signInRes.ok || !payload?.sessionToken || !payload.user) {
     throw new Error(
-      "Authentication failed — could not retrieve session token. Ensure your signature is valid.",
+      payload?.error ?? "Authentication failed — could not retrieve session token. Ensure your signature is valid.",
     );
   }
-  return sessionToken;
+  return { sessionToken: payload.sessionToken, user: payload.user };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -110,18 +113,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithAccount = useCallback(
-    async (account: Account, profile?: Pick<Session, "fid" | "username" | "image" | "name">) => {
+    async (account: Account, profile?: AuthProfile) => {
       const message = await createSiweMessage(account.address);
       const signature = await account.signMessage({ message });
-      const sessionToken = await postToNextAuth(account.address, message, signature);
+      const { sessionToken, user } = await postToMobileAuth(account.address, message, signature, profile);
 
       await persistSession({
-        address: account.address.toLowerCase(),
+        address: user.address.toLowerCase(),
         sessionToken,
-        fid: profile?.fid ?? null,
-        username: profile?.username ?? null,
-        image: profile?.image ?? null,
-        name: profile?.name ?? null,
+        fid: profile?.fid ?? user.fid ?? null,
+        username: profile?.username ?? user.username ?? null,
+        image: profile?.image ?? user.image ?? null,
+        name: profile?.name ?? user.name ?? null,
       });
     },
     [persistSession],
@@ -157,26 +160,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (statusErr || !statusData) throw new Error("Sign-in timed out or was cancelled");
 
-    const { custody, signature, message, fid, username, displayName, pfpUrl } =
+    const { custody, signature, message, fid, username, displayName, pfpUrl, nonce } =
       statusData as {
         custody: string;
         signature: string;
         message: string;
+        nonce: string;
         fid?: number;
         username?: string;
         displayName?: string;
         pfpUrl?: string;
       };
 
-    const sessionToken = await postToNextAuth(custody, message, signature);
+    const verification = await appClient.verifySignInMessage({
+      nonce,
+      domain: FARCASTER_DOMAIN,
+      message,
+      signature: signature as `0x${string}`,
+    });
 
-    await persistSession({
-      address: custody.toLowerCase(),
-      sessionToken,
+    if (!verification.success) {
+      throw new Error("Farcaster signature verification failed");
+    }
+
+    const profile = {
       fid: fid ?? null,
       username: username ?? null,
       image: pfpUrl ?? null,
       name: displayName ?? username ?? null,
+    };
+    const { sessionToken, user } = await postToMobileAuth(custody, message, signature, profile);
+
+    await persistSession({
+      address: user.address.toLowerCase(),
+      sessionToken,
+      fid: profile.fid ?? user.fid ?? null,
+      username: profile.username ?? user.username ?? null,
+      image: profile.image ?? user.image ?? null,
+      name: profile.name ?? user.name ?? null,
     });
   }, [persistSession]);
 

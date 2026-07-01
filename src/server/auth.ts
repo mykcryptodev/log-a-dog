@@ -6,6 +6,7 @@ import {
   type NextAuthOptions,
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
+import { type User } from "@prisma/client";
 import { EthereumProvider } from "~/server/auth/ethereumProvider";
 
 import { db } from "~/server/db";
@@ -49,6 +50,143 @@ declare module "next-auth/jwt" {
   }
 }
 
+export const AUTH_SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+
+export async function findOrCreateEthereumUser(credentials: {
+  address: string;
+}): Promise<User> {
+  let fid: number | undefined;
+  let username: string | undefined;
+  let name: string | undefined;
+  let image: string | undefined;
+  try {
+    // Fetch user's FID from Neynar using their Ethereum address
+    const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
+      addresses: [credentials.address],
+    });
+
+    // Extract FID from response - fixing the access pattern
+    const addressKey = credentials.address.toLowerCase();
+    fid = response[addressKey]?.[0]?.fid;
+    username = response[addressKey]?.[0]?.username;
+    name = response[addressKey]?.[0]?.display_name;
+    image = response[addressKey]?.[0]?.pfp_url;
+  } catch (error) {
+    console.error("Error fetching FID from Neynar:", error);
+  }
+
+  // Helper function for database operations with retries
+  const withRetry = async <T>(operation: () => Promise<T>, context: string): Promise<T> => {
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        return await operation();
+      } catch (dbError: unknown) {
+        console.error(`Database operation failed in ${context} (${4 - retries}/3):`, dbError);
+        retries--;
+        if (retries === 0) {
+          throw dbError;
+        }
+        // Wait 1 second before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    throw new Error("Unexpected end of retry loop");
+  };
+
+  // First try to find existing user by address (upserts would fail if the user already exists)
+  let user = await withRetry(
+    () => db.user.findFirst({
+      where: {
+        address: credentials.address.toLowerCase(),
+      },
+    }),
+    'findFirst user'
+  );
+
+  if (user) {
+    // Update existing user
+    const userId = user.id; // Capture the ID to avoid null reference issues
+    user = await withRetry(
+      () => db.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          fid,
+          username,
+          image,
+          name,
+        },
+      }),
+      'update user'
+    );
+  } else {
+    // Create new user
+    user = await withRetry(
+      () => db.user.create({
+        data: {
+          address: credentials.address.toLowerCase(),
+          fid,
+          username,
+          image,
+          name,
+        },
+      }),
+      'create user'
+    );
+  }
+
+  // Link any existing DogEvents to this user
+  try {
+    const finalUserId = user.id; // Capture user ID to avoid null reference issues
+    const unlinkedEvents = await withRetry(
+      () => db.dogEvent.updateMany({
+        where: {
+          eater: credentials.address.toLowerCase(),
+          userId: null,
+        },
+        data: {
+          userId: finalUserId,
+        },
+      }),
+      'update dog events'
+    );
+
+    if (unlinkedEvents.count > 0) {
+      console.log(`Linked ${unlinkedEvents.count} historical DogEvents to user ${user.id}`);
+    }
+  } catch (error) {
+    console.error('Error linking historical DogEvents:', error);
+    // Don't fail auth if this fails
+  }
+
+  // Create a new account for the user
+  const accountUserId = user.id; // Capture user ID to avoid null reference issues
+  await withRetry(
+    () => db.account.upsert({
+      where: {
+        provider_providerAccountId: {
+          provider: "ethereum",
+          providerAccountId: credentials.address,
+        },
+      },
+      update: {
+        type: "ethereum",
+      },
+      create: {
+        userId: accountUserId,
+        type: "ethereum",
+        provider: "ethereum",
+        providerAccountId: credentials.address,
+      },
+    }),
+    'upsert account'
+  );
+  console.log(' returning user ');
+  return user;
+}
+
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
  *
@@ -58,7 +196,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     // Keep users signed in across mini-app opens without re-prompting for SIWE.
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: AUTH_SESSION_MAX_AGE_SECONDS,
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -100,138 +238,7 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
     EthereumProvider({
-      async createUser(credentials) {
-        let fid: number | undefined;
-        let username: string | undefined;
-        let name: string | undefined;
-        let image: string | undefined;
-        try {
-          // Fetch user's FID from Neynar using their Ethereum address
-          const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
-            addresses: [credentials.address],
-          });
-
-          // Extract FID from response - fixing the access pattern
-          const addressKey = credentials.address.toLowerCase();
-          fid = response[addressKey]?.[0]?.fid;
-          username = response[addressKey]?.[0]?.username;
-          name = response[addressKey]?.[0]?.display_name;
-          image = response[addressKey]?.[0]?.pfp_url;
-        } catch (error) {
-          console.error("Error fetching FID from Neynar:", error);
-        }
-
-        // Helper function for database operations with retries
-        const withRetry = async <T>(operation: () => Promise<T>, context: string): Promise<T> => {
-          let retries = 3;
-          while (retries > 0) {
-            try {
-              return await operation();
-            } catch (dbError: unknown) {
-              console.error(`Database operation failed in ${context} (${4 - retries}/3):`, dbError);
-              retries--;
-              if (retries === 0) {
-                throw dbError;
-              }
-              // Wait 1 second before retrying
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          }
-          throw new Error("Unexpected end of retry loop");
-        };
-
-        // First try to find existing user by address (upserts would fail if the user already exists)
-        let user = await withRetry(
-          () => db.user.findFirst({
-            where: {
-              address: credentials.address.toLowerCase(),
-            },
-          }),
-          'findFirst user'
-        );
-
-        if (user) {
-          // Update existing user
-          const userId = user.id; // Capture the ID to avoid null reference issues
-          user = await withRetry(
-            () => db.user.update({
-              where: {
-                id: userId,
-              },
-              data: {
-                fid,
-                username,
-                image,
-                name,
-              },
-            }),
-            'update user'
-          );
-        } else {
-          // Create new user
-          user = await withRetry(
-            () => db.user.create({
-              data: {
-                address: credentials.address.toLowerCase(),
-                fid,
-                username,
-                image,
-                name,
-              },
-            }),
-            'create user'
-          );
-        }
-
-        // Link any existing DogEvents to this user
-        try {
-          const finalUserId = user.id; // Capture user ID to avoid null reference issues
-          const unlinkedEvents = await withRetry(
-            () => db.dogEvent.updateMany({
-              where: {
-                eater: credentials.address.toLowerCase(),
-                userId: null,
-              },
-              data: {
-                userId: finalUserId,
-              },
-            }),
-            'update dog events'
-          );
-          
-          if (unlinkedEvents.count > 0) {
-            console.log(`Linked ${unlinkedEvents.count} historical DogEvents to user ${user.id}`);
-          }
-        } catch (error) {
-          console.error('Error linking historical DogEvents:', error);
-          // Don't fail auth if this fails
-        }
-
-        // Create a new account for the user
-        const accountUserId = user.id; // Capture user ID to avoid null reference issues
-        await withRetry(
-          () => db.account.upsert({ 
-            where: {
-              provider_providerAccountId: {
-                provider: "ethereum",
-                providerAccountId: credentials.address,
-              },
-            },
-            update: {
-              type: "ethereum",
-            },
-            create: {
-              userId: accountUserId,
-              type: "ethereum",
-              provider: "ethereum",
-              providerAccountId: credentials.address,
-            },
-          }),
-          'upsert account'
-        );
-        console.log(' returning user ');
-        return user;
-      },
+      createUser: findOrCreateEthereumUser,
     }),
     /**
      * ...add more providers here.

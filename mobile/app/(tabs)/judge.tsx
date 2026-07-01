@@ -149,11 +149,15 @@ export default function JudgeScreen() {
   const swipeX = useRef(new Animated.Value(0)).current;
 
   const panGesture = Gesture.Pan()
+    .runOnJS(true)
     .onUpdate((e) => {
       swipeX.setValue(e.translationX);
     })
     .onEnd((e) => {
-      if (!dog || !session) return;
+      if (!dog || !session || judgeMutation.isLoading) {
+        Animated.spring(swipeX, { toValue: 0, useNativeDriver: true }).start();
+        return;
+      }
       if (e.translationX > 80) {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         judgeMutation.mutate({

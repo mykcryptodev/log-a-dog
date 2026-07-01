@@ -16,10 +16,29 @@ export {
 
 // ---- Mobile-only runtime config ----
 
+const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
+
 export const API_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
-  process.env.EXPO_PUBLIC_API_URL ??
-  "http://localhost:3000";
+  trimTrailingSlash(
+    (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
+      process.env.EXPO_PUBLIC_API_URL ??
+      "http://localhost:3000",
+  );
+
+export const APP_URL = trimTrailingSlash(
+  process.env.EXPO_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    API_URL,
+);
+
+function getDomainFromUrl(url: string): string {
+  return url.replace(/^https?:\/\//, "").split("/")[0]?.split(":")[0] ?? "logadog.xyz";
+}
+
+export const APP_DOMAIN =
+  process.env.EXPO_PUBLIC_APP_DOMAIN ??
+  process.env.NEXT_PUBLIC_APP_DOMAIN ??
+  getDomainFromUrl(APP_URL);
 
 export const THIRDWEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_THIRDWEB_CLIENT_ID ??
@@ -29,5 +48,7 @@ export const THIRDWEB_CLIENT_ID =
 export const CHAIN_ID = parseInt(process.env.EXPO_PUBLIC_CHAIN_ID ?? "8453", 10);
 
 export const FARCASTER_RELAY_URL = "https://relay.farcaster.xyz";
-export const FARCASTER_DOMAIN = "logadog.com";
-export const FARCASTER_SIWE_URI = "https://logadog.com";
+export const FARCASTER_DOMAIN =
+  process.env.EXPO_PUBLIC_FARCASTER_DOMAIN ?? APP_DOMAIN;
+export const FARCASTER_SIWE_URI =
+  process.env.EXPO_PUBLIC_FARCASTER_SIWE_URI ?? `${APP_URL}/login`;

@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts, Anton_400Regular } from "@expo-google-fonts/anton";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThirdwebProvider } from "thirdweb/react";
 import { AuthProvider } from "~/providers/AuthProvider";
 import { WalletProvider } from "~/providers/WalletProvider";
@@ -24,106 +25,108 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <ThirdwebProvider>
-      <AuthProvider>
-        <WalletProvider>
-          <TRPCProvider>
-          <StatusBar style="dark" />
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="dog/[logId]"
-              options={{
-                headerTitle: "Dog Details",
-                headerStyle: { backgroundColor: "#FFF8EC" },
-                headerTintColor: "#1E1A17",
-                headerTitleStyle: {
-                  fontFamily: "Anton_400Regular",
-                },
-              }}
-            />
-            <Stack.Screen
-              name="sign-in"
-              options={{
-                headerTitle: "Sign In",
-                headerStyle: { backgroundColor: "#FFF8EC" },
-                headerTintColor: "#1E1A17",
-                headerTitleStyle: {
-                  fontFamily: "Anton_400Regular",
-                },
-                presentation: "modal",
-              }}
-            />
-            <Stack.Screen
-              name="rules"
-              options={{
-                headerTitle: "How It Works",
-                headerStyle: { backgroundColor: "#FFF8EC" },
-                headerTintColor: "#1E1A17",
-                headerTitleStyle: {
-                  fontFamily: "Anton_400Regular",
-                },
-              }}
-            />
-            <Stack.Screen
-              name="faq"
-              options={{
-                headerTitle: "FAQ & Rules",
-                headerStyle: { backgroundColor: "#FFF8EC" },
-                headerTintColor: "#1E1A17",
-                headerTitleStyle: {
-                  fontFamily: "Anton_400Regular",
-                },
-              }}
-            />
-            <Stack.Screen
-              name="profile/address/[address]"
-              options={{
-                headerTitle: "Profile",
-                headerStyle: { backgroundColor: "#FFF8EC" },
-                headerTintColor: "#1E1A17",
-                headerTitleStyle: {
-                  fontFamily: "Anton_400Regular",
-                },
-              }}
-            />
-            <Stack.Screen
-              name="profile/[username]"
-              options={{
-                headerTitle: "Profile",
-                headerStyle: { backgroundColor: "#FFF8EC" },
-                headerTintColor: "#1E1A17",
-                headerTitleStyle: {
-                  fontFamily: "Anton_400Regular",
-                },
-              }}
-            />
-            <Stack.Screen
-              name="profile/id/[id]"
-              options={{
-                headerTitle: "Profile",
-                headerStyle: { backgroundColor: "#FFF8EC" },
-                headerTintColor: "#1E1A17",
-                headerTitleStyle: {
-                  fontFamily: "Anton_400Regular",
-                },
-              }}
-            />
-            <Stack.Screen
-              name="poidh"
-              options={{
-                headerTitle: "POIDH Campaign",
-                headerStyle: { backgroundColor: "#FFF8EC" },
-                headerTintColor: "#1E1A17",
-                headerTitleStyle: {
-                  fontFamily: "Anton_400Regular",
-                },
-              }}
-            />
-          </Stack>
-        </TRPCProvider>
-        </WalletProvider>
-      </AuthProvider>
-    </ThirdwebProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThirdwebProvider>
+        <AuthProvider>
+          <WalletProvider>
+            <TRPCProvider>
+              <StatusBar style="dark" />
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="dog/[logId]"
+                  options={{
+                    headerTitle: "Dog Details",
+                    headerStyle: { backgroundColor: "#FFF8EC" },
+                    headerTintColor: "#1E1A17",
+                    headerTitleStyle: {
+                      fontFamily: "Anton_400Regular",
+                    },
+                  }}
+                />
+                <Stack.Screen
+                  name="sign-in"
+                  options={{
+                    headerTitle: "Sign In",
+                    headerStyle: { backgroundColor: "#FFF8EC" },
+                    headerTintColor: "#1E1A17",
+                    headerTitleStyle: {
+                      fontFamily: "Anton_400Regular",
+                    },
+                    presentation: "modal",
+                  }}
+                />
+                <Stack.Screen
+                  name="rules"
+                  options={{
+                    headerTitle: "How It Works",
+                    headerStyle: { backgroundColor: "#FFF8EC" },
+                    headerTintColor: "#1E1A17",
+                    headerTitleStyle: {
+                      fontFamily: "Anton_400Regular",
+                    },
+                  }}
+                />
+                <Stack.Screen
+                  name="faq"
+                  options={{
+                    headerTitle: "FAQ & Rules",
+                    headerStyle: { backgroundColor: "#FFF8EC" },
+                    headerTintColor: "#1E1A17",
+                    headerTitleStyle: {
+                      fontFamily: "Anton_400Regular",
+                    },
+                  }}
+                />
+                <Stack.Screen
+                  name="profile/address/[address]"
+                  options={{
+                    headerTitle: "Profile",
+                    headerStyle: { backgroundColor: "#FFF8EC" },
+                    headerTintColor: "#1E1A17",
+                    headerTitleStyle: {
+                      fontFamily: "Anton_400Regular",
+                    },
+                  }}
+                />
+                <Stack.Screen
+                  name="profile/[username]"
+                  options={{
+                    headerTitle: "Profile",
+                    headerStyle: { backgroundColor: "#FFF8EC" },
+                    headerTintColor: "#1E1A17",
+                    headerTitleStyle: {
+                      fontFamily: "Anton_400Regular",
+                    },
+                  }}
+                />
+                <Stack.Screen
+                  name="profile/id/[id]"
+                  options={{
+                    headerTitle: "Profile",
+                    headerStyle: { backgroundColor: "#FFF8EC" },
+                    headerTintColor: "#1E1A17",
+                    headerTitleStyle: {
+                      fontFamily: "Anton_400Regular",
+                    },
+                  }}
+                />
+                <Stack.Screen
+                  name="poidh"
+                  options={{
+                    headerTitle: "POIDH Campaign",
+                    headerStyle: { backgroundColor: "#FFF8EC" },
+                    headerTintColor: "#1E1A17",
+                    headerTitleStyle: {
+                      fontFamily: "Anton_400Regular",
+                    },
+                  }}
+                />
+              </Stack>
+            </TRPCProvider>
+          </WalletProvider>
+        </AuthProvider>
+      </ThirdwebProvider>
+    </GestureHandlerRootView>
   );
 }
