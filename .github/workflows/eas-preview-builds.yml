@@ -1,0 +1,57 @@
+name: EAS Preview Builds
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: eas-preview-builds-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  submit-build:
+    name: Submit ${{ matrix.name }} build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Android preview APK
+            platform: android
+            profile: preview
+          - name: iOS internal preview
+            platform: ios
+            profile: preview-ios
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install root deps
+        run: bun install
+
+      - name: Build mobile API types
+        run: bun run build:api-types
+
+      - name: Install mobile deps
+        working-directory: mobile
+        run: bun install
+
+      - name: Submit EAS build
+        working-directory: mobile
+        env:
+          EXPO_PUBLIC_API_URL: https://logadog.xyz
+          EXPO_PUBLIC_CHAIN_ID: "8453"
+        run: eas build --platform ${{ matrix.platform }} --profile ${{ matrix.profile }} --non-interactive --no-wait

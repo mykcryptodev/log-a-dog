@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# local environment
+.env
+.env.local
+.env.*.local
+
+# Expo generated state and exports
+.expo/
+dist/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# native build artifacts and local signing material
+android/app/build/
+android/app/debug.keystore
+ios/Pods/
+ios/build/

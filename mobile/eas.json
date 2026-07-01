@@ -4,11 +4,21 @@
   },
   "build": {
     "preview": {
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://logadog.xyz",
+        "EXPO_PUBLIC_CHAIN_ID": "8453"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "preview-ios": {
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://logadog.xyz",
+        "EXPO_PUBLIC_CHAIN_ID": "8453"
+      },
       "ios": {
         "simulator": false,
         "distribution": "internal"

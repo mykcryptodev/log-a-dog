@@ -75,6 +75,19 @@ cd mobile
 eas build --profile preview --platform android
 ```
 
+Merges to `main` submit fresh EAS preview builds through GitHub Actions:
+
+- Android: `preview` profile, APK build
+- iOS: `preview-ios` profile, internal distribution build
+
+Required GitHub repository secrets:
+
+- `EXPO_TOKEN`: Expo access token for submitting EAS builds
+
+Required EAS `preview` environment variable:
+
+- `EXPO_PUBLIC_THIRDWEB_CLIENT_ID`: public Thirdweb client ID used by the mobile bundle
+
 ## CI
 
 Root CI runs `bun run typecheck` (web + shared), `bun run build:api-types`, then `cd mobile && bun run typecheck`.
