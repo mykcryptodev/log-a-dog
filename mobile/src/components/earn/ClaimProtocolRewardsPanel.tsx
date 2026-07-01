@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Text, View } from "react-native";
 import { getContract, prepareContractCall, readContract } from "thirdweb";
 import { toEther } from "thirdweb/utils";
 import { useActiveWallet } from "~/providers/WalletProvider";
@@ -9,6 +9,8 @@ import { PROTOCOL_REWARDS } from "~/constants/addresses";
 import { getActiveChain } from "~/constants/chains";
 import { getThirdwebClient } from "~/utils/thirdweb";
 import { CHAIN_ID } from "~/constants";
+import { COLORS } from "~/constants/colors";
+import { PopButton } from "~/components/ui/Pop";
 
 export function ClaimProtocolRewardsPanel() {
   const wallet = useActiveWallet();
@@ -67,19 +69,24 @@ export function ClaimProtocolRewardsPanel() {
   };
 
   return (
-    <View className="bg-base-200 rounded-2xl p-4 mb-4">
+    <View
+      className="bg-base-100 rounded-3xl p-4 mb-4"
+      style={{ borderWidth: 3, borderColor: COLORS.neutral }}
+    >
       <Text className="font-display text-neutral text-lg mb-2">Creator Rewards</Text>
       <View className="flex-row justify-between mb-3">
         <Text className="text-neutral/70">Protocol rewards</Text>
         <Text className="font-mono text-neutral">{Number(toEther(balance)).toFixed(4)} ETH</Text>
       </View>
-      <Pressable
+      <PopButton
         onPress={() => void claim()}
         disabled={!wallet || busy || balance === 0n}
-        className="bg-secondary rounded-xl py-3 items-center"
+        backgroundColor={COLORS.secondary}
+        radius={12}
+        contentStyle={{ paddingVertical: 12, alignItems: "center" }}
       >
-        {busy ? <ActivityIndicator color="#1E1A17" /> : <Text className="font-bold text-neutral">Claim ETH</Text>}
-      </Pressable>
+        {busy ? <ActivityIndicator color="#1E1A17" /> : <Text className="font-display tracking-wide" style={{ color: COLORS.base100 }}>Claim ETH</Text>}
+      </PopButton>
     </View>
   );
 }

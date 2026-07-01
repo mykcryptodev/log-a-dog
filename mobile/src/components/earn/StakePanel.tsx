@@ -19,6 +19,7 @@ import { getThirdwebClient } from "~/utils/thirdweb";
 import { CHAIN_ID } from "~/constants";
 import { trpc } from "~/utils/trpc";
 import { COLORS } from "~/constants/colors";
+import { PopButton } from "~/components/ui/Pop";
 
 export function StakePanel() {
   const wallet = useActiveWallet();
@@ -136,7 +137,10 @@ export function StakePanel() {
   const stakedLabel = staked != null ? Number(toEther(staked)).toFixed(0) : "—";
 
   return (
-    <View className="bg-base-200 rounded-2xl p-4 mb-4">
+    <View
+      className="bg-base-100 rounded-3xl p-4 mb-4"
+      style={{ borderWidth: 3, borderColor: COLORS.neutral }}
+    >
       <Text className="font-display text-neutral text-lg mb-1">Stake $HOTDOG</Text>
       <Text className="text-neutral/60 text-sm mb-3">
         APY: {typeof apy === "number" ? `${apy.toFixed(1)}%` : "—"} · Balance: {balanceLabel} · Staked: {stakedLabel}
@@ -147,7 +151,8 @@ export function StakePanel() {
           <Pressable
             key={t}
             onPress={() => setTab(t)}
-            className={`flex-1 rounded-xl py-2 items-center ${tab === t ? "bg-primary" : "bg-base-100"}`}
+            className={`flex-1 rounded-xl py-2 items-center ${tab === t ? "bg-primary" : "bg-base-200"}`}
+            style={{ borderWidth: 2, borderColor: COLORS.neutral }}
           >
             <Text className={`font-bold text-sm capitalize ${tab === t ? "text-neutral" : "text-neutral/60"}`}>
               {t}
@@ -161,21 +166,23 @@ export function StakePanel() {
         onChangeText={setAmount}
         placeholder="Amount"
         keyboardType="decimal-pad"
-        className="bg-base-100 rounded-xl px-4 py-3 text-neutral mb-3"
+        className="bg-base-200 rounded-xl px-4 py-3 text-neutral mb-3"
         placeholderTextColor="#999"
       />
 
-      <Pressable
+      <PopButton
         onPress={() => void (tab === "stake" ? handleStake() : handleUnstake())}
         disabled={!wallet || busy || !amount}
-        className="bg-accent rounded-xl py-3 items-center"
+        backgroundColor={COLORS.accent}
+        radius={12}
+        contentStyle={{ paddingVertical: 12, alignItems: "center" }}
       >
         {busy ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text className="font-bold text-white capitalize">{tab}</Text>
+          <Text className="font-display text-white capitalize tracking-wide">{tab}</Text>
         )}
-      </Pressable>
+      </PopButton>
     </View>
   );
 }

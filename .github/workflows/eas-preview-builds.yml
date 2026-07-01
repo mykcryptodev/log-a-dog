@@ -49,14 +49,26 @@ jobs:
         working-directory: mobile
         run: bun install
 
+      # EAS builds run on Expo's servers: env vars exported in this job are NOT
+      # uploaded with the build. Only `build.<profile>.env` in eas.json (or EAS
+      # server-side environments) reach the remote builder, so the public
+      # Thirdweb client ID must be written into eas.json before submitting.
+      - name: Inject public Thirdweb client ID into eas.json
+        working-directory: mobile
+        env:
+          THIRDWEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_THIRDWEB_CLIENT_ID || secrets.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || vars.EXPO_PUBLIC_THIRDWEB_CLIENT_ID || vars.NEXT_PUBLIC_THIRDWEB_CLIENT_ID }}
+        run: |
+          if [ -z "$THIRDWEB_CLIENT_ID" ]; then
+            echo "::warning::No EXPO_PUBLIC_THIRDWEB_CLIENT_ID / NEXT_PUBLIC_THIRDWEB_CLIENT_ID secret or variable is set on this repo. Wallet auth, IPFS uploads, and the Earn tab will be disabled in this build unless the 'preview' EAS environment defines EXPO_PUBLIC_THIRDWEB_CLIENT_ID."
+          else
+            jq --arg id "$THIRDWEB_CLIENT_ID" \
+              '(.build.preview.env.EXPO_PUBLIC_THIRDWEB_CLIENT_ID = $id) | (.build["preview-ios"].env.EXPO_PUBLIC_THIRDWEB_CLIENT_ID = $id)' \
+              eas.json > eas.json.tmp && mv eas.json.tmp eas.json
+            echo "Injected Thirdweb client ID into eas.json build profiles."
+          fi
+
       - name: Submit EAS build
         working-directory: mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EXPO_PUBLIC_API_URL: https://logadog.xyz
-          EXPO_PUBLIC_APP_URL: https://logadog.xyz
-          EXPO_PUBLIC_APP_DOMAIN: logadog.xyz
-          EXPO_PUBLIC_FARCASTER_SIWE_URI: https://logadog.xyz/login
-          EXPO_PUBLIC_THIRDWEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_THIRDWEB_CLIENT_ID || secrets.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || vars.EXPO_PUBLIC_THIRDWEB_CLIENT_ID || vars.NEXT_PUBLIC_THIRDWEB_CLIENT_ID }}
-          EXPO_PUBLIC_CHAIN_ID: "8453"
         run: eas build --platform ${{ matrix.platform }} --profile ${{ matrix.profile }} --non-interactive --no-wait

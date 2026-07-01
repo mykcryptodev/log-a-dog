@@ -1,13 +1,15 @@
 import React, { useMemo } from "react";
-import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
-import { VerdictStamp } from "~/components/VerdictStamp";
 import { VoteBar } from "~/components/VoteBar";
 import { AiJudgement } from "~/components/AiJudgement";
 import { VotingCountdown } from "~/components/VotingCountdown";
+import { PopCard, PopSticker, INK } from "~/components/ui/Pop";
+import { COLORS } from "~/constants/colors";
+import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 import {
   convertIpfsToHttps,
   formatTimestamp,
@@ -38,9 +40,6 @@ export function HotdogCard({
   pending = false,
 }: Props) {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const cardWidth = Math.min(width - 32, 480);
-  const imageHeight = Math.round(cardWidth * (5 / 4));
 
   const eaterName = useMemo(
     () => getDisplayName(hotdog.eaterProfile, hotdog.eater),
@@ -64,89 +63,136 @@ export function HotdogCard({
 
   const isResolved = hotdog.attestationPeriod?.status === 1;
   const isValid = hotdog.attestationPeriod?.isValid ?? false;
+  const isExpired =
+    Number(hotdog.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 <=
+    Date.now();
+
+  // Status sticker (web HotdogCard): mustard = voting live, green = valid,
+  // red = sus. The single verdict/state tag, top-left of the photo.
+  const status = pending
+    ? { label: "LOGGING…", bg: COLORS.base300, fg: COLORS.neutral }
+    : isResolved
+      ? isValid
+        ? { label: "VALID DOG", bg: COLORS.accent, fg: COLORS.base100 }
+        : { label: "RULED SUS", bg: COLORS.error, fg: "#FFFFFF" }
+      : !isExpired
+        ? { label: "ON THE GRILL", bg: COLORS.primary, fg: COLORS.neutral }
+        : { label: "FINAL", bg: COLORS.base300, fg: COLORS.neutral };
 
   return (
-    <View
-      className="mb-4 mx-4 rounded-3xl overflow-hidden bg-base-200"
-      style={{
-        shadowColor: "#E23B2E",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
-        shadowRadius: 20,
-        elevation: 4,
-        opacity: pending ? 0.7 : 1,
-      }}
+    <PopCard
+      offset={6}
+      radius={28}
+      style={{ marginHorizontal: 16, marginBottom: 20, opacity: pending ? 0.75 : 1 }}
+      contentStyle={{ padding: 14 }}
     >
-      {/* Header + Image — tapping navigates to dog detail page */}
-      <Pressable
-        disabled={pending}
-        onPress={() => router.push(`/dog/${hotdog.logId}` as never)}
-      >
-        {/* Header — tapping the eater navigates to their profile */}
-        <View className="flex-row items-center p-3 gap-2">
-          <Pressable
-            disabled={pending}
-            className="flex-row items-center gap-2 flex-1"
-            onPress={() =>
-              router.push(`/profile/address/${hotdog.eater}` as never)
-            }
+      {/* Identity row */}
+      <View className="flex-row items-center gap-2 mb-3">
+        <Pressable
+          disabled={pending}
+          className="flex-row items-center gap-2 flex-1"
+          onPress={() =>
+            router.push(`/profile/address/${hotdog.eater}` as never)
+          }
+        >
+          {/* pop-frame avatar ring */}
+          <View
+            style={{
+              borderWidth: 2.5,
+              borderColor: INK,
+              borderRadius: 22,
+              overflow: "hidden",
+            }}
           >
             <ProfileAvatar
               image={hotdog.eaterProfile?.image}
               address={hotdog.eater}
-              size={38}
+              size={36}
             />
-            <View className="flex-1">
-              <View className="flex-row items-center gap-1">
-                <Text className="font-bold text-neutral text-sm" numberOfLines={1}>
-                  {eaterName}
-                </Text>
-                <ProfileBadge profile={hotdog.eaterProfile} />
-              </View>
-              {showVia && (
-                <Text className="text-xs text-neutral/50" numberOfLines={1}>
-                  via {loggerName}
-                </Text>
-              )}
+          </View>
+          <View className="flex-1">
+            <View className="flex-row items-center gap-1">
+              <Text
+                className="font-display text-neutral text-base tracking-wide"
+                numberOfLines={1}
+              >
+                {eaterName}
+              </Text>
+              <ProfileBadge profile={hotdog.eaterProfile} />
             </View>
-          </Pressable>
-          <Text className="text-xs text-neutral/40">
-            {formatTimestamp(hotdog.timestamp)}
-          </Text>
-        </View>
+            {showVia && (
+              <Text className="text-xs text-neutral/50" numberOfLines={1}>
+                via {loggerName}
+              </Text>
+            )}
+          </View>
+        </Pressable>
+        <Text className="text-xs text-neutral/40">
+          {formatTimestamp(hotdog.timestamp)}
+        </Text>
+      </View>
 
-        {/* Image */}
-        <View style={{ width: cardWidth, height: imageHeight }}>
-          {imageUri ? (
-            <Image
-              source={{ uri: imageUri }}
-              style={{ flex: 1 }}
-              contentFit="cover"
-              transition={300}
-              placeholder={hotdog.zoraCoin?.mediaContent?.previewImage?.blurhash}
-            />
-          ) : (
-            <View className="flex-1 bg-base-300 items-center justify-center">
-              <Text className="text-5xl">🌭</Text>
-            </View>
-          )}
-          {isResolved && <VerdictStamp isValid={isValid} />}
-          {hotdog.duplicateOfLogId && (
-            <Pressable
-              onPress={() =>
-                router.push(`/dog/${hotdog.duplicateOfLogId}` as never)
-              }
-              className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1"
-            >
-              <Text className="text-white text-xs">♻ Dup #{hotdog.duplicateOfLogId}</Text>
-            </Pressable>
-          )}
-        </View>
+      {/* Framed photo (web: flip-face pop-frame rounded-2xl) */}
+      <Pressable
+        disabled={pending}
+        onPress={() => router.push(`/dog/${hotdog.logId}` as never)}
+        style={{
+          aspectRatio: 4 / 5,
+          borderWidth: 3,
+          borderColor: INK,
+          borderRadius: 16,
+          overflow: "hidden",
+          backgroundColor: COLORS.base300,
+        }}
+      >
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            style={{ flex: 1 }}
+            contentFit="cover"
+            transition={300}
+            placeholder={hotdog.zoraCoin?.mediaContent?.previewImage?.blurhash}
+          />
+        ) : (
+          <View className="flex-1 bg-base-300 items-center justify-center">
+            <Text className="text-5xl">🌭</Text>
+          </View>
+        )}
+
+        {/* Status sticker */}
+        <PopSticker
+          rotate={-3}
+          radius={8}
+          backgroundColor={status.bg}
+          style={{ position: "absolute", top: 12, left: 12 }}
+          contentStyle={{ paddingHorizontal: 8, paddingVertical: 3 }}
+        >
+          <Text
+            className="font-display text-xs tracking-wider"
+            style={{ color: status.fg }}
+          >
+            {status.label}
+          </Text>
+        </PopSticker>
+
+        {hotdog.duplicateOfLogId && (
+          <Pressable
+            onPress={() =>
+              router.push(`/dog/${hotdog.duplicateOfLogId}` as never)
+            }
+            className="absolute bottom-3 left-3 bg-primary rounded-full px-2 py-1"
+            style={{ borderWidth: 2, borderColor: INK }}
+          >
+            <Text className="text-neutral text-xs font-bold">
+              ♻ Dup #{hotdog.duplicateOfLogId}
+            </Text>
+          </Pressable>
+        )}
       </Pressable>
 
       {pending ? (
         /* Optimistic card — confirming on-chain */
-        <View className="px-3 py-3 flex-row items-center gap-2">
+        <View className="pt-3 flex-row items-center gap-2">
           <Text className="text-sm">⏳</Text>
           <Text className="text-neutral/60 text-sm font-medium">
             Posting onchain…
@@ -154,7 +200,7 @@ export function HotdogCard({
         </View>
       ) : (
         <>
-          {/* Vote bar — outside navigation pressable so taps register correctly */}
+          {/* THE vote control — primary, full-width */}
           <VoteBar
             logId={hotdog.logId}
             validCount={validCount}
@@ -165,9 +211,9 @@ export function HotdogCard({
             onVoteSuccess={onVoteSuccess}
           />
 
-          {/* Meta row — AI verdict + live voting countdown */}
-          {(showAiJudgement || (hotdog.attestationPeriod && !isResolved)) && (
-            <View className="flex-row items-center gap-3 px-3 pb-1">
+          {/* Metadata row: AI verdict + countdown · log number sticker */}
+          <View className="flex-row items-center justify-between pt-1">
+            <View className="flex-row items-center gap-3 flex-1">
               {showAiJudgement && (
                 <AiJudgement logId={hotdog.logId} timestamp={hotdog.timestamp} />
               )}
@@ -175,28 +221,19 @@ export function HotdogCard({
                 <VotingCountdown timestamp={hotdog.timestamp} />
               )}
             </View>
-          )}
-
-          {/* Footer */}
-          <View className="flex-row items-center justify-between px-3 pb-3">
-            <Text className="text-xs text-neutral/40 font-mono">
-              🌭 #{hotdog.logId}
-            </Text>
-            {hotdog.zoraCoin?.marketCap && (
-              <View className="flex-row items-center gap-2">
-                {typeof hotdog.zoraCoin.uniqueHolders === "number" && (
-                  <Text className="text-xs text-neutral/40">
-                    {hotdog.zoraCoin.uniqueHolders} holders
-                  </Text>
-                )}
-                <Text className="text-xs text-info">
-                  Ξ {parseFloat(hotdog.zoraCoin.marketCap).toFixed(4)} mcap
-                </Text>
-              </View>
-            )}
+            <PopSticker
+              rotate={-2}
+              radius={10}
+              backgroundColor={COLORS.primary}
+              contentStyle={{ paddingHorizontal: 9, paddingVertical: 3 }}
+            >
+              <Text className="font-display text-neutral text-sm tracking-wide">
+                🌭 #{hotdog.logId}
+              </Text>
+            </PopSticker>
           </View>
         </>
       )}
-    </View>
+    </PopCard>
   );
 }

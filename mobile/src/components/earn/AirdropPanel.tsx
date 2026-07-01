@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { PopButton } from "~/components/ui/Pop";
 import { getContract } from "thirdweb";
 import { isClaimed, claimERC20 } from "thirdweb/extensions/airdrop";
 import { useActiveWallet } from "~/providers/WalletProvider";
@@ -76,7 +77,10 @@ export function AirdropPanel() {
   if (!address) return null;
 
   return (
-    <View className="bg-base-200 rounded-2xl p-4 mb-4">
+    <View
+      className="bg-base-100 rounded-3xl p-4 mb-4"
+      style={{ borderWidth: 3, borderColor: "#1E1A17" }}
+    >
       <Text className="font-display text-neutral text-lg mb-2">Airdrop</Text>
       {amount > 0 ? (
         <Text className="text-neutral/70 mb-3">
@@ -87,19 +91,20 @@ export function AirdropPanel() {
           Not eligible for the current airdrop.
         </Text>
       )}
-      <Pressable
+      <PopButton
         onPress={() => void claim()}
         disabled={!wallet || busy || claimed || amount <= 0}
-        className="bg-primary rounded-xl py-3 items-center"
+        radius={12}
+        contentStyle={{ paddingVertical: 12, alignItems: "center" }}
       >
         {busy ? (
           <ActivityIndicator color="#1E1A17" />
         ) : (
-          <Text className="font-bold text-neutral">
+          <Text className="font-display text-neutral tracking-wide">
             {claimed ? "Already Claimed" : "Claim Airdrop"}
           </Text>
         )}
-      </Pressable>
+      </PopButton>
     </View>
   );
 }

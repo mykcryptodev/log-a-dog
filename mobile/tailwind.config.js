@@ -31,8 +31,11 @@ module.exports = {
         "sus": "#D7263D",
       },
       fontFamily: {
-        display: ["Anton_400Regular", "Anton", "serif"],
-        body: ["System", "sans-serif"],
+        // Match the web app: Segment is the single brand face (globals.css
+        // loads Segment-Medium/Bold and tailwind.config.ts maps sans/display
+        // /body to it).
+        display: ["Segment-Bold", "System", "sans-serif"],
+        body: ["Segment-Medium", "System", "sans-serif"],
       },
       borderRadius: {
         "2xl": "1rem",

@@ -20,7 +20,8 @@ import { CHAIN_ID } from "~/constants";
 import { COLORS } from "~/constants/colors";
 import { uploadImageToIPFS, uploadMetadataToIPFS } from "~/utils/upload";
 import { pendingDogsStore } from "~/stores/pendingDogs";
-import { normalizeImageUri } from "~/utils/image";
+import { compressImageForUpload, normalizeImageUri } from "~/utils/image";
+import { PopButton, INK } from "~/components/ui/Pop";
 
 interface Props {
   visible: boolean;
@@ -131,9 +132,12 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
     }
 
     try {
-      // Read local image as base64 for safety check (no network round-trip needed)
+      // Shrink to ≤0.5MB first (same as the web Upload component) — a full-res
+      // base64 photo exceeds the API body limit and the plain-text error
+      // response surfaces as "JSON Parse error".
       setStep("checking-safety");
-      const base64 = await FileSystem.readAsStringAsync(imageUri, {
+      const uploadUri = await compressImageForUpload(imageUri);
+      const base64 = await FileSystem.readAsStringAsync(uploadUri, {
         encoding: FileSystem.EncodingType.Base64,
       });
       const base64WithPrefix = `data:image/jpeg;base64,${base64}`;
@@ -151,9 +155,9 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         return;
       }
 
-      // Upload image to IPFS
+      // Upload the compressed image to IPFS (web uploads the resized file too)
       setStep("uploading-image");
-      const ipfsImageUri = await uploadImageToIPFS(imageUri);
+      const ipfsImageUri = await uploadImageToIPFS(uploadUri);
 
       // Upload metadata
       setStep("uploading-metadata");
@@ -222,7 +226,10 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
     >
       <View className="flex-1 bg-base-100">
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-4 pb-3 border-b border-base-300">
+        <View
+          className="flex-row items-center justify-between px-4 pt-4 pb-3"
+          style={{ borderBottomWidth: 3, borderBottomColor: INK }}
+        >
           <Pressable onPress={handleClose} className="p-1" disabled={isProcessing}>
             <Text className={["text-base", isProcessing ? "text-neutral/30" : "text-neutral/60"].join(" ")}>
               Cancel
@@ -239,11 +246,11 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Image picker */}
+          {/* Image picker — framed like the web card photo (pop-frame) */}
           <Pressable
             onPress={() => !isProcessing && pickImage(false)}
             className="bg-base-200 rounded-3xl overflow-hidden items-center justify-center mb-3"
-            style={{ aspectRatio: 4 / 5 }}
+            style={{ aspectRatio: 4 / 5, borderWidth: 3, borderColor: INK }}
           >
             {imageUri ? (
               <Image
@@ -261,19 +268,25 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
             )}
           </Pressable>
 
-          <View className="flex-row gap-2 mb-5">
-            <Pressable
+          <View className="flex-row mb-5" style={{ gap: 10 }}>
+            <PopButton
               onPress={() => !isProcessing && pickImage(false)}
-              className="flex-1 bg-base-200 rounded-xl py-3 items-center"
+              radius={12}
+              backgroundColor={COLORS.base200}
+              style={{ flex: 1 }}
+              contentStyle={{ paddingVertical: 10, alignItems: "center" }}
             >
               <Text className="text-neutral font-bold text-sm">📷 Gallery</Text>
-            </Pressable>
-            <Pressable
+            </PopButton>
+            <PopButton
               onPress={() => !isProcessing && pickImage(true)}
-              className="flex-1 bg-base-200 rounded-xl py-3 items-center"
+              radius={12}
+              backgroundColor={COLORS.base200}
+              style={{ flex: 1 }}
+              contentStyle={{ paddingVertical: 10, alignItems: "center" }}
             >
               <Text className="text-neutral font-bold text-sm">🤳 Camera</Text>
-            </Pressable>
+            </PopButton>
           </View>
 
           {/* Description */}
@@ -294,13 +307,11 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
           </View>
 
           {/* Submit */}
-          <Pressable
+          <PopButton
             onPress={handleSubmit}
             disabled={!imageUri || isProcessing}
-            className={[
-              "rounded-2xl py-4 items-center justify-center",
-              imageUri && !isProcessing ? "bg-primary" : "bg-base-300",
-            ].join(" ")}
+            radius={16}
+            contentStyle={{ paddingVertical: 15, alignItems: "center", justifyContent: "center" }}
           >
             {isProcessing ? (
               <View className="flex-row items-center gap-3">
@@ -314,7 +325,7 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
                 {step === "success" ? "🎉 LOGGED!" : "🌭 LOG IT"}
               </Text>
             )}
-          </Pressable>
+          </PopButton>
         </ScrollView>
       </View>
     </Modal>

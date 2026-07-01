@@ -1,7 +1,6 @@
 import React, { useCallback, useRef, useState } from "react";
 import {
   Animated,
-  Pressable,
   Text,
   View,
   Alert,
@@ -13,6 +12,7 @@ import { CHAIN_ID } from "~/constants";
 import { getVotePct } from "~/utils/format";
 import { COLORS } from "~/constants/colors";
 import { InsufficientStakeModal } from "~/components/InsufficientStakeModal";
+import { PopButton } from "~/components/ui/Pop";
 
 interface Props {
   logId: string;
@@ -93,74 +93,63 @@ export function VoteBar({
   const isResolved = attestationStatus === 1;
 
   return (
-    <View className="px-3 pb-3 pt-1">
+    <View className="pt-3">
       <InsufficientStakeModal
         visible={showInsufficientStake}
         onClose={() => setShowInsufficientStake(false)}
       />
-      {/* Progress bar */}
-      <View className="h-1.5 bg-base-300 rounded-full mb-2 overflow-hidden flex-row">
-        <View
-          className="h-full bg-accent rounded-full"
-          style={{ flex: validPct }}
-        />
-        <View
-          className="h-full bg-error rounded-full"
-          style={{ flex: invalidPct }}
-        />
-      </View>
 
-      <View className="flex-row gap-2">
-        {/* VALID DOG button */}
+      {/* Tally meter — web shows it only once the verdict is in. */}
+      {isResolved && (
+        <View
+          className="h-2.5 bg-base-300 rounded-full mb-2 overflow-hidden flex-row"
+          style={{ borderWidth: 1.5, borderColor: COLORS.neutral }}
+        >
+          <View className="h-full bg-accent" style={{ flex: validPct }} />
+          <View className="h-full bg-error" style={{ flex: invalidPct }} />
+        </View>
+      )}
+
+      {userHasVoted && !isResolved && (
+        <View className="mb-2 bg-base-200 rounded-lg py-1 items-center">
+          <Text className="font-display text-neutral/70 text-xs tracking-wide">
+            ✓ you voted {userVotedValid ? "VALID DOG" : "SUS"} — verdict locked
+          </Text>
+        </View>
+      )}
+
+      {/* Sticker-brutalism vote control (web pop-btn pair) */}
+      <View className="flex-row" style={{ gap: 10 }}>
         <Animated.View
           style={{ flex: 1, transform: [{ scale: validScale }] }}
         >
-          <Pressable
+          <PopButton
             onPress={() => handleVote(true)}
             disabled={isResolved || judgeMutation.isLoading}
-            className={[
-              "rounded-xl py-2.5 items-center justify-center border",
-              userHasVoted && userVotedValid
-                ? "bg-accent border-accent"
-                : "bg-accent/10 border-accent/40",
-              isResolved ? "opacity-50" : "",
-            ].join(" ")}
+            backgroundColor={COLORS.accent}
+            radius={12}
+            contentStyle={{ paddingVertical: 10, alignItems: "center" }}
           >
-            <Text
-              className={[
-                "font-bold text-sm",
-                userHasVoted && userVotedValid ? "text-white" : "text-accent",
-              ].join(" ")}
-            >
-              ✓ VALID {validPct}%
+            <Text className="font-display text-sm tracking-wide" style={{ color: COLORS.base100 }}>
+              {userHasVoted && userVotedValid ? "✓ " : ""}🥬 VALID DOG
             </Text>
-          </Pressable>
+          </PopButton>
         </Animated.View>
 
-        {/* SUS button */}
         <Animated.View
           style={{ flex: 1, transform: [{ scale: invalidScale }] }}
         >
-          <Pressable
+          <PopButton
             onPress={() => handleVote(false)}
             disabled={isResolved || judgeMutation.isLoading}
-            className={[
-              "rounded-xl py-2.5 items-center justify-center border",
-              userHasVoted && !userVotedValid
-                ? "bg-error border-error"
-                : "bg-error/10 border-error/40",
-              isResolved ? "opacity-50" : "",
-            ].join(" ")}
+            backgroundColor={COLORS.error}
+            radius={12}
+            contentStyle={{ paddingVertical: 10, alignItems: "center" }}
           >
-            <Text
-              className={[
-                "font-bold text-sm",
-                userHasVoted && !userVotedValid ? "text-white" : "text-error",
-              ].join(" ")}
-            >
-              ✗ SUS {invalidPct}%
+            <Text className="font-display text-white text-sm tracking-wide">
+              {userHasVoted && !userVotedValid ? "✓ " : ""}🔴 SUS
             </Text>
-          </Pressable>
+          </PopButton>
         </Animated.View>
       </View>
     </View>

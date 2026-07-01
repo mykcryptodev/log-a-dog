@@ -59,7 +59,7 @@ export function VerdictStamp({ isValid }: Props) {
       >
         <Text
           style={{
-            fontFamily: "Anton_400Regular",
+            fontFamily: "Segment-Bold",
             fontSize: 28,
             color: textColor,
             letterSpacing: 3,

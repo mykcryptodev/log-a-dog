@@ -155,7 +155,10 @@ export function HotdogFeed({ userAddress, header }: Props) {
         {isMainFeed && (
           <View className="px-4 pt-3 gap-3">
             <PreseasonBanner />
-            <View className="overflow-hidden rounded-2xl bg-base-100 border border-base-300">
+            <View
+              className="overflow-hidden rounded-2xl bg-base-100"
+              style={{ borderWidth: 2.5, borderColor: COLORS.neutral }}
+            >
               <LeaderboardBanner scrollSpeed={40} />
             </View>
             <View className="flex-row justify-end">

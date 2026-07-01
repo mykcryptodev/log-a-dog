@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "~/providers/AuthProvider";
 import { useWallet } from "~/providers/WalletProvider";
 import { COLORS } from "~/constants/colors";
+import { PopButton } from "~/components/ui/Pop";
 
 type Mode = "choose" | "email" | "email-verify";
 
@@ -125,13 +126,11 @@ export default function SignInScreen() {
               maxLength={6}
               autoFocus
             />
-            <Pressable
+            <PopButton
               onPress={handleVerifyCode}
               disabled={isLoading || verifyCode.length < 6}
-              className={[
-                "rounded-2xl py-4 items-center",
-                !isLoading && verifyCode.length >= 6 ? "bg-primary" : "bg-base-300",
-              ].join(" ")}
+              radius={16}
+              contentStyle={{ paddingVertical: 14, alignItems: "center" }}
             >
               {isLoading ? (
                 <ActivityIndicator color={COLORS.neutral} />
@@ -140,7 +139,7 @@ export default function SignInScreen() {
                   VERIFY
                 </Text>
               )}
-            </Pressable>
+            </PopButton>
             <Pressable onPress={() => setMode("email")}>
               <Text className="text-neutral/50 text-center text-sm">← Back</Text>
             </Pressable>
@@ -172,13 +171,11 @@ export default function SignInScreen() {
               autoCorrect={false}
               autoFocus
             />
-            <Pressable
+            <PopButton
               onPress={handleEmailSubmit}
               disabled={isLoading || !email.trim()}
-              className={[
-                "rounded-2xl py-4 items-center",
-                !isLoading && email.trim() ? "bg-primary" : "bg-base-300",
-              ].join(" ")}
+              radius={16}
+              contentStyle={{ paddingVertical: 14, alignItems: "center" }}
             >
               {isLoading ? (
                 <View className="flex-row items-center gap-3">
@@ -190,7 +187,7 @@ export default function SignInScreen() {
                   SEND CODE
                 </Text>
               )}
-            </Pressable>
+            </PopButton>
             <Pressable onPress={() => setMode("choose")}>
               <Text className="text-neutral/50 text-center text-sm">← Back</Text>
             </Pressable>
@@ -220,10 +217,11 @@ export default function SignInScreen() {
         </View>
 
         <View className="gap-3 mb-8">
-          <Pressable
+          <PopButton
             onPress={() => void handleWallet()}
             disabled={isLoading}
-            className="bg-primary rounded-2xl py-5 items-center"
+            radius={16}
+            contentStyle={{ paddingVertical: 18, alignItems: "center" }}
           >
             {isWalletLoading ? (
               <View className="flex-row items-center gap-3">
@@ -235,12 +233,14 @@ export default function SignInScreen() {
                 CONNECT WALLET
               </Text>
             )}
-          </Pressable>
+          </PopButton>
 
-          <Pressable
+          <PopButton
             onPress={handleFarcaster}
             disabled={isLoading}
-            className="bg-base-200 rounded-2xl py-4 items-center border border-base-300"
+            radius={16}
+            backgroundColor={COLORS.base200}
+            contentStyle={{ paddingVertical: 14, alignItems: "center" }}
           >
             {isLoading && loadingLabel.includes("Warpcast") ? (
               <View className="flex-row items-center gap-3">
@@ -252,12 +252,14 @@ export default function SignInScreen() {
                 Sign in with Farcaster
               </Text>
             )}
-          </Pressable>
+          </PopButton>
 
-          <Pressable
+          <PopButton
             onPress={handleGoogle}
             disabled={isLoading}
-            className="bg-base-200 rounded-2xl py-4 items-center border border-base-300"
+            radius={16}
+            backgroundColor={COLORS.base200}
+            contentStyle={{ paddingVertical: 14, alignItems: "center" }}
           >
             {isLoading && loadingLabel.includes("Google") ? (
               <View className="flex-row items-center gap-3">
@@ -269,17 +271,19 @@ export default function SignInScreen() {
                 🔵 Continue with Google
               </Text>
             )}
-          </Pressable>
+          </PopButton>
 
-          <Pressable
+          <PopButton
             onPress={() => setMode("email")}
             disabled={isLoading}
-            className="bg-base-200 rounded-2xl py-4 items-center border border-base-300"
+            radius={16}
+            backgroundColor={COLORS.base200}
+            contentStyle={{ paddingVertical: 14, alignItems: "center" }}
           >
             <Text className="font-bold text-neutral text-base">
               ✉️ Continue with Email
             </Text>
-          </Pressable>
+          </PopButton>
         </View>
 
         <Text className="text-neutral/40 text-xs text-center leading-5">
