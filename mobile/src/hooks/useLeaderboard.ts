@@ -15,11 +15,18 @@ export interface UseLeaderboardOptions {
  * query, same shared `toLeaderboardEntries` transform — so both apps derive
  * ranked entries identically.
  */
+export interface UseLeaderboardResult {
+  entries: LeaderboardEntry[];
+  isLoading: boolean;
+  isError: boolean;
+  refetch: () => void;
+}
+
 export function useLeaderboard({
   startDate,
   endDate,
   limit = 10,
-}: UseLeaderboardOptions = {}) {
+}: UseLeaderboardOptions = {}): UseLeaderboardResult {
   const query = trpc.hotdog.getLeaderboard.useQuery(
     {
       chainId: CHAIN_ID,
@@ -38,5 +45,12 @@ export function useLeaderboard({
     [query.data, limit],
   );
 
-  return { ...query, entries };
+  // The tRPC client is currently untyped (`createTRPCReact<any>`), so pull the
+  // query flags out through an explicitly typed result to keep consumers typed.
+  return {
+    entries,
+    isLoading: Boolean(query.isLoading),
+    isError: Boolean(query.isError),
+    refetch: () => void query.refetch(),
+  };
 }

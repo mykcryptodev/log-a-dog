@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { trpc } from "~/utils/trpc";
 import { CHAIN_ID, ZERO_ADDRESS } from "~/constants";
 import { useAuth } from "~/providers/AuthProvider";
