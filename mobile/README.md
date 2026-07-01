@@ -28,6 +28,9 @@ React Native app for [Log a Dog](https://logadog.xyz), sharing the backend and [
    | Variable | Description |
    |----------|-------------|
    | `EXPO_PUBLIC_API_URL` | Next.js backend URL (e.g. `https://logadog.xyz` or `http://localhost:3000`) |
+   | `EXPO_PUBLIC_APP_URL` | Canonical app URL used in SIWE messages (production: `https://logadog.xyz`) |
+   | `EXPO_PUBLIC_APP_DOMAIN` | Canonical app domain used in SIWE messages (production: `logadog.xyz`) |
+   | `EXPO_PUBLIC_FARCASTER_SIWE_URI` | Farcaster SIWE callback URI (production: `https://logadog.xyz/login`) |
    | `EXPO_PUBLIC_THIRDWEB_CLIENT_ID` | Public Thirdweb client ID (same value as web `NEXT_PUBLIC_THIRDWEB_CLIENT_ID`; restart Expo after changing it) |
    | `EXPO_PUBLIC_CHAIN_ID` | `8453` (Base mainnet) or `84532` (Base Sepolia) |
 
@@ -88,6 +91,7 @@ Merges to `main` submit fresh EAS preview builds through GitHub Actions:
 Required GitHub repository secrets:
 
 - `EXPO_TOKEN`: Expo access token for submitting EAS builds
+- `EXPO_PUBLIC_THIRDWEB_CLIENT_ID` or `NEXT_PUBLIC_THIRDWEB_CLIENT_ID`: same public Thirdweb client ID used by the web app
 
 Required EAS `preview` environment variable:
 

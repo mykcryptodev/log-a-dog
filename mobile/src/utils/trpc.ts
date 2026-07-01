@@ -19,7 +19,10 @@ export function buildTRPCClient(sessionToken?: string | null) {
         headers() {
           const headers: Record<string, string> = {};
           if (sessionToken) {
-            headers["Cookie"] = `next-auth.session-token=${sessionToken}`;
+            headers["Cookie"] = [
+              `next-auth.session-token=${sessionToken}`,
+              `__Secure-next-auth.session-token=${sessionToken}`,
+            ].join("; ");
           }
           return headers;
         },
