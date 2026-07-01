@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { Alert, Linking } from "react-native";
+import { Linking } from "react-native";
 import { createAppClient, viemConnector } from "@farcaster/auth-client";
 import { inAppWallet, type Account } from "thirdweb/wallets";
 import {
@@ -94,6 +94,16 @@ async function postToMobileAuth(
   return { sessionToken: payload.sessionToken, user: payload.user };
 }
 
+async function openFarcasterAuthUrl(url: string) {
+  try {
+    await Linking.openURL(url);
+  } catch {
+    throw new Error(
+      `Could not open Warpcast. Install Warpcast and try again, or paste this URL in Warpcast: ${url}`,
+    );
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,12 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { url, channelToken } = channelData;
 
-    const canOpen = await Linking.canOpenURL(url);
-    if (canOpen) {
-      await Linking.openURL(url);
-    } else {
-      Alert.alert("Open Warpcast", `Paste this URL in Warpcast:\n\n${url}`);
-    }
+    await openFarcasterAuthUrl(url);
 
     const { data: statusData, isError: statusErr } = await appClient.watchStatus({
       channelToken,

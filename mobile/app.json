@@ -19,7 +19,21 @@
       "newArchEnabled": false,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Log a Dog needs access to your photos to submit a hotdog.",
-        "NSCameraUsageDescription": "Log a Dog needs your camera to snap a hotdog pic."
+        "NSCameraUsageDescription": "Log a Dog needs your camera to snap a hotdog pic.",
+        "LSApplicationQueriesSchemes": [
+          "farcaster",
+          "warpcast",
+          "wc",
+          "metamask",
+          "trust",
+          "rainbow",
+          "uniswap",
+          "zerion",
+          "imtokenv2",
+          "argent",
+          "safe",
+          "cbwallet"
+        ]
       }
     },
     "android": {
@@ -58,6 +72,88 @@
             "extraMavenRepos": [
               "https://www.jitpack.io"
             ],
+            "manifestQueries": {
+              "intent": [
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "https"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "farcaster"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "warpcast"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "wc"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "metamask"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "trust"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "rainbow"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "uniswap"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "zerion"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "imtokenv2"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "argent"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "safe"
+                  }
+                },
+                {
+                  "action": "android.intent.action.VIEW",
+                  "data": {
+                    "scheme": "cbwallet"
+                  }
+                }
+              ]
+            },
             "packagingOptions": {
               "pickFirst": [
                 "**/libc++_shared.so",
