@@ -1,8 +1,11 @@
 import React from "react";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useAuth } from "~/providers/AuthProvider";
-import { API_URL } from "~/constants";
+import { API_URL, CHAIN_ID } from "~/constants";
+import { trpc } from "~/utils/trpc";
+import { getSeasonInfo } from "@shared/season";
 
 interface InfoCardProps {
   icon: string;
@@ -31,6 +34,12 @@ function InfoCard({ icon, title, body, action }: InfoCardProps) {
 
 export default function EarnScreen() {
   const { session } = useAuth();
+  const router = useRouter();
+  const season = getSeasonInfo();
+  const { data: apy } = trpc.staking.getApy.useQuery(
+    { chainId: CHAIN_ID },
+    { refetchOnWindowFocus: false, staleTime: 60_000 },
+  );
 
   const openWebApp = (path: string) => {
     Linking.openURL(`${API_URL}${path}`);
@@ -45,9 +54,47 @@ export default function EarnScreen() {
         <Text className="font-display text-neutral text-2xl mb-1 tracking-wider">
           EARN $HOTDOG
         </Text>
-        <Text className="text-neutral/60 text-sm mb-6">
+        <Text className="text-neutral/60 text-sm mb-4">
           Stake tokens to vote and earn rewards for accurate verdicts.
         </Text>
+
+        {/* Live stats */}
+        <View className="flex-row gap-3 mb-6">
+          <View className="flex-1 bg-accent/10 rounded-2xl p-4">
+            <Text className="text-neutral/50 text-xs mb-1">Staking APY</Text>
+            <Text className="font-display text-accent text-2xl">
+              {typeof apy === "number" ? `${apy.toFixed(1)}%` : "—"}
+            </Text>
+          </View>
+          <View className="flex-1 bg-primary/10 rounded-2xl p-4">
+            <Text className="text-neutral/50 text-xs mb-1">
+              Season {season.season}
+            </Text>
+            <Text className="font-display text-neutral text-2xl">
+              {season.isLive ? `Day ${season.day}` : "Soon"}
+            </Text>
+          </View>
+        </View>
+
+        <Pressable
+          onPress={() => router.push("/faq")}
+          className="mb-3 bg-base-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
+        >
+          <Text className="text-neutral font-bold text-sm">
+            📖 How it works · Rules & FAQ
+          </Text>
+          <Text className="text-neutral/40">→</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/poidh")}
+          className="mb-6 bg-secondary/10 border border-secondary/30 rounded-xl px-4 py-3 flex-row items-center justify-between"
+        >
+          <Text className="text-neutral font-bold text-sm">
+            🕹️ POIDH Campaign · Win $50 ETH/day
+          </Text>
+          <Text className="text-neutral/40">→</Text>
+        </Pressable>
 
         <InfoCard
           icon="🌭"

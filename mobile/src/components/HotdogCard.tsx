@@ -6,6 +6,8 @@ import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { VerdictStamp } from "~/components/VerdictStamp";
 import { VoteBar } from "~/components/VoteBar";
+import { AiJudgement } from "~/components/AiJudgement";
+import { VotingCountdown } from "~/components/VotingCountdown";
 import {
   convertIpfsToHttps,
   formatTimestamp,
@@ -20,6 +22,9 @@ interface Props {
   userHasVoted: boolean;
   userVotedValid: boolean;
   onVoteSuccess?: () => void;
+  showAiJudgement?: boolean;
+  /** Optimistic card for a log still confirming on-chain. */
+  pending?: boolean;
 }
 
 export function HotdogCard({
@@ -29,6 +34,8 @@ export function HotdogCard({
   userHasVoted,
   userVotedValid,
   onVoteSuccess,
+  showAiJudgement = false,
+  pending = false,
 }: Props) {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -67,30 +74,42 @@ export function HotdogCard({
         shadowOpacity: 0.12,
         shadowRadius: 20,
         elevation: 4,
+        opacity: pending ? 0.7 : 1,
       }}
     >
       {/* Header + Image — tapping navigates to dog detail page */}
-      <Pressable onPress={() => router.push(`/dog/${hotdog.logId}` as never)}>
-        {/* Header */}
+      <Pressable
+        disabled={pending}
+        onPress={() => router.push(`/dog/${hotdog.logId}` as never)}
+      >
+        {/* Header — tapping the eater navigates to their profile */}
         <View className="flex-row items-center p-3 gap-2">
-          <ProfileAvatar
-            image={hotdog.eaterProfile?.image}
-            address={hotdog.eater}
-            size={38}
-          />
-          <View className="flex-1">
-            <View className="flex-row items-center gap-1">
-              <Text className="font-bold text-neutral text-sm" numberOfLines={1}>
-                {eaterName}
-              </Text>
-              <ProfileBadge profile={hotdog.eaterProfile} />
+          <Pressable
+            disabled={pending}
+            className="flex-row items-center gap-2 flex-1"
+            onPress={() =>
+              router.push(`/profile/address/${hotdog.eater}` as never)
+            }
+          >
+            <ProfileAvatar
+              image={hotdog.eaterProfile?.image}
+              address={hotdog.eater}
+              size={38}
+            />
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1">
+                <Text className="font-bold text-neutral text-sm" numberOfLines={1}>
+                  {eaterName}
+                </Text>
+                <ProfileBadge profile={hotdog.eaterProfile} />
+              </View>
+              {showVia && (
+                <Text className="text-xs text-neutral/50" numberOfLines={1}>
+                  via {loggerName}
+                </Text>
+              )}
             </View>
-            {showVia && (
-              <Text className="text-xs text-neutral/50" numberOfLines={1}>
-                via {loggerName}
-              </Text>
-            )}
-          </View>
+          </Pressable>
           <Text className="text-xs text-neutral/40">
             {formatTimestamp(hotdog.timestamp)}
           </Text>
@@ -120,28 +139,59 @@ export function HotdogCard({
         </View>
       </Pressable>
 
-      {/* Vote bar — outside navigation pressable so taps register correctly */}
-      <VoteBar
-        logId={hotdog.logId}
-        validCount={validCount}
-        invalidCount={invalidCount}
-        userHasVoted={userHasVoted}
-        userVotedValid={userVotedValid}
-        attestationStatus={hotdog.attestationPeriod?.status}
-        onVoteSuccess={onVoteSuccess}
-      />
-
-      {/* Footer */}
-      <View className="flex-row items-center justify-between px-3 pb-3">
-        <Text className="text-xs text-neutral/40 font-mono">
-          🌭 #{hotdog.logId}
-        </Text>
-        {hotdog.zoraCoin?.marketCap && (
-          <Text className="text-xs text-info">
-            Ξ {parseFloat(hotdog.zoraCoin.marketCap).toFixed(4)} mcap
+      {pending ? (
+        /* Optimistic card — confirming on-chain */
+        <View className="px-3 py-3 flex-row items-center gap-2">
+          <Text className="text-sm">⏳</Text>
+          <Text className="text-neutral/60 text-sm font-medium">
+            Posting onchain…
           </Text>
-        )}
-      </View>
+        </View>
+      ) : (
+        <>
+          {/* Vote bar — outside navigation pressable so taps register correctly */}
+          <VoteBar
+            logId={hotdog.logId}
+            validCount={validCount}
+            invalidCount={invalidCount}
+            userHasVoted={userHasVoted}
+            userVotedValid={userVotedValid}
+            attestationStatus={hotdog.attestationPeriod?.status}
+            onVoteSuccess={onVoteSuccess}
+          />
+
+          {/* Meta row — AI verdict + live voting countdown */}
+          {(showAiJudgement || (hotdog.attestationPeriod && !isResolved)) && (
+            <View className="flex-row items-center gap-3 px-3 pb-1">
+              {showAiJudgement && (
+                <AiJudgement logId={hotdog.logId} timestamp={hotdog.timestamp} />
+              )}
+              {hotdog.attestationPeriod && !isResolved && (
+                <VotingCountdown timestamp={hotdog.timestamp} />
+              )}
+            </View>
+          )}
+
+          {/* Footer */}
+          <View className="flex-row items-center justify-between px-3 pb-3">
+            <Text className="text-xs text-neutral/40 font-mono">
+              🌭 #{hotdog.logId}
+            </Text>
+            {hotdog.zoraCoin?.marketCap && (
+              <View className="flex-row items-center gap-2">
+                {typeof hotdog.zoraCoin.uniqueHolders === "number" && (
+                  <Text className="text-xs text-neutral/40">
+                    {hotdog.zoraCoin.uniqueHolders} holders
+                  </Text>
+                )}
+                <Text className="text-xs text-info">
+                  Ξ {parseFloat(hotdog.zoraCoin.marketCap).toFixed(4)} mcap
+                </Text>
+              </View>
+            )}
+          </View>
+        </>
+      )}
     </View>
   );
 }

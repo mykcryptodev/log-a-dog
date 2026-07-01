@@ -10,6 +10,8 @@
     "dev": "next dev",
     "postinstall": "prisma generate",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "build:api-types": "tsc -p tsconfig.api-types.json && tsc-alias -p tsconfig.api-types.json",
     "start": "next start",
     "script:fix-addresses": "tsx src/scripts/fix-address-case.ts",
     "script:migrate-events": "tsx src/scripts/migrate-dog-events.ts",
@@ -83,6 +85,7 @@
     "prettier-plugin-tailwindcss": "^0.5.14",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.19",
+    "tsc-alias": "^1.8.17",
     "typescript": "^5.9.3"
   },
   "overrides": {

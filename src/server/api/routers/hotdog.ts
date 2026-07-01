@@ -60,7 +60,7 @@ interface ZoraCoin {
   symbol: string;
 }
 
-interface ZoraCoinDetails {
+export interface ZoraCoinDetails {
   id: string;
   name: string;
   description: string;
@@ -87,7 +87,7 @@ interface ZoraCoinDetails {
   link?: string;
 }
 
-interface HotdogMetadata {
+export interface HotdogMetadata {
   imageUri: string;
   eater: string;
   zoraCoin?: ZoraCoin;
@@ -109,7 +109,7 @@ interface HotdogResponse {
   userAttestations: boolean[];
 }
 
-interface ProcessedHotdog {
+export interface ProcessedHotdog {
   logId: string;
   imageUri: string;
   metadataUri: string;
@@ -147,7 +147,7 @@ interface ProcessedHotdog {
   } | null;
 }
 
-interface GetAllResponse {
+export interface GetAllResponse {
   hotdogs: ProcessedHotdog[];
   validAttestations: string[];
   invalidAttestations: string[];

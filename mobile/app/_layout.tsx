@@ -37,7 +37,6 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
                 },
               }}
             />
@@ -49,7 +48,6 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
                 },
                 presentation: "modal",
               }}
@@ -62,7 +60,39 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
+                },
+              }}
+            />
+            <Stack.Screen
+              name="faq"
+              options={{
+                headerTitle: "FAQ & Rules",
+                headerStyle: { backgroundColor: "#FFF8EC" },
+                headerTintColor: "#1E1A17",
+                headerTitleStyle: {
+                  fontFamily: "Anton_400Regular",
+                },
+              }}
+            />
+            <Stack.Screen
+              name="profile/address/[address]"
+              options={{
+                headerTitle: "Profile",
+                headerStyle: { backgroundColor: "#FFF8EC" },
+                headerTintColor: "#1E1A17",
+                headerTitleStyle: {
+                  fontFamily: "Anton_400Regular",
+                },
+              }}
+            />
+            <Stack.Screen
+              name="poidh"
+              options={{
+                headerTitle: "POIDH Campaign",
+                headerStyle: { backgroundColor: "#FFF8EC" },
+                headerTintColor: "#1E1A17",
+                headerTitleStyle: {
+                  fontFamily: "Anton_400Regular",
                 },
               }}
             />

@@ -44,7 +44,7 @@ export function VoteBar({
     onSuccess: () => {
       onVoteSuccess?.();
     },
-    onError: (err: Error) => {
+    onError: (err) => {
       const msg = err.message ?? "Failed to vote";
       if (msg.includes("Insufficient stake")) {
         Alert.alert(

@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "~/providers/AuthProvider";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { HotdogFeed } from "~/components/HotdogFeed";
+import { NotificationsSettings } from "~/components/NotificationsSettings";
 import { formatAddress } from "~/utils/format";
 
 export default function ProfileScreen() {
@@ -88,6 +89,16 @@ export default function ProfileScreen() {
             <Text className="text-neutral font-bold text-sm">💰 Earn & Stake $HOTDOG</Text>
             <Text className="text-neutral/40">→</Text>
           </Pressable>
+
+          <Pressable
+            onPress={() => router.push("/faq")}
+            className="mt-3 bg-base-200 rounded-xl px-3 py-2 flex-row items-center justify-between"
+          >
+            <Text className="text-neutral font-bold text-sm">📖 How it works · FAQ</Text>
+            <Text className="text-neutral/40">→</Text>
+          </Pressable>
+
+          <NotificationsSettings address={session.address} fid={session.fid} />
         </View>
 
         {/* User's dog feed */}

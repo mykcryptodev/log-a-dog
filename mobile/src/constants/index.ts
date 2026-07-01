@@ -1,5 +1,21 @@
 import Constants from "expo-constants";
 
+// Cross-platform constants (contest timing, attestation rules, zero address,
+// app name) come from the shared data layer so web + mobile never drift.
+export {
+  ZERO_ADDRESS,
+  CONTEST_START_TIME,
+  CONTEST_END_TIME,
+  DOG_FEED_START_TIME,
+  ATTESTATION_WINDOW_SECONDS,
+  APP_NAME,
+  APP_DESCRIPTION,
+  BASE_MAINNET_ID,
+  BASE_SEPOLIA_ID,
+} from "@shared/constants";
+
+// ---- Mobile-only runtime config ----
+
 export const API_URL =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
   process.env.EXPO_PUBLIC_API_URL ??
@@ -10,20 +26,7 @@ export const THIRDWEB_CLIENT_ID =
   process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID ??
   "";
 
-export const CHAIN_ID = parseInt(
-  process.env.EXPO_PUBLIC_CHAIN_ID ?? "8453",
-  10,
-);
-
-export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-export const CONTEST_START_TIME = "2026-07-04T10:00:00-04:00";
-export const CONTEST_END_TIME = "2026-09-07T23:59:00-04:00";
-
-export const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60;
-
-export const APP_NAME = "Log a Dog";
-export const APP_DESCRIPTION = "Earn money eating hotdogs";
+export const CHAIN_ID = parseInt(process.env.EXPO_PUBLIC_CHAIN_ID ?? "8453", 10);
 
 export const FARCASTER_RELAY_URL = "https://relay.farcaster.xyz";
 export const FARCASTER_DOMAIN = "logadog.com";
