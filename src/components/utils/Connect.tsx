@@ -57,7 +57,7 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
   const inAppWallets = [
     inAppWallet({
       auth: {
-        options: ["email", "phone", "x", "google"],
+        options: ["email", "phone", "x", "google", "apple"],
       },
     }),
   ];
