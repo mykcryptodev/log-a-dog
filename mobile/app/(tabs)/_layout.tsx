@@ -6,6 +6,7 @@ import {
   View,
 } from "react-native";
 import { Tabs } from "expo-router";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LogModal } from "~/components/LogModal";
 import { COLORS } from "~/constants/colors";
@@ -75,6 +76,7 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
                     backgroundColor: COLORS.primary,
                     alignItems: "center",
                     justifyContent: "center",
+                    overflow: "hidden",
                     marginBottom: 8,
                     shadowColor: COLORS.secondary,
                     shadowOffset: { width: 0, height: 4 },
@@ -83,7 +85,11 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
                     elevation: 6,
                   }}
                 >
-                  <Text style={{ fontSize: 28 }}>🌭</Text>
+                  <Image
+                    source={require("../../assets/icon.png")}
+                    style={{ width: 58, height: 58 }}
+                    contentFit="cover"
+                  />
                 </Pressable>
               </View>
             );

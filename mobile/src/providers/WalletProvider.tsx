@@ -18,7 +18,7 @@ interface WalletContextValue {
   isConnecting: boolean;
   hasSigner: boolean;
   connectInAppWallet: () => Promise<boolean>;
-  connectExternalWallet: () => Promise<boolean>;
+  connectExternalWallet: () => Promise<Wallet | null>;
   disconnectWallet: () => Promise<void>;
 }
 
@@ -28,7 +28,7 @@ const WalletContext = createContext<WalletContextValue>({
   isConnecting: false,
   hasSigner: false,
   connectInAppWallet: async () => false,
-  connectExternalWallet: async () => false,
+  connectExternalWallet: async () => null,
   disconnectWallet: async () => {},
 });
 
@@ -38,11 +38,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isConnecting, setIsConnecting] = useState(false);
 
   const connectInAppWallet = useCallback(async () => {
-    const client = getThirdwebClient();
-    const chain = getThirdwebChain();
-    const w = inAppWallet();
     setIsConnecting(true);
     try {
+      const client = getThirdwebClient();
+      const chain = getThirdwebChain();
+      const w = inAppWallet();
       const connected = await w.autoConnect({ client, chain });
       if (connected) {
         setWallet(w);
@@ -57,21 +57,21 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const connectExternalWallet = useCallback(async () => {
-    const client = getThirdwebClient();
-    const chain = getThirdwebChain();
-    const w = walletConnect();
     setIsConnecting(true);
     try {
+      const client = getThirdwebClient();
+      const chain = getThirdwebChain();
+      const w = walletConnect();
       await w.connect({
         client,
         chain,
       });
       setWallet(w);
-      return true;
+      return w;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not connect wallet";
       Alert.alert("Wallet Connect", msg);
-      return false;
+      return null;
     } finally {
       setIsConnecting(false);
     }

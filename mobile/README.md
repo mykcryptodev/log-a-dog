@@ -28,7 +28,7 @@ React Native app for [Log a Dog](https://logadog.xyz), sharing the backend and [
    | Variable | Description |
    |----------|-------------|
    | `EXPO_PUBLIC_API_URL` | Next.js backend URL (e.g. `https://logadog.xyz` or `http://localhost:3000`) |
-   | `EXPO_PUBLIC_THIRDWEB_CLIENT_ID` | Thirdweb client ID (same as web `NEXT_PUBLIC_THIRDWEB_CLIENT_ID`) |
+   | `EXPO_PUBLIC_THIRDWEB_CLIENT_ID` | Public Thirdweb client ID (same value as web `NEXT_PUBLIC_THIRDWEB_CLIENT_ID`; restart Expo after changing it) |
    | `EXPO_PUBLIC_CHAIN_ID` | `8453` (Base mainnet) or `84532` (Base Sepolia) |
 
 3. Generate tRPC types (required before `typecheck`):
@@ -54,6 +54,11 @@ bun run typecheck    # TypeScript check
 - **Auth:** Farcaster relay, email OTP, Google via Thirdweb in-app wallet → NextAuth SIWE
 - **Wallet:** `WalletProvider` persists in-app wallet + WalletConnect for on-chain actions (stake, comments, revoke)
 - **Shared logic:** `@shared/*` types, feed transforms, addresses, season, format
+
+The mobile sign-in screen intentionally uses native auth controls instead of the
+web `ConnectButton`. Thirdweb's web modal depends on browser and Next.js APIs,
+so mobile mirrors the same choices with WalletConnect, Farcaster, Google, and
+email flows that all complete a SIWE login against the shared NextAuth backend.
 
 ## Feature parity with web
 
@@ -86,7 +91,7 @@ Required GitHub repository secrets:
 
 Required EAS `preview` environment variable:
 
-- `EXPO_PUBLIC_THIRDWEB_CLIENT_ID`: public Thirdweb client ID used by the mobile bundle
+- `EXPO_PUBLIC_THIRDWEB_CLIENT_ID`: public Thirdweb client ID used by the mobile bundle (same value as web `NEXT_PUBLIC_THIRDWEB_CLIENT_ID`)
 
 ## CI
 

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,12 +14,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "~/providers/AuthProvider";
+import { useWallet } from "~/providers/WalletProvider";
 import { COLORS } from "~/constants/colors";
 
 type Mode = "choose" | "email" | "email-verify";
 
 export default function SignInScreen() {
-  const { signInWithFarcaster, signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithFarcaster, signInWithEmail, signInWithGoogle, signInWithWallet } = useAuth();
+  const { connectExternalWallet } = useWallet();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("choose");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +31,9 @@ export default function SignInScreen() {
   const [verifyFn, setVerifyFn] = useState<((code: string) => Promise<void>) | null>(null);
 
   const navigate = () => router.replace("/(tabs)/profile");
+  const isWalletLoading =
+    isLoading &&
+    (loadingLabel.includes("wallet") || loadingLabel.includes("Signing"));
 
   const wrap = async (label: string, fn: () => Promise<void>) => {
     setIsLoading(true);
@@ -49,6 +55,26 @@ export default function SignInScreen() {
 
   const handleGoogle = () =>
     wrap("Signing in with Google…", signInWithGoogle);
+
+  const handleWallet = async () => {
+    setIsLoading(true);
+    setLoadingLabel("Connecting wallet…");
+    try {
+      const wallet = await connectExternalWallet();
+      const account = wallet?.getAccount();
+      if (!account) return;
+
+      setLoadingLabel("Signing in…");
+      await signInWithWallet(account);
+      navigate();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Wallet sign-in failed";
+      Alert.alert("Error", msg);
+    } finally {
+      setIsLoading(false);
+      setLoadingLabel("");
+    }
+  };
 
   const handleEmailSubmit = async () => {
     if (!email.trim()) return;
@@ -180,24 +206,41 @@ export default function SignInScreen() {
         className="flex-1"
         contentContainerStyle={{ padding: 24, paddingTop: 32, flexGrow: 1 }}
       >
-        {/* Hero */}
-        <View className="items-center mb-10">
-          <Text className="text-7xl mb-4">🌭</Text>
+        <View className="items-center mb-8">
+          <Image
+            source={require("../assets/icon.png")}
+            style={{ width: 96, height: 96, borderRadius: 48, marginBottom: 16 }}
+          />
           <Text className="font-display text-neutral text-4xl text-center tracking-wider mb-2">
-            LOG A DOG
+            LOGIN TO LOG A DOG
           </Text>
           <Text className="text-neutral/60 text-center text-base">
-            The internet's summer hotdog-eating sport
+            Connect a wallet or use a native sign-in option.
           </Text>
         </View>
 
-        {/* Auth options */}
         <View className="gap-3 mb-8">
-          {/* Farcaster — primary */}
+          <Pressable
+            onPress={() => void handleWallet()}
+            disabled={isLoading}
+            className="bg-primary rounded-2xl py-5 items-center"
+          >
+            {isWalletLoading ? (
+              <View className="flex-row items-center gap-3">
+                <ActivityIndicator color={COLORS.neutral} size="small" />
+                <Text className="font-bold text-neutral">{loadingLabel}</Text>
+              </View>
+            ) : (
+              <Text className="font-display text-neutral text-xl tracking-wider">
+                CONNECT WALLET
+              </Text>
+            )}
+          </Pressable>
+
           <Pressable
             onPress={handleFarcaster}
             disabled={isLoading}
-            className="bg-primary rounded-2xl py-5 items-center"
+            className="bg-base-200 rounded-2xl py-4 items-center border border-base-300"
           >
             {isLoading && loadingLabel.includes("Warpcast") ? (
               <View className="flex-row items-center gap-3">
@@ -205,13 +248,12 @@ export default function SignInScreen() {
                 <Text className="font-bold text-neutral">{loadingLabel}</Text>
               </View>
             ) : (
-              <Text className="font-display text-neutral text-xl tracking-wider">
-                SIGN IN WITH FARCASTER
+              <Text className="font-bold text-neutral text-base">
+                Sign in with Farcaster
               </Text>
             )}
           </Pressable>
 
-          {/* Google */}
           <Pressable
             onPress={handleGoogle}
             disabled={isLoading}
@@ -229,7 +271,6 @@ export default function SignInScreen() {
             )}
           </Pressable>
 
-          {/* Email */}
           <Pressable
             onPress={() => setMode("email")}
             disabled={isLoading}
@@ -241,8 +282,9 @@ export default function SignInScreen() {
           </Pressable>
         </View>
 
-        <Text className="text-neutral/40 text-xs text-center">
-          Wallet powered by Thirdweb. By signing in you agree to eat responsibly.
+        <Text className="text-neutral/40 text-xs text-center leading-5">
+          Mobile uses native wallet connections instead of the web-only Thirdweb modal.
+          Google and email create a Thirdweb in-app wallet.
         </Text>
       </ScrollView>
     </SafeAreaView>

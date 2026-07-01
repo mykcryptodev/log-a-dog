@@ -8,7 +8,7 @@ let client: ThirdwebClient | null = null;
 export function getThirdwebClient() {
   if (!THIRDWEB_CLIENT_ID) {
     throw new Error(
-      "Missing EXPO_PUBLIC_THIRDWEB_CLIENT_ID. Add it to mobile/.env.local and restart Expo.",
+      "Missing EXPO_PUBLIC_THIRDWEB_CLIENT_ID. Add the same public Thirdweb client ID used by the web app to mobile/.env.local or the EAS environment, then restart Expo.",
     );
   }
 
