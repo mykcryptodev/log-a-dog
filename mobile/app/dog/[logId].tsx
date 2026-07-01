@@ -17,7 +17,11 @@ import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { VerdictStamp } from "~/components/VerdictStamp";
 import { VoteBar } from "~/components/VoteBar";
+import { AiJudgement } from "~/components/AiJudgement";
+import { VotingCountdown } from "~/components/VotingCountdown";
+import { Comments } from "~/components/Comments";
 import { COLORS } from "~/constants/colors";
+import { formatAbbreviatedFiat } from "@shared/format";
 import {
   convertIpfsToHttps,
   formatTimestamp,
@@ -141,6 +145,14 @@ export default function DogDetailScreen() {
           onVoteSuccess={() => query.refetch()}
         />
 
+        {/* AI verdict + live voting countdown */}
+        <View className="flex-row items-center gap-3 px-4 pb-1">
+          <AiJudgement logId={hotdog.logId} timestamp={hotdog.timestamp} />
+          {hotdog.attestationPeriod && !isResolved && (
+            <VotingCountdown timestamp={hotdog.timestamp} />
+          )}
+        </View>
+
         {/* Metadata */}
         <View className="px-4 pb-8 gap-4">
           {/* Log ID */}
@@ -174,25 +186,68 @@ export default function DogDetailScreen() {
             </View>
           )}
 
-          {/* Zora coin */}
-          {hotdog.zoraCoin?.link && (
-            <Pressable
-              onPress={() => Linking.openURL(hotdog.zoraCoin!.link!)}
-              className="bg-base-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
-            >
-              <View>
-                <Text className="text-neutral/50 text-xs mb-0.5">Zora Coin</Text>
-                <Text className="text-neutral font-bold text-sm">
-                  {hotdog.zoraCoin.symbol ?? "COIN"}
-                </Text>
-                {hotdog.zoraCoin.marketCap && (
-                  <Text className="text-info text-xs">
-                    Ξ {parseFloat(hotdog.zoraCoin.marketCap).toFixed(6)} mcap
+          {/* Zora coin — market stats + trade */}
+          {hotdog.zoraCoin && (
+            <View className="bg-base-200 rounded-xl px-4 py-3 gap-3">
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-neutral/50 text-xs mb-0.5">Zora Coin</Text>
+                  <Text className="text-neutral font-bold text-sm">
+                    {hotdog.zoraCoin.symbol ?? "COIN"}
                   </Text>
+                </View>
+                {typeof hotdog.zoraCoin.uniqueHolders === "number" && (
+                  <View className="items-end">
+                    <Text className="text-neutral/50 text-xs">Holders</Text>
+                    <Text className="text-neutral font-bold text-sm">
+                      {hotdog.zoraCoin.uniqueHolders}
+                    </Text>
+                  </View>
                 )}
               </View>
-              <Text className="text-neutral/40 text-xl">→</Text>
-            </Pressable>
+
+              <View className="flex-row justify-between">
+                {hotdog.zoraCoin.marketCap && (
+                  <View>
+                    <Text className="text-neutral/50 text-xs">Market cap</Text>
+                    <Text className="text-info font-bold text-sm">
+                      ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.marketCap))}
+                    </Text>
+                  </View>
+                )}
+                {hotdog.zoraCoin.volume24h && (
+                  <View className="items-end">
+                    <Text className="text-neutral/50 text-xs">24h volume</Text>
+                    <Text className="text-neutral font-bold text-sm">
+                      ${formatAbbreviatedFiat(Number(hotdog.zoraCoin.volume24h))}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View className="flex-row gap-2">
+                <Pressable
+                  onPress={() =>
+                    Linking.openURL(
+                      `https://zora.co/coin/base:${hotdog.zoraCoin!.address}`,
+                    )
+                  }
+                  className="flex-1 bg-primary rounded-xl py-2.5 items-center"
+                >
+                  <Text className="font-bold text-neutral text-sm">
+                    ⇄ Trade on Zora
+                  </Text>
+                </Pressable>
+                {hotdog.zoraCoin.link && (
+                  <Pressable
+                    onPress={() => Linking.openURL(hotdog.zoraCoin!.link!)}
+                    className="bg-base-300 rounded-xl py-2.5 px-4 items-center justify-center"
+                  >
+                    <Text className="text-neutral/70 text-sm font-bold">View</Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
           )}
 
           {/* Duplicate warning */}
@@ -204,6 +259,9 @@ export default function DogDetailScreen() {
             </View>
           )}
         </View>
+
+        {/* Comments */}
+        <Comments logId={hotdog.logId} />
       </ScrollView>
     </SafeAreaView>
   );

@@ -66,6 +66,18 @@ export default function RootLayout() {
                 },
               }}
             />
+            <Stack.Screen
+              name="faq"
+              options={{
+                headerTitle: "FAQ & Rules",
+                headerStyle: { backgroundColor: "#FFF8EC" },
+                headerTintColor: "#1E1A17",
+                headerTitleStyle: {
+                  fontFamily: "Anton_400Regular",
+                  letterSpacing: 1,
+                },
+              }}
+            />
           </Stack>
         </TRPCProvider>
       </AuthProvider>

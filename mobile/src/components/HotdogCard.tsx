@@ -6,6 +6,8 @@ import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { VerdictStamp } from "~/components/VerdictStamp";
 import { VoteBar } from "~/components/VoteBar";
+import { AiJudgement } from "~/components/AiJudgement";
+import { VotingCountdown } from "~/components/VotingCountdown";
 import {
   convertIpfsToHttps,
   formatTimestamp,
@@ -20,6 +22,7 @@ interface Props {
   userHasVoted: boolean;
   userVotedValid: boolean;
   onVoteSuccess?: () => void;
+  showAiJudgement?: boolean;
 }
 
 export function HotdogCard({
@@ -29,6 +32,7 @@ export function HotdogCard({
   userHasVoted,
   userVotedValid,
   onVoteSuccess,
+  showAiJudgement = false,
 }: Props) {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -131,15 +135,34 @@ export function HotdogCard({
         onVoteSuccess={onVoteSuccess}
       />
 
+      {/* Meta row — AI verdict + live voting countdown */}
+      {(showAiJudgement || (hotdog.attestationPeriod && !isResolved)) && (
+        <View className="flex-row items-center gap-3 px-3 pb-1">
+          {showAiJudgement && (
+            <AiJudgement logId={hotdog.logId} timestamp={hotdog.timestamp} />
+          )}
+          {hotdog.attestationPeriod && !isResolved && (
+            <VotingCountdown timestamp={hotdog.timestamp} />
+          )}
+        </View>
+      )}
+
       {/* Footer */}
       <View className="flex-row items-center justify-between px-3 pb-3">
         <Text className="text-xs text-neutral/40 font-mono">
           🌭 #{hotdog.logId}
         </Text>
         {hotdog.zoraCoin?.marketCap && (
-          <Text className="text-xs text-info">
-            Ξ {parseFloat(hotdog.zoraCoin.marketCap).toFixed(4)} mcap
-          </Text>
+          <View className="flex-row items-center gap-2">
+            {typeof hotdog.zoraCoin.uniqueHolders === "number" && (
+              <Text className="text-xs text-neutral/40">
+                {hotdog.zoraCoin.uniqueHolders} holders
+              </Text>
+            )}
+            <Text className="text-xs text-info">
+              Ξ {parseFloat(hotdog.zoraCoin.marketCap).toFixed(4)} mcap
+            </Text>
+          </View>
         )}
       </View>
     </View>
