@@ -4,6 +4,7 @@
   },
   "build": {
     "preview": {
+      "distribution": "internal",
       "environment": "preview",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://logadog.xyz",
