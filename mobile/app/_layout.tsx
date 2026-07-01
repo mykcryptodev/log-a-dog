@@ -37,7 +37,6 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
                 },
               }}
             />
@@ -49,7 +48,6 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
                 },
                 presentation: "modal",
               }}
@@ -62,7 +60,6 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
                 },
               }}
             />
@@ -74,7 +71,6 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
                 },
               }}
             />
@@ -86,7 +82,6 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
                 },
               }}
             />
@@ -98,7 +93,6 @@ export default function RootLayout() {
                 headerTintColor: "#1E1A17",
                 headerTitleStyle: {
                   fontFamily: "Anton_400Regular",
-                  letterSpacing: 1,
                 },
               }}
             />

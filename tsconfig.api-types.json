@@ -1,0 +1,16 @@
+{
+  "//": "Emits a self-contained .d.ts bundle of the tRPC AppRouter into mobile/api-types so the Expo app can type its tRPC client without pulling web server SOURCE into its typecheck. Run via `bun run build:api-types` (tsc emit + tsc-alias rewrites the ~ aliases to relative paths). Requires the Prisma client to be generated first.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "skipLibCheck": true,
+    "incremental": false,
+    "composite": false,
+    "rootDir": ".",
+    "outDir": "mobile/api-types"
+  },
+  "include": ["src/server/api/root.ts"],
+  "exclude": ["node_modules", "contracts", "mobile"]
+}

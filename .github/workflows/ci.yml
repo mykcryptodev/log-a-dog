@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: Typecheck (web + shared + mobile)
+    runs-on: ubuntu-latest
+    env:
+      SKIP_ENV_VALIDATION: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Installs web deps and generates the Prisma client (postinstall).
+      - name: Install web deps
+        run: bun install
+
+      # Typechecks the web app AND the shared/ data layer (both in tsconfig).
+      - name: Typecheck web + shared
+        run: bun run typecheck
+
+      # Emits the self-contained AppRouter declaration bundle the mobile app
+      # types its tRPC client against (mobile/api-types), then rewrites the
+      # "~" path aliases to relative paths so it resolves standalone.
+      - name: Build mobile API types
+        run: bun run build:api-types
+
+      - name: Install mobile deps
+        working-directory: mobile
+        run: bun install
+
+      # Mobile tsc resolves server-only type packages (e.g. @prisma/client)
+      # referenced by the generated bundle from the root node_modules installed
+      # above via normal upward module resolution.
+      - name: Typecheck mobile
+        working-directory: mobile
+        run: bun run typecheck

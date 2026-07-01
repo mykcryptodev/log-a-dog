@@ -66,7 +66,7 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         onSuccess?.();
       }, 1500);
     },
-    onError: (err: Error) => {
+    onError: (err) => {
       setStep("idle");
       Alert.alert("Error", err.message ?? "Failed to log dog.");
     },
