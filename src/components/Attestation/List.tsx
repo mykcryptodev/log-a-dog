@@ -8,69 +8,14 @@ import { BackToTopButton } from "~/components/utils/BackToTopButton";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { DEFAULT_CHAIN } from "~/constants";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
+import {
+  buildAttestationMaps,
+  getAttestationData as getSharedAttestationData,
+  inferNextLogIdBase,
+} from "@shared/feed";
+import type { ProcessedHotdog } from "@shared/types";
 
-// Types from hotdog router
-type AttestationPeriod = {
-  startTime: string;
-  endTime: string;
-  status: number;
-  totalValidStake: string;
-  totalInvalidStake: string;
-  isValid: boolean;
-};
-
-type HotdogMetadata = {
-  imageUri: string;
-  eater: string;
-  zoraCoin?: {
-    address: string;
-    name: string;
-    symbol: string;
-  };
-};
-
-type ZoraCoinDetails = {
-  id: string;
-  name: string;
-  description: string;
-  address: string;
-  symbol: string;
-  totalSupply: string;
-  totalVolume: string;
-  volume24h?: string;
-  createdAt?: string;
-  creatorAddress?: string;
-  marketCap?: string;
-  marketCapDelta24h?: string;
-  chainId?: number;
-  uniqueHolders?: number;
-  mediaContent?: {
-    mimeType?: string;
-    originalUri?: string;
-    previewImage?: {
-      small?: string;
-      medium?: string;
-      blurhash?: string;
-    };
-  };
-  link?: string;
-};
-
-// Type for hotdog from tRPC
-type RealDogEvent = {
-  logId: string;
-  imageUri: string;
-  metadataUri: string;
-  timestamp: string;
-  eater: string;
-  logger: string;
-  zoraCoin: ZoraCoinDetails | null;
-  attestationPeriod?: AttestationPeriod;
-  metadata?: HotdogMetadata | null;
-  duplicateOfLogId?: string | null;
-};
-
-type HotdogItem = RealDogEvent | PendingDogEvent;
+type HotdogItem = ProcessedHotdog | PendingDogEvent;
 
 type Props = {
   attestors?: string[];
@@ -201,18 +146,10 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
   // of the tx id. max(loaded)+1 doesn't exist yet, so any logId-driven child
   // query returns empty (no wrong data) and it self-corrects when the real row
   // lands. Display only — never used as a React key or for navigation.
-  const nextLogIdBase = useMemo(() => {
-    let max = 0n;
-    for (const h of loadedHotdogs) {
-      try {
-        const id = BigInt(h.logId);
-        if (id > max) max = id;
-      } catch {
-        // non-numeric (shouldn't happen for real rows) — skip
-      }
-    }
-    return max;
-  }, [loadedHotdogs]);
+  const nextLogIdBase = useMemo(
+    () => inferNextLogIdBase(loadedHotdogs.map((h) => h.logId)),
+    [loadedHotdogs],
+  );
 
   // Optimistic cards rendered newest-first; give the newest the highest inferred id.
   const displayPendingDogs = useMemo(() => {
@@ -246,48 +183,13 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
 
   // Build logId -> attestation lookup maps once per data change instead of on
   // every render (the list re-renders on a 30s interval). See `js-index-maps`.
-  const attestationMaps = useMemo(() => {
-    const pages = dogData?.pages;
-    if (!pages) {
-      return {
-        validMap: {} as Record<string, string>,
-        invalidMap: {} as Record<string, string>,
-        userAttestedMap: {} as Record<string, boolean>,
-        userAttestationMap: {} as Record<string, boolean>,
-      };
-    }
+  const attestationMaps = useMemo(
+    () => buildAttestationMaps(dogData?.pages ?? []),
+    [dogData?.pages],
+  );
 
-    const validMap: Record<string, string> = {};
-    const invalidMap: Record<string, string> = {};
-    const userAttestedMap: Record<string, boolean> = {};
-    const userAttestationMap: Record<string, boolean> = {};
-
-    pages.forEach((page) => {
-      page.hotdogs.forEach((hotdog, index) => {
-        validMap[hotdog.logId] = page.validAttestations?.[index] ?? "0";
-        invalidMap[hotdog.logId] = page.invalidAttestations?.[index] ?? "0";
-        userAttestedMap[hotdog.logId] = page.userAttested?.[index] ?? false;
-        userAttestationMap[hotdog.logId] = page.userAttestations?.[index] ?? false;
-      });
-    });
-
-    return {
-      validMap,
-      invalidMap,
-      userAttestedMap,
-      userAttestationMap,
-    };
-  }, [dogData]);
-
-  // Helper to get attestation data for a hotdog. Stable across renders so it
-  // doesn't defeat the memoization above.
-  const getAttestationData = useCallback((hotdog: HotdogItem): {
-    validAttestations: string;
-    invalidAttestations: string;
-    userAttested: boolean;
-    userAttestation: boolean;
-  } => {
-    if ('isPending' in hotdog && hotdog.isPending) {
+  const getAttestationData = useCallback((hotdog: HotdogItem) => {
+    if ("isPending" in hotdog && hotdog.isPending) {
       return {
         validAttestations: "0",
         invalidAttestations: "0",
@@ -295,12 +197,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
         userAttestation: false,
       };
     }
-    return {
-      validAttestations: attestationMaps.validMap[hotdog.logId] ?? "0",
-      invalidAttestations: attestationMaps.invalidMap[hotdog.logId] ?? "0",
-      userAttested: attestationMaps.userAttestedMap[hotdog.logId] ?? false,
-      userAttestation: attestationMaps.userAttestationMap[hotdog.logId] ?? false,
-    };
+    return getSharedAttestationData(hotdog.logId, attestationMaps);
   }, [attestationMaps]);
 
   // Show loading state while client-side query is fetching — grill-mark shimmer

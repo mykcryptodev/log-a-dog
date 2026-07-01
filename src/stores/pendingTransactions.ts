@@ -1,19 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import {
+  filterExpiredPendingDogs,
+  type PendingDogEvent,
+} from '@shared/pending';
 
-export interface PendingDogEvent {
-  logId: string;
-  imageUri: string;
-  metadataUri: string;
-  eater: string;
-  logger: string;
-  zoraCoin: string;
-  timestamp: string; // Store as string to avoid BigInt serialization issues
-  chainId: string;
-  isPending: true;
-  transactionId: string;
-  createdAt: number; // timestamp when added to store
-}
+export type { PendingDogEvent } from '@shared/pending';
 
 interface PendingTransactionsStore {
   pendingDogs: PendingDogEvent[];
@@ -47,18 +39,8 @@ export const usePendingTransactionsStore = create<PendingTransactionsStore>()(
       },
       
       clearExpiredPending: () => {
-        // Pure failsafe for txs that never index. Real cards are now removed the
-        // moment their on-chain row appears (dedup by imageUri in the feed), so
-        // this only needs to catch stuck/failed logs. Keep it generous — if it
-        // fires before a slow CDP index lands, the optimistic card vanishes then
-        // the real one pops back, reintroducing the jank this fix removed.
-        const EXPIRY_TIME = 10 * 60 * 1000; // 10 minutes
-        const now = Date.now();
-        
         set((state) => ({
-          pendingDogs: state.pendingDogs.filter(dog => 
-            now - dog.createdAt < EXPIRY_TIME
-          )
+          pendingDogs: filterExpiredPendingDogs(state.pendingDogs),
         }));
       },
       

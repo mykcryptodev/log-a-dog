@@ -21,7 +21,7 @@ function Collapsible({ title, children, defaultOpen = false }: SectionProps) {
         </Text>
         <Text className="text-neutral/50 text-lg">{open ? "▲" : "▼"}</Text>
       </Pressable>
-      {open && <View className="px-4 pb-4 gap-2">{children}</View>}
+      {open ? <View className="px-4 pb-4 gap-2">{children as any}</View> : null}
     </View>
   );
 }
@@ -31,7 +31,7 @@ function Bullet({ children }: { children: React.ReactNode }) {
     <View className="flex-row gap-2">
       <Text className="text-neutral/60">•</Text>
       <Text className="text-neutral/70 text-sm leading-relaxed flex-1">
-        {children}
+        {children as any}
       </Text>
     </View>
   );
@@ -39,7 +39,7 @@ function Bullet({ children }: { children: React.ReactNode }) {
 
 function Heading({ children }: { children: React.ReactNode }) {
   return (
-    <Text className="font-bold text-neutral text-sm mt-2 mb-0.5">{children}</Text>
+    <Text className="font-bold text-neutral text-sm mt-2 mb-0.5">{children as any}</Text>
   );
 }
 

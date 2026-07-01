@@ -6,6 +6,7 @@ import { useAuth } from "~/providers/AuthProvider";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { HotdogFeed } from "~/components/HotdogFeed";
 import { NotificationsSettings } from "~/components/NotificationsSettings";
+import { ProfileForm } from "~/components/ProfileForm";
 import { formatAddress } from "~/utils/format";
 
 export default function ProfileScreen() {
@@ -99,6 +100,11 @@ export default function ProfileScreen() {
           </Pressable>
 
           <NotificationsSettings address={session.address} fid={session.fid} />
+
+          <ProfileForm
+            existingUsername={session.username}
+            existingImgUrl={session.image}
+          />
         </View>
 
         {/* User's dog feed */}

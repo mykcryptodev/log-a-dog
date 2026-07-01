@@ -8,7 +8,8 @@ const config = getDefaultConfig(__dirname);
 // "@shared" alias. Metro must watch it (it's outside the project root) and be
 // told how to resolve the alias.
 const sharedRoot = path.resolve(__dirname, "../shared");
-config.watchFolders = [...(config.watchFolders ?? []), sharedRoot];
+const repoRoot = path.resolve(__dirname, "..");
+config.watchFolders = [...(config.watchFolders ?? []), sharedRoot, repoRoot];
 
 // Required for Thirdweb React Native v5 package exports
 config.resolver.unstable_enablePackageExports = true;

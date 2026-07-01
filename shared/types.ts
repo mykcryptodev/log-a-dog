@@ -88,6 +88,16 @@ export interface GetAllResponse {
   nextCursor?: number;
 }
 
+/** Response from hotdog.getAllForUser — profile dog lists. */
+export interface GetAllForUserResponse {
+  hotdogs: ProcessedHotdog[];
+  validAttestations?: string[];
+  invalidAttestations?: string[];
+  totalPages: number;
+  hasNextPage: boolean;
+  nextCursor?: number;
+}
+
 export interface LeaderboardProfile {
   address: string;
   name?: string | null;

@@ -6,7 +6,7 @@ import { CHAIN_ID, ZERO_ADDRESS } from "~/constants";
 import { HotdogCard } from "~/components/HotdogCard";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { PreseasonBanner } from "~/components/PreseasonBanner";
-import type { GetAllResponse, ProcessedHotdog } from "~/types";
+import type { GetAllResponse, GetAllForUserResponse, ProcessedHotdog } from "~/types";
 import { buildAttestationMaps, getAttestationData } from "@shared/feed";
 import { useAuth } from "~/providers/AuthProvider";
 import { COLORS } from "~/constants/colors";
@@ -26,27 +26,49 @@ export function HotdogFeed({ userAddress, header }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const pending = usePendingDogs(String(CHAIN_ID));
 
-  const query = trpc.hotdog.getAll.useInfiniteQuery(
+  const mainQuery = trpc.hotdog.getAll.useInfiniteQuery(
     {
       chainId: CHAIN_ID,
-      user: userAddress ?? ZERO_ADDRESS,
+      user: ZERO_ADDRESS,
       voter,
       limit: PAGE_SIZE,
     },
     {
+      enabled: isMainFeed,
       keepPreviousData: true,
       getNextPageParam: (lastPage: GetAllResponse) => lastPage.nextCursor,
       refetchOnWindowFocus: false,
-      // While an optimistic card is in flight, poll so the real on-chain row
-      // lands and replaces it.
       refetchInterval: isMainFeed && pending.length > 0 ? 6000 : false,
     },
   );
 
-  const pages = useMemo(
-    () => (query.data?.pages ?? []) as GetAllResponse[],
-    [query.data?.pages],
+  const userQuery = trpc.hotdog.getAllForUser.useInfiniteQuery(
+    {
+      chainId: CHAIN_ID,
+      user: userAddress ?? "",
+      limit: PAGE_SIZE,
+    },
+    {
+      enabled: !isMainFeed && !!userAddress,
+      keepPreviousData: true,
+      getNextPageParam: (lastPage: GetAllForUserResponse) => lastPage.nextCursor,
+      refetchOnWindowFocus: false,
+    },
   );
+
+  const query = isMainFeed ? mainQuery : userQuery;
+
+  const pages = useMemo(() => {
+    if (!query.data?.pages) return [] as GetAllResponse[];
+    if (isMainFeed) return query.data.pages as GetAllResponse[];
+    return (query.data.pages as GetAllForUserResponse[]).map((p) => ({
+      ...p,
+      validAttestations: p.hotdogs.map(() => "0"),
+      invalidAttestations: p.hotdogs.map(() => "0"),
+      userAttested: p.hotdogs.map(() => false),
+      userAttestations: p.hotdogs.map(() => false),
+    }));
+  }, [query.data?.pages, isMainFeed]);
 
   const hotdogs = useMemo<ProcessedHotdog[]>(
     () => pages.flatMap((p) => p.hotdogs),
@@ -125,11 +147,11 @@ export function HotdogFeed({ userAddress, header }: Props) {
     }
   }, [query]);
 
-  const listHeader = useMemo(() => {
-    if (!isMainFeed && !header) return undefined;
+  const listHeader = useMemo((): React.ReactElement | null => {
+    if (!isMainFeed && !header) return null;
     return (
       <View>
-        {header}
+        {header as any}
         {isMainFeed && (
           <View className="px-4 pt-3 gap-3">
             <PreseasonBanner />
@@ -207,7 +229,7 @@ export function HotdogFeed({ userAddress, header }: Props) {
       refreshing={query.isFetching && !query.isFetchingNextPage && !!query.data}
       onEndReached={loadMore}
       onEndReachedThreshold={0.3}
-      ListHeaderComponent={listHeader}
+      ListHeaderComponent={listHeader as any}
       ListEmptyComponent={
         <View className="items-center justify-center py-20">
           <Text className="text-5xl mb-3">🌭</Text>

@@ -5,36 +5,19 @@ import { upload } from "thirdweb/storage";
 import { DEFAULT_CHAIN } from "~/constants/chains";
 import { AIRDROP, HOTDOG_TOKEN } from "../constants/addresses";
 import { client } from "~/providers/Thirdweb";
+import {
+  parseAirdropCsv,
+  isAddressEligible,
+  getAmountForAddress,
+  type SnapshotEntry,
+} from "@shared/merkle";
 
-// Types matching thirdweb's official format
-interface SnapshotEntry {
-  recipient: string;
-  amount: number; // Amount in tokens (not wei)
-}
-
-// Parse CSV data to thirdweb's snapshot format
-function parseCSVData(csvData: string): SnapshotEntry[] {
-  const lines = csvData.trim().split('\n');
-  const entries: SnapshotEntry[] = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i]?.trim();
-    if (!line) continue;
-    
-    const parts = line.split(',');
-    const address = parts[0]?.trim();
-    const amount = parts[1]?.trim();
-    
-    if (address && amount) {
-      entries.push({
-        recipient: address,
-        amount: parseFloat(amount), // Keep as token amount, not wei
-      });
-    }
-  }
-  
-  return entries;
-}
+export {
+  isAddressEligible,
+  getAmountForAddress,
+  parseAirdropCsv,
+  type SnapshotEntry,
+} from "@shared/merkle";
 
 // Save snapshot to contract metadata (replicating thirdweb's saveSnapshot)
 export async function saveSnapshot(merkleRoot: string, snapshotUri: string) {
@@ -100,7 +83,7 @@ export async function generateOfficialMerkleTree(csvData: string): Promise<{
   snapshotUri: string;
   snapshot: SnapshotEntry[];
 }> {
-  const snapshot = parseCSVData(csvData);
+  const snapshot = parseAirdropCsv(csvData);
   
   // Get the airdrop contract
   const contract = getContract({
@@ -158,23 +141,6 @@ export async function setupAirdropMerkleTree(csvData: string) {
   }
 }
 
-// Check if address is eligible for airdrop
-export function isAddressEligible(csvData: string, address: string): boolean {
-  const snapshot = parseCSVData(csvData);
-  return snapshot.some(entry => 
-    entry.recipient.toLowerCase() === address.toLowerCase()
-  );
-}
-
-// Get amount for address
-export function getAmountForAddress(csvData: string, address: string): number {
-  const snapshot = parseCSVData(csvData);
-  const entry = snapshot.find(entry => 
-    entry.recipient.toLowerCase() === address.toLowerCase()
-  );
-  return entry?.amount ?? 0;
-}
-
 // Debug function for testing
 export async function debugOfficialMerkleTree(csvData: string): Promise<void> {
   console.log("🔧 Starting official merkle tree debug...");
@@ -190,16 +156,14 @@ export async function debugOfficialMerkleTree(csvData: string): Promise<void> {
     
     // Test a specific address
     const testAddress = "0x445664D66C294F49bb55A90d3c30BCAB0F9502A9";
-    const isEligible = isAddressEligible(csvData, testAddress);
+    const eligible = isAddressEligible(csvData, testAddress);
     const amount = getAmountForAddress(csvData, testAddress);
     
     console.log(`- Test address ${testAddress}:`);
-    console.log(`  - Eligible: ${isEligible}`);
+    console.log(`  - Eligible: ${eligible}`);
     console.log(`  - Amount: ${amount} tokens`);
     
   } catch (error) {
     console.error("❌ Debug failed:", error);
   }
 }
-
-export { type SnapshotEntry }; 

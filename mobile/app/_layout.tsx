@@ -7,6 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { ThirdwebProvider } from "thirdweb/react";
 import { AuthProvider } from "~/providers/AuthProvider";
+import { WalletProvider } from "~/providers/WalletProvider";
 import { TRPCProvider } from "~/providers/TRPCProvider";
 
 SplashScreen.preventAutoHideAsync();
@@ -25,7 +26,8 @@ export default function RootLayout() {
   return (
     <ThirdwebProvider>
       <AuthProvider>
-        <TRPCProvider>
+        <WalletProvider>
+          <TRPCProvider>
           <StatusBar style="dark" />
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -86,6 +88,28 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="profile/[username]"
+              options={{
+                headerTitle: "Profile",
+                headerStyle: { backgroundColor: "#FFF8EC" },
+                headerTintColor: "#1E1A17",
+                headerTitleStyle: {
+                  fontFamily: "Anton_400Regular",
+                },
+              }}
+            />
+            <Stack.Screen
+              name="profile/id/[id]"
+              options={{
+                headerTitle: "Profile",
+                headerStyle: { backgroundColor: "#FFF8EC" },
+                headerTintColor: "#1E1A17",
+                headerTitleStyle: {
+                  fontFamily: "Anton_400Regular",
+                },
+              }}
+            />
+            <Stack.Screen
               name="poidh"
               options={{
                 headerTitle: "POIDH Campaign",
@@ -98,6 +122,7 @@ export default function RootLayout() {
             />
           </Stack>
         </TRPCProvider>
+        </WalletProvider>
       </AuthProvider>
     </ThirdwebProvider>
   );

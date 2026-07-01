@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Animated,
   Pressable,
@@ -12,6 +12,7 @@ import { useAuth } from "~/providers/AuthProvider";
 import { CHAIN_ID } from "~/constants";
 import { getVotePct } from "~/utils/format";
 import { COLORS } from "~/constants/colors";
+import { InsufficientStakeModal } from "~/components/InsufficientStakeModal";
 
 interface Props {
   logId: string;
@@ -37,6 +38,7 @@ export function VoteBar({
   const { session } = useAuth();
   const validScale = useRef(new Animated.Value(1)).current;
   const invalidScale = useRef(new Animated.Value(1)).current;
+  const [showInsufficientStake, setShowInsufficientStake] = useState(false);
 
   const { validPct, invalidPct } = getVotePct(validCount, invalidCount);
 
@@ -47,10 +49,7 @@ export function VoteBar({
     onError: (err) => {
       const msg = err.message ?? "Failed to vote";
       if (msg.includes("Insufficient stake")) {
-        Alert.alert(
-          "Insufficient Stake",
-          "You need at least 300,000 $HOTDOG tokens staked to vote. Visit the Earn tab to stake.",
-        );
+        setShowInsufficientStake(true);
       } else {
         Alert.alert("Error", msg);
       }
@@ -95,6 +94,10 @@ export function VoteBar({
 
   return (
     <View className="px-3 pb-3 pt-1">
+      <InsufficientStakeModal
+        visible={showInsufficientStake}
+        onClose={() => setShowInsufficientStake(false)}
+      />
       {/* Progress bar */}
       <View className="h-1.5 bg-base-300 rounded-full mb-2 overflow-hidden flex-row">
         <View
