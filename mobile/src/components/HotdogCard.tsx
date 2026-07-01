@@ -75,26 +75,33 @@ export function HotdogCard({
     >
       {/* Header + Image — tapping navigates to dog detail page */}
       <Pressable onPress={() => router.push(`/dog/${hotdog.logId}` as never)}>
-        {/* Header */}
+        {/* Header — tapping the eater navigates to their profile */}
         <View className="flex-row items-center p-3 gap-2">
-          <ProfileAvatar
-            image={hotdog.eaterProfile?.image}
-            address={hotdog.eater}
-            size={38}
-          />
-          <View className="flex-1">
-            <View className="flex-row items-center gap-1">
-              <Text className="font-bold text-neutral text-sm" numberOfLines={1}>
-                {eaterName}
-              </Text>
-              <ProfileBadge profile={hotdog.eaterProfile} />
+          <Pressable
+            className="flex-row items-center gap-2 flex-1"
+            onPress={() =>
+              router.push(`/profile/address/${hotdog.eater}` as never)
+            }
+          >
+            <ProfileAvatar
+              image={hotdog.eaterProfile?.image}
+              address={hotdog.eater}
+              size={38}
+            />
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1">
+                <Text className="font-bold text-neutral text-sm" numberOfLines={1}>
+                  {eaterName}
+                </Text>
+                <ProfileBadge profile={hotdog.eaterProfile} />
+              </View>
+              {showVia && (
+                <Text className="text-xs text-neutral/50" numberOfLines={1}>
+                  via {loggerName}
+                </Text>
+              )}
             </View>
-            {showVia && (
-              <Text className="text-xs text-neutral/50" numberOfLines={1}>
-                via {loggerName}
-              </Text>
-            )}
-          </View>
+          </Pressable>
           <Text className="text-xs text-neutral/40">
             {formatTimestamp(hotdog.timestamp)}
           </Text>

@@ -1,5 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { useRouter } from "expo-router";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
@@ -14,6 +22,7 @@ interface Props {
 }
 
 export function LeaderboardList({ seasonOnly = true }: Props) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
 
   const { startDate, endDate } = useMemo(
@@ -74,7 +83,10 @@ export function LeaderboardList({ seasonOnly = true }: Props) {
         const isPodium = rank <= 3;
 
         return (
-          <View
+          <Pressable
+            onPress={() =>
+              router.push(`/profile/address/${item.address}` as never)
+            }
             className={[
               "flex-row items-center px-4 py-3 mx-4 mb-2 rounded-2xl",
               isPodium ? "bg-base-200" : "bg-base-100",
@@ -126,7 +138,7 @@ export function LeaderboardList({ seasonOnly = true }: Props) {
                 </Text>
               </View>
             )}
-          </View>
+          </Pressable>
         );
       }}
       ListEmptyComponent={

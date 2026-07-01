@@ -78,6 +78,18 @@ export default function RootLayout() {
                 },
               }}
             />
+            <Stack.Screen
+              name="profile/address/[address]"
+              options={{
+                headerTitle: "Profile",
+                headerStyle: { backgroundColor: "#FFF8EC" },
+                headerTintColor: "#1E1A17",
+                headerTitleStyle: {
+                  fontFamily: "Anton_400Regular",
+                  letterSpacing: 1,
+                },
+              }}
+            />
           </Stack>
         </TRPCProvider>
       </AuthProvider>

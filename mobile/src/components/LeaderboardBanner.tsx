@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Easing, Text, View } from "react-native";
+import { Animated, Easing, Pressable, Text, View } from "react-native";
 import type { LayoutChangeEvent } from "react-native";
+import { useRouter } from "expo-router";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
@@ -12,9 +13,18 @@ interface Props {
   scrollSpeed?: number;
 }
 
-function TickerPill({ item }: { item: LeaderboardEntry }) {
+function TickerPill({
+  item,
+  onPress,
+}: {
+  item: LeaderboardEntry;
+  onPress: () => void;
+}) {
   return (
-    <View className="flex-row items-center gap-1.5 rounded-full bg-base-200 px-3 py-1.5">
+    <Pressable
+      onPress={onPress}
+      className="flex-row items-center gap-1.5 rounded-full bg-base-200 px-3 py-1.5"
+    >
       <Text className="font-display text-secondary text-sm">{item.rank}</Text>
       <ProfileAvatar
         image={item.avatarUrl}
@@ -28,7 +38,7 @@ function TickerPill({ item }: { item: LeaderboardEntry }) {
       <Text className="font-display text-primary text-sm">
         {item.count}🌭
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -78,9 +88,13 @@ function LiveBadge() {
  * loops seamlessly by rendering two copies of the pill row.
  */
 export function LeaderboardBanner({ scrollSpeed = 40 }: Props) {
+  const router = useRouter();
   const { entries, isLoading } = useLeaderboard({ limit: 10 });
   const translateX = useRef(new Animated.Value(0)).current;
   const [setWidth, setSetWidth] = useState(0);
+
+  const goToProfile = (address: string) =>
+    router.push(`/profile/address/${address}` as never);
 
   useEffect(() => {
     if (setWidth <= 0) return;
@@ -127,13 +141,21 @@ export function LeaderboardBanner({ scrollSpeed = 40 }: Props) {
             onLayout={onSetLayout}
           >
             {entries.map((item) => (
-              <TickerPill key={`a-${item.address}`} item={item} />
+              <TickerPill
+                key={`a-${item.address}`}
+                item={item}
+                onPress={() => goToProfile(item.address)}
+              />
             ))}
           </View>
           {/* Second copy for a seamless loop */}
           <View className="flex-row items-center gap-2 px-2">
             {entries.map((item) => (
-              <TickerPill key={`b-${item.address}`} item={item} />
+              <TickerPill
+                key={`b-${item.address}`}
+                item={item}
+                onPress={() => goToProfile(item.address)}
+              />
             ))}
           </View>
         </Animated.View>

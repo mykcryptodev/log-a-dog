@@ -33,6 +33,7 @@ interface Judge {
 }
 
 function TopJudges() {
+  const router = useRouter();
   const { data: judges = [], isLoading } = trpc.hotdog.getJudges.useQuery(
     undefined,
     { refetchOnWindowFocus: false, retry: 1 },
@@ -54,8 +55,9 @@ function TopJudges() {
       </Text>
       <View className="gap-2">
         {(judges as Judge[]).map((j, idx) => (
-          <View
+          <Pressable
             key={j.voter}
+            onPress={() => router.push(`/profile/address/${j.voter}` as never)}
             className="flex-row items-center bg-base-200 rounded-2xl px-3 py-2.5"
           >
             <Text className="w-7 font-display text-secondary text-base">
@@ -82,7 +84,7 @@ function TopJudges() {
                 {j.accuracy.toFixed(1)}% accurate
               </Text>
             </View>
-          </View>
+          </Pressable>
         ))}
       </View>
     </View>
