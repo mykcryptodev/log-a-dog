@@ -1,6 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react";
 import {
-  PENDING_DOG_EXPIRY_MS,
   filterExpiredPendingDogs,
   type PendingDogBase,
 } from "@shared/pending";

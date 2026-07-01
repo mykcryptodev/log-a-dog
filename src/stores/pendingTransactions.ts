@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
-  PENDING_DOG_EXPIRY_MS,
   filterExpiredPendingDogs,
   type PendingDogEvent,
 } from '@shared/pending';
