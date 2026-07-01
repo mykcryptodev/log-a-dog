@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@ecp.eth/sdk": "^0.0.25",
-    "@logadog/shared": "workspace:*",
     "@coinbase/wallet-mobile-sdk": "^1.0.7",
     "@expo-google-fonts/anton": "^0.2.3",
     "@farcaster/auth-client": "^0.6.0",

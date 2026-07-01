@@ -1,4 +1,6 @@
 {
+  "installCommand": "bun install",
+  "buildCommand": "bun run build",
   "functions": {
     "pages/dog/[logId].tsx": {
       "memory": 1024
