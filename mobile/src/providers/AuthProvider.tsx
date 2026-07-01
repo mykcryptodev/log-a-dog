@@ -176,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       nonce,
       domain: FARCASTER_DOMAIN,
       message,
-      signature,
+      signature: signature as `0x${string}`,
     });
 
     if (!verification.success) {

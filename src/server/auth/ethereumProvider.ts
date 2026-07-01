@@ -220,6 +220,17 @@ export const EthereumProvider = ({ createUser }: EthereumProviderConfig): NextAu
     address: { label: "Address", type: "text" },
   },
   async authorize(credentials) {
-    return authenticateEthereumCredentials(credentials, createUser);
+    if (!credentials?.address || !credentials.message || !credentials.signature) {
+      return authenticateEthereumCredentials(undefined, createUser);
+    }
+
+    return authenticateEthereumCredentials(
+      {
+        address: credentials.address,
+        message: credentials.message,
+        signature: credentials.signature,
+      },
+      createUser,
+    );
   },
 });
