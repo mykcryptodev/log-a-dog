@@ -27,6 +27,7 @@ import { getAttestationCounts } from "~/thirdweb/84532/0xc470f55c2877848f1acfcf3
 import { getDogEvents, getDogEventsByEater, getDogEventLeaderboard } from "~/server/api/dog-events";
 import { db } from "~/server/db";
 import { buildHotdogProfileMap, fetchUserProfiles } from "~/server/utils/profile";
+import { buildAddressGroups } from "~/server/utils/fid";
 import { getUserOpGasFees } from "thirdweb/wallets/smart";
 import { abi } from "~/constants/abi/logadog";
 
@@ -1307,7 +1308,7 @@ export const hotdogRouter = createTRPCRouter({
     const chainId = DEFAULT_CHAIN.id.toString();
     const contestStartTimestamp = BigInt(Math.floor(new Date(DOG_FEED_START_TIME).getTime() / 1000));
     const contestEndTimestamp = BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000));
-    const cacheKey = `judges:ranking:${chainId}:${DOG_FEED_START_TIME}`;
+    const cacheKey = `judges:ranking:v2:${chainId}:${DOG_FEED_START_TIME}`;
 
     return getOrSetCache(
       cacheKey,
@@ -1344,18 +1345,59 @@ export const hotdogRouter = createTRPCRouter({
         const voterAddresses = Object.keys(judgeStats);
         if (voterAddresses.length === 0) return [];
 
-        const profileMap = await fetchUserProfiles(voterAddresses);
+        const addressGroups = await buildAddressGroups(voterAddresses);
+        const addressToGroupKey = new Map<string, string>();
+        for (const group of addressGroups) {
+          for (const addr of group.addresses) {
+            addressToGroupKey.set(addr, group.key);
+          }
+        }
 
-        return Object.entries(judgeStats)
-          .map(([voter, stats]) => ({
-            voter,
-            correct: stats.correct,
-            incorrect: stats.total - stats.correct,
-            total: stats.total,
-            accuracy: stats.total > 0 ? (stats.correct / stats.total) * 100 : 0,
-            profile: profileMap.get(voter) ?? { username: "", imgUrl: "", metadata: "", address: voter },
-          }))
-          .sort((a, b) => b.correct - a.correct);
+        const consolidatedStats = new Map<
+          string,
+          { correct: number; total: number; addresses: string[] }
+        >();
+        for (const [voter, stats] of Object.entries(judgeStats)) {
+          const groupKey = addressToGroupKey.get(voter) ?? `addr:${voter}`;
+          const group = addressGroups.find((g) => g.key === groupKey);
+          const existing = consolidatedStats.get(groupKey);
+          if (existing) {
+            existing.correct += stats.correct;
+            existing.total += stats.total;
+          } else {
+            consolidatedStats.set(groupKey, {
+              correct: stats.correct,
+              total: stats.total,
+              addresses: group?.addresses ?? [voter],
+            });
+          }
+        }
+
+        const profileAddresses = [
+          ...new Set(
+            [...consolidatedStats.values()].flatMap((s) => s.addresses),
+          ),
+        ];
+        const profileMap = await fetchUserProfiles(profileAddresses);
+
+        return [...consolidatedStats.values()]
+          .map((stats) => {
+            const voter = stats.addresses[0] ?? "";
+            return {
+              voter,
+              correct: stats.correct,
+              incorrect: stats.total - stats.correct,
+              total: stats.total,
+              accuracy: stats.total > 0 ? (stats.correct / stats.total) * 100 : 0,
+              profile: profileMap.get(voter) ?? {
+                username: "",
+                imgUrl: "",
+                metadata: "",
+                address: voter,
+              },
+            };
+          })
+          .sort((a, b) => b.correct - a.correct || b.total - a.total);
       },
       CACHE_DURATION.MEDIUM
     );
