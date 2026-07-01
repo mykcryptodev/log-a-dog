@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { Alert, Linking } from "react-native";
 import { createAppClient, viemConnector } from "@farcaster/auth-client";
-import { inAppWallet } from "thirdweb/wallets";
+import { inAppWallet, type Account } from "thirdweb/wallets";
 import {
   API_URL,
   CHAIN_ID,
@@ -26,6 +26,7 @@ interface AuthContextValue {
   signInWithFarcaster: () => Promise<void>;
   signInWithEmail: (email: string) => Promise<{ requiresVerification: true; verify: (code: string) => Promise<void> } | void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithWallet: (account: Account) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextValue>({
   signInWithFarcaster: async () => {},
   signInWithEmail: async () => {},
   signInWithGoogle: async () => {},
+  signInWithWallet: async () => {},
   signOut: async () => {},
 });
 
@@ -106,6 +108,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await saveSession(JSON.stringify(s));
     setSession(s);
   }, []);
+
+  const signInWithAccount = useCallback(
+    async (account: Account, profile?: Pick<Session, "fid" | "username" | "image" | "name">) => {
+      const message = await createSiweMessage(account.address);
+      const signature = await account.signMessage({ message });
+      const sessionToken = await postToNextAuth(account.address, message, signature);
+
+      await persistSession({
+        address: account.address.toLowerCase(),
+        sessionToken,
+        fid: profile?.fid ?? null,
+        username: profile?.username ?? null,
+        image: profile?.image ?? null,
+        name: profile?.name ?? null,
+      });
+    },
+    [persistSession],
+  );
 
   const signInWithFarcaster = useCallback(async () => {
     const appClient = createAppClient({
@@ -185,22 +205,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             verificationCode,
           });
 
-          const message = await createSiweMessage(account.address);
-          const signature = await account.signMessage({ message });
-          const sessionToken = await postToNextAuth(account.address, message, signature);
-
-          await persistSession({
-            address: account.address.toLowerCase(),
-            sessionToken,
-            fid: null,
-            username: null,
-            image: null,
-            name: email,
-          });
+          await signInWithAccount(account, { name: email });
         },
       };
     },
-    [persistSession],
+    [signInWithAccount],
   );
 
   const signInWithGoogle = useCallback(async () => {
@@ -214,19 +223,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       redirectUrl: "logadog://",
     });
 
-    const message = await createSiweMessage(account.address);
-    const signature = await account.signMessage({ message });
-    const sessionToken = await postToNextAuth(account.address, message, signature);
+    await signInWithAccount(account);
+  }, [signInWithAccount]);
 
-    await persistSession({
-      address: account.address.toLowerCase(),
-      sessionToken,
-      fid: null,
-      username: null,
-      image: null,
-      name: null,
-    });
-  }, [persistSession]);
+  const signInWithWallet = useCallback(
+    async (account: Account) => {
+      await signInWithAccount(account);
+    },
+    [signInWithAccount],
+  );
 
   const signOut = useCallback(async () => {
     await clearSession();
@@ -234,8 +239,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, isLoading, signInWithFarcaster, signInWithEmail, signInWithGoogle, signOut }),
-    [session, isLoading, signInWithFarcaster, signInWithEmail, signInWithGoogle, signOut],
+    () => ({ session, isLoading, signInWithFarcaster, signInWithEmail, signInWithGoogle, signInWithWallet, signOut }),
+    [session, isLoading, signInWithFarcaster, signInWithEmail, signInWithGoogle, signInWithWallet, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

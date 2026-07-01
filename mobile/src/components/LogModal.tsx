@@ -45,6 +45,13 @@ const STEP_LABELS: Record<Step, string> = {
   success: "Logged! 🎉",
 };
 
+const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
+  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  allowsEditing: true,
+  aspect: [4, 5],
+  quality: 0.85,
+};
+
 export function LogModal({ visible, onClose, onSuccess }: Props) {
   const { session } = useAuth();
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -73,23 +80,45 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
     },
   });
 
-  const pickImage = useCallback(async (useCamera: boolean) => {
-    const method = useCamera
-      ? ImagePicker.launchCameraAsync
-      : ImagePicker.launchImageLibraryAsync;
+  const requestPickerPermission = useCallback(async (useCamera: boolean) => {
+    const permission = useCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    const result = await method({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 5],
-      quality: 0.85,
-    });
+    if (permission.granted) return true;
 
-    if (!result.canceled && result.assets[0]) {
-      const normalized = await normalizeImageUri(result.assets[0].uri);
-      setImageUri(normalized);
-    }
+    Alert.alert(
+      useCamera ? "Camera Permission Needed" : "Photo Permission Needed",
+      useCamera
+        ? "Allow camera access so you can snap a hotdog photo."
+        : "Allow photo access so you can choose a hotdog photo.",
+    );
+    return false;
   }, []);
+
+  const pickImage = useCallback(async (useCamera: boolean) => {
+    const hasPermission = await requestPickerPermission(useCamera);
+    if (!hasPermission) return;
+
+    try {
+      const method = useCamera
+        ? ImagePicker.launchCameraAsync
+        : ImagePicker.launchImageLibraryAsync;
+
+      const result = await method(PICKER_OPTIONS);
+
+      if (!result.canceled && result.assets[0]) {
+        const normalized = await normalizeImageUri(result.assets[0].uri);
+        setImageUri(normalized);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      Alert.alert(
+        useCamera ? "Camera Unavailable" : "Photo Library Unavailable",
+        msg || "Please try again or choose a photo from another source.",
+      );
+    }
+  }, [requestPickerPermission]);
 
   const handleSubmit = useCallback(async () => {
     if (!session) {
@@ -172,7 +201,7 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         Alert.alert("Error", msg);
       }
     }
-  }, [session, imageUri, description, checkSafetyMutation, logMutation]);
+  }, [session, imageUri, description, checkSafetyMutation, refreshFeed, logMutation]);
 
   const handleClose = useCallback(() => {
     setImageUri(null);

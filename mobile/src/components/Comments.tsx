@@ -64,11 +64,11 @@ export function Comments({ logId }: Props) {
 
   const submitComment = async () => {
     if (!newComment.trim()) return;
-    if (!account?.address || !wallet) {
-      const ok = await connectExternalWallet();
-      if (!ok) return;
+    let signer = wallet?.getAccount();
+    if (!account?.address || !signer) {
+      const connectedWallet = await connectExternalWallet();
+      signer = connectedWallet?.getAccount();
     }
-    const signer = wallet?.getAccount();
     if (!signer) {
       Alert.alert("Wallet required", "Connect a wallet to post comments on-chain.");
       return;
