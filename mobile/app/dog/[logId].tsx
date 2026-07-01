@@ -11,8 +11,6 @@ import {
 import { Image } from "expo-image";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { trpc } from "~/utils/trpc";
-import { CHAIN_ID, ZERO_ADDRESS } from "~/constants";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { VerdictStamp } from "~/components/VerdictStamp";
@@ -28,24 +26,26 @@ import {
   getDisplayName,
 } from "~/utils/format";
 import { useAuth } from "~/providers/AuthProvider";
+import { useHotdog } from "~/hooks/useHotdogs";
 
 export default function DogDetailScreen() {
   const { logId } = useLocalSearchParams<{ logId: string }>();
   const { session } = useAuth();
   const { width } = useWindowDimensions();
 
-  const query = trpc.hotdog.getById.useQuery(
-    {
-      chainId: CHAIN_ID,
-      user: session?.address ?? ZERO_ADDRESS,
-      logId: logId ?? "",
-    },
-    { enabled: !!logId },
-  );
+  const {
+    hotdog,
+    validAttestations,
+    invalidAttestations,
+    userAttested,
+    userAttestation,
+    isLoading,
+    refetch,
+  } = useHotdog(logId ?? "", session?.address);
 
   const imageHeight = Math.round(width * (5 / 4));
 
-  if (query.isLoading) {
+  if (isLoading) {
     return (
       <SafeAreaView
         className="flex-1 bg-base-100 items-center justify-center"
@@ -56,7 +56,7 @@ export default function DogDetailScreen() {
     );
   }
 
-  if (!query.data?.hotdog) {
+  if (!hotdog) {
     return (
       <SafeAreaView
         className="flex-1 bg-base-100 items-center justify-center px-8"
@@ -67,7 +67,7 @@ export default function DogDetailScreen() {
           Dog not found or still indexing. Pull to refresh.
         </Text>
         <Pressable
-          onPress={() => query.refetch()}
+          onPress={refetch}
           className="mt-4 bg-primary rounded-xl px-6 py-3"
         >
           <Text className="font-bold text-neutral">Retry</Text>
@@ -75,9 +75,6 @@ export default function DogDetailScreen() {
       </SafeAreaView>
     );
   }
-
-  const { hotdog, validAttestations, invalidAttestations, userAttested, userAttestation } =
-    query.data;
 
   const imageUri = convertIpfsToHttps(
     hotdog.zoraCoin?.mediaContent?.previewImage?.medium ?? hotdog.imageUri,
@@ -142,7 +139,7 @@ export default function DogDetailScreen() {
           userHasVoted={userAttested ?? false}
           userVotedValid={userAttestation ?? false}
           attestationStatus={hotdog.attestationPeriod?.status}
-          onVoteSuccess={() => query.refetch()}
+          onVoteSuccess={refetch}
         />
 
         {/* AI verdict + live voting countdown */}

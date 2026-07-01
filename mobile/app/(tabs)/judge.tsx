@@ -20,25 +20,14 @@ import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { COLORS } from "~/constants/colors";
 import { convertIpfsToHttps, formatTimestamp, getDisplayName } from "~/utils/format";
 import { isJudgeable } from "@shared/time";
+import { useJudges, useUserVotes } from "~/hooks/useHotdogs";
 import type { ProcessedHotdog } from "~/types";
 
 const PAGE_SIZE = 50;
 
-interface Judge {
-  voter: string;
-  correct: number;
-  incorrect: number;
-  total: number;
-  accuracy: number;
-  profile: { username?: string; imgUrl?: string; address?: string };
-}
-
 function TopJudges() {
   const router = useRouter();
-  const { data: judges = [], isLoading } = trpc.hotdog.getJudges.useQuery(
-    undefined,
-    { refetchOnWindowFocus: false, retry: 1 },
-  );
+  const { judges, isLoading } = useJudges();
 
   if (isLoading) {
     return (
@@ -47,7 +36,7 @@ function TopJudges() {
       </View>
     );
   }
-  if ((judges as Judge[]).length === 0) return null;
+  if (judges.length === 0) return null;
 
   return (
     <View className="px-4 pt-2 pb-8">
@@ -55,7 +44,7 @@ function TopJudges() {
         🏅 TOP JUDGES
       </Text>
       <View className="gap-2">
-        {(judges as Judge[]).map((j, idx) => (
+        {judges.map((j, idx) => (
           <Pressable
             key={j.voter}
             onPress={() => router.push(`/profile/address/${j.voter}` as never)}
@@ -109,10 +98,7 @@ export default function JudgeScreen() {
     { staleTime: 60_000 },
   );
 
-  const { data: userVotes } = trpc.hotdog.getUserVotes.useQuery(
-    { voter: voterAddress ?? "" },
-    { enabled: !!voterAddress, staleTime: 60_000 },
-  );
+  const userVotes = useUserVotes(voterAddress);
 
   const allDogs = useMemo(
     () => (query.data?.hotdogs ?? []) as ProcessedHotdog[],
