@@ -56,8 +56,8 @@ export default function RootLayout() {
                   headerBackground: headerWithInkRule,
                   headerTintColor: COLORS.neutral,
                   headerShadowVisible: false,
+                  headerBackButtonDisplayMode: "minimal",
                   headerBackTitle: "",
-                  headerBackTitleVisible: false,
                   headerTitleStyle: {
                     fontFamily: "Segment-Bold",
                     fontSize: 17,
