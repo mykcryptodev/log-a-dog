@@ -79,7 +79,7 @@ const PoidhPage: NextPage = () => {
         <title>POIDH × Log a Dog — Fourth of July Campaign</title>
         <meta
           name="description"
-          content="Win $50 ETH daily July 4–6. Log a hotdog, share it, claim your prize on POIDH."
+          content="Win $50 ETH daily July 3–5. Log a hotdog, share it, claim your prize on POIDH."
         />
         <link rel="icon" href="/favicon.ico" />
         <meta property="og:image" content="https://logadog.xyz/images/og-image.png" />
@@ -105,7 +105,7 @@ const PoidhPage: NextPage = () => {
           <div className="pop-card rounded-3xl bg-secondary p-5 text-secondary-content">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-display text-xs tracking-widest opacity-80">JULY 4 – 6, 2026</p>
+                <p className="font-display text-xs tracking-widest opacity-80">JULY 3 – 5, 2026</p>
                 <h2 className="font-display text-2xl font-bold tracking-tight">THREE DAYS. THREE WINNERS.</h2>
                 <p className="mt-1 text-sm opacity-80">One winner picked per day by the organizers.</p>
                 <a
@@ -251,7 +251,7 @@ const PoidhPage: NextPage = () => {
 
           {/* Fine print */}
           <p className="text-center text-xs opacity-40">
-            Campaign runs July 4–6, 2026. One $50 ETH prize awarded per day.
+            Campaign runs July 3–5, 2026. One $50 ETH prize awarded per day.
             Winners selected by organizers based on quality and creativity.
           </p>
 
