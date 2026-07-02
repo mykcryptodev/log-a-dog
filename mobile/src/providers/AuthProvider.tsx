@@ -7,11 +7,7 @@ import React, {
   useState,
 } from "react";
 import { AppState, Linking } from "react-native";
-import {
-  createAppClient,
-  type AppClient,
-  viemConnector,
-} from "@farcaster/auth-client";
+import { createAppClient, viemConnector } from "@farcaster/auth-client";
 import { inAppWallet, type Account } from "thirdweb/wallets";
 import {
   API_URL,
@@ -121,78 +117,14 @@ async function waitForAppForeground(): Promise<void> {
   }
 }
 
-function buildFarcasterConnectUrl(channelToken: string, nonce: string): string {
-  const params = new URLSearchParams({
-    channelToken,
-    nonce,
-    siweUri: FARCASTER_SIWE_URI,
-    domain: FARCASTER_DOMAIN,
-  });
-  return `farcaster://connect?${params.toString()}`;
-}
-
-async function openFarcasterAuthUrl(
-  channelToken: string,
-  nonce: string,
-  relayUrl: string,
-) {
-  const deepLink = buildFarcasterConnectUrl(channelToken, nonce);
-  let url = relayUrl;
-
-  try {
-    const canOpenDeepLink = await Linking.canOpenURL(deepLink);
-    if (canOpenDeepLink) url = deepLink;
-  } catch {
-    // canOpenURL can fail on some Android builds — fall back to relay URL.
-  }
-
+async function openFarcasterAuthUrl(url: string) {
   try {
     await Linking.openURL(url);
   } catch {
     throw new Error(
-      `Could not open Farcaster. Install the Farcaster app and try again, or paste this URL in Farcaster: ${relayUrl}`,
+      `Could not open Warpcast. Install Warpcast and try again, or paste this URL in Warpcast: ${url}`,
     );
   }
-}
-
-type FarcasterAuthStatus = NonNullable<
-  Awaited<ReturnType<AppClient["status"]>>["data"]
->;
-
-/**
- * Poll the Farcaster auth relay until sign-in completes. Unlike watchStatus,
- * this survives app backgrounding: network failures while the user is in
- * Warpcast are retried, and the timeout only counts foreground time.
- */
-async function watchFarcasterAuthStatus(
-  appClient: AppClient,
-  channelToken: string,
-): Promise<FarcasterAuthStatus> {
-  const TIMEOUT_MS = 300_000;
-  const INTERVAL_MS = 1_500;
-  let remainingMs = TIMEOUT_MS;
-
-  while (remainingMs > 0) {
-    // Don't burn the timeout while the user is in the Farcaster app.
-    while (AppState.currentState !== "active") {
-      await waitForAppForeground();
-    }
-
-    const tickStart = Date.now();
-    const { data, isError } = await appClient.status({ channelToken });
-
-    if (!isError && data?.state === "completed") {
-      return data;
-    }
-
-    remainingMs -= Date.now() - tickStart;
-    if (remainingMs <= 0) break;
-
-    await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
-    remainingMs -= INTERVAL_MS;
-  }
-
-  throw new Error("Sign-in timed out or was cancelled");
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -244,11 +176,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (isError || !channelData) throw new Error("Failed to create Farcaster auth channel");
 
-    const { url, channelToken, nonce: channelNonce } = channelData;
+    const { url, channelToken } = channelData;
 
-    await openFarcasterAuthUrl(channelToken, channelNonce, url);
+    await openFarcasterAuthUrl(url);
 
-    const statusData = await watchFarcasterAuthStatus(appClient, channelToken);
+    const { data: statusData, isError: statusErr } = await appClient.watchStatus({
+      channelToken,
+      timeout: 300_000,
+      interval: 1_500,
+    });
+
+    if (statusErr || !statusData) throw new Error("Sign-in timed out or was cancelled");
 
     const { custody, signature, message, fid, username, displayName, pfpUrl, nonce } =
       statusData as {
