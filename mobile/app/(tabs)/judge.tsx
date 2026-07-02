@@ -10,8 +10,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useBottomTabInset } from "~/constants/layout";
 import { trpc } from "~/utils/trpc";
 import { CHAIN_ID, ZERO_ADDRESS } from "~/constants";
 import { VoteBar } from "~/components/VoteBar";
@@ -94,6 +94,7 @@ function TopJudges() {
 }
 
 export default function JudgeScreen() {
+  const bottomTabInset = useBottomTabInset();
   const [view, setView] = useState<"deck" | "judges">("deck");
   const [currentIdx, setCurrentIdx] = useState(0);
   const { width } = useWindowDimensions();
@@ -232,7 +233,7 @@ export default function JudgeScreen() {
   const eaterName = getDisplayName(dog?.eaterProfile, dog?.eater ?? "");
 
   return (
-    <SafeAreaView className="flex-1 bg-base-100" edges={["bottom"]}>
+    <View className="flex-1 bg-base-100" style={{ paddingBottom: bottomTabInset }}>
       <InsufficientStakeModal
         visible={showInsufficientStake}
         onClose={() => setShowInsufficientStake(false)}
@@ -264,7 +265,10 @@ export default function JudgeScreen() {
       </View>
 
       {view === "judges" ? (
-        <ScrollView className="flex-1">
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: 16 }}
+        >
           <TopJudges />
         </ScrollView>
       ) : query.isLoading ? (
@@ -411,6 +415,6 @@ export default function JudgeScreen() {
           </GestureDetector>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }

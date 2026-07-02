@@ -56,13 +56,18 @@ export default function RootLayout() {
                   headerBackground: headerWithInkRule,
                   headerTintColor: COLORS.neutral,
                   headerShadowVisible: false,
+                  headerBackTitle: "",
+                  headerBackTitleVisible: false,
                   headerTitleStyle: {
                     fontFamily: "Segment-Bold",
                     fontSize: 17,
                   },
                 }}
               >
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="(tabs)"
+                  options={{ headerShown: false, title: "Feed" }}
+                />
                 <Stack.Screen
                   name="dog/[logId]"
                   options={{ headerTitle: "DOG DETAILS" }}

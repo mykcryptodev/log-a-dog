@@ -1,6 +1,5 @@
 import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "~/providers/AuthProvider";
 import { CHAIN_ID } from "~/constants";
@@ -31,7 +30,7 @@ export default function EarnScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-base-100" edges={["bottom"]}>
+    <View className="flex-1 bg-base-100">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
@@ -144,6 +143,6 @@ export default function EarnScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
