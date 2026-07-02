@@ -58,7 +58,7 @@ export default function SignInScreen() {
   };
 
   const handleFarcaster = () =>
-    wrap("Opening Warpcast…", signInWithFarcaster);
+    wrap("Opening Farcaster…", signInWithFarcaster);
 
   const handleGoogle = () =>
     wrap("Signing in with Google…", signInWithGoogle);
@@ -251,7 +251,7 @@ export default function SignInScreen() {
             backgroundColor={COLORS.base200}
             contentStyle={{ paddingVertical: 14, alignItems: "center" }}
           >
-            {isLoading && loadingLabel.includes("Warpcast") ? (
+            {isLoading && loadingLabel.includes("Farcaster") ? (
               <View className="flex-row items-center gap-3">
                 <ActivityIndicator color={COLORS.neutral} size="small" />
                 <Text className="font-bold text-neutral">{loadingLabel}</Text>
