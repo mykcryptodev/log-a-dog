@@ -1,5 +1,6 @@
 import { type FC } from "react";
 import { Tweet } from "react-tweet";
+import FaqArticle from "~/components/Help/FaqArticle";
 
 export const Instructions: FC = () => {
   return (
@@ -21,14 +22,12 @@ export const Instructions: FC = () => {
           </li>
         </ul>
         <div className="w-full justify-center flex items-center">
-          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
-            <input type="checkbox" className="peer" />
-            <div className="collapse-title font-bold">
-              Instructional Video
-            </div>
-            <div className="collapse-content w-full flex justify-center">
-              <Tweet id="1805324646855983453" />
-            </div>
+          <div className="max-w-xl w-full">
+            <FaqArticle number={5} title="Instructional Video">
+              <div className="w-full flex justify-center">
+                <Tweet id="1805324646855983453" />
+              </div>
+            </FaqArticle>
           </div>
         </div>
       </div>
