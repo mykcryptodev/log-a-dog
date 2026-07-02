@@ -8,7 +8,7 @@ import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { PreseasonBanner } from "~/components/PreseasonBanner";
 import type { GetAllResponse, GetAllForUserResponse, ProcessedHotdog } from "~/types";
 import { buildAttestationMaps, getAttestationData } from "@shared/feed";
-import { useAuth } from "~/providers/AuthProvider";
+import { useVoterAddress } from "~/hooks/useVote";
 import { COLORS } from "~/constants/colors";
 import { usePendingDogs, pendingDogsStore } from "~/stores/pendingDogs";
 
@@ -20,8 +20,9 @@ interface Props {
 }
 
 export function HotdogFeed({ userAddress, header }: Props) {
-  const { session } = useAuth();
-  const voter = session?.address ?? ZERO_ADDRESS;
+  // Wallet-first: votes are cast from the connected wallet, so read the
+  // viewer's attestation state for that same address.
+  const voter = useVoterAddress() ?? ZERO_ADDRESS;
   const isMainFeed = !userAddress;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const pending = usePendingDogs(String(CHAIN_ID));

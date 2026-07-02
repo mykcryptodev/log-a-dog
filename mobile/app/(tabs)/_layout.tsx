@@ -17,8 +17,10 @@ interface TabBarProps {
 const LOG_FAB_SIZE = 64;
 const LOG_FAB_BORDER = 4;
 const LOG_FAB_INNER = LOG_FAB_SIZE - LOG_FAB_BORDER * 2;
-/** Half the FAB height — pops the circle above the nav's top ink rule (web: -mt-8). */
-const LOG_FAB_RAISE = LOG_FAB_SIZE / 2;
+/** Top quarter of the FAB juts out above the bar's top ink rule. */
+const LOG_FAB_PROTRUSION = LOG_FAB_SIZE / 4;
+const BAR_BORDER_TOP = 3;
+const BAR_PADDING_TOP = 8;
 
 const TAB_CONFIG = [
   { name: "index", icon: "🌭", label: "Feed" },
@@ -39,10 +41,10 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
         style={{
           flexDirection: "row",
           backgroundColor: COLORS.base100,
-          borderTopWidth: 3,
+          borderTopWidth: BAR_BORDER_TOP,
           borderTopColor: COLORS.neutral,
           paddingBottom: insets.bottom + 4,
-          paddingTop: 8,
+          paddingTop: BAR_PADDING_TOP,
           paddingHorizontal: 8,
           minHeight: 80,
           overflow: "visible",
@@ -70,15 +72,17 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
           };
 
           if (tab.isFab) {
-            // Raised, ceremonial center Log action (web: -mt-8 rounded-full
-            // border-4 border-base-content).
+            // Raised, ceremonial center Log action. Absolutely positioned so
+            // the top quarter of the circle rises above the bar's outer top
+            // edge — a negative margin can't do this under the row's
+            // flex-end alignment. The cell's top sits below the bar's border
+            // and top padding, so both are folded into the offset.
             return (
               <View
                 key="log-fab"
                 style={{
                   flex: 1,
                   alignItems: "center",
-                  justifyContent: "flex-end",
                   overflow: "visible",
                   zIndex: 10,
                 }}
@@ -88,7 +92,8 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
                   accessibilityRole="button"
                   accessibilityLabel="Log a dog"
                   style={({ pressed }) => ({
-                    marginTop: -LOG_FAB_RAISE,
+                    position: "absolute",
+                    top: -(LOG_FAB_PROTRUSION + BAR_BORDER_TOP + BAR_PADDING_TOP),
                     zIndex: 10,
                     transform: [{ scale: pressed ? 0.9 : 1 }],
                   })}

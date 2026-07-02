@@ -13,12 +13,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import type { Account } from "thirdweb/wallets";
 import { useAuth } from "~/providers/AuthProvider";
 import { useWallet } from "~/providers/WalletProvider";
 import { COLORS } from "~/constants/colors";
 import { PopButton } from "~/components/ui/Pop";
 
 type Mode = "choose" | "email" | "email-verify";
+
+const shortAddress = (address: string) =>
+  `${address.slice(0, 6)}…${address.slice(-4)}`;
 
 export default function SignInScreen() {
   const {
@@ -28,7 +32,7 @@ export default function SignInScreen() {
     signInWithApple,
     signInWithWallet,
   } = useAuth();
-  const { connectExternalWallet } = useWallet();
+  const { connectExternalWallet, disconnectWallet } = useWallet();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("choose");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +40,9 @@ export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [verifyFn, setVerifyFn] = useState<((code: string) => Promise<void>) | null>(null);
+  // Wallet sign-in is two explicit steps: connect, then a user-initiated
+  // signature. Holding the connected account here is what gates step 2.
+  const [pendingAccount, setPendingAccount] = useState<Account | null>(null);
 
   const navigate = () => router.replace("/(tabs)/profile");
   const isWalletLoading =
@@ -66,6 +73,9 @@ export default function SignInScreen() {
   const handleApple = () =>
     wrap("Signing in with Apple…", signInWithApple);
 
+  // Step 1: connect only. The signature request is NOT fired here — asking the
+  // wallet to sign while the user is still inside the wallet app (right after
+  // approving the pairing) races the connection and the prompt gets lost.
   const handleWallet = async () => {
     setIsLoading(true);
     setLoadingLabel("Connecting wallet…");
@@ -73,17 +83,22 @@ export default function SignInScreen() {
       const wallet = await connectExternalWallet();
       const account = wallet?.getAccount();
       if (!account) return;
-
-      setLoadingLabel("Confirm sign-in in your wallet…");
-      await signInWithWallet(account);
-      navigate();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Wallet sign-in failed";
-      Alert.alert("Error", msg);
+      setPendingAccount(account);
     } finally {
       setIsLoading(false);
       setLoadingLabel("");
     }
+  };
+
+  // Step 2: user explicitly taps to sign the SIWE message.
+  const handleSignMessage = () => {
+    if (!pendingAccount) return;
+    void wrap("Signing in…", () => signInWithWallet(pendingAccount));
+  };
+
+  const handleUseDifferentWallet = async () => {
+    setPendingAccount(null);
+    await disconnectWallet();
   };
 
   const handleEmailSubmit = async () => {
@@ -154,6 +169,58 @@ export default function SignInScreen() {
             </Pressable>
           </View>
         </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
+
+  // Step 2 of wallet sign-in: the wallet is connected; signing is a separate,
+  // deliberate tap so the signature request never races the connection.
+  if (pendingAccount) {
+    return (
+      <SafeAreaView className="flex-1 bg-base-100" edges={["bottom"]}>
+        <View className="flex-1 px-6 pt-10 gap-4">
+          <Text className="font-display text-neutral text-3xl tracking-wider">
+            WALLET CONNECTED ✓
+          </Text>
+          <View className="bg-base-200 rounded-xl px-4 py-3 flex-row items-center justify-between">
+            <Text className="text-neutral/60 text-sm">Wallet</Text>
+            <Text className="font-mono text-neutral text-base">
+              {shortAddress(pendingAccount.address)}
+            </Text>
+          </View>
+          <Text className="text-neutral/60 text-base leading-6">
+            One more step: sign a message with this wallet to prove you own it.
+            It&apos;s free and doesn&apos;t send a transaction — your wallet app
+            will open with the request when you tap below.
+          </Text>
+          <PopButton
+            onPress={handleSignMessage}
+            disabled={isLoading}
+            radius={16}
+            contentStyle={{ paddingVertical: 18, alignItems: "center" }}
+          >
+            {isLoading ? (
+              <View className="flex-row items-center gap-3">
+                <ActivityIndicator color={COLORS.neutral} size="small" />
+                <Text className="font-bold text-neutral">
+                  Confirm in your wallet…
+                </Text>
+              </View>
+            ) : (
+              <Text className="font-display text-neutral text-xl tracking-wider">
+                SIGN MESSAGE TO SIGN IN
+              </Text>
+            )}
+          </PopButton>
+          <Pressable
+            onPress={() => void handleUseDifferentWallet()}
+            disabled={isLoading}
+          >
+            <Text className="text-neutral/50 text-center text-sm">
+              ← Use a different wallet
+            </Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     );
   }
