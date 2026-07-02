@@ -14,6 +14,12 @@ interface TabBarProps {
 }
 
 // Mirrors the web BottomNav: Feed · Leaderboard · [raised Log button] · Judge · You
+const LOG_FAB_SIZE = 64;
+const LOG_FAB_BORDER = 4;
+const LOG_FAB_INNER = LOG_FAB_SIZE - LOG_FAB_BORDER * 2;
+/** Half the FAB height — pops the circle above the nav's top ink rule (web: -mt-8). */
+const LOG_FAB_RAISE = LOG_FAB_SIZE / 2;
+
 const TAB_CONFIG = [
   { name: "index", icon: "🌭", label: "Feed" },
   { name: "leaderboard", icon: "🏆", label: "Leaderboard" },
@@ -72,30 +78,45 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
                 style={{
                   flex: 1,
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "flex-end",
                   overflow: "visible",
                   zIndex: 10,
                 }}
               >
                 <Pressable
                   onPress={onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel="Log a dog"
                   style={({ pressed }) => ({
-                    width: 64,
-                    height: 64,
-                    borderRadius: 32,
-                    borderWidth: 4,
-                    borderColor: COLORS.neutral,
-                    overflow: "hidden",
-                    marginTop: -32,
+                    marginTop: -LOG_FAB_RAISE,
                     zIndex: 10,
                     transform: [{ scale: pressed ? 0.9 : 1 }],
                   })}
                 >
-                  <Image
-                    source={require("../../assets/hotdog-icon.png")}
-                    style={{ width: 64, height: 64 }}
-                    contentFit="cover"
-                  />
+                  <View
+                    style={{
+                      width: LOG_FAB_SIZE,
+                      height: LOG_FAB_SIZE,
+                      borderRadius: LOG_FAB_SIZE / 2,
+                      borderWidth: LOG_FAB_BORDER,
+                      borderColor: COLORS.neutral,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: COLORS.base100,
+                    }}
+                  >
+                    {/* expo-image is a native view; parent overflow:hidden does not
+                        reliably clip it, so round the image itself. */}
+                    <Image
+                      source={require("../../assets/hotdog-icon.png")}
+                      style={{
+                        width: LOG_FAB_INNER,
+                        height: LOG_FAB_INNER,
+                        borderRadius: LOG_FAB_INNER / 2,
+                      }}
+                      contentFit="cover"
+                    />
+                  </View>
                 </Pressable>
               </View>
             );
@@ -168,6 +189,10 @@ export default function TabLayout() {
           fontFamily: "Segment-Bold",
           letterSpacing: 1,
           fontSize: 17,
+        },
+        tabBarStyle: {
+          overflow: "visible",
+          elevation: 0,
         },
       }}
     >
