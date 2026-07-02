@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
+import Animated, { FadeInDown, ReduceMotion } from "react-native-reanimated";
 import { FlashList } from "@shopify/flash-list";
 import { trpc } from "~/utils/trpc";
 import { CHAIN_ID, ZERO_ADDRESS } from "~/constants";
@@ -11,6 +12,7 @@ import { buildAttestationMaps, getAttestationData } from "@shared/feed";
 import { useVoterAddress } from "~/hooks/useVote";
 import { COLORS } from "~/constants/colors";
 import { usePendingDogs, pendingDogsStore } from "~/stores/pendingDogs";
+import { HotdogLoader } from "~/components/ui/HotdogLoader";
 
 const PAGE_SIZE = 10;
 
@@ -187,8 +189,7 @@ export function HotdogFeed({ userAddress, header }: Props) {
   if (query.isLoading && !query.data) {
     return (
       <View className="flex-1 items-center justify-center py-20">
-        <ActivityIndicator color={COLORS.primary} size="large" />
-        <Text className="text-neutral/60 mt-3 text-sm">Loading dogs…</Text>
+        <HotdogLoader size={52} label="Loading dogs…" />
       </View>
     );
   }
@@ -217,15 +218,24 @@ export function HotdogFeed({ userAddress, header }: Props) {
         const isPending = item.logId.startsWith("pending-");
         const a = getAttestationData(item.logId, attestationMaps);
         return (
-          <HotdogCard
-            hotdog={item}
-            validCount={a.validAttestations}
-            invalidCount={a.invalidAttestations}
-            userHasVoted={a.userAttested}
-            userVotedValid={a.userAttestation}
-            onVoteSuccess={refetch}
-            pending={isPending}
-          />
+          // Entering plays only when FlashList creates a fresh cell (recycled
+          // cells reuse the mounted view), so cards settle in with a short
+          // fade+drop without replaying on every scroll.
+          <Animated.View
+            entering={FadeInDown.duration(240).reduceMotion(
+              ReduceMotion.System,
+            )}
+          >
+            <HotdogCard
+              hotdog={item}
+              validCount={a.validAttestations}
+              invalidCount={a.invalidAttestations}
+              userHasVoted={a.userAttested}
+              userVotedValid={a.userAttestation}
+              onVoteSuccess={refetch}
+              pending={isPending}
+            />
+          </Animated.View>
         );
       }}
       estimatedItemSize={520}
@@ -245,7 +255,7 @@ export function HotdogFeed({ userAddress, header }: Props) {
       ListFooterComponent={
         query.isFetchingNextPage ? (
           <View className="py-6 items-center">
-            <ActivityIndicator color={COLORS.primary} />
+            <HotdogLoader size={28} />
           </View>
         ) : !query.hasNextPage && hotdogs.length > 0 ? (
           <View className="py-6 items-center">

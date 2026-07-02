@@ -17,6 +17,7 @@ import {
   type CommentsPage,
 } from "@shared/comments";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
+import { HotdogLoader } from "~/components/ui/HotdogLoader";
 import { API_URL, CHAIN_ID } from "~/constants";
 import { COLORS } from "~/constants/colors";
 import { formatAddress, formatTimestamp } from "@shared/format";
@@ -147,7 +148,7 @@ export function Comments({ logId }: Props) {
 
       {loading ? (
         <View className="py-8 items-center">
-          <ActivityIndicator color={COLORS.primary} />
+          <HotdogLoader size={28} />
         </View>
       ) : comments.length === 0 ? (
         <View className="py-8 items-center">

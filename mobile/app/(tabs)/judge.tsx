@@ -21,6 +21,7 @@ import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { HotdogImage } from "~/components/HotdogImage";
 import { InsufficientStakeModal } from "~/components/InsufficientStakeModal";
 import { COLORS } from "~/constants/colors";
+import { HotdogLoader } from "~/components/ui/HotdogLoader";
 import { formatTimestamp, getDisplayName } from "~/utils/format";
 import { isJudgeable } from "@shared/time";
 import { useJudges, useUserVotes } from "~/hooks/useHotdogs";
@@ -38,7 +39,7 @@ function TopJudges() {
   if (isLoading) {
     return (
       <View className="py-6 items-center">
-        <ActivityIndicator color={COLORS.primary} />
+        <HotdogLoader size={32} />
       </View>
     );
   }
@@ -273,8 +274,7 @@ export default function JudgeScreen() {
         </ScrollView>
       ) : query.isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color={COLORS.primary} size="large" />
-          <Text className="text-neutral/60 mt-3">Loading the queue…</Text>
+          <HotdogLoader size={52} label="Loading the queue…" />
         </View>
       ) : !dog ? (
         <View className="flex-1 items-center justify-center px-8">

@@ -5,6 +5,7 @@ import { ZERO_ADDRESS } from "thirdweb";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 import HotdogCard from "~/components/utils/HotdogCard";
 import { BackToTopButton } from "~/components/utils/BackToTopButton";
+import { HotdogLoader } from "~/components/utils/HotdogLoader";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { DEFAULT_CHAIN } from "~/constants";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
@@ -232,7 +233,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       <>
         <div id="top-of-list" className="invisible" />
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-          <span className="text-5xl">🧊</span>
+          <span className="inline-block text-5xl motion-safe:animate-dog-bob">🧊</span>
           <h3 className="font-display text-2xl tracking-wide">The grill went cold.</h3>
           <p className="text-sm text-base-content/70">Couldn&apos;t load the dogs.</p>
           <button className="btn btn-primary font-display tracking-wide" onClick={() => void refetchDogData()}>
@@ -249,7 +250,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       <>
         <div id="top-of-list" className="invisible" />
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-          <span className="text-6xl">🌭</span>
+          <span className="inline-block text-6xl motion-safe:animate-dog-bob">🌭</span>
           <h3 className="font-display text-2xl tracking-wide">No dogs yet today.</h3>
           <p className="text-sm text-base-content/70">The grill is hot. 🔥 Be the first to log.</p>
           <button
@@ -276,7 +277,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       </div>
       <div className="flex justify-end">
         <button
-          className="btn btn-ghost btn-sm gap-2"
+          className="group btn btn-ghost btn-sm gap-2"
           onClick={() => void handleRefresh()}
           disabled={isRefreshing}
           title="Not seeing your dog? Pull the latest logs from the chain."
@@ -284,7 +285,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
           {isRefreshing ? (
             <span className="loading loading-spinner loading-xs" />
           ) : (
-            <span>↻</span>
+            <span className="inline-block transition-transform duration-300 motion-safe:group-hover:rotate-180">
+              ↻
+            </span>
           )}
           Refresh feed
         </button>
@@ -321,10 +324,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       })}
       <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center">
         {isFetchingNextPage ? (
-          <div className="flex items-center gap-2 text-sm text-base-content/70">
-            <span className="loading loading-spinner loading-sm" />
-            <span>Loading more dogs...</span>
-          </div>
+          <HotdogLoader size={24} label="Loading more dogs…" />
         ) : !hasNextPage ? (
           <p className="text-sm text-base-content/60">You&apos;ve reached the end of the grill.</p>
         ) : null}

@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import HotdogCard from "~/components/utils/HotdogCard";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
+import { HotdogLoader } from "~/components/utils/HotdogLoader";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -172,10 +173,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
 
         <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center">
           {isFetchingNextPage ? (
-            <div className="flex items-center gap-2 text-sm text-base-content/70">
-              <span className="loading loading-spinner loading-sm" />
-              <span>Loading more dogs...</span>
-            </div>
+            <HotdogLoader size={24} label="Loading more dogs…" />
           ) : !hasNextPage ? (
             <p className="text-sm text-base-content/60">You&apos;ve reached the end of this profile.</p>
           ) : null}
@@ -188,10 +186,7 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
     <main className="flex flex-col items-center justify-center">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-bold">
-            <div className="loading loading-spinner mr-2" />
-            Loading...
-          </h1>
+          <HotdogLoader size={44} vertical label="Loading profile…" />
         </div>
       </div>
     </main>

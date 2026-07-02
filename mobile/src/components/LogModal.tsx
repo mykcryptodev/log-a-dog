@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   Modal,
@@ -22,6 +21,8 @@ import { uploadImageToIPFS, uploadMetadataToIPFS } from "~/utils/upload";
 import { pendingDogsStore } from "~/stores/pendingDogs";
 import { compressImageForUpload, normalizeImageUri } from "~/utils/image";
 import { PopButton, INK } from "~/components/ui/Pop";
+import { HotdogLoader } from "~/components/ui/HotdogLoader";
+import { ConfettiBurst } from "~/components/ui/ConfettiBurst";
 
 interface Props {
   visible: boolean;
@@ -314,8 +315,8 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
             contentStyle={{ paddingVertical: 15, alignItems: "center", justifyContent: "center" }}
           >
             {isProcessing ? (
-              <View className="flex-row items-center gap-3">
-                <ActivityIndicator color={COLORS.neutral} size="small" />
+              <View className="flex-row items-center justify-center gap-3">
+                <HotdogLoader size={20} />
                 <Text className="font-bold text-neutral text-base">
                   {STEP_LABELS[step]}
                 </Text>
@@ -327,6 +328,9 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
             )}
           </PopButton>
         </ScrollView>
+
+        {/* Hotdog confetti rains over the sheet while the success state shows. */}
+        {step === "success" && <ConfettiBurst />}
       </View>
     </Modal>
   );

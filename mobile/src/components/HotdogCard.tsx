@@ -1,5 +1,14 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
+import Animated, {
+  Easing,
+  ReduceMotion,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { HotdogImage } from "~/components/HotdogImage";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
@@ -8,6 +17,7 @@ import { VoteBar } from "~/components/VoteBar";
 import { AiJudgement } from "~/components/AiJudgement";
 import { VotingCountdown } from "~/components/VotingCountdown";
 import { PopCard, PopSticker, INK } from "~/components/ui/Pop";
+import { HotdogLoader } from "~/components/ui/HotdogLoader";
 import { COLORS } from "~/constants/colors";
 import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 import { formatTimestamp, getDisplayName } from "~/utils/format";
@@ -36,6 +46,33 @@ export function HotdogCard({
   pending = false,
 }: Props) {
   const router = useRouter();
+
+  // Optimistic cards breathe softly while the log confirms on-chain, so
+  // "in flight" reads at a glance instead of just looking washed out.
+  const pulse = useSharedValue(0);
+  useEffect(() => {
+    if (pending) {
+      pulse.value = withRepeat(
+        withTiming(1, {
+          duration: 900,
+          easing: Easing.inOut(Easing.quad),
+          reduceMotion: ReduceMotion.System,
+        }),
+        -1,
+        true,
+        undefined,
+        ReduceMotion.System,
+      );
+    } else {
+      cancelAnimation(pulse);
+      pulse.value = 0;
+    }
+    return () => cancelAnimation(pulse);
+  }, [pending, pulse]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: pending ? 0.6 + pulse.value * 0.3 : 1,
+  }));
 
   const eaterName = useMemo(
     () => getDisplayName(hotdog.eaterProfile, hotdog.eater),
@@ -67,10 +104,12 @@ export function HotdogCard({
         : { label: "FINAL", bg: COLORS.base300, fg: COLORS.neutral };
 
   return (
+    <Animated.View
+      style={[{ marginHorizontal: 16, marginBottom: 20 }, pulseStyle]}
+    >
     <PopCard
       offset={6}
       radius={28}
-      style={{ marginHorizontal: 16, marginBottom: 20, opacity: pending ? 0.75 : 1 }}
       contentStyle={{ padding: 14 }}
     >
       {/* Identity row */}
@@ -172,7 +211,7 @@ export function HotdogCard({
       {pending ? (
         /* Optimistic card — confirming on-chain */
         <View className="pt-3 flex-row items-center gap-2">
-          <Text className="text-sm">⏳</Text>
+          <HotdogLoader size={16} />
           <Text className="text-neutral/60 text-sm font-medium">
             Posting onchain…
           </Text>
@@ -214,5 +253,6 @@ export function HotdogCard({
         </>
       )}
     </PopCard>
+    </Animated.View>
   );
 }

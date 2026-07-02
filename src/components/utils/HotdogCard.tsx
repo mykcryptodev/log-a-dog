@@ -317,12 +317,23 @@ const HotdogCardComponent: FC<Props> = ({
                 Photo
               )}
 
-              {/* Status sticker — the single verdict/state tag. */}
-              <span
-                className={`sticker absolute left-3 top-3 -rotate-3 rounded-lg px-2 py-0.5 font-display text-xs tracking-wider ${status.cls}`}
+              {/* Status sticker — the single verdict/state tag. Slaps on with
+                  a springy pop just after the card lands. */}
+              <motion.span
+                initial={
+                  animateEntrance ? { scale: 0.4, opacity: 0, rotate: -14 } : false
+                }
+                animate={{ scale: 1, opacity: 1, rotate: -3 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 380,
+                  damping: 16,
+                  delay: animateEntrance ? 0.12 : 0,
+                }}
+                className={`sticker absolute left-3 top-3 rounded-lg px-2 py-0.5 font-display text-xs tracking-wider ${status.cls}`}
               >
                 {status.label}
-              </span>
+              </motion.span>
 
               {hotdog.duplicateOfLogId && (
                 <Link

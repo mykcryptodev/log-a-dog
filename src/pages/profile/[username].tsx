@@ -9,6 +9,7 @@ import { useActiveAccount } from "thirdweb/react";
 import { UserListAttestations } from "~/components/Attestation/UserList";
 import { useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
+import { HotdogLoader } from "~/components/utils/HotdogLoader";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -60,10 +61,7 @@ export const Profile: NextPage<{ username: string }> = ({ username }) => {
     <main className="flex flex-col items-center justify-center">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-bold">
-            <div className="loading loading-spinner mr-2" />
-            Loading...
-          </h1>
+          <HotdogLoader size={44} vertical label="Loading profile…" />
         </div>
       </div>
     </main>

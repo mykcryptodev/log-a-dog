@@ -3,6 +3,7 @@ import { useActiveAccount } from "thirdweb/react";
 import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
 import HotdogCard from "~/components/utils/HotdogCard";
+import { HotdogLoader } from "~/components/utils/HotdogLoader";
 import { DEFAULT_CHAIN } from "~/constants";
 
 const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
@@ -17,7 +18,9 @@ const DogPage: NextPage<{ logId: string }> = ({ logId }) => {
   if (isLoading || !data) {
     return (
       <main className="flex flex-col items-center justify-center">
-          <div className="pop-card w-64 h-64 bg-base-300 animate-pulse rounded-2xl" />
+          <div className="pop-card flex h-64 w-64 items-center justify-center rounded-2xl bg-base-300">
+            <HotdogLoader size={44} vertical label="Fetching this dog…" />
+          </div>
       </main>
     );
   }

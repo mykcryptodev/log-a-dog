@@ -1,7 +1,8 @@
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
-import { MotionConfig } from "motion/react";
+import { useRouter } from "next/router";
+import { MotionConfig, motion } from "motion/react";
 import { api } from "~/utils/api";
 import "~/styles/globals.css";
 import { ThirdwebProviderWithActiveChain } from "~/providers/Thirdweb";
@@ -13,6 +14,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
+  const router = useRouter();
   return (
     <SessionProvider session={session}>
       <ThirdwebProviderWithActiveChain>
@@ -22,7 +24,18 @@ const MyApp: AppType<{ session: Session | null }> = ({
           <MotionConfig reducedMotion="user">
             <div className="font-sans">
               <Layout>
-                <Component {...pageProps} />
+                {/* Subtle page transition: each route settles in with a short
+                    fade + rise. Keyed by route (not asPath) so param-only
+                    changes on the same page don't re-run it, and no exit
+                    animation so navigation never feels delayed. */}
+                <motion.div
+                  key={router.route}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                >
+                  <Component {...pageProps} />
+                </motion.div>
                 <div id="portal" />
               </Layout>
             </div>

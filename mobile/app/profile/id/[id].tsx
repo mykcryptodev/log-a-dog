@@ -1,5 +1,5 @@
 import React from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { trpc } from "~/utils/trpc";
@@ -7,6 +7,7 @@ import { CHAIN_ID } from "~/constants";
 import { HotdogFeed } from "~/components/HotdogFeed";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { formatAddress } from "~/utils/format";
+import { HotdogLoader } from "~/components/ui/HotdogLoader";
 
 export default function ProfileByIdScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,7 +20,7 @@ export default function ProfileByIdScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-base-100 items-center justify-center">
-        <ActivityIndicator />
+        <HotdogLoader size={44} />
       </SafeAreaView>
     );
   }
