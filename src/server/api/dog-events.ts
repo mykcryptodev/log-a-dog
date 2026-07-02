@@ -1,5 +1,12 @@
 import { db } from "~/server/db";
 import type { Prisma } from "@prisma/client";
+import { DOG_FEED_START_TIME, CONTEST_END_TIME } from "~/constants";
+
+// Only dogs posted within the season window count toward user totals.
+const SEASON_TIMESTAMP_FILTER: Prisma.BigIntFilter = {
+  gte: BigInt(Math.floor(new Date(DOG_FEED_START_TIME).getTime() / 1000)),
+  lte: BigInt(Math.floor(new Date(CONTEST_END_TIME).getTime() / 1000)),
+};
 
 export async function getDogEvents(options?: {
   where?: Prisma.DogEventWhereInput;
@@ -254,6 +261,7 @@ export async function getUserValidDogEventCount(address: string) {
       where: {
         userId: { in: userIds },
         attestationValid: true,
+        timestamp: SEASON_TIMESTAMP_FILTER,
       },
     });
   }
@@ -261,12 +269,20 @@ export async function getUserValidDogEventCount(address: string) {
   if (user?.id) {
     // Count by userId if we found the user but no fid
     return db.dogEvent.count({
-      where: { userId: user.id, attestationValid: true },
+      where: {
+        userId: user.id,
+        attestationValid: true,
+        timestamp: SEASON_TIMESTAMP_FILTER,
+      },
     });
   }
 
   // Fallback: count by address directly
   return db.dogEvent.count({
-    where: { eater: lowerAddress, attestationValid: true },
+    where: {
+      eater: lowerAddress,
+      attestationValid: true,
+      timestamp: SEASON_TIMESTAMP_FILTER,
+    },
   });
 }

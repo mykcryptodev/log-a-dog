@@ -7,7 +7,7 @@ import HotdogCard from "~/components/utils/HotdogCard";
 import { BackToTopButton } from "~/components/utils/BackToTopButton";
 import { HotdogLoader } from "~/components/utils/HotdogLoader";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
-import { DEFAULT_CHAIN } from "~/constants";
+import { DEFAULT_CHAIN, CONTEST_START_TIME } from "~/constants";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
 import {
   buildAttestationMaps,
@@ -271,9 +271,9 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       <BackToTopButton />
       <div id="top-of-list" className="invisible" />
       <div className="flex flex-col gap-4">
-      {/* Live scoreboard ticker — always shows all-time top dogs */}
+      {/* Live scoreboard ticker — current season top dogs */}
       <div className="pop-card w-full overflow-hidden rounded-2xl bg-base-100">
-        <LeaderboardBanner scrollSpeed={40} />
+        <LeaderboardBanner startDate={new Date(CONTEST_START_TIME)} scrollSpeed={40} />
       </div>
       <div className="flex justify-end">
         <button

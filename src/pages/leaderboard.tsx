@@ -1,17 +1,11 @@
 import Head from "next/head";
 import { type NextPage } from "next";
-import { useState } from "react";
 import LeaderboardList from "~/components/LeaderboardList";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import { CONTEST_START_TIME } from "~/constants";
 
-const TABS = ["Season", "All-time"] as const;
-type Tab = (typeof TABS)[number];
-
 const LeaderboardPage: NextPage = () => {
-  const [tab, setTab] = useState<Tab>("Season");
-
-  const startDateObj = tab === "Season" ? new Date(CONTEST_START_TIME) : undefined;
+  const startDateObj = new Date(CONTEST_START_TIME);
 
   return (
     <>
@@ -25,19 +19,6 @@ const LeaderboardPage: NextPage = () => {
           <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
             🏆 THE SCOREBOARD
           </h1>
-
-          <div role="tablist" className="tabs tabs-boxed border-2 border-base-content bg-base-200">
-            {TABS.map((t) => (
-              <a
-                key={t}
-                role="tab"
-                className={`tab font-display tracking-wide ${tab === t ? "tab-active" : ""}`}
-                onClick={() => setTab(t)}
-              >
-                {t}
-              </a>
-            ))}
-          </div>
 
           <div className="pop-card w-full overflow-hidden rounded-2xl bg-base-100">
             <LeaderboardBanner startDate={startDateObj} scrollSpeed={35} />
