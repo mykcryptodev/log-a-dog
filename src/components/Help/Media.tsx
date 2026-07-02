@@ -1,6 +1,7 @@
 import { type FC } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import FaqArticle from "~/components/Help/FaqArticle";
 
 export const Media: FC = () => {
   return (
@@ -8,12 +9,8 @@ export const Media: FC = () => {
       <div className="flex flex-col gap-4">
         <h3 className="text-2xl font-bold mx-auto">Media</h3>
         <div className="w-full justify-center flex flex-col gap-2 items-center">
-          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
-            <input type="checkbox" />
-            <div className="collapse-title font-bold">
-              Season 2 Award Ceremony
-            </div>
-            <div className="collapse-content">
+          <div className="max-w-xl w-full">
+            <FaqArticle number={6} title="Season 2 Award Ceremony">
               <p className="mb-4">
                 Watch the Season 2 award ceremony:
               </p>
@@ -26,14 +23,10 @@ export const Media: FC = () => {
                   allowFullScreen
                 />
               </div>
-            </div>
+            </FaqArticle>
           </div>
-          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
-            <input type="checkbox" />
-            <div className="collapse-title font-bold">
-              Podcast Episode
-            </div>
-            <div className="collapse-content"> 
+          <div className="max-w-xl w-full">
+            <FaqArticle number={7} title="Podcast Episode">
               <p className="mb-4">
                 Listen to the ta$te podcast episode about Log a Dog:
               </p>
@@ -46,14 +39,10 @@ export const Media: FC = () => {
               <p className="text-sm mt-2 opacity-75">
                 Episode 4: &quot;Are Hotdogs Sandwiches?&quot; - A deep dive into the Log a Dog app and the eternal hotdog debate.
               </p>
-            </div>
+            </FaqArticle>
           </div>
-          <div className="max-w-xl collapse collapse-arrow border-collapse border w-full bg-base-200 bg-opacity-30">
-            <input type="checkbox" /> 
-            <div className="collapse-title font-bold">
-              Interview with Season 1 Winner: Cool Beans!
-            </div>
-            <div className="collapse-content"> 
+          <div className="max-w-xl w-full">
+            <FaqArticle number={8} title="Interview with Season 1 Winner: Cool Beans!">
               <p className="mb-4">
                 Listen to the interview with the Season 1 winner: Cool Beans!
               </p>
@@ -69,7 +58,7 @@ export const Media: FC = () => {
               <p className="text-sm mt-2 opacity-75">
                 Interview with Season 1 winner: Cool Beans on Zora!
               </p>
-            </div>
+            </FaqArticle>
           </div>
         </div>
       </div>
