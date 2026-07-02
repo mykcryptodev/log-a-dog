@@ -36,121 +36,127 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
 
   return (
     <>
-      {/* Web BottomNav: border-t-[3px] border-base-content bg-base-100 */}
+      {/* The FAB must ride above the bar's ink rule. Negative offsets that
+          push a child outside the row's bounds have repeatedly failed on
+          device, so the geometry is inverted: this root view is taller than
+          the visible bar by the protrusion, pulled up over the screen by the
+          same amount (net flow height unchanged), and left transparent in
+          that strip. The FAB is anchored to the root's top edge — everything
+          stays inside this view's bounds, so nothing can be clipped. */}
       <View
-        style={{
-          flexDirection: "row",
-          backgroundColor: COLORS.base100,
-          borderTopWidth: BAR_BORDER_TOP,
-          borderTopColor: COLORS.neutral,
-          paddingBottom: insets.bottom + 4,
-          paddingTop: BAR_PADDING_TOP,
-          paddingHorizontal: 8,
-          minHeight: 80,
-          overflow: "visible",
-        }}
+        pointerEvents="box-none"
+        style={{ marginTop: -LOG_FAB_PROTRUSION }}
       >
-        {TAB_CONFIG.map((tab) => {
-          const routeIdx = tab.isFab ? -1 : state.routes.findIndex((r) => r.name === tab.name);
-          const isFocused = !tab.isFab && state.index === routeIdx;
-
-          const onPress = () => {
+        {/* Web BottomNav: border-t-[3px] border-base-content bg-base-100 */}
+        <View
+          style={{
+            marginTop: LOG_FAB_PROTRUSION,
+            flexDirection: "row",
+            backgroundColor: COLORS.base100,
+            borderTopWidth: BAR_BORDER_TOP,
+            borderTopColor: COLORS.neutral,
+            paddingBottom: insets.bottom + 4,
+            paddingTop: BAR_PADDING_TOP,
+            paddingHorizontal: 8,
+            minHeight: 80,
+          }}
+        >
+          {TAB_CONFIG.map((tab) => {
+            // The FAB renders in the overlay below; keep an empty cell so the
+            // remaining tabs land in the same columns as the web grid.
             if (tab.isFab) {
-              setLogModalVisible(true);
-              return;
+              return <View key="log-fab" style={{ flex: 1 }} />;
             }
-            const route = state.routes[routeIdx];
-            if (!route) return;
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(tab.name);
-            }
-          };
 
-          if (tab.isFab) {
-            // Raised, ceremonial center Log action. Absolutely positioned so
-            // the top quarter of the circle rises above the bar's outer top
-            // edge — a negative margin can't do this under the row's
-            // flex-end alignment. The cell's top sits below the bar's border
-            // and top padding, so both are folded into the offset.
+            const routeIdx = state.routes.findIndex((r) => r.name === tab.name);
+            const isFocused = state.index === routeIdx;
+
+            const onPress = () => {
+              const route = state.routes[routeIdx];
+              if (!route) return;
+              const event = navigation.emit({
+                type: "tabPress",
+                target: route.key,
+                canPreventDefault: true,
+              });
+              if (!isFocused && !event.defaultPrevented) {
+                navigation.navigate(tab.name);
+              }
+            };
+
             return (
-              <View
-                key="log-fab"
-                style={{
-                  flex: 1,
-                  alignItems: "center",
-                  overflow: "visible",
-                  zIndex: 10,
-                }}
+              <Pressable
+                key={tab.name}
+                onPress={onPress}
+                style={{ flex: 1, alignItems: "center", paddingVertical: 4 }}
               >
-                <Pressable
-                  onPress={onPress}
-                  accessibilityRole="button"
-                  accessibilityLabel="Log a dog"
-                  style={({ pressed }) => ({
-                    position: "absolute",
-                    top: -(LOG_FAB_PROTRUSION + BAR_BORDER_TOP + BAR_PADDING_TOP),
-                    zIndex: 10,
-                    transform: [{ scale: pressed ? 0.9 : 1 }],
-                  })}
+                <Text style={{ fontSize: 20, opacity: isFocused ? 1 : 0.5 }}>
+                  {tab.icon}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontFamily: "Segment-Bold",
+                    color: isFocused ? COLORS.primary : COLORS.neutral + "99",
+                    marginTop: 2,
+                    letterSpacing: 0.4,
+                  }}
+                  numberOfLines={1}
                 >
-                  <View
-                    style={{
-                      width: LOG_FAB_SIZE,
-                      height: LOG_FAB_SIZE,
-                      borderRadius: LOG_FAB_SIZE / 2,
-                      borderWidth: LOG_FAB_BORDER,
-                      borderColor: COLORS.neutral,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: COLORS.base100,
-                    }}
-                  >
-                    {/* expo-image is a native view; parent overflow:hidden does not
-                        reliably clip it, so round the image itself. */}
-                    <Image
-                      source={require("../../assets/hotdog-icon.png")}
-                      style={{
-                        width: LOG_FAB_INNER,
-                        height: LOG_FAB_INNER,
-                        borderRadius: LOG_FAB_INNER / 2,
-                      }}
-                      contentFit="cover"
-                    />
-                  </View>
-                </Pressable>
-              </View>
+                  {tab.label}
+                </Text>
+              </Pressable>
             );
-          }
+          })}
+        </View>
 
-          return (
-            <Pressable
-              key={tab.name}
-              onPress={onPress}
-              style={{ flex: 1, alignItems: "center", paddingVertical: 4 }}
+        {/* Raised, ceremonial center Log action. top: 0 puts the circle's
+            top at the root's top edge — LOG_FAB_PROTRUSION above the bar's
+            border — without leaving the root's bounds. */}
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            alignItems: "center",
+          }}
+        >
+          <Pressable
+            onPress={() => setLogModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Log a dog"
+            style={({ pressed }) => ({
+              transform: [{ scale: pressed ? 0.9 : 1 }],
+            })}
+          >
+            <View
+              style={{
+                width: LOG_FAB_SIZE,
+                height: LOG_FAB_SIZE,
+                borderRadius: LOG_FAB_SIZE / 2,
+                borderWidth: LOG_FAB_BORDER,
+                borderColor: COLORS.neutral,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: COLORS.base100,
+              }}
             >
-              <Text style={{ fontSize: 20, opacity: isFocused ? 1 : 0.5 }}>
-                {tab.icon}
-              </Text>
-              <Text
+              {/* expo-image is a native view; parent overflow:hidden does not
+                  reliably clip it, so round the image itself. */}
+              <Image
+                source={require("../../assets/hotdog-icon.png")}
                 style={{
-                  fontSize: 10,
-                  fontFamily: "Segment-Bold",
-                  color: isFocused ? COLORS.primary : COLORS.neutral + "99",
-                  marginTop: 2,
-                  letterSpacing: 0.4,
+                  width: LOG_FAB_INNER,
+                  height: LOG_FAB_INNER,
+                  borderRadius: LOG_FAB_INNER / 2,
                 }}
-                numberOfLines={1}
-              >
-                {tab.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+                contentFit="cover"
+              />
+            </View>
+          </Pressable>
+        </View>
       </View>
 
       <LogModal
@@ -194,10 +200,6 @@ export default function TabLayout() {
           fontFamily: "Segment-Bold",
           letterSpacing: 1,
           fontSize: 17,
-        },
-        tabBarStyle: {
-          overflow: "visible",
-          elevation: 0,
         },
       }}
     >
