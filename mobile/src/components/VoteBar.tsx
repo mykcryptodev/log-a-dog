@@ -6,9 +6,7 @@ import {
   Alert,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { trpc } from "~/utils/trpc";
-import { useAuth } from "~/providers/AuthProvider";
-import { CHAIN_ID } from "~/constants";
+import { useVote, useVoterAddress } from "~/hooks/useVote";
 import { getVotePct } from "~/utils/format";
 import { COLORS } from "~/constants/colors";
 import { InsufficientStakeModal } from "~/components/InsufficientStakeModal";
@@ -35,34 +33,30 @@ export function VoteBar({
   disabled,
   onVoteSuccess,
 }: Props) {
-  const { session } = useAuth();
+  const voterAddress = useVoterAddress();
+  const { vote, isVoting } = useVote();
   const validScale = useRef(new Animated.Value(1)).current;
   const invalidScale = useRef(new Animated.Value(1)).current;
   const [showInsufficientStake, setShowInsufficientStake] = useState(false);
+  // Optimistic lock so the buttons freeze the moment a verdict lands, before
+  // the server props catch up.
+  const [castVote, setCastVote] = useState<boolean | null>(null);
 
   const { validPct, invalidPct } = getVotePct(validCount, invalidCount);
 
-  const judgeMutation = trpc.hotdog.judge.useMutation({
-    onSuccess: () => {
-      onVoteSuccess?.();
-    },
-    onError: (err) => {
-      const msg = err.message ?? "Failed to vote";
-      if (msg.includes("Insufficient stake")) {
-        setShowInsufficientStake(true);
-      } else {
-        Alert.alert("Error", msg);
-      }
-    },
-  });
+  const hasVoted = userHasVoted || castVote !== null;
+  const votedValid = castVote ?? userVotedValid;
+  const isResolved = attestationStatus === 1;
 
   const handleVote = useCallback(
     async (isValid: boolean) => {
-      if (!session) {
+      if (!voterAddress) {
         Alert.alert("Sign In Required", "Please sign in to vote.");
         return;
       }
-      if (disabled || attestationStatus === 1) return;
+      // Attestations are final on-chain (the contract has no revoke and
+      // reverts on a second attest), so a cast verdict locks the buttons.
+      if (disabled || isResolved || isVoting || hasVoted) return;
 
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -79,18 +73,28 @@ export function VoteBar({
         }),
       ]).start();
 
-      const shouldRevoke = userHasVoted && userVotedValid === isValid;
-      judgeMutation.mutate({
-        chainId: CHAIN_ID,
-        logId,
-        isValid,
-        shouldRevoke,
-      });
+      try {
+        await vote({ logId, isValid });
+        setCastVote(isValid);
+        onVoteSuccess?.();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to vote";
+        // A revert here means our local state was stale — the vote is already
+        // on-chain. Lock the buttons and refresh instead of surfacing an error.
+        if (/already attested/i.test(msg)) {
+          setCastVote(isValid);
+          onVoteSuccess?.();
+          return;
+        }
+        if (msg.includes("Insufficient stake")) {
+          setShowInsufficientStake(true);
+        } else {
+          Alert.alert("Error", msg);
+        }
+      }
     },
-    [session, disabled, attestationStatus, userHasVoted, userVotedValid, logId, judgeMutation, validScale, invalidScale],
+    [voterAddress, disabled, isResolved, isVoting, hasVoted, logId, vote, onVoteSuccess, validScale, invalidScale],
   );
-
-  const isResolved = attestationStatus === 1;
 
   return (
     <View className="pt-3">
@@ -110,10 +114,10 @@ export function VoteBar({
         </View>
       )}
 
-      {userHasVoted && !isResolved && (
+      {hasVoted && !isResolved && (
         <View className="mb-2 bg-base-200 rounded-lg py-1 items-center">
           <Text className="font-display text-neutral/70 text-xs tracking-wide">
-            ✓ you voted {userVotedValid ? "VALID DOG" : "SUS"} — verdict locked
+            ✓ you voted {votedValid ? "VALID DOG" : "SUS"} — verdict locked
           </Text>
         </View>
       )}
@@ -121,33 +125,33 @@ export function VoteBar({
       {/* Sticker-brutalism vote control (web pop-btn pair) */}
       <View className="flex-row" style={{ gap: 10 }}>
         <Animated.View
-          style={{ flex: 1, transform: [{ scale: validScale }] }}
+          style={{ flex: 1, transform: [{ scale: validScale }], opacity: hasVoted && !votedValid ? 0.35 : 1 }}
         >
           <PopButton
             onPress={() => handleVote(true)}
-            disabled={isResolved || judgeMutation.isLoading}
+            disabled={isResolved || isVoting || hasVoted}
             backgroundColor={COLORS.accent}
             radius={12}
             contentStyle={{ paddingVertical: 10, alignItems: "center" }}
           >
             <Text className="font-display text-sm tracking-wide" style={{ color: COLORS.base100 }}>
-              {userHasVoted && userVotedValid ? "✓ " : ""}🥬 VALID DOG
+              {hasVoted && votedValid ? "✓ " : ""}🥬 VALID DOG
             </Text>
           </PopButton>
         </Animated.View>
 
         <Animated.View
-          style={{ flex: 1, transform: [{ scale: invalidScale }] }}
+          style={{ flex: 1, transform: [{ scale: invalidScale }], opacity: hasVoted && votedValid ? 0.35 : 1 }}
         >
           <PopButton
             onPress={() => handleVote(false)}
-            disabled={isResolved || judgeMutation.isLoading}
+            disabled={isResolved || isVoting || hasVoted}
             backgroundColor={COLORS.error}
             radius={12}
             contentStyle={{ paddingVertical: 10, alignItems: "center" }}
           >
             <Text className="font-display text-white text-sm tracking-wide">
-              {userHasVoted && !userVotedValid ? "✓ " : ""}🔴 SUS
+              {hasVoted && !votedValid ? "✓ " : ""}🔴 SUS
             </Text>
           </PopButton>
         </Animated.View>

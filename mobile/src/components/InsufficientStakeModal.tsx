@@ -17,9 +17,13 @@ export function InsufficientStakeModal({ visible, onClose }: Props) {
           <Text className="font-bold text-neutral text-lg mb-2">
             Insufficient Stake
           </Text>
-          <Text className="text-neutral/60 text-sm mb-4">
+          <Text className="text-neutral/60 text-sm mb-2">
             You need at least 300,000 $HOTDOG staked to vote. Stake tokens on the
             Earn tab to participate.
+          </Text>
+          <Text className="text-neutral/60 text-sm mb-4">
+            Already staked? Make sure the wallet holding your stake is the one
+            connected here — votes are cast from your connected wallet.
           </Text>
           <View className="flex-row gap-2">
             <Pressable

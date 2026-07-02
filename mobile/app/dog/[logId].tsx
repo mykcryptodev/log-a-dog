@@ -24,13 +24,13 @@ import { COLORS } from "~/constants/colors";
 import { formatAbbreviatedFiat } from "@shared/format";
 import { formatTimestamp, getDisplayName } from "~/utils/format";
 import { HotdogImage } from "~/components/HotdogImage";
-import { useAuth } from "~/providers/AuthProvider";
+import { useVoterAddress } from "~/hooks/useVote";
 import { useHotdog } from "~/hooks/useHotdogs";
 
 export default function DogDetailScreen() {
   const { logId } = useLocalSearchParams<{ logId: string }>();
   const router = useRouter();
-  const { session } = useAuth();
+  const voterAddress = useVoterAddress();
   const { width } = useWindowDimensions();
 
   const {
@@ -41,7 +41,7 @@ export default function DogDetailScreen() {
     userAttestation,
     isLoading,
     refetch,
-  } = useHotdog(logId ?? "", session?.address);
+  } = useHotdog(logId ?? "", voterAddress);
 
   const imageHeight = Math.round(width * (5 / 4));
 
