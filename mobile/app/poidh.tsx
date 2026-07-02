@@ -3,7 +3,7 @@ import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-const POIDH_BOUNTY_URL = "https://poidh.xyz/base/bounty/1265";
+const POIDH_BOUNTY_URL = "https://poidh.xyz/base/bounty/1274";
 
 const STEPS = [
   { emoji: "🌭", title: "Eat a hotdog", body: "It must be a real dog — 4.8+ inches, in a bun." },

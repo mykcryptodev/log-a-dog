@@ -12,7 +12,7 @@ import {
 import { FarcasterContext } from "~/providers/Farcaster";
 import { openMiniApp } from "~/utils/farcasterSdk";
 
-const POIDH_BOUNTY_URL = "https://poidh.xyz/base/bounty/1265";
+const POIDH_BOUNTY_URL = "https://poidh.xyz/base/bounty/1274";
 
 const STEPS = [
   {
