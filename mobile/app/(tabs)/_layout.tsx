@@ -38,6 +38,8 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
           paddingBottom: insets.bottom + 4,
           paddingTop: 8,
           paddingHorizontal: 8,
+          minHeight: 80,
+          overflow: "visible",
         }}
       >
         {TAB_CONFIG.map((tab) => {
@@ -65,7 +67,16 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
             // Raised, ceremonial center Log action (web: -mt-8 rounded-full
             // border-4 border-base-content).
             return (
-              <View key="log-fab" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+              <View
+                key="log-fab"
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "visible",
+                  zIndex: 10,
+                }}
+              >
                 <Pressable
                   onPress={onPress}
                   style={({ pressed }) => ({
@@ -74,20 +85,15 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
                     borderRadius: 32,
                     borderWidth: 4,
                     borderColor: COLORS.neutral,
-                    backgroundColor: COLORS.primary,
-                    alignItems: "center",
-                    justifyContent: "center",
                     overflow: "hidden",
-                    marginTop: -28,
+                    marginTop: -32,
+                    zIndex: 10,
                     transform: [{ scale: pressed ? 0.9 : 1 }],
                   })}
                 >
-                  {/* Rounded on the image itself: expo-image is a native view
-                      that the container's overflow:hidden doesn't reliably
-                      clip, which rendered the FAB as a square. */}
                   <Image
-                    source={require("../../assets/icon.png")}
-                    style={{ width: 56, height: 56, borderRadius: 28 }}
+                    source={require("../../assets/hotdog-icon.png")}
+                    style={{ width: 64, height: 64 }}
                     contentFit="cover"
                   />
                 </Pressable>

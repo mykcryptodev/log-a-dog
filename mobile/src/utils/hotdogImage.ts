@@ -1,31 +1,70 @@
 import { resolveScheme } from "thirdweb/storage";
 import { convertIpfsToHttps } from "@shared/format";
+import { getMobileProxiedUrl } from "~/utils/imageProxy";
 import { getThirdwebClient, isThirdwebConfigured } from "~/utils/thirdweb";
 
+function tryThirdwebResolve(uri: string): string | null {
+  if (!uri.startsWith("ipfs://") || !isThirdwebConfigured()) return null;
+  try {
+    return resolveScheme({ client: getThirdwebClient(), uri });
+  } catch {
+    return null;
+  }
+}
+
+function resolveMediaUrl(url: string): string {
+  return tryThirdwebResolve(url) ?? convertIpfsToHttps(url) ?? url;
+}
+
 /**
- * Resolve a hotdog's display image. Prefers the Zora coin's cached preview
- * image; falls back to the raw upload. A freshly logged dog has no Zora coin
- * media yet (indexing lag), so it falls back to `imageUri` — a thirdweb-hosted
- * `ipfs://` URI. That only resolves reliably through thirdweb's own gateway
- * (same infra that received the upload); a generic public gateway like
- * ipfs.io often hasn't picked up the content yet, which is why the newest
- * log's photo showed up on web (thirdweb `MediaRenderer`/`resolveScheme`) but
- * not on mobile (plain `ipfs://` -> `ipfs.io` string swap).
+ * Ordered image URLs to try for a hotdog photo. Mirrors web HotdogImage:
+ * Zora preview first, then raw upload via Thirdweb gateway (critical for
+ * freshly mobile-uploaded ipfs:// URIs), then public gateways and proxy.
+ */
+export function getHotdogImageCandidates(
+  preview: string | null | undefined,
+  rawImageUri: string | null | undefined,
+): string[] {
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (url: string | null | undefined) => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    candidates.push(url);
+  };
+
+  if (preview) {
+    const resolved = resolveMediaUrl(preview);
+    push(getMobileProxiedUrl(resolved));
+    push(resolved);
+  }
+
+  if (rawImageUri) {
+    const thirdweb = tryThirdwebResolve(rawImageUri);
+    push(thirdweb);
+    if (thirdweb) push(getMobileProxiedUrl(thirdweb));
+
+    const ipfsIo = convertIpfsToHttps(rawImageUri);
+    push(ipfsIo);
+    if (ipfsIo) push(getMobileProxiedUrl(ipfsIo));
+
+    if (!rawImageUri.startsWith("ipfs://")) {
+      push(getMobileProxiedUrl(rawImageUri));
+      push(rawImageUri);
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Primary display URL for a hotdog photo. Prefer `getHotdogImageCandidates`
+ * with onError fallback when rendering — a single URL is not always enough.
  */
 export function resolveHotdogImage(
   preview: string | null | undefined,
   rawImageUri: string | null | undefined,
 ): string | null {
-  if (preview) return convertIpfsToHttps(preview);
-  if (!rawImageUri) return null;
-
-  if (rawImageUri.startsWith("ipfs://") && isThirdwebConfigured()) {
-    try {
-      return resolveScheme({ client: getThirdwebClient(), uri: rawImageUri });
-    } catch {
-      return convertIpfsToHttps(rawImageUri);
-    }
-  }
-
-  return convertIpfsToHttps(rawImageUri);
+  return getHotdogImageCandidates(preview, rawImageUri)[0] ?? null;
 }

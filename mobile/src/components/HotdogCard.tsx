@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { HotdogImage } from "~/components/HotdogImage";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { VoteBar } from "~/components/VoteBar";
@@ -11,7 +11,6 @@ import { PopCard, PopSticker, INK } from "~/components/ui/Pop";
 import { COLORS } from "~/constants/colors";
 import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
 import { formatTimestamp, getDisplayName } from "~/utils/format";
-import { resolveHotdogImage } from "~/utils/hotdogImage";
 import type { ProcessedHotdog } from "~/types";
 
 interface Props {
@@ -48,15 +47,6 @@ export function HotdogCard({
   );
   const showVia =
     hotdog.eater.toLowerCase() !== hotdog.logger.toLowerCase();
-
-  const imageUri = useMemo(
-    () =>
-      resolveHotdogImage(
-        hotdog.zoraCoin?.mediaContent?.previewImage?.medium,
-        hotdog.imageUri,
-      ),
-    [hotdog.zoraCoin, hotdog.imageUri],
-  );
 
   const isResolved = hotdog.attestationPeriod?.status === 1;
   const isValid = hotdog.attestationPeriod?.isValid ?? false;
@@ -142,19 +132,11 @@ export function HotdogCard({
           backgroundColor: COLORS.base300,
         }}
       >
-        {imageUri ? (
-          <Image
-            source={{ uri: imageUri }}
-            style={{ flex: 1 }}
-            contentFit="cover"
-            transition={300}
-            placeholder={hotdog.zoraCoin?.mediaContent?.previewImage?.blurhash}
-          />
-        ) : (
-          <View className="flex-1 bg-base-300 items-center justify-center">
-            <Text className="text-5xl">🌭</Text>
-          </View>
-        )}
+        <HotdogImage
+          preview={hotdog.zoraCoin?.mediaContent?.previewImage?.medium}
+          rawImageUri={hotdog.imageUri}
+          blurhash={hotdog.zoraCoin?.mediaContent?.previewImage?.blurhash}
+        />
 
         {/* Status sticker */}
         <PopSticker

@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
-import { Image } from "expo-image";
+import { HotdogImage } from "~/components/HotdogImage";
 import { formatAbbreviatedFiat } from "@shared/format";
 import type { ZoraCoinDetails } from "~/types";
 
 interface Props {
-  imageUri: string | null;
+  preview?: string | null;
+  rawImageUri?: string | null;
   zoraCoin: ZoraCoinDetails;
   blurhash?: string;
 }
 
-export function ZoraStatsFlip({ imageUri, zoraCoin, blurhash }: Props) {
+export function ZoraStatsFlip({ preview, rawImageUri, zoraCoin, blurhash }: Props) {
   const [flipped, setFlipped] = useState(false);
   const { width } = useWindowDimensions();
   const height = Math.round(width * (5 / 4));
@@ -39,18 +40,12 @@ export function ZoraStatsFlip({ imageUri, zoraCoin, blurhash }: Props) {
           )}
           <Text className="text-neutral/50 text-xs mt-2">Tap to flip back</Text>
         </View>
-      ) : imageUri ? (
-        <Image
-          source={{ uri: imageUri }}
-          style={{ flex: 1 }}
-          contentFit="cover"
-          transition={300}
-          placeholder={blurhash}
-        />
       ) : (
-        <View className="flex-1 bg-base-300 items-center justify-center">
-          <Text className="text-7xl">🌭</Text>
-        </View>
+        <HotdogImage
+          preview={preview}
+          rawImageUri={rawImageUri}
+          blurhash={blurhash}
+        />
       )}
       <View className="absolute bottom-2 right-2 bg-black/50 rounded-full px-2 py-1">
         <Text className="text-white text-xs">{flipped ? "📷" : "📊"}</Text>

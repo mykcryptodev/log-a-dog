@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { trpc } from "~/utils/trpc";
 import { CHAIN_ID, ZERO_ADDRESS } from "~/constants";
@@ -19,9 +18,9 @@ import { VoteBar } from "~/components/VoteBar";
 import { AiJudgement } from "~/components/AiJudgement";
 import { VotingCountdown } from "~/components/VotingCountdown";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
+import { HotdogImage } from "~/components/HotdogImage";
 import { COLORS } from "~/constants/colors";
 import { formatTimestamp, getDisplayName } from "~/utils/format";
-import { resolveHotdogImage } from "~/utils/hotdogImage";
 import { isJudgeable } from "@shared/time";
 import { useJudges, useUserVotes } from "~/hooks/useHotdogs";
 import type { ProcessedHotdog } from "~/types";
@@ -191,10 +190,6 @@ export default function JudgeScreen() {
     );
   }
 
-  const imageUri = resolveHotdogImage(
-    dog?.zoraCoin?.mediaContent?.previewImage?.medium,
-    dog?.imageUri,
-  );
   const eaterName = getDisplayName(dog?.eaterProfile, dog?.eater ?? "");
   const imageHeight = Math.round((width - 32) * (5 / 4));
 
@@ -261,18 +256,11 @@ export default function JudgeScreen() {
 
                 {/* Image */}
                 <View style={{ width: width - 32, height: imageHeight }}>
-                  {imageUri ? (
-                    <Image
-                      source={{ uri: imageUri }}
-                      style={{ flex: 1 }}
-                      contentFit="cover"
-                      transition={300}
-                    />
-                  ) : (
-                    <View className="flex-1 bg-base-300 items-center justify-center">
-                      <Text className="text-5xl">🌭</Text>
-                    </View>
-                  )}
+                  <HotdogImage
+                    preview={dog.zoraCoin?.mediaContent?.previewImage?.medium}
+                    rawImageUri={dog.imageUri}
+                    blurhash={dog.zoraCoin?.mediaContent?.previewImage?.blurhash}
+                  />
                 </View>
 
                 {/* Vote bar */}

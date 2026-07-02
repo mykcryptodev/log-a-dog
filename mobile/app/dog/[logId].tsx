@@ -8,7 +8,6 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
@@ -24,7 +23,7 @@ import { ZoraStatsFlip } from "~/components/ZoraStatsFlip";
 import { COLORS } from "~/constants/colors";
 import { formatAbbreviatedFiat } from "@shared/format";
 import { formatTimestamp, getDisplayName } from "~/utils/format";
-import { resolveHotdogImage } from "~/utils/hotdogImage";
+import { HotdogImage } from "~/components/HotdogImage";
 import { useAuth } from "~/providers/AuthProvider";
 import { useHotdog } from "~/hooks/useHotdogs";
 
@@ -77,10 +76,6 @@ export default function DogDetailScreen() {
     );
   }
 
-  const imageUri = resolveHotdogImage(
-    hotdog.zoraCoin?.mediaContent?.previewImage?.medium,
-    hotdog.imageUri,
-  );
   const eaterName = getDisplayName(hotdog.eaterProfile, hotdog.eater);
   const loggerName = getDisplayName(hotdog.loggerProfile, hotdog.logger);
   const showVia = hotdog.eater.toLowerCase() !== hotdog.logger.toLowerCase();
@@ -140,24 +135,14 @@ export default function DogDetailScreen() {
         {/* Image / Zora flip */}
         {hotdog.zoraCoin ? (
           <ZoraStatsFlip
-            imageUri={imageUri}
+            preview={hotdog.zoraCoin.mediaContent?.previewImage?.medium}
+            rawImageUri={hotdog.imageUri}
             zoraCoin={hotdog.zoraCoin}
             blurhash={hotdog.zoraCoin.mediaContent?.previewImage?.blurhash}
           />
         ) : (
           <View style={{ width, height: imageHeight }}>
-            {imageUri ? (
-              <Image
-                source={{ uri: imageUri }}
-                style={{ flex: 1 }}
-                contentFit="cover"
-                transition={300}
-              />
-            ) : (
-              <View className="flex-1 bg-base-300 items-center justify-center">
-                <Text className="text-7xl">🌭</Text>
-              </View>
-            )}
+            <HotdogImage rawImageUri={hotdog.imageUri} />
             {isResolved && <VerdictStamp isValid={isValid} />}
           </View>
         )}
