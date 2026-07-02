@@ -7,7 +7,11 @@ import React, {
   useState,
 } from "react";
 import { AppState, Linking } from "react-native";
-import { createAppClient, viemConnector } from "@farcaster/auth-client";
+import {
+  createAppClient,
+  type AppClient,
+  viemConnector,
+} from "@farcaster/auth-client";
 import { inAppWallet, type Account } from "thirdweb/wallets";
 import {
   API_URL,
@@ -122,9 +126,55 @@ async function openFarcasterAuthUrl(url: string) {
     await Linking.openURL(url);
   } catch {
     throw new Error(
-      `Could not open Warpcast. Install Warpcast and try again, or paste this URL in Warpcast: ${url}`,
+      `Could not open Farcaster. Install the Farcaster app and try again, or paste this URL in Farcaster: ${url}`,
     );
   }
+}
+
+type FarcasterAuthStatus = NonNullable<
+  Awaited<ReturnType<AppClient["status"]>>["data"]
+>;
+
+/**
+ * Poll the Farcaster auth relay until sign-in completes. Unlike watchStatus,
+ * this survives app backgrounding: while the user is in the Farcaster app the
+ * OS suspends our network and timers, so watchStatus surfaces those failures
+ * as a terminal error and the *first* sign-in attempt bails immediately with
+ * "Sign-in timed out or was cancelled" (which is why signing in twice was
+ * needed). Here a failed poll is treated as transient and retried, and the
+ * timeout only counts foreground time.
+ */
+async function watchFarcasterAuthStatus(
+  appClient: AppClient,
+  channelToken: string,
+): Promise<FarcasterAuthStatus> {
+  const TIMEOUT_MS = 300_000;
+  const INTERVAL_MS = 1_500;
+  let remainingMs = TIMEOUT_MS;
+
+  while (remainingMs > 0) {
+    // The user is inside the Farcaster app while approving — wait until we're
+    // foregrounded again before polling so suspended-network failures don't
+    // count against us or get mistaken for a cancellation.
+    if (AppState.currentState !== "active") {
+      await waitForAppForeground();
+    }
+
+    const tickStart = Date.now();
+    const { data, isError } = await appClient.status({ channelToken });
+
+    if (!isError && data?.state === "completed") {
+      return data;
+    }
+
+    remainingMs -= Date.now() - tickStart;
+    if (remainingMs <= 0) break;
+
+    await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
+    remainingMs -= INTERVAL_MS;
+  }
+
+  throw new Error("Sign-in timed out or was cancelled");
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -180,13 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await openFarcasterAuthUrl(url);
 
-    const { data: statusData, isError: statusErr } = await appClient.watchStatus({
-      channelToken,
-      timeout: 300_000,
-      interval: 1_500,
-    });
-
-    if (statusErr || !statusData) throw new Error("Sign-in timed out or was cancelled");
+    const statusData = await watchFarcasterAuthStatus(appClient, channelToken);
 
     const { custody, signature, message, fid, username, displayName, pfpUrl, nonce } =
       statusData as {
