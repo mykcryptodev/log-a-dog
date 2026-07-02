@@ -1,6 +1,5 @@
 import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "~/providers/AuthProvider";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
@@ -15,10 +14,7 @@ export default function ProfileScreen() {
 
   if (!session) {
     return (
-      <SafeAreaView
-        className="flex-1 bg-base-100 items-center justify-center px-8"
-        edges={["bottom"]}
-      >
+      <View className="flex-1 bg-base-100 items-center justify-center px-8">
         <Text className="text-6xl mb-4">🌭</Text>
         <Text className="font-display text-neutral text-2xl text-center mb-2 tracking-wide">
           JOIN THE GAME
@@ -34,7 +30,7 @@ export default function ProfileScreen() {
             SIGN IN
           </Text>
         </Pressable>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -42,8 +38,8 @@ export default function ProfileScreen() {
     session.name ?? session.username ?? formatAddress(session.address);
 
   return (
-    <SafeAreaView className="flex-1 bg-base-100" edges={["bottom"]}>
-      <ScrollView stickyHeaderIndices={[0]} className="flex-1">
+    <View className="flex-1 bg-base-100">
+      <ScrollView className="flex-1">
         {/* Profile header */}
         <View className="bg-base-100 px-4 py-4 border-b border-base-300">
           <View className="flex-row items-center gap-3">
@@ -110,6 +106,6 @@ export default function ProfileScreen() {
         {/* User's dog feed */}
         <HotdogFeed userAddress={session.address} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

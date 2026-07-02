@@ -1,24 +1,24 @@
 import React, { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { Tabs } from "expo-router";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LogModal } from "~/components/LogModal";
 import { COLORS } from "~/constants/colors";
+import { LOG_FAB_PROTRUSION } from "~/constants/layout";
 import { useRulesOnboarding } from "~/hooks/useRulesOnboarding";
 
 interface TabBarProps {
   state: { index: number; routes: { key: string; name: string }[] };
   descriptors: Record<string, { options: { tabBarLabel?: string } }>;
   navigation: { emit: (event: { type: string; target: string; canPreventDefault: boolean }) => { defaultPrevented: boolean }; navigate: (name: string) => void };
+  style?: StyleProp<ViewStyle>;
 }
 
 // Mirrors the web BottomNav: Feed · Leaderboard · [raised Log button] · Judge · You
 const LOG_FAB_SIZE = 64;
 const LOG_FAB_BORDER = 4;
 const LOG_FAB_INNER = LOG_FAB_SIZE - LOG_FAB_BORDER * 2;
-/** Top quarter of the FAB juts out above the bar's top ink rule. */
-const LOG_FAB_PROTRUSION = LOG_FAB_SIZE / 4;
 const BAR_BORDER_TOP = 3;
 const BAR_PADDING_TOP = 8;
 
@@ -30,27 +30,19 @@ const TAB_CONFIG = [
   { name: "profile", icon: "👤", label: "You" },
 ];
 
-function CustomTabBar({ state, navigation }: TabBarProps) {
+function CustomTabBar({ state, navigation, style }: TabBarProps) {
   const insets = useSafeAreaInsets();
   const [logModalVisible, setLogModalVisible] = useState(false);
 
   return (
     <>
-      {/* The FAB must ride above the bar's ink rule. Negative offsets that
-          push a child outside the row's bounds have repeatedly failed on
-          device, so the geometry is inverted: this root view is taller than
-          the visible bar by the protrusion, pulled up over the screen by the
-          same amount (net flow height unchanged), and left transparent in
-          that strip. The FAB is anchored to the root's top edge — everything
-          stays inside this view's bounds, so nothing can be clipped. */}
       <View
         pointerEvents="box-none"
-        style={{ marginTop: -LOG_FAB_PROTRUSION }}
+        style={[style, { position: "absolute", left: 0, right: 0, bottom: 0 }]}
       >
         {/* Web BottomNav: border-t-[3px] border-base-content bg-base-100 */}
         <View
           style={{
-            marginTop: LOG_FAB_PROTRUSION,
             flexDirection: "row",
             backgroundColor: COLORS.base100,
             borderTopWidth: BAR_BORDER_TOP,
@@ -58,7 +50,7 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
             paddingBottom: insets.bottom + 4,
             paddingTop: BAR_PADDING_TOP,
             paddingHorizontal: 8,
-            minHeight: 80,
+            minHeight: 64,
           }}
         >
           {TAB_CONFIG.map((tab) => {
@@ -110,14 +102,12 @@ function CustomTabBar({ state, navigation }: TabBarProps) {
           })}
         </View>
 
-        {/* Raised, ceremonial center Log action. top: 0 puts the circle's
-            top at the root's top edge — LOG_FAB_PROTRUSION above the bar's
-            border — without leaving the root's bounds. */}
+        {/* Raised, ceremonial center Log action — top quarter overlaps content. */}
         <View
           pointerEvents="box-none"
           style={{
             position: "absolute",
-            top: 0,
+            top: -LOG_FAB_PROTRUSION,
             left: 0,
             right: 0,
             alignItems: "center",
@@ -200,6 +190,12 @@ export default function TabLayout() {
           fontFamily: "Segment-Bold",
           letterSpacing: 1,
           fontSize: 17,
+        },
+        tabBarStyle: {
+          position: "absolute",
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
+          elevation: 0,
         },
       }}
     >
