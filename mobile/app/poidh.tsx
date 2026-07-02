@@ -50,7 +50,7 @@ export default function PoidhScreen() {
         <View className="bg-secondary rounded-3xl p-5 mb-4 flex-row items-center justify-between">
           <View className="flex-1 pr-3">
             <Text className="font-display text-white/80 text-xs tracking-widest">
-              JULY 4 – 6, 2026
+              JULY 3 – 5, 2026
             </Text>
             <Text className="font-display text-white text-xl">
               THREE DAYS. THREE WINNERS.
@@ -138,7 +138,7 @@ export default function PoidhScreen() {
         </Pressable>
 
         <Text className="text-neutral/40 text-xs text-center mt-4">
-          Campaign runs July 4–6, 2026. One $50 ETH prize awarded per day.
+          Campaign runs July 3–5, 2026. One $50 ETH prize awarded per day.
           Winners selected by organizers based on quality and creativity.
         </Text>
       </ScrollView>
