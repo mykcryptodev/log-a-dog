@@ -21,7 +21,13 @@ import { PopButton } from "~/components/ui/Pop";
 type Mode = "choose" | "email" | "email-verify";
 
 export default function SignInScreen() {
-  const { signInWithFarcaster, signInWithEmail, signInWithGoogle, signInWithWallet } = useAuth();
+  const {
+    signInWithFarcaster,
+    signInWithEmail,
+    signInWithGoogle,
+    signInWithApple,
+    signInWithWallet,
+  } = useAuth();
   const { connectExternalWallet } = useWallet();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("choose");
@@ -56,6 +62,9 @@ export default function SignInScreen() {
 
   const handleGoogle = () =>
     wrap("Signing in with Google…", signInWithGoogle);
+
+  const handleApple = () =>
+    wrap("Signing in with Apple…", signInWithApple);
 
   const handleWallet = async () => {
     setIsLoading(true);
@@ -254,6 +263,35 @@ export default function SignInScreen() {
             )}
           </PopButton>
 
+          {Platform.OS === "ios" && (
+            <PopButton
+              onPress={handleApple}
+              disabled={isLoading}
+              radius={16}
+              backgroundColor={COLORS.neutral}
+              contentStyle={{ paddingVertical: 14, alignItems: "center" }}
+            >
+              {isLoading && loadingLabel.includes("Apple") ? (
+                <View className="flex-row items-center gap-3">
+                  <ActivityIndicator color={COLORS.base100} size="small" />
+                  <Text
+                    className="font-bold"
+                    style={{ color: COLORS.base100 }}
+                  >
+                    {loadingLabel}
+                  </Text>
+                </View>
+              ) : (
+                <Text
+                  className="font-bold text-base"
+                  style={{ color: COLORS.base100 }}
+                >
+                  🍎 Continue with Apple
+                </Text>
+              )}
+            </PopButton>
+          )}
+
           <PopButton
             onPress={handleGoogle}
             disabled={isLoading}
@@ -288,7 +326,7 @@ export default function SignInScreen() {
 
         <Text className="text-neutral/40 text-xs text-center leading-5">
           Mobile uses native wallet connections instead of the web-only Thirdweb modal.
-          Google and email create a Thirdweb in-app wallet.
+          Apple, Google, and email create a Thirdweb in-app wallet.
         </Text>
       </ScrollView>
     </SafeAreaView>

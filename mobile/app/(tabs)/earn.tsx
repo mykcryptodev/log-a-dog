@@ -132,7 +132,7 @@ export default function EarnScreen() {
           >
             <Text className="font-bold text-neutral mb-1">Sign in to earn</Text>
             <Text className="text-neutral/60 text-sm mb-3">
-              Connect with Farcaster to log dogs and earn $HOTDOG tokens.
+              Sign in to log dogs and earn $HOTDOG tokens.
             </Text>
             <PopButton
               onPress={() => router.push("/sign-in")}

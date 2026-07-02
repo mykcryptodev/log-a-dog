@@ -10,11 +10,8 @@ import { VotingCountdown } from "~/components/VotingCountdown";
 import { PopCard, PopSticker, INK } from "~/components/ui/Pop";
 import { COLORS } from "~/constants/colors";
 import { ATTESTATION_WINDOW_SECONDS } from "~/constants";
-import {
-  convertIpfsToHttps,
-  formatTimestamp,
-  getDisplayName,
-} from "~/utils/format";
+import { formatTimestamp, getDisplayName } from "~/utils/format";
+import { resolveHotdogImage } from "~/utils/hotdogImage";
 import type { ProcessedHotdog } from "~/types";
 
 interface Props {
@@ -54,9 +51,9 @@ export function HotdogCard({
 
   const imageUri = useMemo(
     () =>
-      convertIpfsToHttps(
-        hotdog.zoraCoin?.mediaContent?.previewImage?.medium ??
-          hotdog.imageUri,
+      resolveHotdogImage(
+        hotdog.zoraCoin?.mediaContent?.previewImage?.medium,
+        hotdog.imageUri,
       ),
     [hotdog.zoraCoin, hotdog.imageUri],
   );
