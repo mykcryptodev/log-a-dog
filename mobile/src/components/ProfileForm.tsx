@@ -41,7 +41,7 @@ export function ProfileForm({
     return (
       <View className="bg-info/10 rounded-xl px-3 py-2 mb-3">
         <Text className="text-info text-xs">
-          Farcaster-verified profiles are managed through Warpcast.
+          Farcaster-verified profiles are managed through Farcaster.
         </Text>
       </View>
     );
