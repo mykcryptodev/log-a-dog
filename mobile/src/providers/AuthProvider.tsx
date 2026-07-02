@@ -28,6 +28,7 @@ interface AuthContextValue {
   signInWithFarcaster: () => Promise<void>;
   signInWithEmail: (email: string) => Promise<{ requiresVerification: true; verify: (code: string) => Promise<void> } | void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signInWithWallet: (account: Account) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -38,6 +39,7 @@ const AuthContext = createContext<AuthContextValue>({
   signInWithFarcaster: async () => {},
   signInWithEmail: async () => {},
   signInWithGoogle: async () => {},
+  signInWithApple: async () => {},
   signInWithWallet: async () => {},
   signOut: async () => {},
 });
@@ -273,6 +275,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithAccount(account);
   }, [signInWithAccount]);
 
+  const signInWithApple = useCallback(async () => {
+    const wallet = inAppWallet();
+    const thirdwebClient = getThirdwebClient();
+    const account = await wallet.connect({
+      client: thirdwebClient,
+      // @ts-ignore - chain type compatibility
+      chain: getThirdwebChain(),
+      strategy: "apple",
+      redirectUrl: "logadog://",
+    });
+
+    await signInWithAccount(account);
+  }, [signInWithAccount]);
+
   const signInWithWallet = useCallback(
     async (account: Account) => {
       // External wallets sign over WalletConnect: wait until we're back in the
@@ -299,8 +315,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, isLoading, signInWithFarcaster, signInWithEmail, signInWithGoogle, signInWithWallet, signOut }),
-    [session, isLoading, signInWithFarcaster, signInWithEmail, signInWithGoogle, signInWithWallet, signOut],
+    () => ({ session, isLoading, signInWithFarcaster, signInWithEmail, signInWithGoogle, signInWithApple, signInWithWallet, signOut }),
+    [session, isLoading, signInWithFarcaster, signInWithEmail, signInWithGoogle, signInWithApple, signInWithWallet, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

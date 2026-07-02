@@ -23,11 +23,8 @@ import { RevokeButton } from "~/components/RevokeButton";
 import { ZoraStatsFlip } from "~/components/ZoraStatsFlip";
 import { COLORS } from "~/constants/colors";
 import { formatAbbreviatedFiat } from "@shared/format";
-import {
-  convertIpfsToHttps,
-  formatTimestamp,
-  getDisplayName,
-} from "~/utils/format";
+import { formatTimestamp, getDisplayName } from "~/utils/format";
+import { resolveHotdogImage } from "~/utils/hotdogImage";
 import { useAuth } from "~/providers/AuthProvider";
 import { useHotdog } from "~/hooks/useHotdogs";
 
@@ -80,8 +77,9 @@ export default function DogDetailScreen() {
     );
   }
 
-  const imageUri = convertIpfsToHttps(
-    hotdog.zoraCoin?.mediaContent?.previewImage?.medium ?? hotdog.imageUri,
+  const imageUri = resolveHotdogImage(
+    hotdog.zoraCoin?.mediaContent?.previewImage?.medium,
+    hotdog.imageUri,
   );
   const eaterName = getDisplayName(hotdog.eaterProfile, hotdog.eater);
   const loggerName = getDisplayName(hotdog.loggerProfile, hotdog.logger);

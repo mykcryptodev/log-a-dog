@@ -20,7 +20,8 @@ import { AiJudgement } from "~/components/AiJudgement";
 import { VotingCountdown } from "~/components/VotingCountdown";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { COLORS } from "~/constants/colors";
-import { convertIpfsToHttps, formatTimestamp, getDisplayName } from "~/utils/format";
+import { formatTimestamp, getDisplayName } from "~/utils/format";
+import { resolveHotdogImage } from "~/utils/hotdogImage";
 import { isJudgeable } from "@shared/time";
 import { useJudges, useUserVotes } from "~/hooks/useHotdogs";
 import type { ProcessedHotdog } from "~/types";
@@ -190,8 +191,9 @@ export default function JudgeScreen() {
     );
   }
 
-  const imageUri = convertIpfsToHttps(
-    dog?.zoraCoin?.mediaContent?.previewImage?.medium ?? dog?.imageUri,
+  const imageUri = resolveHotdogImage(
+    dog?.zoraCoin?.mediaContent?.previewImage?.medium,
+    dog?.imageUri,
   );
   const eaterName = getDisplayName(dog?.eaterProfile, dog?.eater ?? "");
   const imageHeight = Math.round((width - 32) * (5 / 4));

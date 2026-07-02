@@ -24,14 +24,14 @@ export default function ProfileScreen() {
           JOIN THE GAME
         </Text>
         <Text className="text-neutral/60 text-center text-base mb-8">
-          Sign in with Farcaster to log dogs, vote, and climb the leaderboard.
+          Sign in to log dogs, vote, and climb the leaderboard.
         </Text>
         <Pressable
           onPress={() => router.push("/sign-in")}
           className="bg-primary rounded-2xl px-8 py-4 w-full items-center"
         >
           <Text className="font-display text-neutral text-lg tracking-wider">
-            SIGN IN WITH FARCASTER
+            SIGN IN
           </Text>
         </Pressable>
       </SafeAreaView>

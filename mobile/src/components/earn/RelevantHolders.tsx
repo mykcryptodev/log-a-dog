@@ -6,6 +6,10 @@ import { useAuth } from "~/providers/AuthProvider";
 import { trpc } from "~/utils/trpc";
 import { HOTDOG_TOKEN } from "~/constants/addresses";
 import { CHAIN_ID } from "~/constants";
+import { COLORS } from "~/constants/colors";
+
+const AVATAR_SIZE = 40;
+const AVATAR_OVERLAP = 12;
 
 export function RelevantHolders() {
   const { session } = useAuth();
@@ -33,24 +37,44 @@ export function RelevantHolders() {
   const remaining = holders.length - visible.length;
 
   return (
-    <View className="items-center mb-4">
-      <View className="flex-row">
-        {visible.map((h) => (
+    <View className="items-center bg-base-200 rounded-2xl px-4 py-4 mb-4">
+      <View className="flex-row flex-wrap justify-center">
+        {visible.map((h: any, i: number) => (
           <Pressable
             key={h.fid}
             onPress={() =>
               router.push(`/profile/address/${h.custody_address}`)
             }
-            className="-ml-2"
+            style={{
+              marginLeft: i === 0 ? 0 : -AVATAR_OVERLAP,
+              zIndex: visible.length - i,
+            }}
           >
             <Image
               source={{ uri: h.pfp_url }}
-              style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: "#FFF8EC" }}
+              style={{
+                width: AVATAR_SIZE,
+                height: AVATAR_SIZE,
+                borderRadius: AVATAR_SIZE / 2,
+                borderWidth: 2,
+                borderColor: COLORS.base200,
+              }}
             />
           </Pressable>
         ))}
         {remaining > 0 && (
-          <View className="w-10 h-10 rounded-full bg-neutral items-center justify-center -ml-2">
+          <View
+            className="bg-neutral items-center justify-center"
+            style={{
+              width: AVATAR_SIZE,
+              height: AVATAR_SIZE,
+              borderRadius: AVATAR_SIZE / 2,
+              borderWidth: 2,
+              borderColor: COLORS.base200,
+              marginLeft: -AVATAR_OVERLAP,
+              zIndex: 0,
+            }}
+          >
             <Text className="text-white text-xs font-bold">+{remaining}</Text>
           </View>
         )}
