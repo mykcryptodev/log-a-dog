@@ -11,6 +11,21 @@ import type { Wallet } from "thirdweb/wallets";
 import { inAppWallet, walletConnect } from "thirdweb/wallets";
 import { getThirdwebClient, getThirdwebChain } from "~/utils/thirdweb";
 import { useAuth } from "~/providers/AuthProvider";
+import {
+  APP_DESCRIPTION,
+  APP_NAME,
+  APP_URL,
+  WALLETCONNECT_PROJECT_ID,
+} from "~/constants";
+
+// Shown by wallets on the pairing/sign prompts. Without this, thirdweb sends
+// its default metadata and wallets say "thirdweb.com wants to connect".
+const WALLETCONNECT_APP_METADATA = {
+  name: APP_NAME,
+  description: APP_DESCRIPTION,
+  url: APP_URL,
+  logoUrl: `${APP_URL}/images/logo.png`,
+};
 
 interface WalletContextValue {
   wallet: Wallet | null;
@@ -65,6 +80,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       await w.connect({
         client,
         chain,
+        appMetadata: WALLETCONNECT_APP_METADATA,
+        // Only branded pairing verifies cleanly against our own WC project.
+        ...(WALLETCONNECT_PROJECT_ID
+          ? { projectId: WALLETCONNECT_PROJECT_ID }
+          : {}),
       });
       setWallet(w);
       return w;

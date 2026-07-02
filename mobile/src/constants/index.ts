@@ -47,6 +47,16 @@ export const THIRDWEB_CLIENT_ID =
 
 export const CHAIN_ID = parseInt(process.env.EXPO_PUBLIC_CHAIN_ID ?? "8453", 10);
 
+/**
+ * Optional WalletConnect (Reown) Cloud project ID. Without it, thirdweb falls
+ * back to its own shared project ID, and wallets attribute the connection to
+ * thirdweb.com (their registered domain) instead of Log a Dog. Register a
+ * project at https://cloud.reown.com with the logadog.xyz domain to get
+ * fully-branded, verified pairing prompts.
+ */
+export const WALLETCONNECT_PROJECT_ID =
+  process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
+
 export const FARCASTER_RELAY_URL = "https://relay.farcaster.xyz";
 export const FARCASTER_DOMAIN =
   process.env.EXPO_PUBLIC_FARCASTER_DOMAIN ?? APP_DOMAIN;

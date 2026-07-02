@@ -17,8 +17,8 @@ interface TabBarProps {
 const LOG_FAB_SIZE = 64;
 const LOG_FAB_BORDER = 4;
 const LOG_FAB_INNER = LOG_FAB_SIZE - LOG_FAB_BORDER * 2;
-/** Half the FAB height — pops the circle above the nav's top ink rule (web: -mt-8). */
-const LOG_FAB_RAISE = LOG_FAB_SIZE / 2;
+/** A quarter of the FAB height juts above the nav's top ink rule. */
+const LOG_FAB_RAISE = LOG_FAB_SIZE / 4;
 
 const TAB_CONFIG = [
   { name: "index", icon: "🌭", label: "Feed" },

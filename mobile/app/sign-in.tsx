@@ -17,6 +17,13 @@ import { useAuth } from "~/providers/AuthProvider";
 import { useWallet } from "~/providers/WalletProvider";
 import { COLORS } from "~/constants/colors";
 import { PopButton } from "~/components/ui/Pop";
+import {
+  AppleLogo,
+  EmailIcon,
+  FARCASTER_BRAND,
+  FarcasterLogo,
+  GoogleLogo,
+} from "~/components/ui/ProviderLogos";
 
 type Mode = "choose" | "email" | "email-verify";
 
@@ -58,7 +65,7 @@ export default function SignInScreen() {
   };
 
   const handleFarcaster = () =>
-    wrap("Opening Warpcast…", signInWithFarcaster);
+    wrap("Opening Farcaster…", signInWithFarcaster);
 
   const handleGoogle = () =>
     wrap("Signing in with Google…", signInWithGoogle);
@@ -248,18 +255,23 @@ export default function SignInScreen() {
             onPress={handleFarcaster}
             disabled={isLoading}
             radius={16}
-            backgroundColor={COLORS.base200}
+            backgroundColor={FARCASTER_BRAND}
             contentStyle={{ paddingVertical: 14, alignItems: "center" }}
           >
-            {isLoading && loadingLabel.includes("Warpcast") ? (
+            {isLoading && loadingLabel.includes("Farcaster") ? (
               <View className="flex-row items-center gap-3">
-                <ActivityIndicator color={COLORS.neutral} size="small" />
-                <Text className="font-bold text-neutral">{loadingLabel}</Text>
+                <ActivityIndicator color={COLORS.white} size="small" />
+                <Text className="font-bold" style={{ color: COLORS.white }}>
+                  {loadingLabel}
+                </Text>
               </View>
             ) : (
-              <Text className="font-bold text-neutral text-base">
-                Sign in with Farcaster
-              </Text>
+              <View className="flex-row items-center justify-center gap-3">
+                <FarcasterLogo size={20} color={COLORS.white} />
+                <Text className="font-bold text-base" style={{ color: COLORS.white }}>
+                  Sign in with Farcaster
+                </Text>
+              </View>
             )}
           </PopButton>
 
@@ -282,12 +294,15 @@ export default function SignInScreen() {
                   </Text>
                 </View>
               ) : (
-                <Text
-                  className="font-bold text-base"
-                  style={{ color: COLORS.base100 }}
-                >
-                  🍎 Continue with Apple
-                </Text>
+                <View className="flex-row items-center justify-center gap-3">
+                  <AppleLogo size={20} color={COLORS.base100} />
+                  <Text
+                    className="font-bold text-base"
+                    style={{ color: COLORS.base100 }}
+                  >
+                    Continue with Apple
+                  </Text>
+                </View>
               )}
             </PopButton>
           )}
@@ -296,7 +311,7 @@ export default function SignInScreen() {
             onPress={handleGoogle}
             disabled={isLoading}
             radius={16}
-            backgroundColor={COLORS.base200}
+            backgroundColor={COLORS.white}
             contentStyle={{ paddingVertical: 14, alignItems: "center" }}
           >
             {isLoading && loadingLabel.includes("Google") ? (
@@ -305,9 +320,12 @@ export default function SignInScreen() {
                 <Text className="font-bold text-neutral">{loadingLabel}</Text>
               </View>
             ) : (
-              <Text className="font-bold text-neutral text-base">
-                🔵 Continue with Google
-              </Text>
+              <View className="flex-row items-center justify-center gap-3">
+                <GoogleLogo size={20} />
+                <Text className="font-bold text-neutral text-base">
+                  Continue with Google
+                </Text>
+              </View>
             )}
           </PopButton>
 
@@ -318,9 +336,12 @@ export default function SignInScreen() {
             backgroundColor={COLORS.base200}
             contentStyle={{ paddingVertical: 14, alignItems: "center" }}
           >
-            <Text className="font-bold text-neutral text-base">
-              ✉️ Continue with Email
-            </Text>
+            <View className="flex-row items-center justify-center gap-3">
+              <EmailIcon size={20} color={COLORS.neutral} />
+              <Text className="font-bold text-neutral text-base">
+                Continue with Email
+              </Text>
+            </View>
           </PopButton>
         </View>
 

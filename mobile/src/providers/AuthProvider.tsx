@@ -7,7 +7,12 @@ import React, {
   useState,
 } from "react";
 import { AppState, Linking } from "react-native";
-import { createAppClient, viemConnector } from "@farcaster/auth-client";
+import {
+  createAppClient,
+  viemConnector,
+  type AppClient,
+  type StatusAPIResponse,
+} from "@farcaster/auth-client";
 import { inAppWallet, type Account } from "thirdweb/wallets";
 import {
   API_URL,
@@ -122,9 +127,46 @@ async function openFarcasterAuthUrl(url: string) {
     await Linking.openURL(url);
   } catch {
     throw new Error(
-      `Could not open Warpcast. Install Warpcast and try again, or paste this URL in Warpcast: ${url}`,
+      `Could not open the Farcaster app. Install Farcaster and try again, or open this URL in Farcaster: ${url}`,
     );
   }
+}
+
+const FARCASTER_POLL_INTERVAL_MS = 1_500;
+const FARCASTER_FOREGROUND_TIMEOUT_MS = 300_000;
+
+/**
+ * Poll the auth relay until the user approves the sign-in in the Farcaster
+ * app. The library's `watchStatus` treats the first failed fetch as terminal,
+ * but the OS kills our in-flight relay requests the moment the user
+ * app-switches to Farcaster — so relay errors must be retried, and time spent
+ * backgrounded must not count toward the timeout.
+ */
+async function pollFarcasterAuthStatus(
+  appClient: AppClient,
+  channelToken: string,
+): Promise<StatusAPIResponse> {
+  let foregroundMsLeft = FARCASTER_FOREGROUND_TIMEOUT_MS;
+
+  while (foregroundMsLeft > 0) {
+    if (AppState.currentState !== "active") {
+      await waitForAppForeground();
+      continue;
+    }
+
+    const tickStart = Date.now();
+    try {
+      const { data, isError } = await appClient.status({ channelToken });
+      if (!isError && data?.state === "completed") return data;
+    } catch {
+      // Relay fetch aborted mid-suspend or flaky network — retry.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, FARCASTER_POLL_INTERVAL_MS));
+    foregroundMsLeft -= Date.now() - tickStart;
+  }
+
+  throw new Error("Sign-in timed out or was cancelled");
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -180,31 +222,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await openFarcasterAuthUrl(url);
 
-    const { data: statusData, isError: statusErr } = await appClient.watchStatus({
-      channelToken,
-      timeout: 300_000,
-      interval: 1_500,
-    });
-
-    if (statusErr || !statusData) throw new Error("Sign-in timed out or was cancelled");
+    const statusData = await pollFarcasterAuthStatus(appClient, channelToken);
 
     const { custody, signature, message, fid, username, displayName, pfpUrl, nonce } =
-      statusData as {
-        custody: string;
-        signature: string;
-        message: string;
-        nonce: string;
-        fid?: number;
-        username?: string;
-        displayName?: string;
-        pfpUrl?: string;
-      };
+      statusData;
+
+    if (!custody || !signature || !message) {
+      throw new Error("Farcaster sign-in did not return a signed message");
+    }
 
     const verification = await appClient.verifySignInMessage({
       nonce,
       domain: FARCASTER_DOMAIN,
       message,
-      signature: signature as `0x${string}`,
+      signature,
     });
 
     if (!verification.success) {
