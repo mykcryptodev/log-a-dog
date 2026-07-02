@@ -6,6 +6,7 @@ import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
 import { COLORS } from "~/constants/colors";
+import { CONTEST_START_TIME, CONTEST_END_TIME } from "~/constants";
 import type { LeaderboardEntry } from "~/types";
 
 interface Props {
@@ -84,12 +85,16 @@ function LiveBadge() {
 
 /**
  * Auto-scrolling scoreboard ticker for the top of the feed — the mobile
- * counterpart to the web `LeaderboardBanner`. Shows the all-time top dogs and
- * loops seamlessly by rendering two copies of the pill row.
+ * counterpart to the web `LeaderboardBanner`. Shows the current season's top
+ * dogs and loops seamlessly by rendering two copies of the pill row.
  */
 export function LeaderboardBanner({ scrollSpeed = 40 }: Props) {
   const router = useRouter();
-  const { entries, isLoading } = useLeaderboard({ limit: 10 });
+  const { entries, isLoading } = useLeaderboard({
+    startDate: new Date(CONTEST_START_TIME),
+    endDate: new Date(CONTEST_END_TIME),
+    limit: 10,
+  });
   const translateX = useRef(new Animated.Value(0)).current;
   const [setWidth, setSetWidth] = useState(0);
 

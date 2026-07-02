@@ -8,7 +8,7 @@ export * from "./chains";
 export {
   CONTEST_START_TIME,
   CONTEST_END_TIME,
-  // Pre-season logs are visible and judgeable for testing, but leaderboard
+  // Season launch cutoff for the feed, profiles, and judge counts. Leaderboard
   // season scoring still starts at CONTEST_START_TIME.
   DOG_FEED_START_TIME,
   ATTESTATION_WINDOW_SECONDS,
