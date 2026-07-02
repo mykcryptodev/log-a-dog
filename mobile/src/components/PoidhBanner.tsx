@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getSeasonInfo } from "@shared/season";
+import { useRouter } from "expo-router";
 
-const STORAGE_KEY = "preseason-banner-dismissed";
+const STORAGE_KEY = "poidh-banner-dismissed";
 
 /**
- * Dismissible pre-season notice shown on the feed until the contest goes live —
- * the mobile counterpart to the web PreseasonBanner.
+ * Dismissible POIDH campaign banner on the feed — links to the campaign page.
  */
-export function PreseasonBanner() {
-  const { isLive } = getSeasonInfo();
+export function PoidhBanner() {
+  const router = useRouter();
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
@@ -19,7 +18,7 @@ export function PreseasonBanner() {
     );
   }, []);
 
-  if (isLive || dismissed) return null;
+  if (dismissed) return null;
 
   const dismiss = () => {
     void AsyncStorage.setItem(STORAGE_KEY, "true");
@@ -28,9 +27,15 @@ export function PreseasonBanner() {
 
   return (
     <View className="flex-row items-center justify-between bg-primary rounded-2xl px-4 py-3">
-      <Text className="font-display text-neutral text-sm tracking-wide flex-1">
-        🌭 PRE-SEASON: Competition kicks off July 4th
-      </Text>
+      <Pressable
+        onPress={() => router.push("/poidh")}
+        className="flex-1 flex-row items-center justify-between"
+      >
+        <Text className="font-display text-neutral text-sm tracking-wide flex-1">
+          🕹️ POIDH Campaign · Win $50 ETH/day
+        </Text>
+        <Text className="text-neutral/60 text-sm ml-2">→</Text>
+      </Pressable>
       <Pressable onPress={dismiss} hitSlop={8}>
         <Text className="text-neutral/60 text-base ml-3">✕</Text>
       </Pressable>

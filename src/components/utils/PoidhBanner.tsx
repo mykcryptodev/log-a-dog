@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import useMounted from "~/hooks/useMounted";
-import { getSeasonInfo } from "~/helpers/season";
 
-const STORAGE_KEY = "preseason-banner-dismissed";
+const STORAGE_KEY = "poidh-banner-dismissed";
 
-export function PreseasonBanner() {
+export function PoidhBanner() {
   const mounted = useMounted();
   const [dismissed, setDismissed] = useState(true);
-  const { isLive } = getSeasonInfo();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -15,19 +14,23 @@ export function PreseasonBanner() {
     }
   }, []);
 
-  const handleDismiss = () => {
+  const handleDismiss = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     localStorage.setItem(STORAGE_KEY, "true");
     setDismissed(true);
   };
 
-  if (!mounted || isLive || dismissed) return null;
+  if (!mounted || dismissed) return null;
 
   return (
-    <div className="relative border-b-[3px] border-base-content bg-primary px-4 py-3 text-primary-content">
+    <Link
+      href="/poidh"
+      className="relative block border-b-[3px] border-base-content bg-primary px-4 py-3 text-primary-content transition-opacity hover:opacity-95"
+    >
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-4">
         <p className="font-display text-sm tracking-wide">
-          🌭 <strong>PRE-SEASON:</strong> Competition kicks off{" "}
-          <strong>July 4th</strong>
+          🕹️ <strong>POIDH Campaign</strong> · Win $50 ETH/day →
         </p>
         <button
           onClick={handleDismiss}
@@ -37,6 +40,6 @@ export function PreseasonBanner() {
           ✕
         </button>
       </div>
-    </div>
+    </Link>
   );
 }
