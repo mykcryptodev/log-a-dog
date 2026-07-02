@@ -20,9 +20,21 @@ export default {
           "0%": { backgroundPosition: "-150% 0" },
           "100%": { backgroundPosition: "250% 0" },
         },
+        // Hotdog rolling on the grill — the branded loading indicator.
+        "dog-rock": {
+          "0%, 100%": { transform: "rotate(-12deg) translateY(0)" },
+          "50%": { transform: "rotate(12deg) translateY(-2px)" },
+        },
+        // Gentle idle float for empty-state emoji.
+        "dog-bob": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
       },
       animation: {
         "grill-shimmer": "grill-shimmer 1.6s ease-in-out infinite",
+        "dog-rock": "dog-rock 0.85s ease-in-out infinite",
+        "dog-bob": "dog-bob 2.6s ease-in-out infinite",
       },
     },
   },

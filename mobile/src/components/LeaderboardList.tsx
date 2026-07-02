@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   Text,
@@ -11,6 +10,7 @@ import { useRouter } from "expo-router";
 import { ProfileAvatar } from "~/components/ProfileAvatar";
 import { ProfileBadge } from "~/components/ProfileBadge";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
+import { HotdogLoader } from "~/components/ui/HotdogLoader";
 import { COLORS } from "~/constants/colors";
 import { CONTEST_START_TIME, CONTEST_END_TIME } from "~/constants";
 import type { LeaderboardEntry } from "~/types";
@@ -57,7 +57,7 @@ export function LeaderboardList({ seasonOnly = true }: Props) {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center py-20">
-        <ActivityIndicator color={COLORS.primary} size="large" />
+        <HotdogLoader size={52} label="Tallying the dogs…" />
       </View>
     );
   }

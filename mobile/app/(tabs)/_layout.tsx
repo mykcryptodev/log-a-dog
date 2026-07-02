@@ -1,8 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { Tabs } from "expo-router";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
+import Animated, {
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { LogModal } from "~/components/LogModal";
 import { COLORS } from "~/constants/colors";
 import { LOG_FAB_PROTRUSION } from "~/constants/layout";
@@ -30,9 +38,43 @@ const TAB_CONFIG = [
   { name: "profile", icon: "👤", label: "You" },
 ];
 
+// Tab icon that springs up slightly when its tab becomes active — a small
+// "landed here" bounce instead of a flat opacity swap.
+function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
+  const active = useSharedValue(focused ? 1 : 0);
+
+  useEffect(() => {
+    active.value = withSpring(focused ? 1 : 0, {
+      damping: 12,
+      stiffness: 260,
+      reduceMotion: ReduceMotion.System,
+    });
+  }, [focused, active]);
+
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: 1 + active.value * 0.2 },
+      { translateY: active.value * -2 },
+    ],
+  }));
+
+  return (
+    <Animated.Text
+      style={[{ fontSize: 20, opacity: focused ? 1 : 0.5 }, iconStyle]}
+    >
+      {icon}
+    </Animated.Text>
+  );
+}
+
 function CustomTabBar({ state, navigation, style }: TabBarProps) {
   const insets = useSafeAreaInsets();
   const [logModalVisible, setLogModalVisible] = useState(false);
+  // The Log FAB squashes on press and springs back with overshoot on release.
+  const fabPressed = useSharedValue(0);
+  const fabStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 - fabPressed.value * 0.12 }],
+  }));
 
   return (
     <>
@@ -82,9 +124,7 @@ function CustomTabBar({ state, navigation, style }: TabBarProps) {
                 onPress={onPress}
                 style={{ flex: 1, alignItems: "center", paddingVertical: 4 }}
               >
-                <Text style={{ fontSize: 20, opacity: isFocused ? 1 : 0.5 }}>
-                  {tab.icon}
-                </Text>
+                <TabIcon icon={tab.icon} focused={isFocused} />
                 <Text
                   style={{
                     fontSize: 10,
@@ -117,21 +157,35 @@ function CustomTabBar({ state, navigation, style }: TabBarProps) {
             onPress={() => setLogModalVisible(true)}
             accessibilityRole="button"
             accessibilityLabel="Log a dog"
-            style={({ pressed }) => ({
-              transform: [{ scale: pressed ? 0.9 : 1 }],
-            })}
+            onPressIn={() => {
+              fabPressed.value = withTiming(1, {
+                duration: 80,
+                reduceMotion: ReduceMotion.System,
+              });
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            onPressOut={() => {
+              fabPressed.value = withSpring(0, {
+                damping: 9,
+                stiffness: 300,
+                reduceMotion: ReduceMotion.System,
+              });
+            }}
           >
-            <View
-              style={{
-                width: LOG_FAB_SIZE,
-                height: LOG_FAB_SIZE,
-                borderRadius: LOG_FAB_SIZE / 2,
-                borderWidth: LOG_FAB_BORDER,
-                borderColor: COLORS.neutral,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: COLORS.base100,
-              }}
+            <Animated.View
+              style={[
+                {
+                  width: LOG_FAB_SIZE,
+                  height: LOG_FAB_SIZE,
+                  borderRadius: LOG_FAB_SIZE / 2,
+                  borderWidth: LOG_FAB_BORDER,
+                  borderColor: COLORS.neutral,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: COLORS.base100,
+                },
+                fabStyle,
+              ]}
             >
               {/* expo-image is a native view; parent overflow:hidden does not
                   reliably clip it, so round the image itself. */}
@@ -144,7 +198,7 @@ function CustomTabBar({ state, navigation, style }: TabBarProps) {
                 }}
                 contentFit="cover"
               />
-            </View>
+            </Animated.View>
           </Pressable>
         </View>
       </View>

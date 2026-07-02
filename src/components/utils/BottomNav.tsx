@@ -35,7 +35,14 @@ const NavButton: FC<{
     }`}
   >
     <div className="relative flex items-center justify-center">
-      <span className="text-xl leading-none">{emoji}</span>
+      {/* Active tab gets a small springy bump so switching tabs lands. */}
+      <motion.span
+        animate={{ scale: active ? 1.18 : 1, y: active ? -1 : 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 14 }}
+        className="text-xl leading-none"
+      >
+        {emoji}
+      </motion.span>
     </div>
     <span className="font-display text-[0.65rem] font-bold tracking-wide">{label}</span>
   </button>

@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  ActivityIndicator,
   Linking,
   Pressable,
   ScrollView,
@@ -26,6 +25,7 @@ import { formatTimestamp, getDisplayName } from "~/utils/format";
 import { HotdogImage } from "~/components/HotdogImage";
 import { useVoterAddress } from "~/hooks/useVote";
 import { useHotdog } from "~/hooks/useHotdogs";
+import { HotdogLoader } from "~/components/ui/HotdogLoader";
 
 export default function DogDetailScreen() {
   const { logId } = useLocalSearchParams<{ logId: string }>();
@@ -51,7 +51,7 @@ export default function DogDetailScreen() {
         className="flex-1 bg-base-100 items-center justify-center"
         edges={["bottom"]}
       >
-        <ActivityIndicator color={COLORS.primary} size="large" />
+        <HotdogLoader size={52} label="Fetching this dog…" />
       </SafeAreaView>
     );
   }

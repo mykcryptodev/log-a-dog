@@ -15,6 +15,7 @@ import { client } from "~/providers/Thirdweb";
 import Connect from "./utils/Connect";
 import Avatar from "./Profile/Avatar";
 import Name from "./Profile/Name";
+import { HotdogLoader } from "./utils/HotdogLoader";
 
 interface CustomCommentsProps {
   targetUri: string;
@@ -260,7 +261,7 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri }) => 
       <div className="space-y-4">
         {isLoading && comments.length === 0 ? (
           <div className="flex justify-center py-8">
-            <span className="loading loading-spinner loading-md" />
+            <HotdogLoader size={28} />
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-8 text-base-content/60">

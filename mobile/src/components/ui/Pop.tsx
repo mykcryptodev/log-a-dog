@@ -1,11 +1,19 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   Pressable,
   View,
+  type GestureResponderEvent,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import Animated, {
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { COLORS } from "~/constants/colors";
 
 // Native counterpart of the web app's "Sticker Brutalism" utilities
@@ -127,7 +135,8 @@ interface PopButtonProps extends Omit<PressableProps, "style"> {
 
 /**
  * Web `.pop-btn`: blocky button whose hard shadow collapses while the element
- * shifts into it on press.
+ * shifts into it on press. The press-in is a quick snap; the release springs
+ * back with a little overshoot so the button feels like it pops back out.
  */
 export function PopButton({
   children,
@@ -137,8 +146,42 @@ export function PopButton({
   style,
   contentStyle,
   disabled,
+  onPressIn,
+  onPressOut,
   ...pressableProps
 }: PopButtonProps) {
+  const pressed = useSharedValue(0);
+
+  const handlePressIn = useCallback(
+    (e: GestureResponderEvent) => {
+      pressed.value = withTiming(1, {
+        duration: 70,
+        reduceMotion: ReduceMotion.System,
+      });
+      onPressIn?.(e);
+    },
+    [pressed, onPressIn],
+  );
+
+  const handlePressOut = useCallback(
+    (e: GestureResponderEvent) => {
+      pressed.value = withSpring(0, {
+        damping: 14,
+        stiffness: 320,
+        reduceMotion: ReduceMotion.System,
+      });
+      onPressOut?.(e);
+    },
+    [pressed, onPressOut],
+  );
+
+  const shiftStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: pressed.value * offset },
+      { translateY: pressed.value * offset },
+    ],
+  }));
+
   return (
     <View style={[{ marginRight: offset, marginBottom: offset }, style]}>
       <View
@@ -154,26 +197,27 @@ export function PopButton({
           opacity: disabled ? 0.35 : 1,
         }}
       />
-      <Pressable disabled={disabled} {...pressableProps}>
-        {({ pressed }) => (
-          <View
-            style={[
-              {
-                borderWidth: 3,
-                borderColor: INK,
-                borderRadius: radius,
-                backgroundColor,
-                opacity: disabled ? 0.55 : 1,
-                transform: pressed
-                  ? [{ translateX: offset }, { translateY: offset }]
-                  : [],
-              },
-              contentStyle,
-            ]}
-          >
-            {children}
-          </View>
-        )}
+      <Pressable
+        disabled={disabled}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        {...pressableProps}
+      >
+        <Animated.View
+          style={[
+            {
+              borderWidth: 3,
+              borderColor: INK,
+              borderRadius: radius,
+              backgroundColor,
+              opacity: disabled ? 0.55 : 1,
+            },
+            contentStyle,
+            shiftStyle,
+          ]}
+        >
+          {children}
+        </Animated.View>
       </Pressable>
     </View>
   );
