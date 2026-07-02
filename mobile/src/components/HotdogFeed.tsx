@@ -6,7 +6,7 @@ import { trpc } from "~/utils/trpc";
 import { CHAIN_ID, ZERO_ADDRESS } from "~/constants";
 import { HotdogCard } from "~/components/HotdogCard";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
-import { PreseasonBanner } from "~/components/PreseasonBanner";
+import { PoidhBanner } from "~/components/PoidhBanner";
 import type { GetAllResponse, GetAllForUserResponse, ProcessedHotdog } from "~/types";
 import { buildAttestationMaps, getAttestationData } from "@shared/feed";
 import { useVoterAddress } from "~/hooks/useVote";
@@ -157,7 +157,7 @@ export function HotdogFeed({ userAddress, header }: Props) {
         {header as any}
         {isMainFeed && (
           <View className="px-4 pt-3 gap-3">
-            <PreseasonBanner />
+            <PoidhBanner />
             <View
               className="overflow-hidden rounded-2xl bg-base-100"
               style={{ borderWidth: 2.5, borderColor: COLORS.neutral }}
