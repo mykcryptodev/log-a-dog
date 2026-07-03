@@ -13,7 +13,7 @@ export const CONTEST_END_TIME = "2026-09-07T23:59:00-04:00";
 // Season launch cutoff: dogs are only shown in the feed, on profiles, and in
 // judge counts if they were posted on or after this time. Leaderboard season
 // scoring still starts at CONTEST_START_TIME.
-export const DOG_FEED_START_TIME = "2026-07-03T10:00:00-04:00";
+export const DOG_FEED_START_TIME = "2026-07-03T00:00:00-04:00";
 
 export const ATTESTATION_WINDOW_SECONDS = 48 * 60 * 60;
 
