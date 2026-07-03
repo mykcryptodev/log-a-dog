@@ -2,8 +2,7 @@ import React from "react";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-
-const POIDH_BOUNTY_URL = "https://poidh.xyz/base/bounty/1274";
+import { getPoidhBountyUrl } from "~/utils/poidh";
 
 const STEPS = [
   { emoji: "🌭", title: "Eat a hotdog", body: "It must be a real dog — 4.8+ inches, in a bun." },
@@ -30,7 +29,8 @@ const REQUIREMENTS = [
 
 export default function PoidhScreen() {
   const router = useRouter();
-  const openPoidh = () => Linking.openURL(POIDH_BOUNTY_URL);
+  const bountyUrl = getPoidhBountyUrl();
+  const openPoidh = () => Linking.openURL(bountyUrl);
 
   return (
     <SafeAreaView className="flex-1 bg-base-100" edges={["bottom"]}>
