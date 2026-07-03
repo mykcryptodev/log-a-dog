@@ -17,6 +17,7 @@ import { upload } from 'thirdweb/storage';
 import { encodePoolConfig } from '~/server/utils/poolConfig';
 import { useStableAccount, useStableWallet } from '~/hooks/useStableAccount';
 import { getFarcasterSdk } from '~/utils/farcasterSdk';
+import { closeLogModal, openLogModal } from '~/utils/logModal';
 
 const Upload = dynamic(() => import('~/components/utils/Upload'), { ssr: false });
 
@@ -211,7 +212,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
       });
 
       // close the modal
-      (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+      closeLogModal();
       setImgUri(undefined);
       setDescription('');
     } catch (error) {
@@ -221,7 +222,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
     } finally {
       setIsLoading(false);
       // close the modal
-      (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+      closeLogModal();
     }
   };
 
@@ -291,7 +292,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
     });
 
     // close the modal
-    (document.getElementById('create_attestation_modal') as HTMLDialogElement).close();
+    closeLogModal();
     setImgUri(undefined);
     setDescription('');
   }
@@ -315,7 +316,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
       {showTriggers && (
         <button
           className="btn btn-primary font-display tracking-wide"
-          onClick={()=>(document.getElementById('create_attestation_modal') as HTMLDialogElement).showModal()}
+          onClick={openLogModal}
         >
           Log a Dog
         </button>
@@ -401,6 +402,9 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
             )}
           </div>
         </div>
+        <form method="dialog" className="modal-backdrop">
+          <button aria-label="Close">Close</button>
+        </form>
       </dialog>
       {transactionId && !isTransactionIdResolved && (
         <TransactionStatus
