@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion } from "motion/react";
+import { openLogModal } from "~/utils/logModal";
 
 const CreateAttestation = dynamic(
   () =>
@@ -17,10 +18,6 @@ const ProfileButton = dynamic(
   () => import("../Profile/Button").then((mod) => ({ default: mod.ProfileButton })),
   { ssr: false, loading: () => null },
 );
-
-const openLogModal = () => {
-  (document.getElementById("create_attestation_modal") as HTMLDialogElement | null)?.showModal();
-};
 
 const NavButton: FC<{
   emoji: string;

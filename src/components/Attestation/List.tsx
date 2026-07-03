@@ -15,6 +15,7 @@ import {
   inferNextLogIdBase,
 } from "@shared/feed";
 import type { ProcessedHotdog } from "@shared/types";
+import { openLogModal } from "~/utils/logModal";
 
 type HotdogItem = ProcessedHotdog | PendingDogEvent;
 
@@ -255,9 +256,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
           <p className="text-sm text-base-content/70">The grill is hot. 🔥 Be the first to log.</p>
           <button
             className="btn btn-primary font-display tracking-wide"
-            onClick={() =>
-              (document.getElementById("create_attestation_modal") as HTMLDialogElement | null)?.showModal()
-            }
+            onClick={openLogModal}
           >
             Log a Dog
           </button>
