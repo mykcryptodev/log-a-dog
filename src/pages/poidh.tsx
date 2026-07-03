@@ -9,10 +9,10 @@ import {
   CheckCircleIcon,
   StarIcon,
 } from "@heroicons/react/24/outline";
+import useMounted from "~/hooks/useMounted";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { openMiniApp } from "~/utils/farcasterSdk";
-
-const POIDH_BOUNTY_URL = "https://poidh.xyz/base/bounty/1274";
+import { DEFAULT_POIDH_BOUNTY_URL, getPoidhBountyUrl } from "~/utils/poidh";
 
 const STEPS = [
   {
@@ -57,6 +57,8 @@ const WINNING_CRITERIA = [
 const PoidhPage: NextPage = () => {
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
+  const mounted = useMounted();
+  const bountyUrl = mounted ? getPoidhBountyUrl() : DEFAULT_POIDH_BOUNTY_URL;
 
   const openPoidh = useCallback(
     async (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -64,13 +66,13 @@ const PoidhPage: NextPage = () => {
 
       e.preventDefault();
       try {
-        await openMiniApp(POIDH_BOUNTY_URL);
+        await openMiniApp(bountyUrl);
       } catch (err) {
         console.error("Failed to open POIDH mini app", err);
-        window.open(POIDH_BOUNTY_URL, "_blank");
+        window.open(bountyUrl, "_blank");
       }
     },
-    [isMiniApp],
+    [isMiniApp, bountyUrl],
   );
 
   return (
@@ -109,7 +111,7 @@ const PoidhPage: NextPage = () => {
                 <h2 className="font-display text-2xl font-bold tracking-tight">THREE DAYS. THREE WINNERS.</h2>
                 <p className="mt-1 text-sm opacity-80">One winner picked per day by the organizers.</p>
                 <a
-                  href={POIDH_BOUNTY_URL}
+                  href={bountyUrl}
                   target={isMiniApp ? undefined : "_blank"}
                   rel={isMiniApp ? undefined : "noopener noreferrer"}
                   onClick={openPoidh}
@@ -238,7 +240,7 @@ const PoidhPage: NextPage = () => {
               LOG YOUR DOG 🌭
             </Link>
             <a
-              href={POIDH_BOUNTY_URL}
+              href={bountyUrl}
               target={isMiniApp ? undefined : "_blank"}
               rel={isMiniApp ? undefined : "noopener noreferrer"}
               onClick={openPoidh}
