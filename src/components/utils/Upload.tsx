@@ -42,19 +42,44 @@ export const Upload: FC<UploadProps> = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
+  // Instant local preview (object URL from the file the browser already has) so
+  // the image shows immediately instead of waiting on the IPFS/thirdweb gateway
+  // to serve the freshly-uploaded file. Tracked in a ref so we can revoke it.
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const localPreviewUrlRef = useRef<string | null>(null);
+  const setLocalPreview = useCallback((url: string | null) => {
+    if (localPreviewUrlRef.current) {
+      URL.revokeObjectURL(localPreviewUrlRef.current);
+    }
+    localPreviewUrlRef.current = url;
+    setLocalPreviewUrl(url);
+  }, []);
+
+  // Revoke any outstanding object URL when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (localPreviewUrlRef.current) {
+        URL.revokeObjectURL(localPreviewUrlRef.current);
+        localPreviewUrlRef.current = null;
+      }
+    };
+  }, []);
+
   // Prevent re-renders when parent passes a new array reference
   const prevInitialUrlsRef = useRef<string>();
   useEffect(() => {
     const joined = initialUrls?.join('|');
     if (prevInitialUrlsRef.current !== joined) {
       prevInitialUrlsRef.current = joined;
+      // Parent is (re)setting the controlled value, so drop the local preview.
+      setLocalPreview(null);
       if (initialUrls && initialUrls.length > 0) {
         setUrls(initialUrls);
       } else {
         setUrls([]);
       }
     }
-  }, [initialUrls]);
+  }, [initialUrls, setLocalPreview]);
 
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
     // convert the file to base64 image
@@ -129,6 +154,7 @@ export const Upload: FC<UploadProps> = ({
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setUrls([]);
+    setLocalPreview(null);
     setUploadError(null);
     setDropzoneLabel("🖼️ Preparing upload...");
 
@@ -181,13 +207,18 @@ export const Upload: FC<UploadProps> = ({
 
     try {
       setDropzoneLabel("☁️ Uploading...");
+
+      // Show the image instantly from local bytes so the user isn't waiting on
+      // the IPFS/thirdweb gateway to serve the freshly-uploaded file.
+      setLocalPreview(URL.createObjectURL(resizedFiles[0]!));
+
       // Rename files to "image" before uploading
       const renamedFiles = resizedFiles.map((file, index) => {
         const extension = file.name.split('.').pop() ?? 'jpg';
         const newName = resizedFiles.length > 1 ? `image_${index + 1}.${extension}` : `image.${extension}`;
         return new File([file], newName, { type: file.type });
       });
-      
+
       const uris = await upload({
         files: renamedFiles,
         client,
@@ -208,11 +239,13 @@ export const Upload: FC<UploadProps> = ({
       console.error("Error uploading file:", err);
       toast("Error uploading file", { type: "error" });
       setUploadError(`Upload failed: ${err.message}`);
+      // Drop the optimistic local preview so the error state is visible.
+      setLocalPreview(null);
       onUploadError?.(err);
     } finally {
       setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
     }
-  }, [conductImageSafetyCheck, label, onUpload, onUploadError, resizeImageFile]);
+  }, [conductImageSafetyCheck, label, onUpload, onUploadError, resizeImageFile, setLocalPreview]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
@@ -233,16 +266,23 @@ export const Upload: FC<UploadProps> = ({
     return src;
   }
 
+  // Prefer the instant local object URL; fall back to the resolved gateway URL.
+  const displaySrc = localPreviewUrl ??
+    (urls.length > 0 && urls[0] !== "" ? previewImageSrc(urls[0]!) : null);
+  const isLocalPreview = displaySrc !== null && displaySrc === localPreviewUrl;
+
   return (
     <div {...getRootProps()} className={className ?? `bg-base-200 rounded-lg ${height ? height : 'h-64'} w-full grid place-content-center cursor-pointer relative ${additionalClasses ?? ""}`}>
       <input {...getInputProps()} />
       {
-        urls.length && urls.length > 0 && urls[0] !== "" ? (
+        displaySrc ? (
           <div className="absolute inset-0 w-full h-full bg-cover overflow-hidden rounded-lg">
             <Image
-              src={previewImageSrc(urls[0]!)}
+              src={displaySrc}
               alt="uploaded image"
               fill
+              // Object URLs can't be run through the Next.js image optimizer.
+              unoptimized={isLocalPreview}
               style={{ objectFit: objectCover ? "cover" : "contain" }}
               className={imageClassName}
             />
