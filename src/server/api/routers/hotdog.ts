@@ -984,7 +984,13 @@ export const hotdogRouter = createTRPCRouter({
         return { success: false, error: String(error) };
       }
     }),
-  checkForSafety: protectedProcedure
+  // Image moderation runs during the upload flow, which happens before a user
+  // is required to connect a wallet / establish a NextAuth session. Gating it
+  // behind protectedProcedure made the safety check fail with UNAUTHORIZED for
+  // not-yet-authenticated users (the "Safety check failed: UNAUTHORIZED" error).
+  // The check only calls Google Vision and doesn't depend on user identity, so
+  // it is safe to expose as a public procedure.
+  checkForSafety: publicProcedure
     .input(z.object({ base64ImageString: z.string() }))
     .mutation(async ({ input }) => {
       const { base64ImageString } = input;
