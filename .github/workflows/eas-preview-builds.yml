@@ -1,8 +1,9 @@
 name: EAS Preview Builds
 
 on:
-  push:
-    branches: [main]
+  # Paused: automatic preview builds on every main commit. Re-enable with:
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 concurrency:
