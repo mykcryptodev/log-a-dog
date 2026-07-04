@@ -84,8 +84,8 @@ const PoidhPage: NextPage = () => {
           content="Win $50 ETH daily July 3–5. Log a hotdog, share it, claim your prize on POIDH."
         />
         <link rel="icon" href="/favicon.ico" />
-        <meta property="og:image" content="https://logadog.xyz/images/og-image.png" />
-        <meta property="twitter:image" content="https://logadog.xyz/images/og-image.png" />
+        <meta key="ogimage" property="og:image" content="https://www.logadog.xyz/images/og-image.png" />
+        <meta key="twimage" name="twitter:image" content="https://www.logadog.xyz/images/og-image.png" />
       </Head>
       <main className="flex flex-col items-center px-4 pt-6 pb-10">
         <div className="flex w-full max-w-xl flex-col gap-5">
