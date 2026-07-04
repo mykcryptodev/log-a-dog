@@ -1,4 +1,4 @@
-import { type FC, useMemo, memo } from "react";
+import { type FC, type ReactNode, useMemo, memo } from "react";
 import { Badge } from "./Profile/Badge";
 import Link from "next/link";
 import styles from "./LeaderboardBanner.module.css";
@@ -66,6 +66,10 @@ const LiveBadge: FC<{ dim?: boolean }> = ({ dim }) => (
   </div>
 );
 
+const BannerShell: FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="pop-card w-full overflow-hidden rounded-2xl bg-base-100">{children}</div>
+);
+
 const LeaderboardBannerComponent: FC<Props> = ({
   startDate,
   endDate,
@@ -97,10 +101,12 @@ const LeaderboardBannerComponent: FC<Props> = ({
 
   if (!leaderboard || !profiles) {
     return (
-      <div className="flex h-12 items-stretch overflow-hidden">
-        <LiveBadge dim />
-        <div className="grill-skeleton flex-1 animate-grill-shimmer" />
-      </div>
+      <BannerShell>
+        <div className="flex h-12 items-stretch overflow-hidden">
+          <LiveBadge dim />
+          <div className="grill-skeleton flex-1 animate-grill-shimmer" />
+        </div>
+      </BannerShell>
     );
   }
 
@@ -108,14 +114,16 @@ const LeaderboardBannerComponent: FC<Props> = ({
 
   if (reduceMotion) {
     return (
-      <div className="flex h-12 items-stretch overflow-hidden">
-        <LiveBadge />
-        <div className="flex flex-1 items-center gap-3 overflow-x-auto px-3">
-          {items.map((item) => (
-            <TickerPill key={item.address} item={item} />
-          ))}
+      <BannerShell>
+        <div className="flex h-12 items-stretch overflow-hidden">
+          <LiveBadge />
+          <div className="flex flex-1 items-center gap-3 overflow-x-auto px-3">
+            {items.map((item) => (
+              <TickerPill key={item.address} item={item} />
+            ))}
+          </div>
         </div>
-      </div>
+      </BannerShell>
     );
   }
 
@@ -124,27 +132,29 @@ const LeaderboardBannerComponent: FC<Props> = ({
   const animationDuration = totalWidth / scrollSpeed;
 
   return (
-    <div className="flex h-12 items-stretch overflow-hidden">
-      <LiveBadge />
-      <div className="relative flex-1 overflow-hidden">
-        <div
-          className={`absolute flex h-full items-center gap-3 whitespace-nowrap px-3 ${styles.scrollContainer}`}
-          style={
-            {
-              "--duration": `${animationDuration}s`,
-              width: `${totalWidth * 2 + 24}px`,
-            } as React.CSSProperties
-          }
-        >
-          {items.map((item) => (
-            <TickerPill key={`a-${item.address}`} item={item} />
-          ))}
-          {items.map((item) => (
-            <TickerPill key={`b-${item.address}`} item={item} />
-          ))}
+    <BannerShell>
+      <div className="flex h-12 items-stretch overflow-hidden">
+        <LiveBadge />
+        <div className="relative flex-1 overflow-hidden">
+          <div
+            className={`absolute flex h-full items-center gap-3 whitespace-nowrap px-3 ${styles.scrollContainer}`}
+            style={
+              {
+                "--duration": `${animationDuration}s`,
+                width: `${totalWidth * 2 + 24}px`,
+              } as React.CSSProperties
+            }
+          >
+            {items.map((item) => (
+              <TickerPill key={`a-${item.address}`} item={item} />
+            ))}
+            {items.map((item) => (
+              <TickerPill key={`b-${item.address}`} item={item} />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </BannerShell>
   );
 };
 

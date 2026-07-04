@@ -271,9 +271,7 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
       <div id="top-of-list" className="invisible" />
       <div className="flex flex-col gap-4">
       {/* Live scoreboard ticker — current season top dogs */}
-      <div className="pop-card w-full overflow-hidden rounded-2xl bg-base-100">
-        <LeaderboardBanner startDate={new Date(CONTEST_START_TIME)} scrollSpeed={40} />
-      </div>
+      <LeaderboardBanner startDate={new Date(CONTEST_START_TIME)} scrollSpeed={40} />
       <div className="flex justify-end">
         <button
           className="group btn btn-ghost btn-sm gap-2"
