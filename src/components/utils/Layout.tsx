@@ -6,6 +6,7 @@ import { ToastProvider } from "~/providers/Toast";
 import useMounted from "~/hooks/useMounted";
 import { getSeasonInfo } from "~/helpers/season";
 import { PoidhBanner } from "./PoidhBanner";
+import { isPoidhCampaignLive } from "~/utils/poidh";
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   // Compute on the client to avoid a hydration mismatch on the day counter.
   const mounted = useMounted();
   const { day, isLive } = getSeasonInfo();
+  const poidhLive = isPoidhCampaignLive();
 
   return (
     <div className="app-bg block min-h-screen">
@@ -59,7 +61,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               >
                 POIDH
               </Link>
-              {mounted && isLive && (
+              {mounted && isLive && !poidhLive && (
                 <span className="rounded-full border-2 border-base-content bg-primary px-2.5 py-1 text-primary-content">
                   DAY {day}
                 </span>
