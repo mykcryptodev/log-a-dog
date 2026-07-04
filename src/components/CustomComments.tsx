@@ -12,6 +12,7 @@ import { prepareContractCall, sendTransaction, waitForReceipt } from "thirdweb";
 import { getContract } from "thirdweb";
 import { base as thirdwebBase, baseSepolia as thirdwebBaseSepolia } from "thirdweb/chains";
 import { client } from "~/providers/Thirdweb";
+import { withBuilderCode } from "~/constants/builderCode";
 import Connect from "./utils/Connect";
 import Avatar from "./Profile/Avatar";
 import Name from "./Profile/Name";
@@ -133,9 +134,9 @@ export const CustomComments: React.FC<CustomCommentsProps> = ({ targetUri }) => 
         ],
       });
 
-      // Send the transaction
+      // Send the transaction (with Builder Code attribution appended to calldata)
       const result = await sendTransaction({
-        transaction,
+        transaction: await withBuilderCode(transaction),
         account,
       });
 

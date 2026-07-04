@@ -9,6 +9,7 @@ import { client } from "~/providers/Thirdweb";
 import { ATTESTATION_MANAGER } from "~/constants/addresses";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { attestToLog } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
+import { DATA_SUFFIX, withBuilderCode } from "~/constants/builderCode";
 import { InsufficientStake } from "../Stake/InsufficientStake";
 import { Portal } from "../utils/Portal";
 import { useGhostVote } from "~/hooks/useGhostVote";
@@ -118,10 +119,13 @@ export const VoteBar: FC<Props> = ({
           paymasterService: {
             url: `https://${chainId}.bundler.thirdweb.com/${client.clientId}`,
           },
+          // Builder Code attribution on the outer userOp (EIP-5792). Optional so
+          // wallets that don't support it just ignore it instead of failing.
+          dataSuffix: { value: DATA_SUFFIX, optional: true },
         },
       });
     } else {
-      await sendTransaction({ account, transaction });
+      await sendTransaction({ account, transaction: await withBuilderCode(transaction) });
     }
   };
 
