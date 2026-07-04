@@ -20,9 +20,7 @@ const LeaderboardPage: NextPage = () => {
             🏆 THE SCOREBOARD
           </h1>
 
-          <div className="pop-card w-full overflow-hidden rounded-2xl bg-base-100">
-            <LeaderboardBanner startDate={startDateObj} scrollSpeed={35} />
-          </div>
+          <LeaderboardBanner startDate={startDateObj} scrollSpeed={35} />
 
           <LeaderboardList
             showPodium
