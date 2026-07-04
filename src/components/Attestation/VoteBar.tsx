@@ -1,7 +1,7 @@
 import { useEffect, useState, type FC } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "react-toastify";
-import { getContract, sendTransaction } from "thirdweb";
+import { getContract, sendTransaction, waitForReceipt } from "thirdweb";
 import { useActiveWallet } from "thirdweb/react";
 import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { api } from "~/utils/api";
@@ -35,8 +35,8 @@ type Props = {
 // "Sticker Brutalism" vote control: two chunky blocky buttons whose hard offset
 // shadow collapses on press, plus a "you voted" confirmation. The valid/sus
 // tally meter has moved to the back of the card photo and is hidden while the
-// voting window is open. Same on-chain `hotdog.judge` mutation + optimistic
-// user-vote logic as before.
+// voting window is open. Votes are sent from the user's wallet via `attestToLog`;
+// the locked banner only appears once the tx confirms on-chain.
 export const VoteBar: FC<Props> = ({
   logId,
   chainId,
@@ -50,29 +50,25 @@ export const VoteBar: FC<Props> = ({
   const wallet = useActiveWallet();
   const utils = api.useUtils();
   const { mutateAsync: refreshFeed } = api.indexer.refreshFeed.useMutation();
-  const [optimisticUserAttested, setOptimisticUserAttested] = useState<boolean | undefined>(userAttested);
-  const [optimisticUserAttestation, setOptimisticUserAttestation] = useState<boolean | undefined>(userAttestation);
+  const [confirmedVote, setConfirmedVote] = useState<boolean | null>(() => {
+    if (userAttested) return userAttestation ?? false;
+    return null;
+  });
   const [isInsufficientStake, setIsInsufficientStake] = useState(false);
   const [busy, setBusy] = useState<null | "valid" | "invalid">(null);
   const [streak, setStreak] = useState<null | "valid" | "invalid">(null);
 
   const ghostVote = useGhostVote(logId, voterAddress);
-  // ghostVote is null (no vote), true (voted valid), or false (voted sus).
-  // ?? cannot be used here: `false ?? x` returns `x`, masking a SUS vote.
-  const effectiveUserAttested = ghostVote !== null || (optimisticUserAttested ?? false);
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-  const effectiveUserAttestation = ghostVote !== null ? ghostVote : (optimisticUserAttestation ?? false);
 
-  // Keep the locked/highlighted state in sync when server props or indexed votes load.
+  // Only treat a vote as locked once it is confirmed on-chain (indexed vote,
+  // server props, or a tx that mined successfully — never optimistically).
   useEffect(() => {
     if (ghostVote !== null) {
-      setOptimisticUserAttested(true);
-      setOptimisticUserAttestation(ghostVote);
+      setConfirmedVote(ghostVote);
       return;
     }
     if (userAttested) {
-      setOptimisticUserAttested(true);
-      setOptimisticUserAttestation(userAttestation ?? false);
+      setConfirmedVote(userAttestation ?? false);
     }
   }, [ghostVote, userAttested, userAttestation]);
 
@@ -125,7 +121,8 @@ export const VoteBar: FC<Props> = ({
         },
       });
     } else {
-      await sendTransaction({ account, transaction: await withBuilderCode(transaction) });
+      const result = await sendTransaction({ account, transaction: await withBuilderCode(transaction) });
+      await waitForReceipt({ client, chain, transactionHash: result.transactionHash });
     }
   };
 
@@ -148,7 +145,7 @@ export const VoteBar: FC<Props> = ({
       return;
     }
     // The contract has no revoke; re-voting the same way is a no-op on-chain.
-    if (effectiveUserAttested && effectiveUserAttestation === isValid) {
+    if (confirmedVote !== null && confirmedVote === isValid) {
       return;
     }
 
@@ -156,12 +153,9 @@ export const VoteBar: FC<Props> = ({
     setStreak(isValid ? "valid" : "invalid");
     setTimeout(() => setStreak(null), 350);
 
-    // Optimistic update.
-    setOptimisticUserAttested(true);
-    setOptimisticUserAttestation(isValid);
-
     try {
       await submitVote(isValid);
+      setConfirmedVote(isValid);
       toast.success("Verdict cast!");
       try {
         await refreshFeed({ chainId });
@@ -177,16 +171,13 @@ export const VoteBar: FC<Props> = ({
       const message = error instanceof Error ? error.message : String(error);
       // The contract reverts if you've already attested to this log. That means
       // our local state was stale (e.g. a cached getById), not a real failure —
-      // keep the optimistic "voted" state, lock the buttons, and refresh truth.
+      // the vote is already on-chain; lock the buttons and refresh truth.
       if (/already attested/i.test(message)) {
-        setOptimisticUserAttested(true);
-        setOptimisticUserAttestation(isValid);
+        setConfirmedVote(isValid);
         await invalidateVoteState();
         void onAttestationMade?.();
         return;
       }
-      setOptimisticUserAttested(userAttested);
-      setOptimisticUserAttestation(userAttestation);
       if (message.includes("Insufficient stake")) {
         setIsInsufficientStake(true);
       } else {
@@ -197,12 +188,12 @@ export const VoteBar: FC<Props> = ({
     }
   };
 
-  const votedValid = effectiveUserAttested && effectiveUserAttestation === true;
-  const votedSus = effectiveUserAttested && effectiveUserAttestation === false;
-  const hasVoted = votedValid || votedSus;
+  const hasConfirmedVote = confirmedVote !== null;
+  const votedValid = hasConfirmedVote && confirmedVote === true;
+  const votedSus = hasConfirmedVote && confirmedVote === false;
   // Attestations are final on-chain (the contract has no revoke/update and
-  // reverts on a second attest), so once you've voted the buttons lock.
-  const locked = (disabled ?? false) || busy !== null || hasVoted;
+  // reverts on a second attest), so once confirmed the buttons lock.
+  const locked = (disabled ?? false) || busy !== null || hasConfirmedVote;
 
   // Once voting closes there's nothing to act on here — the tally lives on the
   // flipped card back. Still surface how *you* voted, if you did.
@@ -218,14 +209,14 @@ export const VoteBar: FC<Props> = ({
     ) : null;
   }
 
-  // After voting, the un-chosen side dims and goes flat so it's obvious the
-  // verdict is locked; the chosen side stays solid with a clear ✓ marker.
-  const validBtnClass = hasVoted
+  // After a confirmed vote, the un-chosen side dims and goes flat so it's
+  // obvious the verdict is locked; the chosen side stays solid with a ✓ marker.
+  const validBtnClass = hasConfirmedVote
     ? votedValid
       ? "bg-accent ring-2 ring-accent ring-offset-1 ring-offset-base-100"
       : "bg-accent/20 text-accent-content/40 grayscale"
     : "bg-accent/85";
-  const susBtnClass = hasVoted
+  const susBtnClass = hasConfirmedVote
     ? votedSus
       ? "bg-error ring-2 ring-error ring-offset-1 ring-offset-base-100"
       : "bg-error/20 text-white/40 grayscale"
@@ -239,7 +230,7 @@ export const VoteBar: FC<Props> = ({
         )}
       </Portal>
 
-      {hasVoted && (
+      {hasConfirmedVote && (
         <div className="mb-2 flex items-center justify-center gap-1.5 rounded-lg bg-base-200/70 py-1 font-display text-xs tracking-wide opacity-80">
           ✓ you voted {votedValid ? "VALID DOG" : "SUS"} — verdict locked
         </div>

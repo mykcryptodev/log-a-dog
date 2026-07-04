@@ -44,7 +44,7 @@ export function VoteBar({
 
   const { validPct, invalidPct } = getVotePct(validCount, invalidCount);
 
-  const hasVoted = userHasVoted || castVote !== null;
+  const hasConfirmedVote = userHasVoted || castVote !== null;
   const votedValid = castVote ?? userVotedValid;
   const isResolved = attestationStatus === 1;
 
@@ -56,7 +56,7 @@ export function VoteBar({
       }
       // Attestations are final on-chain (the contract has no revoke and
       // reverts on a second attest), so a cast verdict locks the buttons.
-      if (disabled || isResolved || isVoting || hasVoted) return;
+      if (disabled || isResolved || isVoting || hasConfirmedVote) return;
 
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -93,7 +93,7 @@ export function VoteBar({
         }
       }
     },
-    [voterAddress, disabled, isResolved, isVoting, hasVoted, logId, vote, onVoteSuccess, validScale, invalidScale],
+    [voterAddress, disabled, isResolved, isVoting, hasConfirmedVote, logId, vote, onVoteSuccess, validScale, invalidScale],
   );
 
   return (
@@ -114,7 +114,7 @@ export function VoteBar({
         </View>
       )}
 
-      {hasVoted && !isResolved && (
+      {hasConfirmedVote && !isResolved && !isVoting && (
         <View className="mb-2 bg-base-200 rounded-lg py-1 items-center">
           <Text className="font-display text-neutral/70 text-xs tracking-wide">
             ✓ you voted {votedValid ? "VALID DOG" : "SUS"} — verdict locked
@@ -125,33 +125,33 @@ export function VoteBar({
       {/* Sticker-brutalism vote control (web pop-btn pair) */}
       <View className="flex-row" style={{ gap: 10 }}>
         <Animated.View
-          style={{ flex: 1, transform: [{ scale: validScale }], opacity: hasVoted && !votedValid ? 0.35 : 1 }}
+          style={{ flex: 1, transform: [{ scale: validScale }], opacity: hasConfirmedVote && !votedValid ? 0.35 : 1 }}
         >
           <PopButton
             onPress={() => handleVote(true)}
-            disabled={isResolved || isVoting || hasVoted}
+            disabled={isResolved || isVoting || hasConfirmedVote}
             backgroundColor={COLORS.accent}
             radius={12}
             contentStyle={{ paddingVertical: 10, alignItems: "center" }}
           >
             <Text className="font-display text-sm tracking-wide" style={{ color: COLORS.base100 }}>
-              {hasVoted && votedValid ? "✓ " : ""}🥬 VALID DOG
+              {hasConfirmedVote && votedValid ? "✓ " : ""}🥬 VALID DOG
             </Text>
           </PopButton>
         </Animated.View>
 
         <Animated.View
-          style={{ flex: 1, transform: [{ scale: invalidScale }], opacity: hasVoted && votedValid ? 0.35 : 1 }}
+          style={{ flex: 1, transform: [{ scale: invalidScale }], opacity: hasConfirmedVote && votedValid ? 0.35 : 1 }}
         >
           <PopButton
             onPress={() => handleVote(false)}
-            disabled={isResolved || isVoting || hasVoted}
+            disabled={isResolved || isVoting || hasConfirmedVote}
             backgroundColor={COLORS.error}
             radius={12}
             contentStyle={{ paddingVertical: 10, alignItems: "center" }}
           >
             <Text className="font-display text-white text-sm tracking-wide">
-              {hasVoted && !votedValid ? "✓ " : ""}🔴 SUS
+              {hasConfirmedVote && !votedValid ? "✓ " : ""}🔴 SUS
             </Text>
           </PopButton>
         </Animated.View>

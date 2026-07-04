@@ -1,6 +1,6 @@
 import type { PreparedTransaction } from "thirdweb";
 import type { Wallet } from "thirdweb/wallets";
-import { sendTransaction } from "thirdweb";
+import { sendTransaction, waitForReceipt } from "thirdweb";
 import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { getThirdwebClient } from "~/utils/thirdweb";
 import { getActiveChain } from "~/constants/chains";
@@ -35,5 +35,6 @@ export async function sendOnChainTx(
     return;
   }
 
-  await sendTransaction({ account, transaction });
+  const result = await sendTransaction({ account, transaction });
+  await waitForReceipt({ client, chain, transactionHash: result.transactionHash });
 }
