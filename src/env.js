@@ -37,6 +37,10 @@ export const env = createEnv({
     BACKEND_PROFILE_WALLET_ADDRESS: z.string(),
     NEYNAR_WEBHOOK_SECRET: z.string(),
     NEYNAR_API_KEY: z.string(),
+    // Base App notifications (dashboard.base.org). Optional so the build/runtime
+    // doesn't fail before the key is provisioned; the daily cron skips Base sends
+    // when it is absent.
+    BASE_NOTIFICATIONS_API_KEY: z.string().optional(),
     ADMIN_PRIVATE_KEY: z.string(),
     MORALIS_SECRET_KEY: z.string(),
     MAKER_AFFIRM_SECRET: z.string(),
@@ -80,6 +84,7 @@ export const env = createEnv({
     THIRDWEB_ENGINE_URL: process.env.THIRDWEB_ENGINE_URL,
     NEYNAR_WEBHOOK_SECRET: process.env.NEYNAR_WEBHOOK_SECRET,
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
+    BASE_NOTIFICATIONS_API_KEY: process.env.BASE_NOTIFICATIONS_API_KEY,
     ADMIN_PRIVATE_KEY: process.env.ADMIN_PRIVATE_KEY,
     BACKEND_WALLET_ADDRESS: process.env.BACKEND_WALLET_ADDRESS,
     THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN: process.env.THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN,

@@ -122,6 +122,11 @@ The **Supabase/Postgres DB is a cache/read-model of on-chain state, not the sour
 - **Moderator Rewards Cron**: Runs hourly to automatically distribute rewards for resolved attestation periods
   - Path: `/api/cron/reward-moderators`
   - Schedule: Every hour (`0 * * * *`)
+- **Daily Engagement Notification Cron**: Fires at **noon Eastern** and, only if ≥1 dog was logged in the last 24h, notifies the community on **Farcaster** (Neynar `publishFrameNotifications` to every unique `fid` in the User table) and the **Base App** (`dashboard.base.org` notifications API to every unique `address` in the User table) with a CTA to open the app and judge dogs.
+  - Path: `/api/cron/daily-notification`
+  - Schedule: two UTC entries (`0 16 * * *` + `0 17 * * *`); the handler gates on the actual Eastern hour (== 12) so exactly one fires per ET day across DST, backed by a Redis per-ET-day dedupe guard. Add `?force=true` to bypass the hour/dedupe gates for manual testing.
+  - Requires `BASE_NOTIFICATIONS_API_KEY` (from the Base Dashboard project → Settings → API Key) for the Base leg; the Farcaster leg uses `NEYNAR_API_KEY`. If the Base key is absent the Base send is skipped and the Farcaster send still runs.
+  - Libs: `src/lib/base-notifications.ts` (Base), `sendNotificationToFids` in `src/lib/neynar.ts` (Farcaster).
 - See `CRON_JOBS.md` for detailed documentation of both
 
 ## Development Notes
@@ -130,7 +135,7 @@ The **Supabase/Postgres DB is a cache/read-model of on-chain state, not the sour
 - Uses `.env` files for configuration. **All env vars are validated by a Zod schema in `src/env.js`** (via `@t3-oss/env-nextjs`) — add new vars there or the build/runtime will reject them.
 - Prisma generates client on postinstall
 - Database URL (`DATABASE_URL`) and direct URL (`DIRECT_URL`) required for Prisma
-- Key secrets: `THIRDWEB_*` / wallet vars, `CDP_CLIENT_TOKEN` (indexer), `NEYNAR_API_KEY`, `GHOST_PROTOCOL_API_KEY`, `UPSTASH_REDIS_REST_*`, `GOOGLE_VISION_API_KEY`, `CRON_SECRET`, `NEXTAUTH_SECRET`
+- Key secrets: `THIRDWEB_*` / wallet vars, `CDP_CLIENT_TOKEN` (indexer), `NEYNAR_API_KEY`, `BASE_NOTIFICATIONS_API_KEY` (Base App daily notification; optional), `GHOST_PROTOCOL_API_KEY`, `UPSTASH_REDIS_REST_*`, `GOOGLE_VISION_API_KEY`, `CRON_SECRET`, `NEXTAUTH_SECRET`
 
 ### Build Process
 - **IMPORTANT**: Always run `bun run build` before committing changes to ensure TypeScript and linting errors are caught
