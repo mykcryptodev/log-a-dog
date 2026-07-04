@@ -11,6 +11,9 @@ class MyDocument extends Document {
           <meta name="title" content="Log a Dog" />
           <meta name="description" content="Track how many hotdogs you eat and compete against your friends!" />
 
+          {/* Base.dev builder code / agent registration */}
+          <meta name="base:app_id" content="6a490846484964c79f8bb09e" />
+
           {/* Open Graph / Twitter defaults live in _app.tsx (next/head) so that
               individual pages can override them by key (e.g. per-dog OG images). */}
         </Head>
