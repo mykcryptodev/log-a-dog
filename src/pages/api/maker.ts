@@ -7,6 +7,7 @@ import { DEFAULT_CHAIN } from '~/constants/chains';
 import { env } from '~/env';
 import { logHotdog } from '~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c';
 import { upload } from "thirdweb/storage";
+import { withBuilderCode } from '~/constants/builderCode';
 
 // Define the schema for the request body
 const requestBodySchema = z.object({
@@ -59,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       await sendTransaction({
-        transaction: logDogTransaction,
+        transaction: await withBuilderCode(logDogTransaction),
         account,
       });
       res.status(200).json({ message: 'Success' });

@@ -8,6 +8,7 @@ import { DEFAULT_CHAIN } from "~/constants";
 import { LOG_A_DOG } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { revokeHotdogLog } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c";
+import { DATA_SUFFIX, withBuilderCode } from "~/constants/builderCode";
 import { useStableAccount } from "~/hooks/useStableAccount";
 import { useIsMobile } from "~/hooks/useIsMobile";
 
@@ -51,13 +52,16 @@ export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
           capabilities: {
             paymasterService: {
               url: `https://${DEFAULT_CHAIN.id}.bundler.thirdweb.com/${client.clientId}`
-            }
+            },
+            // Builder Code attribution on the outer userOp (EIP-5792). Optional
+            // so wallets without support ignore it instead of failing.
+            dataSuffix: { value: DATA_SUFFIX, optional: true },
           },
         });
       } else {
         await sendTransaction({
           account: wallet.getAccount()!,
-          transaction,
+          transaction: await withBuilderCode(transaction),
         });
       }
       toast.success("Attestation revoked!");

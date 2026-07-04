@@ -6,6 +6,7 @@ import { LOG_A_DOG } from '~/constants/addresses';
 import { SUPPORTED_CHAINS } from '~/constants/chains';
 import { env } from '~/env';
 import { attestHotdogLog } from '~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c';
+import { withBuilderCode } from '~/constants/builderCode';
 
 // Define the schema for the request body
 const requestBodySchema = z.object({
@@ -56,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await sendTransaction({
         account,
-        transaction: attestation,
+        transaction: await withBuilderCode(attestation),
       });
       res.status(200).json({ message: 'Success' });
     } catch (error) {
