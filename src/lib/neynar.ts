@@ -60,3 +60,42 @@ export async function sendNotificationToUsers(notification: {
     return false;
   }
 }
+
+/**
+ * Sends a notification to an explicit list of FIDs via Neynar.
+ *
+ * Neynar only actually delivers to FIDs that have a valid notification token
+ * (i.e. added the mini app + enabled notifications); other FIDs are ignored.
+ * FIDs are chunked to keep request bodies reasonable.
+ *
+ * @returns number of FIDs the request was submitted for
+ */
+export async function sendNotificationToFids(
+  fids: number[],
+  notification: { title: string; body: string; target_url: string },
+): Promise<number> {
+  const uniqueFids = Array.from(new Set(fids.filter((f) => Number.isFinite(f))));
+
+  if (uniqueFids.length === 0) {
+    console.log("No FIDs provided for notification");
+    return 0;
+  }
+
+  const CHUNK_SIZE = 100;
+  let submitted = 0;
+
+  for (let i = 0; i < uniqueFids.length; i += CHUNK_SIZE) {
+    const targetFids = uniqueFids.slice(i, i + CHUNK_SIZE);
+    try {
+      await neynarClient.publishFrameNotifications({ targetFids, notification });
+      submitted += targetFids.length;
+      console.log(
+        `[neynar] Submitted notification for ${targetFids.length} FIDs`,
+      );
+    } catch (error) {
+      console.error("[neynar] Error submitting notification chunk:", error);
+    }
+  }
+
+  return submitted;
+}
