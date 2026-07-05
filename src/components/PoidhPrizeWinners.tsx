@@ -99,6 +99,12 @@ export function PoidhPrizeWinners() {
         <p className="mt-1 text-sm text-base-content/70">
           $50 ETH daily bounty winners from the Fourth of July campaign
         </p>
+        <Link
+          href="/poidh"
+          className="mt-2 inline-block font-display text-sm tracking-wide text-secondary hover:underline"
+        >
+          View POIDH campaign →
+        </Link>
       </div>
       <div className="pop-card space-y-2 rounded-2xl bg-base-100 p-3">
         {POIDH_PRIZE_WINNERS.map((winner) => (
