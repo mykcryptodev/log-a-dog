@@ -1,8 +1,11 @@
 import { type FC } from "react";
-import { Tweet } from "react-tweet";
+import Link from "next/link";
 import FaqArticle from "~/components/Help/FaqArticle";
 
 export const Instructions: FC = () => {
+  const tweetId = "1805324646855983453";
+  const tweetUrl = `https://x.com/i/web/status/${tweetId}`;
+
   return (
     <div className="max-w-2xl">
       <div className="flex flex-col gap-4">
@@ -25,7 +28,14 @@ export const Instructions: FC = () => {
           <div className="max-w-xl w-full">
             <FaqArticle number={5} title="Instructional Video">
               <div className="w-full flex justify-center">
-                <Tweet id="1805324646855983453" />
+                <Link
+                  href={tweetUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn"
+                >
+                  Open on X
+                </Link>
               </div>
             </FaqArticle>
           </div>
