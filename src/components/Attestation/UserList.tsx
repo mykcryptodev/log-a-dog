@@ -2,6 +2,7 @@ import { useEffect, type FC, useMemo, useRef } from "react";
 import { api } from "~/utils/api";
 import { useActiveAccount } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
+import LazyFeedItem from "~/components/utils/LazyFeedItem";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "~/components/Profile/Avatar";
 // Removed Name import - using backend profile data instead
@@ -111,8 +112,12 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
         ))
       }
       {loadedHotdogs.map(({ hotdog, validAttestations, invalidAttestations }, index) => {
+        // Window the feed like the homepage: cards far outside the viewport
+        // unmount behind a fixed-height placeholder so long profiles don't
+        // exhaust tab memory.
         return (
-          <div className="card bg-base-200 bg-opacity-50" key={`${hotdog.logId}-${index}`}>
+          <LazyFeedItem key={`${hotdog.logId}-${index}`} estimatedHeight={480}>
+          <div className="card bg-base-200 bg-opacity-50">
             <div className="card-body p-4 max-w-xs">
               <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center">
@@ -173,6 +178,7 @@ export const UserListAttestations: FC<Props> = ({ user, limit }) => {
               </div>
             </div>
           </div>
+          </LazyFeedItem>
         )
       })}
       <div ref={loadMoreRef} className="md:col-span-2 flex min-h-16 items-center justify-center">

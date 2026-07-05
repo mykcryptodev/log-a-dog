@@ -4,6 +4,7 @@ import { api } from "~/utils/api";
 import { ZERO_ADDRESS } from "thirdweb";
 import { usePendingTransactionsStore, type PendingDogEvent } from "~/stores/pendingTransactions";
 import HotdogCard from "~/components/utils/HotdogCard";
+import LazyFeedItem from "~/components/utils/LazyFeedItem";
 import { BackToTopButton } from "~/components/utils/BackToTopButton";
 import { HotdogLoader } from "~/components/utils/HotdogLoader";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
@@ -302,21 +303,26 @@ export const ListAttestations: FC<Props> = ({ limit }) => {
           ? `pending-${hotdog.transactionId}`
           : hotdog.logId;
 
+        // Each card is heavy (media, portal modals, polling hooks), so window
+        // the feed: cards far outside the viewport unmount behind a
+        // fixed-height placeholder instead of accumulating until the tab
+        // runs out of memory on long scrolls.
         return (
-          <HotdogCard
-            key={key}
-            hotdog={hotdog}
-            validAttestations={attestationData.validAttestations}
-            invalidAttestations={attestationData.invalidAttestations}
-            userAttested={attestationData.userAttested}
-            userAttestation={attestationData.userAttestation}
-            chainId={DEFAULT_CHAIN.id}
-            onRefetch={handleRefetch}
-            linkToDetail={true}
-            showAiJudgement={false}
-            disabled={isPending}
-            animateEntrance={!justLanded}
-          />
+          <LazyFeedItem key={key}>
+            <HotdogCard
+              hotdog={hotdog}
+              validAttestations={attestationData.validAttestations}
+              invalidAttestations={attestationData.invalidAttestations}
+              userAttested={attestationData.userAttested}
+              userAttestation={attestationData.userAttestation}
+              chainId={DEFAULT_CHAIN.id}
+              onRefetch={handleRefetch}
+              linkToDetail={true}
+              showAiJudgement={false}
+              disabled={isPending}
+              animateEntrance={!justLanded}
+            />
+          </LazyFeedItem>
         );
       })}
       <div ref={loadMoreRef} className="flex min-h-16 items-center justify-center">
