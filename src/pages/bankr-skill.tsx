@@ -129,15 +129,6 @@ const BankrSkillPage: NextPage = () => {
                 </ol>
               </section>
 
-              <section className="rounded-2xl border-2 border-warning bg-warning/10 p-4 text-sm">
-                <p className="font-bold">Privacy while voting is open</p>
-                <p className="mt-1 opacity-80">
-                  While a dog&apos;s 48-hour voting window is still active, do not ask Bankr to reveal
-                  live vote totals or which side is ahead. You can ask whether your wallet has voted and
-                  when the period ends.
-                </p>
-              </section>
-
               <p className="text-center text-xs opacity-50">
                 <a
                   href="https://mykclawd.xyz/skills#logadog"
