@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { isPoidhCampaignLive } from "~/utils/poidh";
 
 const STORAGE_KEY = "poidh-banner-dismissed";
 
@@ -18,7 +19,7 @@ export function PoidhBanner() {
     );
   }, []);
 
-  if (dismissed) return null;
+  if (dismissed || !isPoidhCampaignLive()) return null;
 
   const dismiss = () => {
     void AsyncStorage.setItem(STORAGE_KEY, "true");
