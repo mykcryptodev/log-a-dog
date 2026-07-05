@@ -18,3 +18,4 @@ export * from "./comments";
 export * from "./pending";
 export * from "./profile";
 export * from "./merkle";
+export * from "./imageProxy";

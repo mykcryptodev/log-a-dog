@@ -1,5 +1,6 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
 import sharp from 'sharp';
+import { isAllowedProxyUrl } from '@shared/imageProxy';
 
 const getDecodedChoiceCdnUrl = (url: string): string | null => {
   try {
@@ -48,6 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'URL parameter is required' });
   }
 
+  if (!isAllowedProxyUrl(url)) {
+    return res.status(403).json({ error: 'URL host is not allowed' });
+  }
+
   try {
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -69,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!response.ok) {
       const fallbackUrl = getDecodedChoiceCdnUrl(url);
-      if (fallbackUrl) {
+      if (fallbackUrl && isAllowedProxyUrl(fallbackUrl)) {
         response = await fetch(fallbackUrl, {
           headers: {
             ...headers,
