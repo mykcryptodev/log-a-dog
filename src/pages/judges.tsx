@@ -7,6 +7,7 @@ import { ZERO_ADDRESS } from "thirdweb";
 import { api } from "~/utils/api";
 import { getProxiedUrl } from "~/utils/imageProxy";
 import HotdogCard from "~/components/utils/HotdogCard";
+import { BankrSkillLink } from "~/components/Bankr/BankrSkillLink";
 import { ATTESTATION_WINDOW_SECONDS, DEFAULT_CHAIN } from "~/constants";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
 
@@ -78,6 +79,8 @@ const JudgesPage: NextPage = () => {
                   : "No dogs awaiting a verdict right now. The jury rests. 🛏️"}
             </p>
           </div>
+
+          <BankrSkillLink />
 
           {dogsErrored && (
             <div className="alert alert-warning">
