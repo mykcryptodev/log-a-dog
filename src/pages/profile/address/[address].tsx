@@ -9,6 +9,7 @@ import { useActiveAccount, ConnectButton } from "thirdweb/react";
 import { useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import HotdogCard from "~/components/utils/HotdogCard";
+import LazyFeedItem from "~/components/utils/LazyFeedItem";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
 import { HotdogLoader } from "~/components/utils/HotdogLoader";
 
@@ -154,20 +155,24 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
             const userAttested = vote !== undefined;
             const userAttestation = vote ?? false;
 
+            // Window the feed like the homepage: cards far outside the
+            // viewport unmount behind a fixed-height placeholder so long
+            // profiles don't exhaust tab memory.
             return (
-            <HotdogCard
-              key={`${hotdog.logId}-${index}`}
-              hotdog={hotdog}
-              validAttestations={validAttestations?.toString() ?? "0"}
-              invalidAttestations={invalidAttestations?.toString() ?? "0"}
-              userAttested={userAttested}
-              userAttestation={userAttestation}
-              chainId={DEFAULT_CHAIN.id}
-              onRefetch={handleRefetchDogData}
-              linkToDetail={true}
-              showAiJudgement={false}
-              disabled={false}
-            />
+            <LazyFeedItem key={`${hotdog.logId}-${index}`}>
+              <HotdogCard
+                hotdog={hotdog}
+                validAttestations={validAttestations?.toString() ?? "0"}
+                invalidAttestations={invalidAttestations?.toString() ?? "0"}
+                userAttested={userAttested}
+                userAttestation={userAttestation}
+                chainId={DEFAULT_CHAIN.id}
+                onRefetch={handleRefetchDogData}
+                linkToDetail={true}
+                showAiJudgement={false}
+                disabled={false}
+              />
+            </LazyFeedItem>
           )})}
         </div>
 
