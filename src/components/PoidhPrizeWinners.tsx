@@ -1,10 +1,12 @@
 import { type FC } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ZERO_ADDRESS } from "thirdweb";
+import { Blobbie } from "thirdweb/react";
 import HotdogImage from "~/components/utils/HotdogImage";
-import { Avatar } from "~/components/Profile/Avatar";
 import { DEFAULT_CHAIN } from "~/constants";
 import { api } from "~/utils/api";
+import { getProxiedUrl } from "~/utils/imageProxy";
 import { POIDH_PRIZE_WINNERS } from "~/utils/poidh";
 
 type WinnerCardProps = {
@@ -16,6 +18,25 @@ const nameFor = (
   profile: { name?: string | null; username?: string | null } | null | undefined,
   address: string,
 ) => profile?.name ?? profile?.username ?? `${address.slice(0, 6)}…${address.slice(-4)}`;
+
+const WinnerAvatar: FC<{
+  address: string;
+  profile?: { name?: string | null; username?: string | null; image?: string | null } | null;
+}> = ({ address, profile }) => {
+  const avatarUrl = profile?.image;
+  if (avatarUrl && avatarUrl !== "") {
+    return (
+      <Image
+        src={getProxiedUrl(avatarUrl)}
+        alt={nameFor(profile, address)}
+        width={24}
+        height={24}
+        className="h-6 w-6 shrink-0 rounded-full object-cover"
+      />
+    );
+  }
+  return <Blobbie address={address} size={24} className="shrink-0 rounded-full" />;
+};
 
 const WinnerCard: FC<WinnerCardProps> = ({ logId, prizeUsd }) => {
   const { data, isLoading } = api.hotdog.getById.useQuery(
@@ -34,8 +55,8 @@ const WinnerCard: FC<WinnerCardProps> = ({ logId, prizeUsd }) => {
   }
 
   const { hotdog } = data;
-  const profile = hotdog.loggerProfile ?? hotdog.eaterProfile;
-  const address = hotdog.logger || hotdog.eater;
+  const profile = hotdog.eaterProfile;
+  const address = hotdog.eater;
 
   return (
     <Link
@@ -53,7 +74,7 @@ const WinnerCard: FC<WinnerCardProps> = ({ logId, prizeUsd }) => {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <Avatar address={address} fallbackSize={24} size="24px" />
+          <WinnerAvatar address={address} profile={profile} />
           <span className="truncate font-semibold">{nameFor(profile, address)}</span>
         </div>
         <p className="mt-0.5 text-sm text-base-content/70">
