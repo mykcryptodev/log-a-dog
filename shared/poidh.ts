@@ -22,5 +22,6 @@ export function isPoidhCampaignLive(date: Date = new Date()): boolean {
 
 export const POIDH_PRIZE_WINNERS = [
   { logId: "2123", prizeUsd: 50 },
+  { logId: "2124", prizeUsd: 50 },
   { logId: "2093", prizeUsd: 50 },
 ] as const;
