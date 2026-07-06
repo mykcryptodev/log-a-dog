@@ -1,4 +1,4 @@
-import { type FC, type MouseEvent, memo, useCallback, useContext, useState } from "react";
+import { type FC, type MouseEvent, memo, useCallback, useContext, useState, type Ref } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import {
@@ -13,7 +13,7 @@ import { Badge } from "~/components/Profile/Badge";
 import Revoke from "~/components/Attestation/Revoke";
 import AiJudgement from "~/components/Attestation/AiJudgement";
 import Comments from "~/components/Attestation/Comments";
-import VoteBar from "~/components/Attestation/VoteBar";
+import VoteBar, { type VoteBarHandle } from "~/components/Attestation/VoteBar";
 import VotingCountdown from "~/components/Attestation/VotingCountdown";
 import ZoraCoinTrading from "~/components/Attestation/ZoraCoinTrading";
 import { formatAbbreviatedFiat } from "~/helpers/formatFiat";
@@ -105,6 +105,8 @@ type Props = {
   showAiJudgement?: boolean; // Whether to show AI judgement
   disabled?: boolean; // Whether judgement is disabled (for pending)
   animateEntrance?: boolean; // Drop-in animation on mount; off for cards that just replaced an optimistic one
+  voteBarRef?: Ref<VoteBarHandle>;
+  onVoteBusyChange?: (busy: boolean) => void;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -122,6 +124,8 @@ const HotdogCardComponent: FC<Props> = ({
   showAiJudgement = false,
   disabled = false,
   animateEntrance = true,
+  voteBarRef,
+  onVoteBusyChange,
 }) => {
   const account = useActiveAccount();
   const [flipped, setFlipped] = useState(false);
@@ -476,6 +480,7 @@ const HotdogCardComponent: FC<Props> = ({
 
         {/* THE vote control — primary, full-width */}
         <VoteBar
+          ref={voteBarRef}
           logId={hotdog.logId}
           chainId={chainId}
           disabled={disabled}
@@ -486,6 +491,7 @@ const HotdogCardComponent: FC<Props> = ({
           invalidAttestations={invalidAttestations}
           onAttestationMade={onRefetch}
           onAttestationAffirmationRevoked={onRefetch}
+          onBusyChange={onVoteBusyChange}
         />
 
         {/* Metadata row: comments · season number sticker */}

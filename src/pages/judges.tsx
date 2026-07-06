@@ -1,12 +1,11 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "motion/react";
 import { ZERO_ADDRESS } from "thirdweb";
 import { api } from "~/utils/api";
 import { getProxiedUrl } from "~/utils/imageProxy";
-import HotdogCard from "~/components/utils/HotdogCard";
+import SwipeableJudgeDeck from "~/components/Attestation/SwipeableJudgeDeck";
 import { BankrSkillLink } from "~/components/Bankr/BankrSkillLink";
 import { ATTESTATION_WINDOW_SECONDS, DEFAULT_CHAIN } from "~/constants";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
@@ -40,6 +39,18 @@ const JudgesPage: NextPage = () => {
     { enabled: !!voterAddress, refetchOnWindowFocus: false, retry: 1 },
   );
 
+  // Verdicts cast this session. The indexer can lag behind a fresh on-chain
+  // vote, so a refetch alone won't drop the card from the queue — this does.
+  const [votedLogIds, setVotedLogIds] = useState<Set<string>>(new Set());
+
+  const handleVoteSuccess = useCallback((logId: string) => {
+    setVotedLogIds((prev) => {
+      const next = new Set(prev);
+      next.add(logId);
+      return next;
+    });
+  }, []);
+
   // Dogs still inside their 48h voting window, not yet resolved, and awaiting this user's vote.
   const queue = useMemo(() => {
     const hotdogs = dogData?.hotdogs ?? [];
@@ -49,14 +60,16 @@ const JudgesPage: NextPage = () => {
         const open = Number(h.timestamp) * 1000 + ATTESTATION_WINDOW_SECONDS * 1000 > Date.now();
         const unresolved = h.attestationPeriod?.status !== 1;
         const alreadyVoted =
-          voterAddress &&
-          ((dogData?.userAttested?.[i] ?? false) || userVotes?.[h.logId] !== undefined);
+          votedLogIds.has(h.logId) ||
+          (voterAddress &&
+            ((dogData?.userAttested?.[i] ?? false) || userVotes?.[h.logId] !== undefined));
         return open && unresolved && !alreadyVoted;
       });
-  }, [dogData?.hotdogs, dogData?.userAttested, userVotes, voterAddress]);
+  }, [dogData?.hotdogs, dogData?.userAttested, userVotes, voterAddress, votedLogIds]);
 
   const [cursor, setCursor] = useState(0);
-  const current = queue[Math.min(cursor, queue.length - 1)];
+  const safeCursor = queue.length > 0 ? cursor % queue.length : 0;
+  const current = queue[safeCursor];
 
   const next = () => setCursor((c) => (c + 1) % Math.max(queue.length, 1));
 
@@ -75,7 +88,7 @@ const JudgesPage: NextPage = () => {
                 : dogsErrored
                   ? "The jury queue could not load right now."
                   : queue.length > 0
-                  ? `${queue.length} dog${queue.length === 1 ? "" : "s"} await your verdict. Don't let the frauds win.`
+                  ? `${queue.length} dog${queue.length === 1 ? "" : "s"} await your verdict. Swipe right for VALID, left for SUS.`
                   : "No dogs awaiting a verdict right now. The jury rests. 🛏️"}
             </p>
           </div>
@@ -91,38 +104,22 @@ const JudgesPage: NextPage = () => {
             </div>
           )}
 
-          {/* Voting queue — one dog at a time */}
+          {/* Swipable voting queue — one dog at a time */}
           {current && (
-            <div className="w-full">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={current.h.logId}
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -40 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 26 }}
-                >
-                  <HotdogCard
-                    hotdog={current.h}
-                    validAttestations={dogData?.validAttestations?.[current.i] ?? "0"}
-                    invalidAttestations={dogData?.invalidAttestations?.[current.i] ?? "0"}
-                    userAttested={dogData?.userAttested?.[current.i] ?? false}
-                    userAttestation={dogData?.userAttestations?.[current.i] ?? false}
-                    chainId={DEFAULT_CHAIN.id}
-                    onRefetch={() => void refetch()}
-                    linkToDetail={false}
-                    showAiJudgement
-                  />
-                </motion.div>
-              </AnimatePresence>
-              {queue.length > 1 && (
-                <div className="mt-3 flex justify-center">
-                  <button className="pop-btn rounded-lg bg-base-100 px-3 py-1.5 font-display text-sm tracking-wide" onClick={next}>
-                    Skip to next dog →
-                  </button>
-                </div>
-              )}
-            </div>
+            <SwipeableJudgeDeck
+              key={current.h.logId}
+              hotdog={current.h}
+              chainId={DEFAULT_CHAIN.id}
+              validAttestations={dogData?.validAttestations?.[current.i] ?? "0"}
+              invalidAttestations={dogData?.invalidAttestations?.[current.i] ?? "0"}
+              userAttested={dogData?.userAttested?.[current.i] ?? false}
+              userAttestation={dogData?.userAttestations?.[current.i] ?? false}
+              queuePosition={safeCursor + 1}
+              queueLength={queue.length}
+              onRefetch={() => void refetch()}
+              onVoteSuccess={handleVoteSuccess}
+              onSkip={next}
+            />
           )}
 
           {/* Top judges ranking */}

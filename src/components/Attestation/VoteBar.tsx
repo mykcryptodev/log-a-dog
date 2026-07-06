@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "react-toastify";
 import { getContract, sendTransaction, waitForReceipt } from "thirdweb";
@@ -30,6 +30,11 @@ type Props = {
   invalidAttestations?: string | undefined;
   onAttestationMade?: () => void;
   onAttestationAffirmationRevoked?: () => void;
+  onBusyChange?: (busy: boolean) => void;
+};
+
+export type VoteBarHandle = {
+  vote: (isValid: boolean) => Promise<void>;
 };
 
 // "Sticker Brutalism" vote control: two chunky blocky buttons whose hard offset
@@ -37,15 +42,19 @@ type Props = {
 // tally meter has moved to the back of the card photo and is hidden while the
 // voting window is open. Votes are sent from the user's wallet via `attestToLog`;
 // the locked banner only appears once the tx confirms on-chain.
-export const VoteBar: FC<Props> = ({
-  logId,
-  chainId,
-  disabled,
-  isExpired = false,
-  userAttested,
-  userAttestation,
-  onAttestationMade,
-}) => {
+export const VoteBar = forwardRef<VoteBarHandle, Props>(function VoteBar(
+  {
+    logId,
+    chainId,
+    disabled,
+    isExpired = false,
+    userAttested,
+    userAttestation,
+    onAttestationMade,
+    onBusyChange,
+  },
+  ref,
+) {
   const voterAddress = useVoterAddress();
   const wallet = useActiveWallet();
   const utils = api.useUtils();
@@ -57,6 +66,10 @@ export const VoteBar: FC<Props> = ({
   const [isInsufficientStake, setIsInsufficientStake] = useState(false);
   const [busy, setBusy] = useState<null | "valid" | "invalid">(null);
   const [streak, setStreak] = useState<null | "valid" | "invalid">(null);
+
+  useEffect(() => {
+    onBusyChange?.(busy !== null);
+  }, [busy, onBusyChange]);
 
   const ghostVote = useGhostVote(logId, voterAddress);
 
@@ -76,7 +89,7 @@ export const VoteBar: FC<Props> = ({
   // so we mirror Revoke.tsx: build the user-callable `attestToLog`, then prefer
   // a gasless EIP-5792 `sendCalls` through the thirdweb paymaster, falling back
   // to a normal `sendTransaction` for wallets without 5792 capabilities.
-  const submitVote = async (isValid: boolean) => {
+  const submitVote = useCallback(async (isValid: boolean) => {
     if (!wallet) throw new Error("No wallet connected");
     const account = wallet.getAccount();
     if (!account) throw new Error("No wallet connected");
@@ -124,21 +137,21 @@ export const VoteBar: FC<Props> = ({
       const result = await sendTransaction({ account, transaction: await withBuilderCode(transaction) });
       await waitForReceipt({ client, chain, transactionHash: result.transactionHash });
     }
-  };
+  }, [chainId, logId, utils, wallet]);
 
   // Bust every read that feeds the voted/locked state. getById (dog page) is
   // Redis-cached per-user and would otherwise serve a stale `userAttested`,
   // leaving the buttons unlocked and re-votes reverting on-chain.
-  const invalidateVoteState = async () => {
+  const invalidateVoteState = useCallback(async () => {
     const voter = voterAddress;
     await Promise.all([
       voter ? utils.hotdog.getUserVotes.invalidate({ voter }) : Promise.resolve(),
       utils.hotdog.getJudges.invalidate(),
       utils.hotdog.getById.invalidate({ logId }),
     ]);
-  };
+  }, [logId, utils, voterAddress]);
 
-  const vote = async (isValid: boolean) => {
+  const vote = useCallback(async (isValid: boolean) => {
     if ((disabled ?? false) || isExpired) return;
     if (!voterAddress || !wallet) {
       toast.error("You must login to judge dogs!");
@@ -186,7 +199,20 @@ export const VoteBar: FC<Props> = ({
     } finally {
       setBusy(null);
     }
-  };
+  }, [
+    chainId,
+    confirmedVote,
+    disabled,
+    invalidateVoteState,
+    isExpired,
+    onAttestationMade,
+    refreshFeed,
+    submitVote,
+    voterAddress,
+    wallet,
+  ]);
+
+  useImperativeHandle(ref, () => ({ vote }), [vote]);
 
   const hasConfirmedVote = confirmedVote !== null;
   const votedValid = hasConfirmedVote && confirmedVote === true;
@@ -282,6 +308,6 @@ export const VoteBar: FC<Props> = ({
       </div>
     </div>
   );
-};
+});
 
 export default VoteBar;
