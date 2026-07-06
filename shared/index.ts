@@ -19,3 +19,4 @@ export * from "./pending";
 export * from "./profile";
 export * from "./merkle";
 export * from "./imageProxy";
+export * from "./poidh";

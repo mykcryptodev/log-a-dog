@@ -13,6 +13,7 @@ import { ClaimRewardsPanel } from "~/components/earn/ClaimRewardsPanel";
 import { ClaimProtocolRewardsPanel } from "~/components/earn/ClaimProtocolRewardsPanel";
 import { AirdropPanel } from "~/components/earn/AirdropPanel";
 import { isThirdwebConfigured } from "~/utils/thirdweb";
+import { isPoidhCampaignLive } from "~/utils/poidh";
 import { INK, PopButton } from "~/components/ui/Pop";
 
 export default function EarnScreen() {
@@ -113,16 +114,18 @@ export default function EarnScreen() {
           <Text className="text-neutral/40">→</Text>
         </Pressable>
 
-        <Pressable
-          onPress={() => router.push("/poidh")}
-          className="mb-6 bg-secondary/10 rounded-xl px-4 py-3 flex-row items-center justify-between"
-          style={{ borderWidth: 2.5, borderColor: INK }}
-        >
-          <Text className="text-neutral font-bold text-sm">
-            🕹️ POIDH Campaign · Win $50 ETH/day
-          </Text>
-          <Text className="text-neutral/40">→</Text>
-        </Pressable>
+        {isPoidhCampaignLive() && (
+          <Pressable
+            onPress={() => router.push("/poidh")}
+            className="mb-6 bg-secondary/10 rounded-xl px-4 py-3 flex-row items-center justify-between"
+            style={{ borderWidth: 2.5, borderColor: INK }}
+          >
+            <Text className="text-neutral font-bold text-sm">
+              🕹️ POIDH Campaign · Win $50 ETH/day
+            </Text>
+            <Text className="text-neutral/40">→</Text>
+          </Pressable>
+        )}
 
         {!session && (
           <View

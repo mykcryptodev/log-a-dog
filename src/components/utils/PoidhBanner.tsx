@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import useMounted from "~/hooks/useMounted";
+import { isPoidhCampaignLive } from "~/utils/poidh";
 
 const STORAGE_KEY = "poidh-banner-dismissed";
 
@@ -21,7 +22,7 @@ export function PoidhBanner() {
     setDismissed(true);
   };
 
-  if (!mounted || dismissed) return null;
+  if (!mounted || dismissed || !isPoidhCampaignLive()) return null;
 
   return (
     <Link
