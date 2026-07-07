@@ -147,9 +147,12 @@
     --ink: #1e1a17;
     --toast-accent: var(--ink);
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     min-height: 0;
     margin-bottom: 0.75rem;
-    padding: 0.85rem 1rem 0.85rem 1.15rem;
+    padding: 0.85rem 2.5rem 0.85rem 1.15rem;
     border-radius: 0.9rem;
     border: 3px solid var(--ink);
     box-shadow: 4px 4px 0 0 var(--ink);
@@ -170,14 +173,20 @@
     font-family: "Segment", system-ui, sans-serif;
     font-weight: 600;
     letter-spacing: 0.01em;
+    flex: 1 1 auto;
     padding: 0;
     margin: 0;
     color: var(--ink);
   }
   .pop-toast .Toastify__close-button {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
     color: var(--ink);
     opacity: 0.65;
     align-self: center;
+    flex-shrink: 0;
   }
   .pop-toast .Toastify__close-button:hover {
     opacity: 1;
