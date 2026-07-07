@@ -1,17 +1,18 @@
 import { type NextPage } from "next";
 import { type GetServerSideProps } from "next";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { ProfileForm } from "~/components/Profile/Form";
 import { api } from "~/utils/api";
 import dynamic from "next/dynamic";
 import { client } from "~/providers/Thirdweb";
-import { useActiveAccount, ConnectButton } from "thirdweb/react";
-import { useSession } from "next-auth/react";
+import { useActiveAccount, ConnectButton, useActiveWallet, useDisconnect } from "thirdweb/react";
+import { signOut, useSession } from "next-auth/react";
 import { DEFAULT_CHAIN } from "~/constants";
 import HotdogCard from "~/components/utils/HotdogCard";
 import LazyFeedItem from "~/components/utils/LazyFeedItem";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
 import { HotdogLoader } from "~/components/utils/HotdogLoader";
+import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 
 const CustomMediaRenderer = dynamic(
   () => import('~/components/utils/CustomMediaRenderer'),
@@ -28,6 +29,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const acccount = useActiveAccount();
+  const wallet = useActiveWallet();
+  const { disconnect } = useDisconnect();
   const { data: sessionData } = useSession();
   const voterAddress = useVoterAddress();
   const { data, isLoading, refetch } = api.profile.getByAddress.useQuery({
@@ -117,6 +120,13 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
   const handleRefetchDogData = () => {
     void refetchDogData();
   };
+
+  const logout = useCallback(async () => {
+    if (wallet) {
+      void disconnect(wallet);
+    }
+    await signOut({ redirect: false });
+  }, [wallet, disconnect]);
 
   const renderHotdogSkeletons = () => (
     <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
@@ -241,8 +251,15 @@ export const Profile: NextPage<{ address: string }> = ({ address }) => {
           />
         )}
         {isOwnProfile && (
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-3">
             <ConnectButton client={client} />
+            <button
+              className="pop-btn flex items-center gap-2 rounded-lg bg-base-100 px-4 py-2 font-display text-sm"
+              onClick={() => void logout()}
+            >
+              <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
+              Log out
+            </button>
           </div>
         )}
         {/* User's Hotdog Submissions */}

@@ -98,7 +98,7 @@ export const BottomNav: FC = () => {
             onClick={() => void router.push("/judges")}
           />
           <div className="flex items-center justify-center">
-            <ProfileButton hideNameAndBadge label="You" />
+            <ProfileButton hideNameAndBadge label="You" active={router.pathname.startsWith("/profile")} />
           </div>
         </div>
       </nav>
