@@ -21,8 +21,11 @@ const CustomMediaRenderer = dynamic(
 const compactProfileButtonClassName =
   "!btn !btn-ghost !h-auto !min-h-0 !w-16 !flex !flex-col !items-center !justify-center !gap-0.5 !border-0 !bg-transparent !px-0 !py-1 !font-display !text-[0.65rem] !font-normal !tracking-wide !text-base-content/60 !shadow-none !normal-case hover:!bg-transparent before:content-['👤'] before:text-xl before:leading-none";
 
-const compactProfileDropdownButtonClassName =
-  "btn btn-ghost h-auto min-h-0 w-16 flex-col gap-0.5 border-0 bg-transparent px-0 py-1 font-display text-[0.65rem] font-normal tracking-wide text-base-content/60 shadow-none hover:bg-transparent";
+const compactProfileLinkClassName =
+  "flex h-auto min-h-0 w-16 flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-0 py-1 font-display text-[0.65rem] font-normal tracking-wide text-base-content/60 shadow-none hover:bg-transparent";
+
+const compactProfileLinkActiveClassName =
+  "flex h-auto min-h-0 w-16 flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-0 py-1 font-display text-[0.65rem] font-bold tracking-wide text-primary shadow-none hover:bg-transparent";
 
 type Props = {
   onProfileCreated?: (profile: {
@@ -35,8 +38,9 @@ type Props = {
   hideLogout?: boolean;
   hideNameAndBadge?: boolean;
   label?: string;
+  active?: boolean;
 }
-export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout, hideNameAndBadge, label }) => {
+export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, createProfileBtnLabel, hideLogout, hideNameAndBadge, label, active }) => {
   const { data: sessionData } = useSession();
   const account = useActiveAccount();
   const wallet = useActiveWallet();
@@ -115,9 +119,11 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
           loginBtnLabel={isCompact ? compactLabel : "Reconnect"}
           className={isCompact ? compactProfileButtonClassName : undefined}
         />
-        <button className={`btn ${hideLogout ? 'hidden' : ''}`} onClick={logout}>
-          <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
-        </button>
+        {!hideLogout && !isCompact && (
+          <button className="btn" onClick={logout}>
+            <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+          </button>
+        )}
       </div>
     )
   }
@@ -132,94 +138,106 @@ export const ProfileButton: FC<Props> = ({ onProfileCreated, loginBtnLabel, crea
     )
   }
 
-  if (!displayUsername) return (
-    <>
-      {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <div className={isCompact ? "flex items-center justify-center" : "flex items-center gap-2"}>
-        <button
-          className={isCompact ? compactProfileButtonClassName : "btn"}
-          onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).showModal()}
-        >
-          {isCompact ? compactLabel : createProfileBtnLabel ?? 'Profile'}
-        </button>
-        <button className={`btn ${hideLogout === true || isCompact ? 'hidden' : ''}`} onClick={logout}>
-          <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
-        </button>
-      </div>
+  const profileHref = `/profile/address/${queryAddress ?? ""}`;
+  const compactLinkClassName = active ? compactProfileLinkActiveClassName : compactProfileLinkClassName;
 
-      <dialog id="create_profile_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box relative">
-          <button 
-            className="btn btn-circle btn-sm btn-ghost absolute top-4 right-4"
-            onClick={()=>(document.getElementById('create_profile_modal') as HTMLDialogElement).close()}
-          >
-            &times;
-          </button>
-          <h3 className="font-bold text-2xl mb-4">Create Profile</h3>
-          <ProfileForm
-            onProfileSaved={handleProfileSaved}
-          />
-          {isCompact && !hideLogout && (
-            <div className="modal-action justify-center">
-              <button className="btn btn-ghost gap-2" onClick={logout}>
-                <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
-      </dialog>
-    </>
+  const profileAvatar = isLoading ? (
+    <div className="h-6 w-6 rounded-full bg-base-200 animate-pulse" />
+  ) : (
+    <div className="indicator">
+      {hasNoAvatar && <span className="indicator-item badge badge-accent badge-xs" />}
+      <CustomMediaRenderer
+        src={imgSrc}
+        alt="Profile Pic"
+        width={"24px"}
+        height={"24px"}
+        className="rounded-full"
+        client={client}
+      />
+    </div>
   );
 
-  return (
-    <div className={isCompact ? "" : "mr-4"}>
-      <div className="dropdown dropdown-end dropdown-top">
-        <div tabIndex={0} role="button" className={isCompact ? compactProfileDropdownButtonClassName : "btn btn-ghost"}>
-          <div className="flex items-center gap-2">
-            {isLoading ? (
-              <>
-                <div className="h-8 w-8 bg-base-200 rounded-full animate-pulse" />
-                <div className="h-5 w-24 bg-base-200 rounded-lg animate-pulse" />
-              </>
-            ) : (
-              <>
-              <div className="indicator">
-                {hasNoAvatar && <span className="indicator-item badge badge-accent"></span>}
-                <div className="flex flex-col gap-0.5 items-center">
-                  <CustomMediaRenderer
-                    src={imgSrc}
-                    alt="Profile Pic"
-                    width={"24px"}
-                    height={"24px"}
-                    className="rounded-full"
-                    client={client}
-                  />
-                  {!hideNameAndBadge ? (
-                    <>
-                      <span className="text-sm font-normal">{displayUsername}</span>
-                      {sessionData?.user?.fid && (
-                        <CheckBadgeIcon className="w-4 h-4 text-primary" />
-                      )}
-                    </>
-                  ) : (
-                    label && <span className="font-display text-[0.65rem] font-normal tracking-wide">{label}</span>
-                  )}
-                </div>
-              </div>
-              </>
-            )}
-          </div>
+  if (!displayUsername) {
+    if (isCompact) {
+      return (
+        <Link href={profileHref} className={compactLinkClassName}>
+          {profileAvatar}
+          <span>{compactLabel}</span>
+        </Link>
+      );
+    }
+
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <button
+            className="btn"
+            onClick={() => (document.getElementById("create_profile_modal") as HTMLDialogElement).showModal()}
+          >
+            {createProfileBtnLabel ?? "Profile"}
+          </button>
+          {!hideLogout && (
+            <button className="btn" onClick={logout}>
+              <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+            </button>
+          )}
         </div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-          <li>
-            <Link href={`/profile/address/${queryAddress ?? ''}`}>
-              Profile {hasNoAvatar && <div className="badge badge-accent">add avatar</div>}
-            </Link>
-          </li>
-          <li><button onClick={logout}>Logout</button></li>
-        </ul>
-      </div>
+
+        <dialog id="create_profile_modal" className="modal modal-bottom sm:modal-middle">
+          <div className="modal-box relative">
+            <button
+              className="btn btn-circle btn-sm btn-ghost absolute top-4 right-4"
+              onClick={() => (document.getElementById("create_profile_modal") as HTMLDialogElement).close()}
+            >
+              &times;
+            </button>
+            <h3 className="font-bold text-2xl mb-4">Create Profile</h3>
+            <ProfileForm onProfileSaved={handleProfileSaved} />
+          </div>
+        </dialog>
+      </>
+    );
+  }
+
+  if (isCompact) {
+    return (
+      <Link href={profileHref} className={compactLinkClassName}>
+        {profileAvatar}
+        {label && <span>{label}</span>}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="mr-4">
+      <Link href={profileHref} className="btn btn-ghost">
+        <div className="flex items-center gap-2">
+          {isLoading ? (
+            <>
+              <div className="h-8 w-8 bg-base-200 rounded-full animate-pulse" />
+              <div className="h-5 w-24 bg-base-200 rounded-lg animate-pulse" />
+            </>
+          ) : (
+            <>
+              <div className="indicator">
+                {hasNoAvatar && <span className="indicator-item badge badge-accent" />}
+                <CustomMediaRenderer
+                  src={imgSrc}
+                  alt="Profile Pic"
+                  width={"24px"}
+                  height={"24px"}
+                  className="rounded-full"
+                  client={client}
+                />
+              </div>
+              <span className="text-sm font-normal">{displayUsername}</span>
+              {sessionData?.user?.fid && (
+                <CheckBadgeIcon className="w-4 h-4 text-primary" />
+              )}
+            </>
+          )}
+        </div>
+      </Link>
     </div>
-  )
+  );
 };
