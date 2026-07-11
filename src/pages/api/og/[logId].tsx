@@ -12,6 +12,12 @@ export const config = {
   runtime: 'edge',
 };
 
+// X center-crops 3:2 images (~1200x800) down to ~1.91:1, removing ~86px from the
+// top and bottom. Keep overlays inside that band plus extra inset for rounded
+// preview corners on mobile.
+const OG_SAFE_INSET_X = 48;
+const OG_SAFE_INSET_Y = 100;
+
 // Helper function to convert IPFS URLs to HTTP gateway URLs
 function convertIpfsToHttp(ipfsUrl: string): string {
   if (ipfsUrl.startsWith('ipfs://')) {
@@ -146,14 +152,14 @@ export default async function handler(req: NextRequest) {
         <img src={convertIpfsToHttp(hotdog.imageUri)} style={{ objectFit: 'cover', width: '1200px', height: '800px', position: 'absolute', top:0, left:0 }} alt="Hotdog image" />
         
         {/* Log a Dog title in upper left */}
-        <div style={{ position: 'absolute', top: 20, left: 20, display:'flex', alignItems:'center', gap:12, background:'rgba(0,0,0,0.5)', padding:'12px 20px', borderRadius:12 }}>
+        <div style={{ position: 'absolute', top: OG_SAFE_INSET_Y, left: OG_SAFE_INSET_X, display:'flex', alignItems:'center', gap:12, background:'rgba(0,0,0,0.5)', padding:'12px 20px', borderRadius:12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={`${base}/images/logo.png`} width="40" height="40" style={{ borderRadius: '4px' }} alt="Log a Dog logo" />
           <div style={{ fontSize: 36, display: 'flex', fontFamily: 'Segment' }}>Log a Dog</div>
         </div>
 
         {/* Username in bottom right */}
-        <div style={{ position: 'absolute', bottom: 20, right: 20, display:'flex', alignItems:'center', gap:16, background:'rgba(0,0,0,0.5)', padding:'12px 20px', borderRadius:12 }}>
+        <div style={{ position: 'absolute', bottom: OG_SAFE_INSET_Y, right: OG_SAFE_INSET_X, display:'flex', alignItems:'center', gap:16, background:'rgba(0,0,0,0.5)', padding:'12px 20px', borderRadius:12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={convertIpfsToHttp(avatar)} width="64" height="64" style={{ borderRadius: '50%' }} alt={`${username} avatar`} />
           <div style={{ display:'flex', flexDirection:'column' }}>
