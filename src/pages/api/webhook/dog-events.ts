@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { db } from "~/server/db";
-import { sendTelegramMessage, formatDogLogMessage } from "~/lib/telegram";
+import { sendDogLogAlert } from "~/lib/telegram";
 import { sendNotificationToUsers } from "~/lib/neynar";
 
 // Type for the result of processing each event
@@ -146,6 +146,11 @@ export default async function handler(
 
           // Create or update the dog event
           // Using upsert to handle potential race conditions
+          const existingEvent = await db.dogEvent.findUnique({
+            where: { transactionHash: eventData.transaction_hash },
+            select: { id: true },
+          });
+
           const dogEvent = await db.dogEvent.upsert({
             where: {
               transactionHash: eventData.transaction_hash,
@@ -181,20 +186,26 @@ export default async function handler(
           });
 
           console.log(`Successfully processed event: ${dogEvent.id}`);
-          
+
+          // Notify only for newly created events; redeliveries and events the
+          // indexer already inserted would otherwise alert twice.
+          if (existingEvent) {
+            return { success: true, id: dogEvent.id, transactionHash: eventData.transaction_hash, duplicate: true };
+          }
+
           // Send Telegram notification for new dog event
           try {
-            const message = formatDogLogMessage({
-              id: dogEvent.id,
+            await sendDogLogAlert({
+              logId: decoded.indexed_params.logId,
+              imageUri: decoded.non_indexed_params.imageUri,
               userFid: user?.fid,
-              userName: undefined, // User object only has id, address, fid - no display name
+              userName: user?.username,
             });
-            await sendTelegramMessage(message);
           } catch (telegramError) {
             console.error('Failed to send Telegram notification:', telegramError);
             // Don't fail the webhook if Telegram fails
           }
-          
+
           // Send Neynar notification to users with notifications enabled
           try {
             const userInfo = user?.username ? `@${user.username}` : 'Unknown user';

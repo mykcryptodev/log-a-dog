@@ -22,7 +22,7 @@ import { redis } from "~/server/utils/redis";
 import { env } from "~/env";
 import { DOG_FEED_START_TIME } from "~/constants";
 import { LOG_A_DOG, ATTESTATION_MANAGER, ATTESTATION_MANAGER_V1 } from "~/constants/addresses";
-import { sendTelegramMessage, formatDogLogMessage } from "~/lib/telegram";
+import { sendDogLogAlert } from "~/lib/telegram";
 import { sendNotificationToUsers } from "~/lib/neynar";
 
 const CDP_SQL_URL = "https://api.cdp.coinbase.com/platform/v2/data/query/run";
@@ -315,7 +315,7 @@ async function insertHotdogLog(
   });
 
   try {
-    const dogEvent = await db.dogEvent.create({
+    await db.dogEvent.create({
       data: {
         chainId: chainId.toString(),
         transactionHash: r.transaction_hash,
@@ -336,7 +336,7 @@ async function insertHotdogLog(
     // Only notify for fresh logs, so a backfill of old/missed events stays quiet.
     const ageSeconds = Math.floor(Date.now() / 1000) - blockUnix;
     if (ageSeconds <= NOTIFY_MAX_AGE_SECONDS) {
-      await notifyNewLog(dogEvent.id, r.parameters.logId, user);
+      await notifyNewLog(r.parameters.logId, r.parameters.imageUri, user);
     }
     return 1;
   } catch (error) {
@@ -349,14 +349,17 @@ async function insertHotdogLog(
 }
 
 async function notifyNewLog(
-  dogEventId: string,
   logId: string,
+  imageUri: string,
   user: { fid: number | null; username: string | null } | null,
 ): Promise<void> {
   try {
-    await sendTelegramMessage(
-      formatDogLogMessage({ id: dogEventId, userFid: user?.fid }),
-    );
+    await sendDogLogAlert({
+      logId,
+      imageUri,
+      userFid: user?.fid,
+      userName: user?.username,
+    });
   } catch (e) {
     console.error("[indexer] Telegram notification failed:", e);
   }
