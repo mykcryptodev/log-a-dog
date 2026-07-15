@@ -5,11 +5,13 @@ import { useMemo } from "react";
 export type UseLeaderboardOptions = {
   startDate?: Date;
   endDate?: Date;
+  includePending?: boolean;
 };
 
 export const useLeaderboardData = ({
   startDate,
   endDate,
+  includePending,
 }: UseLeaderboardOptions) => {
   const { data: leaderboard } = api.hotdog.getLeaderboard.useQuery(
     {
@@ -18,6 +20,7 @@ export const useLeaderboardData = ({
         ? { startDate: Math.floor(startDate.getTime() / 1000) }
         : {}),
       ...(endDate ? { endDate: Math.floor(endDate.getTime() / 1000) } : {}),
+      ...(includePending ? { includePending: true } : {}),
     },
     {
       refetchOnWindowFocus: false,

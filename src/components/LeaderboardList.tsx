@@ -15,6 +15,8 @@ export type LeaderboardListProps = {
   height?: string;
   /** Show top-3 podium treatment above the list. */
   showPodium?: boolean;
+  /** Count pending (unresolved) dogs as if they'll be voted valid. */
+  includePending?: boolean;
 };
 
 type ProfileData = {
@@ -69,9 +71,14 @@ const LeaderboardListComponent: FC<LeaderboardListProps> = ({
   showCurrentUser = false,
   height = "400px",
   showPodium = false,
+  includePending = false,
 }) => {
   const { data: session } = useSession();
-  const { leaderboard, profiles } = useLeaderboardData({ startDate, endDate });
+  const { leaderboard, profiles } = useLeaderboardData({
+    startDate,
+    endDate,
+    includePending,
+  });
 
   const profileMap = useMemo(() => {
     if (!leaderboard?.users || !profiles) return new Map<string, ProfileData>();

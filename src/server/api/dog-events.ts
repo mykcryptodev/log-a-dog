@@ -105,6 +105,7 @@ export async function getDogEventLeaderboard(options?: {
   endDate?: number;
   take?: number;
   skip?: number;
+  includePending?: boolean;
 }) {
   const where: Prisma.DogEventWhereInput = {};
 
@@ -118,8 +119,14 @@ export async function getDogEventLeaderboard(options?: {
     }
   }
 
-  // Only include events with a valid attestation
-  where.attestationValid = true;
+  if (options?.includePending) {
+    // Count pending dogs (voting window not resolved, attestationValid still
+    // null) as if they'll be voted valid. Rejected dogs stay excluded.
+    where.OR = [{ attestationValid: true }, { attestationValid: null }];
+  } else {
+    // Only include events with a valid attestation
+    where.attestationValid = true;
+  }
 
   // Get all dog events with the filters
   const dogEvents = await db.dogEvent.findMany({

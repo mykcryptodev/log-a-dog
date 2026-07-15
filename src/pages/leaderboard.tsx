@@ -1,4 +1,5 @@
 import Head from "next/head";
+import { useState } from "react";
 import { type NextPage } from "next";
 import LeaderboardList from "~/components/LeaderboardList";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
@@ -7,6 +8,7 @@ import { CONTEST_START_TIME } from "~/constants";
 
 const LeaderboardPage: NextPage = () => {
   const startDateObj = new Date(CONTEST_START_TIME);
+  const [includePending, setIncludePending] = useState(false);
 
   return (
     <>
@@ -25,12 +27,25 @@ const LeaderboardPage: NextPage = () => {
 
           <PoidhPrizeWinners />
 
+          <label className="flex cursor-pointer items-center gap-2 self-end text-sm">
+            <input
+              type="checkbox"
+              className="toggle toggle-primary toggle-sm"
+              checked={includePending}
+              onChange={(e) => setIncludePending(e.target.checked)}
+            />
+            <span className="font-semibold">
+              Include pending dogs 🗳️
+            </span>
+          </label>
+
           <LeaderboardList
             showPodium
             showCurrentUser
             limit={25}
             height="600px"
             startDate={startDateObj}
+            includePending={includePending}
           />
         </div>
       </main>

@@ -906,12 +906,13 @@ export const hotdogRouter = createTRPCRouter({
       chainId: z.number(),
       startDate: z.number().optional(),
       endDate: z.number().optional(),
+      includePending: z.boolean().optional(),
     }))
     .query(async ({ input }) => {
-      const { chainId, startDate, endDate } = input;
+      const { chainId, startDate, endDate, includePending } = input;
 
       // Generate cache key for this query
-      const cacheKey = `leaderboard:${chainId}:${startDate ?? 'all'}:${endDate ?? 'all'}`;
+      const cacheKey = `leaderboard:${chainId}:${startDate ?? 'all'}:${endDate ?? 'all'}${includePending ? ':pending' : ''}`;
 
       // Try to get cached data first
       const cachedData = await getCachedData<{
@@ -941,6 +942,7 @@ export const hotdogRouter = createTRPCRouter({
         const leaderboard = await getDogEventLeaderboard({
           startDate,
           endDate,
+          includePending,
         });
 
         const result = {
