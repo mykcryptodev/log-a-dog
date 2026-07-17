@@ -7,6 +7,7 @@ import { api } from "~/utils/api";
 import { getProxiedUrl } from "~/utils/imageProxy";
 import SwipeableJudgeDeck from "~/components/Attestation/SwipeableJudgeDeck";
 import { BankrSkillLink } from "~/components/Bankr/BankrSkillLink";
+import { compareJudgeQueueOrder } from "@shared/time";
 import { ATTESTATION_WINDOW_SECONDS, DEFAULT_CHAIN } from "~/constants";
 import { useVoterAddress } from "~/hooks/useVoterAddress";
 
@@ -64,7 +65,8 @@ const JudgesPage: NextPage = () => {
           (voterAddress &&
             ((dogData?.userAttested?.[i] ?? false) || userVotes?.[h.logId] !== undefined));
         return open && unresolved && !alreadyVoted;
-      });
+      })
+      .sort((a, b) => compareJudgeQueueOrder(a.h, b.h));
   }, [dogData?.hotdogs, dogData?.userAttested, userVotes, voterAddress, votedLogIds]);
 
   const [cursor, setCursor] = useState(0);
@@ -72,6 +74,8 @@ const JudgesPage: NextPage = () => {
   const current = queue[safeCursor];
 
   const next = () => setCursor((c) => (c + 1) % Math.max(queue.length, 1));
+  const prev = () =>
+    setCursor((c) => (c - 1 + Math.max(queue.length, 1)) % Math.max(queue.length, 1));
 
   return (
     <>
@@ -119,6 +123,7 @@ const JudgesPage: NextPage = () => {
               onRefetch={() => void refetch()}
               onVoteSuccess={handleVoteSuccess}
               onSkip={next}
+              onPrevious={prev}
             />
           )}
 
