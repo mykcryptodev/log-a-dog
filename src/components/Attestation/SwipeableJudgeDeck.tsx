@@ -19,6 +19,7 @@ type Props = {
   onRefetch: () => void;
   onVoteSuccess: (logId: string) => void;
   onSkip: () => void;
+  onPrevious: () => void;
 };
 
 export const SwipeableJudgeDeck: FC<Props> = ({
@@ -33,6 +34,7 @@ export const SwipeableJudgeDeck: FC<Props> = ({
   onRefetch,
   onVoteSuccess,
   onSkip,
+  onPrevious,
 }) => {
   const voteBarRef = useRef<VoteBarHandle>(null);
   const [isVoting, setIsVoting] = useState(false);
@@ -68,13 +70,22 @@ export const SwipeableJudgeDeck: FC<Props> = ({
           Dog {queuePosition} of {queueLength} awaiting verdict
         </span>
         {queueLength > 1 && (
-          <button
-            type="button"
-            className="pop-btn rounded-lg bg-base-100 px-3 py-1 font-display text-sm tracking-wide"
-            onClick={onSkip}
-          >
-            Skip →
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="pop-btn rounded-lg bg-base-100 px-3 py-1 font-display text-sm tracking-wide"
+              onClick={onPrevious}
+            >
+              ← Back
+            </button>
+            <button
+              type="button"
+              className="pop-btn rounded-lg bg-base-100 px-3 py-1 font-display text-sm tracking-wide"
+              onClick={onSkip}
+            >
+              Skip →
+            </button>
+          </div>
         )}
       </div>
 

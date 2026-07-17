@@ -61,3 +61,26 @@ export function isJudgeable(
   const unresolved = attestationStatus !== 1;
   return open && unresolved;
 }
+
+/** Unix seconds when a log's voting window closes. */
+export function getVotingWindowEnd(
+  timestamp: string | number,
+  windowSeconds: number = ATTESTATION_WINDOW_SECONDS,
+): number {
+  return Number(timestamp) + windowSeconds;
+}
+
+/**
+ * Sort judge-queue entries so dogs whose voting window closes soonest appear
+ * first (oldest logs first — reverse of the feed's newest-first order).
+ */
+export function compareJudgeQueueOrder(
+  a: { timestamp: string | number },
+  b: { timestamp: string | number },
+  windowSeconds: number = ATTESTATION_WINDOW_SECONDS,
+): number {
+  return (
+    getVotingWindowEnd(a.timestamp, windowSeconds) -
+    getVotingWindowEnd(b.timestamp, windowSeconds)
+  );
+}

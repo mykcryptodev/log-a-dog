@@ -23,7 +23,7 @@ import { InsufficientStakeModal } from "~/components/InsufficientStakeModal";
 import { COLORS } from "~/constants/colors";
 import { HotdogLoader } from "~/components/ui/HotdogLoader";
 import { formatTimestamp, getDisplayName } from "~/utils/format";
-import { isJudgeable } from "@shared/time";
+import { compareJudgeQueueOrder, isJudgeable } from "@shared/time";
 import { useJudges, useUserVotes } from "~/hooks/useHotdogs";
 import { useVote, useVoterAddress } from "~/hooks/useVote";
 import type { ProcessedHotdog } from "~/types";
@@ -136,6 +136,7 @@ export default function JudgeScreen() {
             ((userAttested[i] ?? false) || userVotes?.[h.logId] !== undefined));
         return open && !alreadyVoted;
       })
+      .sort((a, b) => compareJudgeQueueOrder(a.h, b.h))
       .map(({ h }) => h);
   }, [allDogs, query.data?.userAttested, userVotes, voterAddress, votedLogIds]);
 
@@ -149,6 +150,11 @@ export default function JudgeScreen() {
   const handleSkip = useCallback(() => {
     if (pending.length < 2) return;
     setCurrentIdx((i) => (i + 1) % pending.length);
+  }, [pending.length]);
+
+  const handleBack = useCallback(() => {
+    if (pending.length < 2) return;
+    setCurrentIdx((i) => (i - 1 + pending.length) % pending.length);
   }, [pending.length]);
 
   const handleVoteSuccess = useCallback(
@@ -304,12 +310,20 @@ export default function JudgeScreen() {
               Dog {safeIdx + 1} of {pending.length} awaiting verdict
             </Text>
             {pending.length > 1 && (
-              <Pressable
-                onPress={handleSkip}
-                className="bg-base-200 rounded-xl px-3 py-1.5"
-              >
-                <Text className="text-neutral font-bold text-sm">Skip →</Text>
-              </Pressable>
+              <View className="flex-row items-center gap-2">
+                <Pressable
+                  onPress={handleBack}
+                  className="bg-base-200 rounded-xl px-3 py-1.5"
+                >
+                  <Text className="text-neutral font-bold text-sm">← Back</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleSkip}
+                  className="bg-base-200 rounded-xl px-3 py-1.5"
+                >
+                  <Text className="text-neutral font-bold text-sm">Skip →</Text>
+                </Pressable>
+              </View>
             )}
           </View>
 
