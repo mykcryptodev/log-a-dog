@@ -16,6 +16,50 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   return { props: { slug: celebrity.toLowerCase() } };
 };
 
+// Eater identity under each dog: avatar + name always; bio (live from
+// Farcaster) and description (config) tucked behind a collapsible. If there's
+// neither a bio nor a description, there's nothing to expand — show a static
+// row instead.
+function EaterInfo({
+  eater,
+}: {
+  eater: { name: string; avatarUrl: string; bio: string | null; description: string | null };
+}) {
+  const canExpand = !!(eater.bio ?? eater.description);
+  const header = (
+    <span className="flex items-center gap-2">
+      {eater.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={eater.avatarUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
+      ) : (
+        <span className="h-6 w-6 rounded-full bg-base-300" />
+      )}
+      <span className="text-sm font-medium">{eater.name}</span>
+    </span>
+  );
+
+  if (!canExpand) {
+    return (
+      <div className="mt-3 flex items-center border-t-2 border-base-content/10 pt-3">
+        {header}
+      </div>
+    );
+  }
+
+  return (
+    <details className="group mt-3 border-t-2 border-base-content/10 pt-3">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
+        {header}
+        <span className="text-xs opacity-50 transition group-open:rotate-180">▾</span>
+      </summary>
+      <div className="mt-2 space-y-2 text-left text-sm">
+        {eater.bio && <p className="opacity-80">{eater.bio}</p>}
+        {eater.description && <p className="italic opacity-60">{eater.description}</p>}
+      </div>
+    </details>
+  );
+}
+
 const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
   const utils = api.useUtils();
   const { data, isLoading } = api.celebrity.getPage.useQuery({ slug });
@@ -66,33 +110,41 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
                   const isSelected = !locked && selected === dog.logId;
                   const dimmed = locked && !isWinner;
                   return (
-                    <button
+                    <div
                       key={dog.logId}
-                      type="button"
-                      disabled={!!locked || submitting}
-                      onClick={() => setSelected(dog.logId)}
                       className={[
-                        "flex flex-col items-center gap-3 rounded-2xl border-4 border-base-content bg-base-100 p-3 transition",
+                        "flex flex-col rounded-2xl border-4 border-base-content bg-base-100 p-3 transition",
                         "shadow-[4px_4px_0_0_hsl(var(--bc))]",
                         isSelected
                           ? "-translate-y-1 ring-4 ring-primary shadow-[6px_6px_0_0_hsl(var(--bc))]"
                           : "",
                         isWinner ? "ring-4 ring-success -translate-y-1" : "",
                         dimmed ? "opacity-40" : "",
-                        !locked ? "cursor-pointer hover:-translate-y-1" : "cursor-default",
                       ].join(" ")}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={dog.imageUrl}
-                        alt={dog.name}
-                        className="aspect-square w-full rounded-xl object-cover"
-                      />
-                      <span className="font-display text-lg">{dog.name}</span>
-                      {isWinner && (
-                        <span className="font-display text-sm text-success">WINNER</span>
-                      )}
-                    </button>
+                      <button
+                        type="button"
+                        disabled={!!locked || submitting}
+                        onClick={() => setSelected(dog.logId)}
+                        className={
+                          !locked
+                            ? "flex flex-col items-center gap-3 cursor-pointer"
+                            : "flex flex-col items-center gap-3 cursor-default"
+                        }
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={dog.imageUrl}
+                          alt={dog.name}
+                          className="aspect-square w-full rounded-xl object-cover"
+                        />
+                        <span className="font-display text-lg">{dog.name}</span>
+                        {isWinner && (
+                          <span className="font-display text-sm text-success">WINNER</span>
+                        )}
+                      </button>
+                      {dog.eater && <EaterInfo eater={dog.eater} />}
+                    </div>
                   );
                 })}
               </div>

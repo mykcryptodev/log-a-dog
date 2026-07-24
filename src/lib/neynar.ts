@@ -8,6 +8,51 @@ const config = new Configuration({
 
 export const neynarClient = new NeynarAPIClient(config);
 
+export interface EaterFarcaster {
+  fid: number;
+  bio: string;
+  pfpUrl: string;
+  displayName: string;
+  username: string;
+}
+
+/**
+ * Resolve Farcaster profiles for a set of wallet addresses in one call.
+ *
+ * Intentionally uncached: celebrity pages must reflect the eater's current
+ * Farcaster bio on every load. Addresses with no Farcaster account are simply
+ * absent from the returned map (→ no fid → no bio). Never throws — a Neynar
+ * hiccup returns an empty map rather than breaking the page.
+ */
+export async function fetchFarcasterByAddresses(
+  addresses: string[],
+): Promise<Map<string, EaterFarcaster>> {
+  const out = new Map<string, EaterFarcaster>();
+  const unique = [...new Set(addresses.map((a) => a.toLowerCase()))].filter(Boolean);
+  if (unique.length === 0) return out;
+
+  try {
+    const response = await neynarClient.fetchBulkUsersByEthOrSolAddress({
+      addresses: unique,
+    });
+    for (const address of unique) {
+      const user = response[address]?.[0];
+      if (!user) continue;
+      out.set(address, {
+        fid: user.fid,
+        bio: user.profile?.bio?.text ?? "",
+        pfpUrl: user.pfp_url ?? "",
+        displayName: user.display_name ?? user.username,
+        username: user.username,
+      });
+    }
+  } catch (error) {
+    console.error("[neynar] fetchFarcasterByAddresses error:", error);
+  }
+
+  return out;
+}
+
 /**
  * Sends a notification to all users who have notifications enabled
  * @param notification - The notification object with title, body, and target_url
