@@ -19,6 +19,48 @@ function shortAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+/**
+ * Return the stored Farcaster snapshot for an eater, capturing it once (fresh
+ * fetch) if we've never seen this address. After the first capture, every
+ * celebrity page load reads this row — Farcaster is never hit per page load.
+ * The first snapshot is kept as-is on races/re-captures (upsert update is a
+ * no-op); refreshing a bio is a deliberate separate action.
+ */
+async function getOrCaptureEaterBio(address: string) {
+  const key = address.toLowerCase();
+
+  const existing = await db.eaterBio.findUnique({ where: { address: key } });
+  if (existing) return existing;
+
+  const fc = (await fetchFarcasterByAddresses([key])).get(key);
+  const data = fc
+    ? {
+        address: key,
+        fid: fc.fid,
+        name: fc.displayName || fc.username || shortAddress(key),
+        avatarUrl: fc.pfpUrl,
+        bio: fc.bio,
+      }
+    : await (async () => {
+        // No Farcaster account → no bio. Snapshot name/avatar from the eater's
+        // other profile sources so they still render, and don't refetch later.
+        const profile = await getCachedProfile(key, DEFAULT_CHAIN.id);
+        return {
+          address: key,
+          fid: null,
+          name: profile.username || shortAddress(key),
+          avatarUrl: profile.imgUrl,
+          bio: "",
+        };
+      })();
+
+  return db.eaterBio.upsert({
+    where: { address: key },
+    create: data,
+    update: {},
+  });
+}
+
 /** Resolve the display image for a dog: its onchain image, falling back to the
  * rendered OG card (which always exists for a real dog). */
 function dogImageUrl(logId: string, imageUri: string | undefined): string {
@@ -42,41 +84,20 @@ export const celebrityRouter = createTRPCRouter({
       });
       const eventByLogId = new Map(events.map((e) => [e.logId, e]));
 
-      // Each dog's eater: live Farcaster bio (fetched fresh every load so edits
-      // show up), plus a reusable description from config. Name + avatar come
-      // from Farcaster when present, else the cached profile resolver so eaters
-      // with no Farcaster account still show up.
-      const eaterAddresses = page.dogs
-        .map((d) => eventByLogId.get(d.logId)?.eater)
-        .filter((a): a is string => !!a);
-      const farcasterByAddr = await fetchFarcasterByAddresses(eaterAddresses);
-
+      // Each dog's eater: a stored Farcaster snapshot (captured once, then
+      // served from the DB — no per-load fetch) plus a reusable description
+      // from config.
       const resolveEater = async (logId: string) => {
         const address = eventByLogId.get(logId)?.eater;
         if (!address) return null;
-        const description = getEaterDescription(address);
-        const fc = farcasterByAddr.get(address.toLowerCase());
 
-        if (fc) {
-          const bio = fc.bio.trim();
-          return {
-            name: fc.displayName || fc.username || shortAddress(address),
-            avatarUrl: fc.pfpUrl,
-            bio: bio.length > 0 ? bio : null,
-            description,
-          };
-        }
-
-        // No Farcaster account → no bio. Still surface a name + avatar.
-        const profile = await getCachedProfile(
-          address.toLowerCase(),
-          DEFAULT_CHAIN.id,
-        );
+        const snapshot = await getOrCaptureEaterBio(address);
+        const bio = snapshot.bio.trim();
         return {
-          name: profile.username || shortAddress(address),
-          avatarUrl: profile.imgUrl,
-          bio: null,
-          description,
+          name: snapshot.name || shortAddress(address),
+          avatarUrl: snapshot.avatarUrl,
+          bio: bio.length > 0 ? bio : null,
+          description: getEaterDescription(address),
         };
       };
 

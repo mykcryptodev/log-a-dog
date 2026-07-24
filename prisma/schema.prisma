@@ -140,3 +140,19 @@ model CelebrityPick {
     prizeUsd      Int
     createdAt     DateTime @default(now())
 }
+
+// Snapshot of an eater's Farcaster identity, captured once (fresh fetch) the
+// first time a celebrity page featuring them is built/loaded, then served from
+// here — celebrity pages never re-fetch Farcaster per page load. Keyed by
+// (lowercased) address so the snapshot is reused across every celebrity page
+// that features the same eater. Refreshing a bio = re-capturing this row.
+model EaterBio {
+    id         String   @id @default(cuid())
+    address    String   @unique
+    fid        Int?
+    name       String
+    avatarUrl  String
+    bio        String   @db.Text
+    fetchedAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+}
