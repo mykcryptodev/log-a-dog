@@ -127,3 +127,16 @@ model AttestationVote {
     @@index([chainId, voter])
     @@index([chainId, logId])
 }
+
+// Celebrity "pick your favorite dog" pages (e.g. logadog.xyz/mike).
+// One row per slug — the @unique on slug is the "can't change their mind"
+// lock (first pick wins; a second create throws P2002). Dog name + prize are
+// snapshotted so myk's view and the Telegram alert survive later config edits.
+model CelebrityPick {
+    id            String   @id @default(cuid())
+    slug          String   @unique
+    pickedLogId   String
+    pickedDogName String
+    prizeUsd      Int
+    createdAt     DateTime @default(now())
+}
