@@ -74,8 +74,8 @@ function WtfModal({ onClose }: { onClose: () => void }) {
         <h2 className="font-display text-2xl">wtf is Log a Dog?</h2>
         <div className="mt-3 space-y-3 text-sm opacity-80">
           <p>
-            Log a Dog is the internet&apos;s summer hotdog-eating sport. People eat hotdogs, log
-            them onchain, and get judged by everyone else. It&apos;s already awarded{" "}
+            Log a Dog is the internet&apos;s summer hotdog-eating competition. People eat hotdogs, log
+            them, and get judged by everyone else. It&apos;s already awarded{" "}
             <strong>over $17,000 in prizes</strong> to people for eating hotdogs.
           </p>
           <p>
