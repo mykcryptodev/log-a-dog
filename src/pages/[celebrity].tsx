@@ -60,10 +60,46 @@ function EaterInfo({
   );
 }
 
+// Quick "what is this?" explainer for a celebrity who's never heard of Log a Dog.
+function WtfModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border-4 border-base-content bg-base-100 p-6 shadow-[6px_6px_0_0_hsl(var(--bc))]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="font-display text-2xl">wtf is Log a Dog?</h2>
+        <div className="mt-3 space-y-3 text-sm opacity-80">
+          <p>
+            Log a Dog is the internet&apos;s summer hotdog-eating sport. People eat hotdogs, log
+            them onchain, and get judged by everyone else. It&apos;s already awarded{" "}
+            <strong>over $17,000 in prizes</strong> to people for eating hotdogs.
+          </p>
+          <p>
+            Your job: crown the <strong>top dog of the week</strong>. Whichever dog you pick wins
+            its eater a <strong>$50 prize</strong>.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="btn btn-primary btn-sm mt-4 w-full font-display"
+        >
+          got it
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
   const utils = api.useUtils();
   const { data, isLoading } = api.celebrity.getPage.useQuery({ slug });
   const [selected, setSelected] = useState<string | null>(null);
+  const [showWtf, setShowWtf] = useState(false);
 
   const pickMutation = api.celebrity.pick.useMutation({
     onSuccess: async () => {
@@ -74,6 +110,7 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
   const title = data?.title ?? slug;
   const locked = data?.pick ?? null;
   const submitting = pickMutation.isLoading;
+  const selectedName = data?.dogs.find((d) => d.logId === selected)?.name;
 
   return (
     <>
@@ -84,7 +121,7 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <main className="flex flex-col items-center px-4 pt-10 pb-16">
+      <main className="flex flex-col items-center px-4 pt-10 pb-32">
         <div className="flex w-full max-w-3xl flex-col items-center gap-6">
           <h1 className="text-center font-display text-3xl tracking-wide sm:text-4xl">
             {title}, pick your favorite dog
@@ -95,81 +132,76 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
               🏆 You picked <span className="underline">{locked.pickedDogName}</span>
             </p>
           ) : (
-            <p className="text-center font-display text-xl opacity-70">
-              The winner you pick wins ${data?.prizeUsd ?? ""}
-            </p>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-center font-display text-xl opacity-70">
+                The winner you pick wins ${data?.prizeUsd ?? ""}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowWtf(true)}
+                className="text-sm underline opacity-60 hover:opacity-100"
+              >
+                wtf?
+              </button>
+            </div>
           )}
 
           {isLoading || !data ? (
             <p className="opacity-60">Loading dogs…</p>
           ) : (
-            <>
-              <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
-                {data.dogs.map((dog) => {
-                  const isWinner = locked?.pickedLogId === dog.logId;
-                  const isSelected = !locked && selected === dog.logId;
-                  const dimmed = locked && !isWinner;
-                  return (
-                    <div
-                      key={dog.logId}
-                      className={[
-                        "flex flex-col rounded-2xl border-4 border-base-content bg-base-100 p-3 transition",
-                        "shadow-[4px_4px_0_0_hsl(var(--bc))]",
-                        isSelected
-                          ? "-translate-y-1 ring-4 ring-primary shadow-[6px_6px_0_0_hsl(var(--bc))]"
-                          : "",
-                        isWinner ? "ring-4 ring-success -translate-y-1" : "",
-                        dimmed ? "opacity-40" : "",
-                      ].join(" ")}
+            <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+              {data.dogs.map((dog) => {
+                const isWinner = locked?.pickedLogId === dog.logId;
+                const isSelected = !locked && selected === dog.logId;
+                const dimmed = locked && !isWinner;
+
+                const stateClasses = isSelected
+                  ? "-translate-y-1 border-[6px] border-yellow-400 ring-4 ring-yellow-300 shadow-[6px_6px_0_0_hsl(var(--bc))]"
+                  : isWinner
+                    ? "-translate-y-1 border-4 border-success ring-2 ring-success"
+                    : "border-4 border-base-content";
+
+                return (
+                  <div
+                    key={dog.logId}
+                    className={[
+                      "relative flex flex-col rounded-2xl bg-base-100 p-3 transition",
+                      "shadow-[4px_4px_0_0_hsl(var(--bc))]",
+                      stateClasses,
+                      dimmed ? "opacity-40" : "",
+                    ].join(" ")}
+                  >
+                    {isSelected && (
+                      <span className="absolute -right-3 -top-3 z-10 rotate-6 rounded-full border-4 border-base-content bg-yellow-400 px-3 py-1 font-display text-sm text-black shadow-[3px_3px_0_0_hsl(var(--bc))]">
+                        YOUR PICK 👆
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      disabled={!!locked || submitting}
+                      onClick={() => setSelected(dog.logId)}
+                      className={
+                        !locked
+                          ? "flex flex-col items-center gap-3 cursor-pointer"
+                          : "flex flex-col items-center gap-3 cursor-default"
+                      }
                     >
-                      <button
-                        type="button"
-                        disabled={!!locked || submitting}
-                        onClick={() => setSelected(dog.logId)}
-                        className={
-                          !locked
-                            ? "flex flex-col items-center gap-3 cursor-pointer"
-                            : "flex flex-col items-center gap-3 cursor-default"
-                        }
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={dog.imageUrl}
-                          alt={dog.name}
-                          className="aspect-square w-full rounded-xl object-cover"
-                        />
-                        <span className="font-display text-lg">{dog.name}</span>
-                        {isWinner && (
-                          <span className="font-display text-sm text-success">WINNER</span>
-                        )}
-                      </button>
-                      {dog.eater && <EaterInfo eater={dog.eater} />}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {!locked && (
-                <button
-                  type="button"
-                  disabled={!selected || submitting}
-                  onClick={() => selected && pickMutation.mutate({ slug, pickedLogId: selected })}
-                  className="btn btn-primary btn-lg font-display shadow-[4px_4px_0_0_hsl(var(--bc))] disabled:opacity-50"
-                >
-                  {submitting
-                    ? "Locking in…"
-                    : selected
-                      ? `Lock in ${data.dogs.find((d) => d.logId === selected)?.name} — final`
-                      : "Tap a dog above"}
-                </button>
-              )}
-
-              {!locked && (
-                <p className="text-center text-sm opacity-50">
-                  Your pick is final — you can&apos;t change it once you lock it in.
-                </p>
-              )}
-            </>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={dog.imageUrl}
+                        alt={dog.name}
+                        className="aspect-square w-full rounded-xl object-cover"
+                      />
+                      <span className="font-display text-lg">{dog.name}</span>
+                      {isWinner && (
+                        <span className="font-display text-sm text-success">WINNER</span>
+                      )}
+                    </button>
+                    {dog.eater && <EaterInfo eater={dog.eater} />}
+                  </div>
+                );
+              })}
+            </div>
           )}
 
           <Link href="/" className="mt-2 text-sm underline opacity-60">
@@ -177,6 +209,28 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
           </Link>
         </div>
       </main>
+
+      {/* Sticky confirm: once a dog is tapped, the final-lock action follows the
+          celebrity down the page so they never hunt for it. */}
+      {!locked && selected && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t-4 border-base-content bg-base-100/95 px-4 py-3 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+            <span className="hidden text-sm opacity-60 sm:block">
+              This is final — you can&apos;t change it once you lock it in.
+            </span>
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => pickMutation.mutate({ slug, pickedLogId: selected })}
+              className="btn btn-warning btn-lg w-full border-4 border-base-content font-display shadow-[4px_4px_0_0_hsl(var(--bc))] disabled:opacity-50 sm:w-auto"
+            >
+              {submitting ? "Locking in…" : `Lock in ${selectedName} — final`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showWtf && <WtfModal onClose={() => setShowWtf(false)} />}
     </>
   );
 };
