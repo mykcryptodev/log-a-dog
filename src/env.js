@@ -53,6 +53,7 @@ export const env = createEnv({
     TELEGRAM_BOT_TOKEN: z.string().optional(),
     TELEGRAM_CHAT_ID: z.string().optional(),
     TELEGRAM_NOTIFICATIONS_ENABLED: z.string().optional(),
+    DISCORD_CELEBRITY_WEBHOOK_URL: z.string().url().optional(),
   },
 
   /**
@@ -105,6 +106,7 @@ export const env = createEnv({
     TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
     TELEGRAM_NOTIFICATIONS_ENABLED: process.env.TELEGRAM_NOTIFICATIONS_ENABLED,
+    DISCORD_CELEBRITY_WEBHOOK_URL: process.env.DISCORD_CELEBRITY_WEBHOOK_URL,
     NEXT_PUBLIC_BACKEND_WALLET_ADDRESS: process.env.NEXT_PUBLIC_BACKEND_WALLET_ADDRESS,
   },
   /**
