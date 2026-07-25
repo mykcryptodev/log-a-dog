@@ -122,9 +122,9 @@ The **Supabase/Postgres DB is a cache/read-model of on-chain state, not the sour
 - **Moderator Rewards Cron**: Runs hourly to automatically distribute rewards for resolved attestation periods
   - Path: `/api/cron/reward-moderators`
   - Schedule: Every hour (`0 * * * *`)
-- **Daily Engagement Notification Cron**: Fires at **noon Eastern** and, only if ≥1 dog was logged in the last 24h, notifies the community on **Farcaster** (Neynar `publishFrameNotifications` to every unique `fid` in the User table) and the **Base App** (`dashboard.base.org` notifications API to every unique `address` in the User table) with a CTA to open the app and judge dogs.
+- **Judge Engagement Notification Cron**: Fires at **noon Eastern, at most once every 72h** and, only if ≥1 dog was logged in the last 72h, notifies the community on **Farcaster** (Neynar `publishFrameNotifications` to every unique `fid` in the User table) and the **Base App** (`dashboard.base.org` notifications API to every unique `address` in the User table) with a CTA to open the app and judge dogs.
   - Path: `/api/cron/daily-notification`
-  - Schedule: two UTC entries (`0 16 * * *` + `0 17 * * *`); the handler gates on the actual Eastern hour (== 12) so exactly one fires per ET day across DST, backed by a Redis per-ET-day dedupe guard. Add `?force=true` to bypass the hour/dedupe gates for manual testing.
+  - Schedule: two UTC entries (`0 16 * * *` + `0 17 * * *`); the handler gates on the actual Eastern hour (== 12) so at most one fires per ET day across DST, then a 70h Redis cooldown key (`judge-notification:cooldown`) means only every third noon-ET run actually sends. Add `?force=true` to bypass the hour/cooldown gates for manual testing.
   - Requires `BASE_NOTIFICATIONS_API_KEY` (from the Base Dashboard project → Settings → API Key) for the Base leg; the Farcaster leg uses `NEYNAR_API_KEY`. If the Base key is absent the Base send is skipped and the Farcaster send still runs.
   - Libs: `src/lib/base-notifications.ts` (Base), `sendNotificationToFids` in `src/lib/neynar.ts` (Farcaster).
 - See `CRON_JOBS.md` for detailed documentation of both

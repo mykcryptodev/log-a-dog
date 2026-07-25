@@ -6,20 +6,25 @@ import { sendBaseNotification } from "~/lib/base-notifications";
 import { sendTelegramMessage } from "~/lib/telegram";
 
 /**
- * Daily engagement notification.
+ * Judge engagement notification.
  *
- * Fires at noon Eastern Time and, only if at least one dog was logged in the
- * last 24 hours, notifies the community on both Farcaster (via Neynar) and the
- * Base App with a call to action to open the app and judge the logged dogs.
+ * Fires at noon Eastern Time at most once every 72 hours and, only if at least
+ * one dog was logged in that window, notifies the community on both Farcaster
+ * (via Neynar) and the Base App with a call to action to open the app and judge
+ * the logged dogs.
  *
  * Scheduling / DST: Vercel crons run in UTC with no DST awareness. We schedule
  * this at both 16:00 and 17:00 UTC (noon ET in EDT and EST respectively) and
- * gate on the actual Eastern-time hour here, plus a Redis "already sent today"
- * guard so exactly one send happens per ET day regardless of DST.
+ * gate on the actual Eastern-time hour here, plus a Redis cooldown key so the
+ * daily noon-ET run only actually sends every third day.
  */
 
 const TARGET_ET_HOUR = 12; // noon Eastern
-const DEDUPE_TTL_SECONDS = 60 * 60 * 20; // 20h — comfortably past the next run
+const LOOKBACK_HOURS = 72;
+// Cooldown expires before the third day's noon-ET run (which lands 71–73h after
+// the last send depending on DST), so that run sends and the two in between skip.
+const COOLDOWN_SECONDS = 60 * 60 * 70;
+const COOLDOWN_KEY = "judge-notification:cooldown";
 
 /** Returns { hour, dateKey } for the current time in America/New_York. */
 function easternNow(): { hour: number; dateKey: string } {
@@ -68,26 +73,27 @@ export default async function handler(
       });
     }
 
-    // Idempotency guard so the two UTC cron entries (and any retries) only
-    // ever produce one send per ET day.
-    const dedupeKey = `daily-notification:sent:${dateKey}`;
+    // Cooldown guard: caps sends at one per 72h, and also absorbs the two UTC
+    // cron entries (and any retries) hitting the same noon-ET window.
     if (!force) {
       // NX = only set if not present; returns null if it already existed.
-      const acquired = await redis.set(dedupeKey, "1", {
+      const acquired = await redis.set(COOLDOWN_KEY, dateKey, {
         nx: true,
-        ex: DEDUPE_TTL_SECONDS,
+        ex: COOLDOWN_SECONDS,
       });
       if (acquired === null) {
         return res.status(200).json({
           skipped: true,
-          reason: `Already sent for ${dateKey}`,
+          reason: `Within ${LOOKBACK_HOURS}h cooldown since the last send`,
         });
       }
     }
 
-    // Count dogs logged in the last 24 hours. DogEvent.timestamp is the
+    // Count dogs logged in the lookback window. DogEvent.timestamp is the
     // on-chain event time in unix seconds.
-    const cutoffSeconds = BigInt(Math.floor(Date.now() / 1000) - 24 * 60 * 60);
+    const cutoffSeconds = BigInt(
+      Math.floor(Date.now() / 1000) - LOOKBACK_HOURS * 60 * 60,
+    );
     const dogsLogged = await db.dogEvent.count({
       where: { timestamp: { gte: cutoffSeconds } },
     });
@@ -96,18 +102,18 @@ export default async function handler(
       // Nothing happened today — release the guard so we don't block a future
       // manual/forced run, and send nothing.
       if (!force) {
-        await redis.del(dedupeKey);
+        await redis.del(COOLDOWN_KEY);
       }
       return res.status(200).json({
         skipped: true,
-        reason: "No dogs logged in the last 24h",
+        reason: `No dogs logged in the last ${LOOKBACK_HOURS}h`,
         dogsLogged: 0,
       });
     }
 
     const dogWord = dogsLogged === 1 ? "dog" : "dogs";
     const title = "🌭 Time to judge!";
-    const body = `${dogsLogged} ${dogWord} logged in the last 24h. Open Log a Dog to judge them and earn.`;
+    const body = `${dogsLogged} ${dogWord} logged in the last 3 days. Open Log a Dog to judge them and earn.`;
     const targetPath = "/";
     const targetUrl = "https://logadog.xyz/";
 
@@ -163,7 +169,7 @@ export default async function handler(
 
     try {
       await sendTelegramMessage(
-        `📣 Daily notification sent\n🌭 ${dogsLogged} ${dogWord} logged in last 24h\n🟣 Farcaster: ${farcasterSubmitted}/${fids.length} FIDs\n🔵 Base: ${baseResult.attempted}/${addresses.length} addresses`,
+        `📣 Judge notification sent\n🌭 ${dogsLogged} ${dogWord} logged in last ${LOOKBACK_HOURS}h\n🟣 Farcaster: ${farcasterSubmitted}/${fids.length} FIDs\n🔵 Base: ${baseResult.attempted}/${addresses.length} addresses`,
       );
     } catch (telegramError) {
       console.error(
