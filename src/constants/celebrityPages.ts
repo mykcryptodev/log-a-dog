@@ -40,6 +40,16 @@ export const CELEBRITY_PAGES: Record<string, CelebrityPage> = {
       { logId: "2384", name: "The Wink" },
     ],
   },
+  bob: {
+    slug: "bob",
+    title: "Bob",
+    prizeUsd: 50,
+    dogs: [
+      { logId: "2407", name: "The Candid" },
+      { logId: "2406", name: "The Crosseyed" },
+      { logId: "2384", name: "The Wink" },
+    ],
+  },
 };
 
 export function getCelebrityPage(slug: string): CelebrityPage | null {
