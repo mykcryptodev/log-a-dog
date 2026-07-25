@@ -9,7 +9,7 @@ import { getCelebrityPage } from "~/constants/celebrityPages";
 import { getEaterDescription } from "~/constants/eaterDescriptions";
 import { fetchFarcasterByAddresses } from "~/lib/neynar";
 import { getCachedProfile } from "~/server/utils/profile";
-import { sendTelegramMessage } from "~/lib/telegram";
+import { sendDiscordMessage } from "~/lib/discord";
 
 function ipfsToHttp(uri: string): string {
   return uri.startsWith("ipfs://") ? `https://ipfs.io/ipfs/${uri.slice(7)}` : uri;
@@ -171,15 +171,28 @@ export const celebrityRouter = createTRPCRouter({
         throw err;
       }
 
-      // Alert myk. Non-fatal: a Telegram hiccup must not undo a saved pick.
+      // Alert the celebrity-pick Discord channel so the eater's prize airdrop
+      // can be proposed there. Non-fatal: an alert hiccup must not undo a saved
+      // pick.
       try {
-        await sendTelegramMessage(
-          `🐕 *${page.title}* picked *${dog.name}* on /${page.slug}\n` +
-            `Prize: $${page.prizeUsd}\n` +
-            `[View dog](https://logadog.xyz/dog/${dog.logId})`,
+        const event = await db.dogEvent.findFirst({
+          where: { logId: dog.logId, chainId: DEFAULT_CHAIN.id.toString() },
+          select: { eater: true },
+        });
+        const eaterAddress = event?.eater ?? null;
+        let eaterName = eaterAddress ? shortAddress(eaterAddress) : "unknown";
+        if (eaterAddress) {
+          const snapshot = await getOrCaptureEaterBio(eaterAddress);
+          if (snapshot.name) eaterName = snapshot.name;
+        }
+        await sendDiscordMessage(
+          `🐕 **${page.title}** picked **${dog.name}** on /${page.slug}\n` +
+            `Prize: **$${page.prizeUsd} of HOTDOG** → eater **${eaterName}**` +
+            (eaterAddress ? ` \`${eaterAddress}\`` : "") +
+            `\nReply **"propose it"** to queue the airdrop. <https://logadog.xyz/dog/${dog.logId}>`,
         );
-      } catch (telegramError) {
-        console.error("Celebrity pick: Telegram alert failed:", telegramError);
+      } catch (alertError) {
+        console.error("Celebrity pick: Discord alert failed:", alertError);
       }
 
       return {
