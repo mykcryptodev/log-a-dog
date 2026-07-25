@@ -48,9 +48,15 @@ function EaterInfo({
 
   return (
     <details className="group mt-3 border-t-2 border-base-content/10 pt-3">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg py-1 hover:bg-base-200">
         {header}
-        <span className="text-xs opacity-50 transition group-open:rotate-180">▾</span>
+        <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide opacity-70">
+          <span className="group-open:hidden">{eater.bio ? "read bio" : "read more"}</span>
+          <span className="hidden group-open:inline">hide</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-base-content transition group-open:rotate-180">
+            ▾
+          </span>
+        </span>
       </summary>
       <div className="mt-2 space-y-2 text-left text-sm">
         {eater.bio && <p className="opacity-80">{eater.bio}</p>}
@@ -121,9 +127,9 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <main className="flex flex-col items-center px-4 pt-10 pb-32">
+      <main className="flex flex-col items-center px-4 pt-10 pb-44">
         <div className="flex w-full max-w-3xl flex-col items-center gap-6">
-          <h1 className="text-center font-display text-3xl tracking-wide sm:text-4xl">
+          <h1 className="text-center font-display text-4xl font-black leading-none tracking-tight sm:text-6xl">
             {title}, pick your favorite dog
           </h1>
 
@@ -213,7 +219,7 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
       {/* Sticky confirm: once a dog is tapped, the final-lock action follows the
           celebrity down the page so they never hunt for it. */}
       {!locked && selected && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t-4 border-base-content bg-base-100/95 px-4 py-3 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-20 z-[60] border-y-4 border-base-content bg-base-100 px-4 py-3 shadow-[0_-6px_20px_-4px_rgba(0,0,0,0.25)]">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
             <span className="hidden text-sm opacity-60 sm:block">
               This is final — you can&apos;t change it once you lock it in.
