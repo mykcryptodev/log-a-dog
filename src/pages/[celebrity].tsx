@@ -188,8 +188,8 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
                       onClick={() => setSelected(dog.logId)}
                       className={
                         !locked
-                          ? "flex flex-col items-center gap-3 cursor-pointer"
-                          : "flex flex-col items-center gap-3 cursor-default"
+                          ? "flex w-full flex-col gap-3 cursor-pointer"
+                          : "flex w-full flex-col gap-3 cursor-default"
                       }
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -198,10 +198,19 @@ const CelebrityPage: NextPage<{ slug: string }> = ({ slug }) => {
                         alt={dog.name}
                         className="aspect-square w-full rounded-xl object-cover"
                       />
-                      <span className="font-display text-lg">{dog.name}</span>
-                      {isWinner && (
-                        <span className="font-display text-sm text-success">WINNER</span>
-                      )}
+                      <div className="flex w-full items-center justify-between gap-2">
+                        <span className="text-left font-display text-lg">{dog.name}</span>
+                        {/* Visual affordance only — the whole card is the tap target.
+                            Hidden once selected; the corner sticker signals it instead. */}
+                        {!locked && !isSelected && (
+                          <span className="shrink-0 rounded-full border-2 border-base-content bg-yellow-400 px-5 py-1.5 font-display text-base uppercase text-black shadow-[2px_2px_0_0_hsl(var(--bc))]">
+                            select
+                          </span>
+                        )}
+                        {isWinner && (
+                          <span className="shrink-0 font-display text-sm text-success">WINNER</span>
+                        )}
+                      </div>
                     </button>
                     {dog.eater && <EaterInfo eater={dog.eater} />}
                   </div>
