@@ -64,7 +64,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
                 </Link>
               )}
               {mounted && isLive && !poidhLive && (
-                <span className="rounded-full border-2 border-base-content bg-primary px-2.5 py-1 text-primary-content">
+                <span className="shrink-0 whitespace-nowrap rounded-full border-2 border-base-content bg-primary px-2.5 py-1 text-primary-content">
                   DAY {day}
                 </span>
               )}
