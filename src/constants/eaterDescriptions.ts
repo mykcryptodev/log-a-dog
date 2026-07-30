@@ -15,6 +15,12 @@ export const EATER_DESCRIPTIONS: Record<string, string> = {
   // Edux (fid 368278)
   "0x8a75ba69bc76e2e8eed53901b42688205bc214e5":
     "Edux is back for his second season of Log a Dog! A staple of the Log a Dog community, Edux pocketed ~$230 for his efforts in Season 2. Do not sleep on this competitor, he is out for blood! (and dogs!)",
+  // bearded
+  "0xbad134c2649747ac76351df711937a4638315cd6":
+    "Bearded is a new contestant to Log a Dog and has made a splash in Season 3. Often seen sporting a tortilla for a bun (technically not Log a Dog regulation), Bearded has been slamming dogs in house like it's paying the rent (maybe it will!)",
+  // Evan Mann
+  "0x2f39d00a1fc21f2dc9eb5671147c7ae98f254b6a":
+    "Evan is back for his third season of Log a Dog. Evan is the charming and charismatic host of The Rise Up Morning Show and leads Narrative Strategy at SuperTeam USA. He's also a TV show actor, musician, and very tall! But more than all of this, he's a fierce hotdog eater!!",
 };
 
 export function getEaterDescription(address: string): string | null {
