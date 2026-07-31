@@ -5,6 +5,7 @@ import LeaderboardList from "~/components/LeaderboardList";
 import { LeaderboardBanner } from "~/components/LeaderboardBanner";
 import PoidhPrizeWinners from "~/components/PoidhPrizeWinners";
 import HotdogDayWinners from "~/components/HotdogDayWinners";
+import TopDogs from "~/components/TopDogs";
 import { CONTEST_START_TIME } from "~/constants";
 
 const LeaderboardPage: NextPage = () => {
@@ -25,6 +26,8 @@ const LeaderboardPage: NextPage = () => {
           </h1>
 
           <LeaderboardBanner startDate={startDateObj} scrollSpeed={35} />
+
+          <TopDogs />
 
           <HotdogDayWinners />
 
