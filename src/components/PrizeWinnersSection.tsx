@@ -1,4 +1,4 @@
-import { type FC } from "react";
+import { type FC, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Tweet } from "react-tweet";
@@ -49,6 +49,36 @@ const WinnerAvatar: FC<{
     );
   }
   return <Blobbie address={address} size={24} className="shrink-0 rounded-full" />;
+};
+
+/**
+ * Collapsed by default. The <Tweet> only mounts once opened, so a collapsed
+ * embed costs no syndication fetch on page load.
+ */
+const TweetDisclosure: FC<{ tweetId: string }> = ({ tweetId }) => {
+  const [hasOpened, setHasOpened] = useState(false);
+
+  return (
+    <details
+      className="group"
+      onToggle={(e) => {
+        if (e.currentTarget.open) setHasOpened(true);
+      }}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-center gap-1 py-1 text-xs font-bold uppercase tracking-wide opacity-70 hover:opacity-100">
+        <span className="group-open:hidden">watch the announcement</span>
+        <span className="hidden group-open:inline">hide</span>
+        <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-base-content transition group-open:rotate-180">
+          ▾
+        </span>
+      </summary>
+      {hasOpened && (
+        <div className="mx-auto mt-2 flex max-w-sm justify-center [&_.react-tweet-theme]:my-0">
+          <Tweet id={tweetId} />
+        </div>
+      )}
+    </details>
+  );
 };
 
 const WinnerCard: FC<{ entry: PrizeWinnerEntry; prizeLabel: string }> = ({
@@ -132,9 +162,7 @@ export function PrizeWinnersSection({
           entry.tweetId ? (
             <div key={entry.logId} className="space-y-2">
               <WinnerCard entry={entry} prizeLabel={prizeLabel} />
-              <div className="mx-auto flex max-w-sm justify-center [&_.react-tweet-theme]:my-0">
-                <Tweet id={entry.tweetId} />
-              </div>
+              <TweetDisclosure tweetId={entry.tweetId} />
             </div>
           ) : (
             <WinnerCard key={entry.logId} entry={entry} prizeLabel={prizeLabel} />
