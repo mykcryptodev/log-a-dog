@@ -42,6 +42,28 @@ export const Upload: FC<UploadProps> = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const safetyCheck = api.hotdog.checkForSafety.useMutation();
 
+  // Local object-URL preview so the image shows up the instant it's picked,
+  // instead of after resize + safety check + IPFS upload + gateway fetch.
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const localPreviewRef = useRef<string | null>(null);
+
+  const showLocalPreview = useCallback((file: File) => {
+    if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+    const objectUrl = URL.createObjectURL(file);
+    localPreviewRef.current = objectUrl;
+    setLocalPreview(objectUrl);
+  }, []);
+
+  const clearLocalPreview = useCallback(() => {
+    if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+    localPreviewRef.current = null;
+    setLocalPreview(null);
+  }, []);
+
+  useEffect(() => () => {
+    if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+  }, []);
+
   // Prevent re-renders when parent passes a new array reference
   const prevInitialUrlsRef = useRef<string>();
   useEffect(() => {
@@ -49,12 +71,16 @@ export const Upload: FC<UploadProps> = ({
     if (prevInitialUrlsRef.current !== joined) {
       prevInitialUrlsRef.current = joined;
       if (initialUrls && initialUrls.length > 0) {
+        // Keep any local preview: the parent is usually just echoing back the
+        // URL we just uploaded, and the local blob renders with no network.
         setUrls(initialUrls);
       } else {
+        // Parent cleared the field — drop the local preview too.
         setUrls([]);
+        clearLocalPreview();
       }
     }
-  }, [initialUrls]);
+  }, [clearLocalPreview, initialUrls]);
 
   const conductImageSafetyCheck = useCallback(async (file: File): Promise<boolean> => {
     // convert the file to base64 image
@@ -132,6 +158,9 @@ export const Upload: FC<UploadProps> = ({
     setUploadError(null);
     setDropzoneLabel("🖼️ Preparing upload...");
 
+    // Show the picked file right away — everything below is slow and serial.
+    if (acceptedFiles[0]) showLocalPreview(acceptedFiles[0]);
+
     // Resize / HEIC-convert. This was previously unguarded, so a conversion
     // failure became an unhandled rejection with no user-visible message.
     let resizedFiles: File[];
@@ -145,6 +174,7 @@ export const Upload: FC<UploadProps> = ({
       toast.error("Couldn't process that image. Try a JPG or PNG.");
       setUploadError(`Couldn't process that image: ${err.message}`);
       onUploadError?.(err);
+      clearLocalPreview();
       setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
       return;
     }
@@ -153,9 +183,13 @@ export const Upload: FC<UploadProps> = ({
       toast.error("No files to upload");
       setUploadError("No files to upload");
       onUploadError?.(new Error("No files to upload"));
+      clearLocalPreview();
       setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
       return;
     }
+
+    // Browsers can't render HEIC, so re-point the preview at the converted file.
+    if (resizedFiles[0]) showLocalPreview(resizedFiles[0]);
 
     // Check if the image is safe
     setDropzoneLabel("🕵🏻‍♂️ Checking for safety...");
@@ -165,6 +199,7 @@ export const Upload: FC<UploadProps> = ({
         toast.error("Image is not safe to upload");
         setUploadError("That image didn't pass the safety check.");
         onUploadError?.(new Error("Image is not safe to upload"));
+        clearLocalPreview();
         setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
         return;
       }
@@ -175,6 +210,7 @@ export const Upload: FC<UploadProps> = ({
       toast.error("Error checking image safety");
       setUploadError(`Safety check failed: ${err.message}`);
       onUploadError?.(err);
+      clearLocalPreview();
       setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
       return;
     }
@@ -209,10 +245,11 @@ export const Upload: FC<UploadProps> = ({
       toast("Error uploading file", { type: "error" });
       setUploadError(`Upload failed: ${err.message}`);
       onUploadError?.(err);
+      clearLocalPreview();
     } finally {
       setDropzoneLabel(label ?? DEFAULT_UPLOAD_PHRASE);
     }
-  }, [conductImageSafetyCheck, label, onUpload, onUploadError, resizeImageFile]);
+  }, [clearLocalPreview, conductImageSafetyCheck, label, onUpload, onUploadError, resizeImageFile, showLocalPreview]);
   
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { image: ["image/*"] }});
@@ -233,19 +270,31 @@ export const Upload: FC<UploadProps> = ({
     return src;
   }
 
+  const remoteUrl = urls.length > 0 && urls[0] !== "" ? urls[0] : null;
+  // Local blob wins: it's already decoded, so it paints immediately and never
+  // waits on the IPFS gateway.
+  const previewSrc = localPreview ?? (remoteUrl ? previewImageSrc(remoteUrl) : null);
+  const isWorking = localPreview !== null && remoteUrl === null;
+
   return (
     <div {...getRootProps()} className={className ?? `bg-base-200 rounded-lg ${height ? height : 'h-64'} w-full grid place-content-center cursor-pointer relative ${additionalClasses ?? ""}`}>
       <input {...getInputProps()} />
       {
-        urls.length && urls.length > 0 && urls[0] !== "" ? (
+        previewSrc ? (
           <div className="absolute inset-0 w-full h-full bg-cover overflow-hidden rounded-lg">
             <Image
-              src={previewImageSrc(urls[0]!)}
+              src={previewSrc}
               alt="uploaded image"
               fill
+              unoptimized={localPreview !== null}
               style={{ objectFit: objectCover ? "cover" : "contain" }}
               className={imageClassName}
             />
+            {isWorking && (
+              <p className="absolute inset-x-0 bottom-0 bg-base-100/80 px-2 py-1 text-center text-xs">
+                {dropzoneLabel}
+              </p>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-1 px-4 text-center">
