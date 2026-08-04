@@ -1,7 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getContract } from "thirdweb";
+import { getContract, sendTransaction } from "thirdweb";
+import { type Account, privateKeyToAccount } from "thirdweb/wallets";
 import { db } from "~/server/db";
-import { client, serverWallet } from "~/server/utils";
+import { client } from "~/server/utils";
+import { env } from "~/env";
 import { ATTESTATION_MANAGER, ATTESTATION_WINDOW_SECONDS, CONTEST_END_TIME, DOG_FEED_START_TIME } from "~/constants";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
@@ -22,6 +24,20 @@ export default async function handler(
 
   try {
     console.log("Starting automated moderator reward process...");
+
+    // Signer: dedicated keeper EOA (bypasses the thirdweb vault serverWallet, whose
+    // access token was invalidated by an issuer rotation). resolveAttestationPeriod is
+    // permissionless, so this key only needs Base ETH for gas. If it is not configured,
+    // skip cleanly with a 200 rather than erroring, so the cron stops failing.
+    if (!env.LOGADOG_KEEPER_PK) {
+      console.log("LOGADOG_KEEPER_PK not configured — skipping resolution (no signer).");
+      return res.status(200).json({ success: true, skipped: "LOGADOG_KEEPER_PK not configured" });
+    }
+    const keeperAccount = privateKeyToAccount({
+      client,
+      privateKey: env.LOGADOG_KEEPER_PK,
+    }) as unknown as Account;
+    console.log(`Resolving attestation periods with keeper ${keeperAccount.address}`);
 
     // Ensure database connection is established with retry logic
     let retryCount = 0;
@@ -147,23 +163,26 @@ export default async function handler(
 
         console.log(`Processing logId ${logId} - Total stake: ${Number(totalValidStake) + Number(totalInvalidStake)}`);
 
-        // Execute the reward transaction - webhook will handle database updates
+        // Resolve on-chain directly with the keeper EOA.
         const transaction = resolveAttestationPeriod({
           contract: attestationContract,
           logId: BigInt(logId),
         });
 
-        const { transactionId } = await serverWallet.enqueueTransaction({ transaction });
+        const { transactionHash } = await sendTransaction({
+          account: keeperAccount,
+          transaction,
+        });
 
         results.processed++;
         results.details.push({
           logId,
           status: "processed",
-          transactionId
+          transactionId: transactionHash
         });
 
-        console.log(`Successfully queued transaction for logId ${logId}, transaction: ${transactionId}`);
-        console.log(`Database will be updated automatically via webhook when transaction is mined`);
+        console.log(`Resolved logId ${logId} on-chain, tx: ${transactionHash}`);
+        console.log(`DB updates when the index-chain indexer reads the AttestationPeriodResolved event`);
 
         // Add a small delay between transactions to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 1000));

@@ -42,6 +42,11 @@ export const env = createEnv({
     // when it is absent.
     BASE_NOTIFICATIONS_API_KEY: z.string().optional(),
     ADMIN_PRIVATE_KEY: z.string(),
+    // Dedicated keeper EOA private key used to resolve attestation periods on-chain
+    // (permissionless resolveAttestationPeriod), bypassing the thirdweb vault
+    // serverWallet whose access token was invalidated by an issuer-account rotation.
+    // Optional so the build/cron degrade gracefully (skip, no error) until it is set.
+    LOGADOG_KEEPER_PK: z.string().optional(),
     MORALIS_SECRET_KEY: z.string(),
     MAKER_AFFIRM_SECRET: z.string(),
     GOOGLE_VISION_API_KEY: z.string(),
@@ -87,6 +92,7 @@ export const env = createEnv({
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
     BASE_NOTIFICATIONS_API_KEY: process.env.BASE_NOTIFICATIONS_API_KEY,
     ADMIN_PRIVATE_KEY: process.env.ADMIN_PRIVATE_KEY,
+    LOGADOG_KEEPER_PK: process.env.LOGADOG_KEEPER_PK,
     BACKEND_WALLET_ADDRESS: process.env.BACKEND_WALLET_ADDRESS,
     THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN: process.env.THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN,
     NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS: process.env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS,
