@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { redis } from "~/server/utils/redis";
+import { redis, deleteCachedData } from "~/server/utils/redis";
 import { indexChainEvents, indexAfterTransaction } from "~/server/utils/indexer";
 
 // Per-identity cooldown for manual refreshes. The Redis index lock already
@@ -61,6 +61,12 @@ export const indexerRouter = createTRPCRouter({
       const result = input.transactionHash
         ? await indexAfterTransaction(input.chainId, input.transactionHash)
         : await indexChainEvents(input.chainId);
+
+      // Bust the Redis read caches so a freshly-indexed log/vote shows up
+      // without waiting for the TTL. (The old Engine-based `hotdog.log` did
+      // this itself; client-side logging means refreshFeed is the only hook.)
+      await deleteCachedData(`hotdogs:${input.chainId}:*`);
+      await deleteCachedData(`leaderboard:${input.chainId}:*`);
 
       return result;
     }),

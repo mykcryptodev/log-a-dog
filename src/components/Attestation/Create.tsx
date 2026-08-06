@@ -6,12 +6,13 @@ import { ConnectButton, TransactionButton, useActiveWallet } from "thirdweb/reac
 import { toast } from "react-toastify";
 import dynamic from 'next/dynamic';
 import { api } from "~/utils/api";
-import { TransactionStatus } from '../utils/TransactionStatus';
 import { DEFAULT_CHAIN, DEFAULT_UPLOAD_PHRASE, LOG_A_DOG } from '~/constants';
 import { FarcasterContext } from "~/providers/Farcaster";
 import { usePendingTransactionsStore } from "~/stores/pendingTransactions";
 import { logHotdog as logHotdogBase } from '~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974';
-import { getContract } from 'thirdweb';
+import { getContract, sendTransaction, waitForReceipt } from 'thirdweb';
+import { getCapabilities, sendAndConfirmCalls } from 'thirdweb/wallets/eip5792';
+import { DATA_SUFFIX, withBuilderCode } from '~/constants/builderCode';
 import { client } from '~/providers/Thirdweb';
 import { upload } from 'thirdweb/storage';
 import { encodePoolConfig } from '~/server/utils/poolConfig';
@@ -52,14 +53,12 @@ type Props = {
   showTriggers?: boolean;
 }
 const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTriggers = true }) => {
-  const { mutateAsync: logHotdog } = api.hotdog.log.useMutation();
   const { mutateAsync: indexAfterLog } = api.indexer.refreshFeed.useMutation();
   const utils = api.useUtils();
-  const { addPendingDog, removePendingDog } = usePendingTransactionsStore();
+  const { addPendingDog } = usePendingTransactionsStore();
   const [imgUri, setImgUri] = useState<string | undefined>();
   const [lastLoggedImgUri, setLastLoggedImgUri] = useState<string | undefined>();
   const [lastLoggedDescription, setLastLoggedDescription] = useState<string>('');
-  const [lastLoggedTransactionHash, setLastLoggedTransactionHash] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
   const [payOwnGas, setPayOwnGas] = useState<boolean>(false);
@@ -103,9 +102,7 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
   const account = useStableAccount();
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
-  const [transactionId, setTransactionId] = useState<string | undefined>();
   const [transactionHash, setTransactionHash] = useState<string | undefined>();
-  const [isTransactionIdResolved, setIsTransactionIdResolved] = useState<boolean>(false);
 
   const initialUrlsRef = useRef<string[] | undefined>();
   const memoInitialUpload = useMemo(() => {
@@ -129,72 +126,150 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
   const { data: dogEvent } = api.hotdog.getDogEventByTransactionHash.useQuery(
     { transactionHash: transactionHash! },
     {
-      enabled: !!transactionHash && isTransactionIdResolved,
+      enabled: !!transactionHash,
     }
   );
 
   // Show share dialog when dog event is loaded
   useEffect(() => {
-    if (isMiniApp && dogEvent && isTransactionIdResolved) {
+    if (isMiniApp && dogEvent && transactionHash) {
       const dialog = document.getElementById('share_cast_modal') as HTMLDialogElement;
       dialog?.showModal();
     }
-  }, [isMiniApp, dogEvent, isTransactionIdResolved]);
+  }, [isMiniApp, dogEvent, transactionHash]);
 
-
-  const handleOnResolved = (success: boolean) => {
-    if (success && account && transactionId) {
-      // Keep the optimistic data - don't remove it here
-      // Let it be naturally filtered out when real data appears
-
-      // The on-chain tx is mined; pull it into the DB read-model via the
-      // CDP-backed indexer (it waits for CDP to have the tx), then refresh.
-      void indexAfterLog({
-        chainId: DEFAULT_CHAIN.id,
-        transactionHash,
-      })
-        .catch(() => undefined)
-        .finally(() => {
-          void Promise.all([
-            utils.hotdog.getAll.invalidate(),
-            utils.hotdog.getAllForUser.invalidate(),
-            utils.hotdog.getLeaderboard.invalidate(),
-          ]);
-        });
-
-    } else if (!success && transactionId) {
-      // If transaction failed, remove the optimistic update
-      removePendingDog(transactionId);
-    }
-    setIsTransactionIdResolved(true);
-  }
+  // Post-confirmation bookkeeping shared by both the paymaster and plain-send
+  // paths: kick the CDP-backed indexer on the mined hash, then invalidate the
+  // tRPC reads that feed the feed/leaderboard so the new dog shows up.
+  const handleTxConfirmed = (hash: string, pendingKey: string) => {
+    void indexAfterLog({
+      chainId: DEFAULT_CHAIN.id,
+      transactionHash: hash,
+    })
+      .catch(() => undefined)
+      .finally(() => {
+        void Promise.all([
+          utils.hotdog.getAll.invalidate(),
+          utils.hotdog.getAllForUser.invalidate(),
+          utils.hotdog.getLeaderboard.invalidate(),
+        ]);
+      });
+    setTransactionHash(hash);
+    // The pending card is deduped against real data by imageUri once the
+    // refetch lands; nothing to remove here.
+    void pendingKey;
+  };
 
   // Hoisted out of render rather than defined as an inline `<ActionButton />`
   // component. Defining a component inside another component gives it a new
   // identity on every render, which forces React to unmount/remount its
   // subtree and discard its state. See React rule `rerender-no-inline-components`.
+  //
+  // Logging is client-side now: thirdweb Engine (the old `hotdog.log` server
+  // path) is sunset, so we mirror VoteBar — build `logHotdog` for the user's
+  // own address, prefer a gasless EIP-5792 `sendAndConfirmCalls` through the
+  // thirdweb paymaster, and fall back to a normal `sendTransaction` for
+  // wallets without 5792 support. `payOwnGas` skips the paymaster entirely.
   const logDog = async () => {
     if (!wallet) {
       return toast.error("You must login to attest to dogs!");
     }
+    const activeAccount = wallet.getAccount();
+    if (!activeAccount) {
+      return toast.error("You must login to attest to dogs!");
+    }
     if (isDisabled) return;
     setIsLoading(true);
+
+    const toastId = 'log-dog-pending';
     try {
-      // Reset state for new logs
-      setTransactionId(undefined);
-      setIsTransactionIdResolved(false);
-      // Call the backend tRPC procedure
-      const result = await logHotdog({
-        chainId: DEFAULT_CHAIN.id,
+      // The coin metadata upload is debounced on imgUri; if the user hit LOG IT
+      // before it fired, upload on demand so we always have a coinUri.
+      let resolvedCoinUri = coinMetadataUri;
+      if (!resolvedCoinUri) {
+        resolvedCoinUri = await upload({
+          client,
+          files: [{
+            name: "Logged Dog",
+            description: description && description.trim() !== '' ? description : "Logging dogs onchain",
+            image: imgUri!,
+            properties: { category: "social" },
+          }],
+        });
+        setCoinMetadataUri(resolvedCoinUri);
+      }
+
+      const transaction = logHotdogBase({
+        contract: getContract({
+          address: LOG_A_DOG[DEFAULT_CHAIN.id]!,
+          chain: DEFAULT_CHAIN,
+          client,
+        }),
         imageUri: imgUri!,
         metadataUri: '',
-        description,
+        coinUri: resolvedCoinUri,
+        eater: activeAccount.address,
+        poolConfig: encodePoolConfig(),
       });
 
-      // Add optimistic update to store
+      toast.loading("Beaming dog into space...", { toastId, autoClose: false });
+
+      let confirmedHash: string | undefined;
+      const chainIdAsHex = DEFAULT_CHAIN.id.toString(16) as unknown as number;
+      const capabilities = payOwnGas
+        ? null
+        : await getCapabilities({ wallet }).catch(() => null);
+
+      if (!payOwnGas && capabilities?.[chainIdAsHex]) {
+        // Gasless via the thirdweb paymaster; waits for the bundle to confirm
+        // and hands back the real tx hash for indexing + the share modal.
+        const result = await sendAndConfirmCalls({
+          chain: DEFAULT_CHAIN,
+          wallet,
+          calls: [transaction],
+          capabilities: {
+            paymasterService: {
+              url: `https://${DEFAULT_CHAIN.id}.bundler.thirdweb.com/${client.clientId}`,
+            },
+            dataSuffix: { value: DATA_SUFFIX, optional: true },
+          },
+        });
+        confirmedHash = result.receipts?.[0]?.transactionHash;
+      }
+
+      if (!confirmedHash) {
+        const result = await sendTransaction({
+          account: activeAccount,
+          transaction: await withBuilderCode(transaction),
+        });
+        await waitForReceipt({
+          client,
+          chain: DEFAULT_CHAIN,
+          transactionHash: result.transactionHash,
+        });
+        confirmedHash = result.transactionHash;
+      }
+
+      toast.update(toastId, {
+        render: "You logged a dog!",
+        type: "success",
+        isLoading: false,
+        autoClose: 5000,
+      });
+
+      // Optimistic pending card keyed by the real tx hash (was the Engine
+      // transactionId, which never existed on-chain).
       addPendingDog({
-        ...result.optimisticData,
-        transactionId: result.transactionId,
+        logId: confirmedHash,
+        imageUri: imgUri!,
+        metadataUri: '',
+        eater: activeAccount.address,
+        logger: activeAccount.address,
+        zoraCoin: '',
+        timestamp: Math.floor(Date.now() / 1000).toString(),
+        chainId: DEFAULT_CHAIN.id.toString(),
+        isPending: true as const,
+        transactionId: confirmedHash,
         createdAt: Date.now(),
       });
 
@@ -203,11 +278,11 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
 
       setLastLoggedImgUri(imgUri);
       setLastLoggedDescription(description);
-      setTransactionId(result.transactionId);
+      handleTxConfirmed(confirmedHash, confirmedHash);
 
       // Trigger immediate UI update
       void onAttestationCreated?.({
-        hotdogEater: account!.address,
+        hotdogEater: activeAccount.address,
         imageUri: imgUri!,
       });
 
@@ -218,7 +293,12 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
     } catch (error) {
       const e = error as Error;
       console.error(error);
-      toast.error(`Attestation failed: ${e.message}`);
+      toast.update(toastId, {
+        render: `Failed to log your dog: ${e.message}`,
+        type: "error",
+        isLoading: false,
+        autoClose: 8000,
+      });
     } finally {
       setIsLoading(false);
       // close the modal
@@ -406,24 +486,6 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
           <button aria-label="Close">Close</button>
         </form>
       </dialog>
-      {transactionId && !isTransactionIdResolved && (
-        <TransactionStatus
-          onResolved={handleOnResolved}
-          transactionId={transactionId}
-          onTransactionHash={setTransactionHash}
-          loadingMessages={[
-            { message: "Beaming dog into space..." },
-            { message: "Guzzlin glizzy into the blockchain..."},
-            { message: "Mining meat into a block..." },
-            { message: "Slathering on the 'sturd..."},
-            { message: "Suckin down analytics..." },
-            { message: "Downloading the dinger..."},
-            { message: "Logging dog..." },
-          ]}
-          successMessage="You logged a dog!"
-          errorMessage="Failed to log your dog"
-        />
-      )}
       <dialog id="share_cast_modal" className="modal modal-bottom sm:modal-middle">
         <div className="modal-box">
           <h3 className="font-display text-2xl tracking-wide">Share the dog? 🌭</h3>

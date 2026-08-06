@@ -12,7 +12,6 @@ import {
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
 import { withBuilderCode } from "~/constants/builderCode";
-import { logHotdogOnBehalf } from "~/thirdweb/84532/0x0b04ceb7542cc13e0e483e7b05907c31dbee4d7f";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
 import { env } from "~/env";
@@ -1058,6 +1057,16 @@ export const hotdogRouter = createTRPCRouter({
         throw error;
       }
     }),
+  /**
+   * DEPRECATED server-side logging path. The on-chain write used to go through
+   * the thirdweb Engine server wallet (`serverWallet.enqueueTransaction`), but
+   * Engine is sunset and those txs stopped landing — this mutation now only
+   * prepares the Zora coin metadata (IPFS upload) so the client can call the
+   * user-payable `logHotdog` itself (see VoteBar for the same pattern).
+   *
+   * The React Native app still calls this endpoint; it gets `coinMetadataUri`
+   * back and must submit `logHotdog` from the connected wallet.
+   */
   log: protectedProcedure
     .input(z.object({
       chainId: z.number(),
@@ -1066,7 +1075,7 @@ export const hotdogRouter = createTRPCRouter({
       description: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { chainId, imageUri, metadataUri, description } = input;
+      const { imageUri, description } = input;
 
       if (!ctx.session?.user.address) {
         throw new Error("User address not found");
@@ -1085,56 +1094,11 @@ export const hotdogRouter = createTRPCRouter({
         files: [coinMetadata],
       });
 
-      const POOL_CONFIG = encodePoolConfig();
-
-      // Prepare base transaction
-      const transaction = logHotdogOnBehalf({
-        contract: getContract({
-          address: LOG_A_DOG[chainId]!,
-          client,
-          chain: SUPPORTED_CHAINS.find(chain => chain.id === chainId)!,
-        }),
-        imageUri,
-        metadataUri,
-        coinUri: coinMetadataUri,
+      return {
+        coinMetadataUri,
+        poolConfig: encodePoolConfig(),
         eater: ctx.session.user.address,
-        poolConfig: POOL_CONFIG,
-      });
-
-      try {
-        // Send through the Thirdweb server wallet (0x360E36…), which holds
-        // OPERATOR_ROLE on LogADog and is therefore authorized to call
-        // logHotdogOnBehalf. Same path judge/rewardModerators use; the returned
-        // transactionId is pollable via engine.getTransactionStatus.
-        const { transactionId } = await serverWallet.enqueueTransaction({
-          transaction: await withBuilderCode(transaction),
-        });
-
-        // Invalidate Redis cache for all hotdog queries and leaderboard for this chain
-        const hotdogPattern = `hotdogs:${chainId}:*`;
-        const leaderboardPattern = `leaderboard:${chainId}:*`;
-        await deleteCachedData(hotdogPattern);
-        await deleteCachedData(leaderboardPattern);
-  
-        // Return data needed for optimistic updates
-        return {
-          transactionId,
-          optimisticData: {
-            logId: transactionId, // Use transactionId as temporary logId
-            imageUri,
-            metadataUri,
-            eater: ctx.session.user.address,
-            logger: ctx.session.user.address,
-            zoraCoin: '', // Will be populated later
-            timestamp: Math.floor(Date.now() / 1000).toString(),
-            chainId: chainId.toString(),
-            isPending: true as const,
-          }
-        };
-      } catch (error) {
-        console.error("Error logging hotdog:", error);
-        throw error;
-      }
+      };
     }),
   judge: protectedProcedure
     .input(z.object({
