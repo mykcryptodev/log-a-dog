@@ -215,12 +215,19 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
       toast.loading("Beaming dog into space...", { toastId, autoClose: false });
 
       let confirmedHash: string | undefined;
+      // In-app wallets (Google/email/etc.) are EIP-7702 delegated with
+      // sponsorGas — sponsorship is baked into the account, so they use the
+      // plain sendTransaction path below. The explicit paymaster URL path is
+      // only for EXTERNAL wallets that advertise EIP-5792 (e.g. Base App);
+      // passing a paymaster capability to an in-app wallet would double-specify
+      // the sponsorship.
+      const isInAppWallet = wallet.id === "inApp" || wallet.id === "embedded";
       const chainIdAsHex = DEFAULT_CHAIN.id.toString(16) as unknown as number;
-      const capabilities = payOwnGas
+      const capabilities = payOwnGas || isInAppWallet
         ? null
         : await getCapabilities({ wallet }).catch(() => null);
 
-      if (!payOwnGas && capabilities?.[chainIdAsHex]) {
+      if (!payOwnGas && !isInAppWallet && capabilities?.[chainIdAsHex]) {
         // Gasless via the thirdweb paymaster; waits for the bundle to confirm
         // and hands back the real tx hash for indexing + the share modal.
         const result = await sendAndConfirmCalls({

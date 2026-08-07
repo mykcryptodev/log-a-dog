@@ -59,6 +59,15 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
       auth: {
         options: ["email", "phone", "x", "google", "apple"],
       },
+      // EIP-7702: delegate the in-app EOA to a minimal account so gas is
+      // sponsored by the thirdweb bundler WITHOUT changing the user's address
+      // (unlike 4337 smart accounts, which would give every social login a new
+      // address and orphan their on-chain history). In-app EOAs hold no ETH, so
+      // without this every client-side send fails "insufficient funds for gas".
+      executionMode: {
+        mode: "EIP7702",
+        sponsorGas: true,
+      },
     }),
   ];
 

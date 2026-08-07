@@ -117,9 +117,18 @@ export const VoteBar = forwardRef<VoteBarHandle, Props>(function VoteBar(
       stakeAmount: BigInt(stakeInfo.minimumStake),
     });
 
+    // In-app wallets (Google/email/etc.) are EIP-7702 delegated with
+    // sponsorGas — sponsorship is baked into the account itself, not exposed
+    // as an explicit paymaster capability. Passing our own paymaster URL to
+    // them is at best redundant and at worst breaks their internal sendCalls;
+    // route them through the plain sendTransaction path below, which for a
+    // 7702 minimal account is already gasless.
+    const isInAppWallet = wallet.id === "inApp" || wallet.id === "embedded";
     const chainIdAsHex = chainId.toString(16) as unknown as number;
-    const walletCapabilities = await getCapabilities({ wallet }).catch(() => null);
-    if (walletCapabilities?.[chainIdAsHex]) {
+    const walletCapabilities = isInAppWallet
+      ? null
+      : await getCapabilities({ wallet }).catch(() => null);
+    if (!isInAppWallet && walletCapabilities?.[chainIdAsHex]) {
       await sendCalls({
         chain,
         wallet,
