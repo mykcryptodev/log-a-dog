@@ -40,6 +40,13 @@ const fireConfetti = async () => {
     });
 };
 
+/**
+ * Did the relay turn us away for going too fast, rather than fail outright?
+ * tRPC surfaces the procedure's TRPCError code on `error.data.code`.
+ */
+const isRateLimit = (error: unknown): boolean =>
+  (error as { data?: { code?: string } })?.data?.code === "TOO_MANY_REQUESTS";
+
 type Props = {
   onAttestationCreated?: (attestation: {
     hotdogEater: string;
@@ -95,8 +102,10 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
     return () => clearTimeout(timeoutId);
   }, [description, imgUri]);
 
-  // Which gasless rail this wallet can use, resolved once per connection so the
-  // modal can tell the user up front whether the log is on us.
+  // Every log goes through the server relay, so the wallet's own rail only
+  // matters as a fallback — but we still resolve it up front so the modal can
+  // say whether gas is covered, and so a rate-limited relay knows whether
+  // degrading to the wallet would be free or would surprise the user with a fee.
   const [sponsorshipRail, setSponsorshipRail] = useState<SponsorshipRail | null>(null);
   useEffect(() => {
     if (!wallet) {
@@ -116,18 +125,15 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
     };
   }, [wallet]);
 
-  // Only plain EOAs depend on the server relay, so only they need to ask.
-  const { data: gaslessStatus, isFetching: isCheckingRelay } =
-    api.hotdog.getGaslessLoggingStatus.useQuery(
-      { chainId: DEFAULT_CHAIN.id },
-      { enabled: sponsorshipRail === "none", staleTime: 5 * 60 * 1000 },
-    );
-  const isCheckingSponsorship =
-    sponsorshipRail === null ||
-    (sponsorshipRail === "none" && (isCheckingRelay || !gaslessStatus));
+  // The relay now serves every wallet, so this is no longer EOA-only.
+  const { data: gaslessStatus } = api.hotdog.getGaslessLoggingStatus.useQuery(
+    { chainId: DEFAULT_CHAIN.id },
+    { staleTime: 5 * 60 * 1000 },
+  );
+  const isCheckingSponsorship = sponsorshipRail === null || !gaslessStatus;
   const gasIsCovered =
-    sponsorshipRail !== null &&
-    (sponsorshipRail !== "none" || (gaslessStatus?.available ?? false));
+    (gaslessStatus?.available ?? false) ||
+    (sponsorshipRail !== null && sponsorshipRail !== "none");
 
   const walletExists = !!stableWallet?.exists;
   const isDisabled = useMemo(() => {
@@ -200,14 +206,18 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
   // identity on every render, which forces React to unmount/remount its
   // subtree and discard its state. See React rule `rerender-no-inline-components`.
   //
-  // Logging a dog is gasless for everybody, via whichever rail the connected
-  // wallet supports (see `~/utils/gasless` and `hotdog.logGasless`):
-  //   - in-app wallets  → their own EIP-7702 account, sponsored by thirdweb
+  // Logging a dog is gasless for EVERY wallet, not just the ones that can
+  // sponsor themselves: the log is relayed server-side through the sponsor
+  // EOA's `logHotdogOnBehalf` (`hotdog.logGasless`). One code path, one funding
+  // source, no dependence on per-wallet EIP-5792 quirks — at the cost of the
+  // sponsor showing up as `logger` on-chain (the feed hides that byline).
+  //
+  // The wallet's own rail (`~/utils/gasless`) is kept as a fallback for when
+  // the relay is unavailable — unconfigured, out of gas, at its daily cap:
+  //   - in-app wallets → their EIP-7702 account, sponsored by thirdweb
   //   - EIP-5792 smart wallets → `sendCalls` with the thirdweb paymaster
-  //   - plain EOAs (MetaMask/Rainbow) → relayed server-side through the sponsor
-  //     EOA's `logHotdogOnBehalf`, since they have no client-side rail at all
-  // Ticking "Pay my own gas fees" skips all of it, and a plain EOA falls back
-  // to paying its own gas if the relay is unavailable.
+  //   - plain EOAs → the user pays, which we say out loud before doing it
+  // Ticking "Pay my own gas fees" skips the relay entirely.
   const logDog = async () => {
     if (!wallet) {
       return toast.error("You must login to attest to dogs!");
@@ -252,15 +262,15 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
 
       toast.loading("Beaming dog into space...", { toastId, autoClose: false });
 
-      // Wallets that can sponsor themselves send their own transaction, which
-      // keeps `logger === eater` on-chain. Plain EOAs get relayed instead.
-      const rail = payOwnGas
+      // Only consulted if the relay can't take the log — see below.
+      const fallbackRail = payOwnGas
         ? "none"
-        : await getSponsorshipRail({ wallet, chainId: DEFAULT_CHAIN.id });
+        : (sponsorshipRail ??
+          (await getSponsorshipRail({ wallet, chainId: DEFAULT_CHAIN.id })));
 
       let confirmedHash: string | undefined;
 
-      if (rail === "none" && !payOwnGas) {
+      if (!payOwnGas) {
         let relayedHash: string | undefined;
         try {
           // The mutation returns as soon as the sponsor has broadcast, so a
@@ -274,11 +284,18 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
           });
           relayedHash = relayed.transactionHash;
         } catch (relayError) {
-          console.warn("Sponsored log unavailable, falling back to user-paid gas", relayError);
-          toast.update(toastId, {
-            render: "Couldn't cover the gas for you — confirm in your wallet.",
-            isLoading: true,
-          });
+          // Degrading to the wallet is free when it sponsors itself, so just do
+          // it quietly. For a plain EOA it means charging someone who was told
+          // the log was on us — acceptable when the relay is genuinely down,
+          // but not for a rate limit, where waiting a moment costs them nothing.
+          if (fallbackRail === "none" && isRateLimit(relayError)) throw relayError;
+          console.warn("Sponsored log unavailable, falling back to the wallet", relayError);
+          if (fallbackRail === "none") {
+            toast.update(toastId, {
+              render: "Couldn't cover the gas for you — confirm in your wallet.",
+              isLoading: true,
+            });
+          }
         }
 
         // Past this point the dog is already being mined, so every failure has
@@ -302,9 +319,9 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
           wallet,
           chain: DEFAULT_CHAIN,
           transaction,
-          // `rail` is already resolved; re-detecting would just re-query the
-          // wallet for capabilities we know it doesn't have.
-          forceUserPaid: payOwnGas || rail === "none",
+          // `fallbackRail` is already resolved; re-detecting would just re-query
+          // the wallet for capabilities we know it doesn't have.
+          forceUserPaid: payOwnGas || fallbackRail === "none",
         });
         if (!result) throw new Error("Could not send the transaction");
         confirmedHash = result.transactionHash;

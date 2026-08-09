@@ -23,6 +23,7 @@ import Image from "next/image";
 import { FarcasterContext } from "~/providers/Farcaster";
 import EthCommentsModal from "../EthCommentsModal";
 import { useActiveAccount } from "thirdweb/react";
+import { useSponsorAddress } from "~/hooks/useSponsorAddress";
 import { getFarcasterSdk } from "~/utils/farcasterSdk";
 
 // Types
@@ -129,6 +130,7 @@ const HotdogCardComponent: FC<Props> = ({
 }) => {
   const account = useActiveAccount();
   const [flipped, setFlipped] = useState(false);
+  const sponsorAddress = useSponsorAddress();
 
   const showLoggedVia = (hotdog: { eater: string; logger: string }) => {
     const loggerIsNotEater = !isAddressEqual(
@@ -143,9 +145,8 @@ const HotdogCardComponent: FC<Props> = ({
       hotdog.logger as `0x${string}`,
       MAKER_WALLET,
     );
-    // Logs relayed for gasless EOAs come from the sponsor EOA. That's plumbing,
-    // not a person, so don't credit it in the byline.
-    const sponsorAddress = env.NEXT_PUBLIC_LOGADOG_SPONSOR_ADDRESS;
+    // Sponsored logs are relayed by the sponsor EOA, so it is the `logger` on
+    // nearly every dog. That's plumbing, not a person — don't credit it.
     const loggerIsNotSponsorWallet =
       !sponsorAddress ||
       !isAddressEqual(

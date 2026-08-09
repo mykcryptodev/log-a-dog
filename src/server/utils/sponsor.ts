@@ -11,19 +11,21 @@ import {
 } from "~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974";
 
 /**
- * Server-side gas sponsorship for wallets that cannot sponsor themselves.
+ * Server-side gas sponsorship for logging a dog.
  *
  * thirdweb's hosted Engine server wallet used to relay every write; its vault
- * access token was invalidated by an issuer rotation, so writes now come from
- * the user's own wallet. That works for in-app (EIP-7702) and EIP-5792 smart
- * wallets, which get sponsored by the thirdweb bundler — but a plain EOA
- * (MetaMask, Rainbow, most WalletConnect wallets) has no sponsorship rail and
- * would have to hold Base ETH.
+ * access token was invalidated by an issuer rotation, so writes moved into the
+ * user's own wallet. That only covers wallets that can sponsor themselves —
+ * in-app (EIP-7702) and EIP-5792 smart wallets — while a plain EOA (MetaMask,
+ * Rainbow, most WalletConnect wallets) would have to hold Base ETH.
  *
- * For those wallets we relay `logHotdogOnBehalf` from a dedicated sponsor EOA,
- * exactly as Engine used to. The sponsor pays the gas; the log is still
+ * Rather than leave the guarantee dependent on which wallet someone happens to
+ * connect, EVERY log is relayed through a dedicated sponsor EOA calling
+ * `logHotdogOnBehalf`, exactly as Engine used to: one code path, one funding
+ * source, gasless for everyone. The sponsor pays the gas; the log is still
  * attributed to the authenticated user because `eater` is taken from their
- * session, never from the request body.
+ * session, never from the request body. The client falls back to the wallet's
+ * own rail if this is unavailable.
  */
 
 /** Reverts unless the caller holds OPERATOR_ROLE, so guard before sending. */
@@ -32,9 +34,15 @@ const OPERATOR_ROLE_CACHE_SECONDS = 300;
 /** One sponsored log per address per cooldown window. */
 const SPONSOR_COOLDOWN_SECONDS = 30;
 
-/** Per-address and global ceilings on how much gas a day we're willing to eat. */
+/**
+ * Per-address and global ceilings on how much gas a day we're willing to eat.
+ * The global one now covers ALL logging traffic rather than just plain EOAs, so
+ * it is the real daily spend cap: a log costs roughly 0.00001 ETH on Base, so
+ * 2000 of them is around 0.02 ETH. Hitting either limit is not fatal — the
+ * client falls back to the wallet's own rail.
+ */
 const SPONSOR_DAILY_LIMIT_PER_USER = 25;
-const SPONSOR_DAILY_LIMIT_GLOBAL = 750;
+const SPONSOR_DAILY_LIMIT_GLOBAL = 2000;
 
 /** How long a single relayed send may hold the nonce lock. */
 const SPONSOR_LOCK_SECONDS = 60;
