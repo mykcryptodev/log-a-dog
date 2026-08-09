@@ -10,9 +10,8 @@ import { DEFAULT_CHAIN, DEFAULT_UPLOAD_PHRASE, LOG_A_DOG } from '~/constants';
 import { FarcasterContext } from "~/providers/Farcaster";
 import { usePendingTransactionsStore } from "~/stores/pendingTransactions";
 import { logHotdog as logHotdogBase } from '~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974';
-import { getContract, sendTransaction, waitForReceipt } from 'thirdweb';
-import { getCapabilities, sendAndConfirmCalls } from 'thirdweb/wallets/eip5792';
-import { DATA_SUFFIX, withBuilderCode } from '~/constants/builderCode';
+import { getContract, waitForReceipt } from 'thirdweb';
+import { getSponsorshipRail, sendSponsoredTransaction, type SponsorshipRail } from '~/utils/gasless';
 import { client } from '~/providers/Thirdweb';
 import { upload } from 'thirdweb/storage';
 import { encodePoolConfig } from '~/server/utils/poolConfig';
@@ -54,6 +53,8 @@ type Props = {
 }
 const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTriggers = true }) => {
   const { mutateAsync: indexAfterLog } = api.indexer.refreshFeed.useMutation();
+  // Server-sponsored relay, used only by wallets that can't sponsor themselves.
+  const { mutateAsync: logGasless } = api.hotdog.logGasless.useMutation();
   const utils = api.useUtils();
   const { addPendingDog } = usePendingTransactionsStore();
   const [imgUri, setImgUri] = useState<string | undefined>();
@@ -93,6 +94,40 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
 
     return () => clearTimeout(timeoutId);
   }, [description, imgUri]);
+
+  // Which gasless rail this wallet can use, resolved once per connection so the
+  // modal can tell the user up front whether the log is on us.
+  const [sponsorshipRail, setSponsorshipRail] = useState<SponsorshipRail | null>(null);
+  useEffect(() => {
+    if (!wallet) {
+      setSponsorshipRail(null);
+      return;
+    }
+    let cancelled = false;
+    void getSponsorshipRail({ wallet, chainId: DEFAULT_CHAIN.id })
+      .then((rail) => {
+        if (!cancelled) setSponsorshipRail(rail);
+      })
+      .catch(() => {
+        if (!cancelled) setSponsorshipRail("none");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [wallet]);
+
+  // Only plain EOAs depend on the server relay, so only they need to ask.
+  const { data: gaslessStatus, isFetching: isCheckingRelay } =
+    api.hotdog.getGaslessLoggingStatus.useQuery(
+      { chainId: DEFAULT_CHAIN.id },
+      { enabled: sponsorshipRail === "none", staleTime: 5 * 60 * 1000 },
+    );
+  const isCheckingSponsorship =
+    sponsorshipRail === null ||
+    (sponsorshipRail === "none" && (isCheckingRelay || !gaslessStatus));
+  const gasIsCovered =
+    sponsorshipRail !== null &&
+    (sponsorshipRail !== "none" || (gaslessStatus?.available ?? false));
 
   const walletExists = !!stableWallet?.exists;
   const isDisabled = useMemo(() => {
@@ -165,11 +200,14 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
   // identity on every render, which forces React to unmount/remount its
   // subtree and discard its state. See React rule `rerender-no-inline-components`.
   //
-  // Logging is client-side now: thirdweb Engine (the old `hotdog.log` server
-  // path) is sunset, so we mirror VoteBar — build `logHotdog` for the user's
-  // own address, prefer a gasless EIP-5792 `sendAndConfirmCalls` through the
-  // thirdweb paymaster, and fall back to a normal `sendTransaction` for
-  // wallets without 5792 support. `payOwnGas` skips the paymaster entirely.
+  // Logging a dog is gasless for everybody, via whichever rail the connected
+  // wallet supports (see `~/utils/gasless` and `hotdog.logGasless`):
+  //   - in-app wallets  → their own EIP-7702 account, sponsored by thirdweb
+  //   - EIP-5792 smart wallets → `sendCalls` with the thirdweb paymaster
+  //   - plain EOAs (MetaMask/Rainbow) → relayed server-side through the sponsor
+  //     EOA's `logHotdogOnBehalf`, since they have no client-side rail at all
+  // Ticking "Pay my own gas fees" skips all of it, and a plain EOA falls back
+  // to paying its own gas if the relay is unavailable.
   const logDog = async () => {
     if (!wallet) {
       return toast.error("You must login to attest to dogs!");
@@ -214,46 +252,61 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
 
       toast.loading("Beaming dog into space...", { toastId, autoClose: false });
 
-      let confirmedHash: string | undefined;
-      // In-app wallets (Google/email/etc.) are EIP-7702 delegated with
-      // sponsorGas — sponsorship is baked into the account, so they use the
-      // plain sendTransaction path below. The explicit paymaster URL path is
-      // only for EXTERNAL wallets that advertise EIP-5792 (e.g. Base App);
-      // passing a paymaster capability to an in-app wallet would double-specify
-      // the sponsorship.
-      const isInAppWallet = wallet.id === "inApp" || wallet.id === "embedded";
-      const chainIdAsHex = DEFAULT_CHAIN.id.toString(16) as unknown as number;
-      const capabilities = payOwnGas || isInAppWallet
-        ? null
-        : await getCapabilities({ wallet }).catch(() => null);
+      // Wallets that can sponsor themselves send their own transaction, which
+      // keeps `logger === eater` on-chain. Plain EOAs get relayed instead.
+      const rail = payOwnGas
+        ? "none"
+        : await getSponsorshipRail({ wallet, chainId: DEFAULT_CHAIN.id });
 
-      if (!payOwnGas && !isInAppWallet && capabilities?.[chainIdAsHex]) {
-        // Gasless via the thirdweb paymaster; waits for the bundle to confirm
-        // and hands back the real tx hash for indexing + the share modal.
-        const result = await sendAndConfirmCalls({
-          chain: DEFAULT_CHAIN,
-          wallet,
-          calls: [transaction],
-          capabilities: {
-            paymasterService: {
-              url: `https://${DEFAULT_CHAIN.id}.bundler.thirdweb.com/${client.clientId}`,
-            },
-            dataSuffix: { value: DATA_SUFFIX, optional: true },
-          },
-        });
-        confirmedHash = result.receipts?.[0]?.transactionHash;
+      let confirmedHash: string | undefined;
+
+      if (rail === "none" && !payOwnGas) {
+        let relayedHash: string | undefined;
+        try {
+          // The mutation returns as soon as the sponsor has broadcast, so a
+          // throw from here means nothing landed on-chain (relay unconfigured,
+          // rate-limited, sponsor out of gas) and retrying is safe.
+          const relayed = await logGasless({
+            chainId: DEFAULT_CHAIN.id,
+            imageUri: imgUri!,
+            metadataUri: '',
+            coinUri: resolvedCoinUri,
+          });
+          relayedHash = relayed.transactionHash;
+        } catch (relayError) {
+          console.warn("Sponsored log unavailable, falling back to user-paid gas", relayError);
+          toast.update(toastId, {
+            render: "Couldn't cover the gas for you — confirm in your wallet.",
+            isLoading: true,
+          });
+        }
+
+        // Past this point the dog is already being mined, so every failure has
+        // to surface as an error: falling back would log it (and mint its Zora
+        // coin) a second time.
+        if (relayedHash) {
+          const receipt = await waitForReceipt({
+            client,
+            chain: DEFAULT_CHAIN,
+            transactionHash: relayedHash as `0x${string}`,
+          });
+          if (receipt.status !== "success") {
+            throw new Error(`Transaction reverted (${relayedHash})`);
+          }
+          confirmedHash = relayedHash;
+        }
       }
 
       if (!confirmedHash) {
-        const result = await sendTransaction({
-          account: activeAccount,
-          transaction: await withBuilderCode(transaction),
-        });
-        await waitForReceipt({
-          client,
+        const result = await sendSponsoredTransaction({
+          wallet,
           chain: DEFAULT_CHAIN,
-          transactionHash: result.transactionHash,
+          transaction,
+          // `rail` is already resolved; re-detecting would just re-query the
+          // wallet for capabilities we know it doesn't have.
+          forceUserPaid: payOwnGas || rail === "none",
         });
+        if (!result) throw new Error("Could not send the transaction");
         confirmedHash = result.transactionHash;
       }
 
@@ -431,6 +484,15 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
             <p className="text-center text-xs opacity-40">
               Photos are public and count toward the global leaderboard
             </p>
+            {account?.isConnected && !payOwnGas && (
+              <p className="text-center text-xs opacity-50">
+                {isCheckingSponsorship
+                  ? "Checking gas sponsorship…"
+                  : gasIsCovered
+                    ? "⛽ Gas is on us — no ETH needed."
+                    : "Your wallet can't be sponsored right now, so you'll pay a small gas fee."}
+              </p>
+            )}
             <div className="collapse collapse-arrow w-full rounded-2xl bg-base-200/50">
               <input type="checkbox" />
               <div className="collapse-title text-sm font-medium opacity-70">

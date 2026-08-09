@@ -1,14 +1,13 @@
 import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useState, type FC } from "react";
 import { toast } from "react-toastify";
-import { getContract, sendTransaction } from "thirdweb";
+import { getContract } from "thirdweb";
 import { useActiveWallet } from "thirdweb/react";
-import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
 import { DEFAULT_CHAIN } from "~/constants";
 import { LOG_A_DOG } from "~/constants/addresses";
 import { client } from "~/providers/Thirdweb";
 import { revokeHotdogLog } from "~/thirdweb/84532/0xa8c9ecb6af528c69db3db340b3fe77888a39309c";
-import { DATA_SUFFIX, withBuilderCode } from "~/constants/builderCode";
+import { sendSponsoredTransaction } from "~/utils/gasless";
 import { useStableAccount } from "~/hooks/useStableAccount";
 import { useIsMobile } from "~/hooks/useIsMobile";
 
@@ -41,29 +40,11 @@ export const Revoke: FC<Props> = ({ hotdog, onRevocation }) => {
 
     setIsLoading(true);
     try {
-      const chainIdAsHex = DEFAULT_CHAIN.id.toString(16) as unknown as number;
-      if (!wallet) return;
-      const walletCapabilities = await getCapabilities({ wallet });
-      if (walletCapabilities?.[chainIdAsHex]) {
-        await sendCalls({
-          chain: DEFAULT_CHAIN,
-          wallet,
-          calls: [transaction],
-          capabilities: {
-            paymasterService: {
-              url: `https://${DEFAULT_CHAIN.id}.bundler.thirdweb.com/${client.clientId}`
-            },
-            // Builder Code attribution on the outer userOp (EIP-5792). Optional
-            // so wallets without support ignore it instead of failing.
-            dataSuffix: { value: DATA_SUFFIX, optional: true },
-          },
-        });
-      } else {
-        await sendTransaction({
-          account: wallet.getAccount()!,
-          transaction: await withBuilderCode(transaction),
-        });
-      }
+      await sendSponsoredTransaction({
+        wallet,
+        chain: DEFAULT_CHAIN,
+        transaction,
+      });
       toast.success("Attestation revoked!");
       onRevocation?.();
     } catch (e) {

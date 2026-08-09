@@ -143,8 +143,20 @@ const HotdogCardComponent: FC<Props> = ({
       hotdog.logger as `0x${string}`,
       MAKER_WALLET,
     );
+    // Logs relayed for gasless EOAs come from the sponsor EOA. That's plumbing,
+    // not a person, so don't credit it in the byline.
+    const sponsorAddress = env.NEXT_PUBLIC_LOGADOG_SPONSOR_ADDRESS;
+    const loggerIsNotSponsorWallet =
+      !sponsorAddress ||
+      !isAddressEqual(
+        hotdog.logger as `0x${string}`,
+        sponsorAddress as `0x${string}`,
+      );
     return (
-      loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet
+      loggerIsNotEater &&
+      loggerIsNotBackendWallet &&
+      loggerIsNotMakerWallet &&
+      loggerIsNotSponsorWallet
     );
   };
 

@@ -47,6 +47,12 @@ export const env = createEnv({
     // serverWallet whose access token was invalidated by an issuer-account rotation.
     // Optional so the build/cron degrade gracefully (skip, no error) until it is set.
     LOGADOG_KEEPER_PK: z.string().optional(),
+    // Private key of the EOA that sponsors gasless dog logs for wallets that
+    // cannot sponsor themselves (plain EOAs such as MetaMask/Rainbow). It calls
+    // `logHotdogOnBehalf`, so its address must hold OPERATOR_ROLE on LogADog and
+    // must be funded with Base ETH. Falls back to LOGADOG_KEEPER_PK when unset;
+    // when neither is configured the app just charges the user their own gas.
+    LOGADOG_SPONSOR_PK: z.string().optional(),
     MORALIS_SECRET_KEY: z.string(),
     MAKER_AFFIRM_SECRET: z.string(),
     GOOGLE_VISION_API_KEY: z.string(),
@@ -73,6 +79,10 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_DOMAIN: z.string(),
     NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS: z.string(),
     NEXT_PUBLIC_BACKEND_WALLET_ADDRESS: z.string(),
+    // Address matching LOGADOG_SPONSOR_PK. Only used cosmetically, so the feed
+    // can hide the "via <relayer>" byline on sponsored logs the same way it
+    // already hides the thirdweb server wallet.
+    NEXT_PUBLIC_LOGADOG_SPONSOR_ADDRESS: z.string().optional(),
   },
 
   /**
@@ -93,6 +103,9 @@ export const env = createEnv({
     BASE_NOTIFICATIONS_API_KEY: process.env.BASE_NOTIFICATIONS_API_KEY,
     ADMIN_PRIVATE_KEY: process.env.ADMIN_PRIVATE_KEY,
     LOGADOG_KEEPER_PK: process.env.LOGADOG_KEEPER_PK,
+    LOGADOG_SPONSOR_PK: process.env.LOGADOG_SPONSOR_PK,
+    NEXT_PUBLIC_LOGADOG_SPONSOR_ADDRESS:
+      process.env.NEXT_PUBLIC_LOGADOG_SPONSOR_ADDRESS,
     BACKEND_WALLET_ADDRESS: process.env.BACKEND_WALLET_ADDRESS,
     THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN: process.env.THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN,
     NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS: process.env.NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS,
