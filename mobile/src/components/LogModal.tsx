@@ -63,7 +63,14 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
 
   const checkSafetyMutation = trpc.hotdog.checkForSafety.useMutation();
   const refreshFeed = trpc.indexer.refreshFeed.useMutation();
-  const logMutation = trpc.hotdog.log.useMutation({
+  // `hotdog.log` only uploads the Zora coin metadata now (Engine, which used
+  // to submit the on-chain write here, is sunset) — the actual log is a
+  // separate relayed call below.
+  const logMutation = trpc.hotdog.log.useMutation();
+  // Relays the on-chain write through the sponsor EOA (see
+  // `src/server/utils/sponsor.ts` on web), so logging needs no signer wallet
+  // and is gasless the same way the web app's default path is.
+  const logGaslessMutation = trpc.hotdog.logGasless.useMutation({
     onSuccess: () => {
       setStep("success");
       Animated.spring(successScale, {
@@ -168,28 +175,34 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         image: ipfsImageUri,
       });
 
-      // Log onchain via server wallet
-      setStep("logging");
-      const result = await logMutation.mutateAsync({
+      // Upload the Zora coin metadata for this log.
+      const { coinMetadataUri } = await logMutation.mutateAsync({
         chainId: CHAIN_ID,
         imageUri: ipfsImageUri,
         metadataUri,
         description: description.trim() || undefined,
       });
 
+      // Submit the on-chain write via the sponsor relay — gasless, and needs
+      // no signer wallet, so it works the same for a Farcaster-only session.
+      setStep("logging");
+      const { transactionHash } = await logGaslessMutation.mutateAsync({
+        chainId: CHAIN_ID,
+        imageUri: ipfsImageUri,
+        metadataUri,
+        coinUri: coinMetadataUri,
+      });
+
       // Optimistically show a pending card in the feed until the real on-chain
       // row indexes (deduped by imageUri in the feed).
-      const txId: string | undefined = result?.transactionId;
-      if (txId && session.address) {
+      if (session.address) {
         pendingDogsStore.add({
-          transactionId: txId,
-          logId: `pending-${txId}`,
+          transactionId: transactionHash,
+          logId: `pending-${transactionHash}`,
           imageUri: ipfsImageUri,
           eater: session.address,
           logger: session.address,
-          timestamp:
-            (result?.optimisticData?.timestamp as string | undefined) ??
-            String(Math.floor(Date.now() / 1000)),
+          timestamp: String(Math.floor(Date.now() / 1000)),
           chainId: String(CHAIN_ID),
           isPending: true,
         });
@@ -206,7 +219,7 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         Alert.alert("Error", msg);
       }
     }
-  }, [session, imageUri, description, checkSafetyMutation, refreshFeed, logMutation]);
+  }, [session, imageUri, description, checkSafetyMutation, refreshFeed, logMutation, logGaslessMutation]);
 
   const handleClose = useCallback(() => {
     setImageUri(null);
