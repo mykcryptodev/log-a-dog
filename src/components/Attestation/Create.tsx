@@ -135,6 +135,18 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
     (gaslessStatus?.available ?? false) ||
     (sponsorshipRail !== null && sponsorshipRail !== "none");
 
+  // A relay that quietly stops sponsoring looks, from the outside, exactly like
+  // an app that never sponsored: users just get charged. Say so in the console
+  // so it's noticed without having to read the network tab.
+  useEffect(() => {
+    if (gaslessStatus && !gaslessStatus.available) {
+      console.warn(
+        `[gasless] server relay unavailable (${gaslessStatus.reason ?? "unknown"}) — logs fall back to the wallet's own rail`,
+        gaslessStatus.sponsor ? `sponsor: ${gaslessStatus.sponsor}` : "",
+      );
+    }
+  }, [gaslessStatus]);
+
   const walletExists = !!stableWallet?.exists;
   const isDisabled = useMemo(() => {
     return !imgUri || !walletExists || isLoading;

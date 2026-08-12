@@ -52,6 +52,13 @@ export class SponsorRateLimitError extends Error {}
 
 let cachedAccount: Account | null | undefined;
 
+/** Why sponsorship isn't working, for diagnosis — never shown verbatim to users. */
+export type SponsorUnavailableReason =
+  | "not-configured"
+  | "invalid-key"
+  | "missing-operator-role"
+  | "check-failed";
+
 /**
  * The EOA that pays for relayed logs, or null when sponsorship is not
  * configured (in which case callers should let the user pay their own gas).
@@ -59,11 +66,16 @@ let cachedAccount: Account | null | undefined;
 export function getSponsorAccount(): Account | null {
   if (cachedAccount !== undefined) return cachedAccount;
 
-  const privateKey = env.LOGADOG_SPONSOR_PK ?? env.LOGADOG_KEEPER_PK;
-  if (!privateKey) {
+  const configured = env.LOGADOG_SPONSOR_PK ?? env.LOGADOG_KEEPER_PK;
+  if (!configured) {
     cachedAccount = null;
     return null;
   }
+
+  // This repo stores keys both ways — LOGADOG_KEEPER_PK carries its own `0x`,
+  // while ADMIN_PRIVATE_KEY is bare and callers prepend it. Accept either, or a
+  // sponsor key pasted in the bare style silently reads as "not configured".
+  const privateKey: `0x${string}` = `0x${configured.replace(/^0x/, "")}`;
 
   try {
     cachedAccount = privateKeyToAccount({
@@ -71,11 +83,61 @@ export function getSponsorAccount(): Account | null {
       privateKey,
     }) as unknown as Account;
   } catch (error) {
-    console.error("Invalid gasless sponsor private key:", error);
+    console.error(
+      "[gasless] LOGADOG_SPONSOR_PK is not a usable private key — sponsored logging is off:",
+      error,
+    );
     cachedAccount = null;
   }
 
   return cachedAccount;
+}
+
+/**
+ * Full sponsorship health, so a failure says *why* instead of just going quiet.
+ * Getting this wrong is invisible from the outside — the app keeps working and
+ * simply bills users for gas — so the reason is worth carrying around.
+ */
+export async function getSponsorStatus(chainId: number): Promise<{
+  available: boolean;
+  sponsor: string | null;
+  reason?: SponsorUnavailableReason;
+}> {
+  const configured = env.LOGADOG_SPONSOR_PK ?? env.LOGADOG_KEEPER_PK;
+  const sponsor = getSponsorAccount();
+
+  if (!sponsor) {
+    return {
+      available: false,
+      sponsor: null,
+      reason: configured ? "invalid-key" : "not-configured",
+    };
+  }
+
+  try {
+    const hasOperatorRole = await sponsorHasOperatorRole(
+      chainId,
+      sponsor.address,
+    );
+    if (!hasOperatorRole) {
+      console.warn(
+        `[gasless] sponsor ${sponsor.address} does not hold OPERATOR_ROLE on LogADog — every log will fall back to the user's wallet. Grant it with addOperator(${sponsor.address}).`,
+      );
+      return {
+        available: false,
+        sponsor: sponsor.address,
+        reason: "missing-operator-role",
+      };
+    }
+    return { available: true, sponsor: sponsor.address };
+  } catch (error) {
+    console.error("[gasless] could not check sponsor OPERATOR_ROLE:", error);
+    return {
+      available: false,
+      sponsor: sponsor.address,
+      reason: "check-failed",
+    };
+  }
 }
 
 function logADogContract(chainId: number) {

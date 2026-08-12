@@ -15,6 +15,7 @@ import { client, serverWallet } from "~/server/utils";
 import {
   assertSponsorQuota,
   getSponsorAccount,
+  getSponsorStatus,
   SponsorRateLimitError,
   sponsorHasOperatorRole,
   withSponsorNonceLock,
@@ -1117,19 +1118,11 @@ export const hotdogRouter = createTRPCRouter({
   getGaslessLoggingStatus: publicProcedure
     .input(z.object({ chainId: z.number() }))
     .query(async ({ input }) => {
-      const sponsor = getSponsorAccount();
-      if (!sponsor) return { available: false, sponsor: null };
-
-      try {
-        const available = await sponsorHasOperatorRole(
-          input.chainId,
-          sponsor.address,
-        );
-        return { available, sponsor: sponsor.address };
-      } catch (error) {
-        console.error("Could not check gasless logging status:", error);
-        return { available: false, sponsor: sponsor.address };
-      }
+      // Carries a `reason` when unavailable ("not-configured", "invalid-key",
+      // "missing-operator-role", "check-failed"). The UI keeps its copy generic,
+      // but the reason rides along so a misconfigured sponsor is one network
+      // response away from being diagnosed instead of silently billing users.
+      return getSponsorStatus(input.chainId);
     }),
   /**
    * Relay a dog log for wallets that cannot sponsor their own gas (plain EOAs
