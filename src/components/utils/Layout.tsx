@@ -6,7 +6,9 @@ import { ToastProvider } from "~/providers/Toast";
 import useMounted from "~/hooks/useMounted";
 import { getSeasonInfo } from "~/helpers/season";
 import { PoidhBanner } from "./PoidhBanner";
+import { Poidh2Banner } from "./Poidh2Banner";
 import { isPoidhCampaignLive } from "~/utils/poidh";
+import { isPoidh2CampaignLive } from "~/utils/poidh2";
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,7 +18,10 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   // Compute on the client to avoid a hydration mismatch on the day counter.
   const mounted = useMounted();
   const { day, isLive } = getSeasonInfo();
-  const poidhLive = isPoidhCampaignLive();
+  const poidh2Live = isPoidh2CampaignLive();
+  // Round two takes over the header slot and banner while it's running.
+  const poidhLive = isPoidhCampaignLive() && !poidh2Live;
+  const anyPoidhLive = poidhLive || poidh2Live;
 
   return (
     <div className="app-bg block min-h-screen">
@@ -55,15 +60,15 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               >
                 $HOTDOG
               </Link>
-              {poidhLive && (
+              {anyPoidhLive && (
                 <Link
-                  href="/poidh"
+                  href={poidh2Live ? "/poidh-2" : "/poidh"}
                   className="rounded-full border-2 border-base-content bg-secondary px-2.5 py-1 text-secondary-content"
                 >
                   POIDH
                 </Link>
               )}
-              {mounted && isLive && !poidhLive && (
+              {mounted && isLive && !anyPoidhLive && (
                 <span className="shrink-0 whitespace-nowrap rounded-full border-2 border-base-content bg-primary px-2.5 py-1 text-primary-content">
                   DAY {day}
                 </span>
@@ -72,6 +77,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
 
+        {poidh2Live && <Poidh2Banner />}
         {poidhLive && <PoidhBanner />}
         <ToastProvider />
         {children}
