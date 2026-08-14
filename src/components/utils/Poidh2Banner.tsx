@@ -31,7 +31,7 @@ export function Poidh2Banner() {
     >
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-4">
         <p className="font-display text-sm tracking-wide">
-          🕹️ <strong>POIDH Aug 14</strong> · 3 winners · $50 ETH each →
+          🕹️ <strong>POIDH Aug 14–16</strong> · Win $50 ETH/day →
         </p>
         <button
           onClick={handleDismiss}

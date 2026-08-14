@@ -13,6 +13,7 @@ import { FarcasterContext } from "~/providers/Farcaster";
 import { openMiniApp } from "~/utils/farcasterSdk";
 import {
   POIDH2_BOUNTY_URL,
+  POIDH2_CAMPAIGN_DAYS,
   POIDH2_PRIZE_USD,
   POIDH2_WINNER_COUNT,
 } from "~/utils/poidh2";
@@ -79,10 +80,10 @@ const Poidh2Page: NextPage = () => {
   return (
     <>
       <Head>
-        <title>POIDH × Log a Dog — August 14th Daily Winner</title>
+        <title>POIDH × Log a Dog — August 14–16 Daily Winners</title>
         <meta
           name="description"
-          content={`One day, ${POIDH2_WINNER_COUNT} winners. Win $${POIDH2_PRIZE_USD} ETH on August 14 — log a hotdog, share it, claim your prize on POIDH.`}
+          content={`Win $${POIDH2_PRIZE_USD} ETH a day, August 14–16. One winner every day — log a hotdog, share it, claim your prize on POIDH.`}
         />
         <link rel="icon" href="/favicon.ico" />
         <meta key="ogimage" property="og:image" content="https://www.logadog.xyz/images/og-image.png" />
@@ -100,7 +101,7 @@ const Poidh2Page: NextPage = () => {
               POIDH <span className="text-secondary">ROUND 2</span>
             </h1>
             <p className="mt-2 text-sm opacity-70">
-              Log a Dog meets &quot;Pics or it didn&apos;t happen&quot; — one more time
+              Log a Dog meets &quot;Pics or it didn&apos;t happen&quot; — all weekend long
             </p>
           </div>
 
@@ -108,10 +109,12 @@ const Poidh2Page: NextPage = () => {
           <div className="pop-card rounded-3xl bg-secondary p-5 text-secondary-content">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-display text-xs tracking-widest opacity-80">AUGUST 14, 2026</p>
-                <h2 className="font-display text-2xl font-bold tracking-tight">ONE DAY. THREE WINNERS.</h2>
+                <p className="font-display text-xs tracking-widest opacity-80">AUGUST 14 – 16, 2026</p>
+                <h2 className="font-display text-2xl font-bold tracking-tight">
+                  FRI. SAT. SUN. {POIDH2_WINNER_COUNT} WINNERS.
+                </h2>
                 <p className="mt-1 text-sm opacity-80">
-                  Three winners picked from the day&apos;s entries by the organizers.
+                  One winner picked per day by the organizers.
                 </p>
                 <a
                   href={POIDH2_BOUNTY_URL}
@@ -125,8 +128,22 @@ const Poidh2Page: NextPage = () => {
               </div>
               <div className="shrink-0 text-center">
                 <div className="font-display text-4xl font-bold">${POIDH2_PRIZE_USD}</div>
-                <div className="font-display text-xs tracking-widest opacity-80">ETH × {POIDH2_WINNER_COUNT}</div>
+                <div className="font-display text-xs tracking-widest opacity-80">ETH / DAY</div>
               </div>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {POIDH2_CAMPAIGN_DAYS.map((day) => (
+                <div
+                  key={day.date}
+                  className="rounded-2xl bg-secondary-content/15 px-2 py-2 text-center"
+                >
+                  <div className="font-display text-xs tracking-widest opacity-80">
+                    {day.label.slice(0, 3).toUpperCase()}
+                  </div>
+                  <div className="text-sm font-semibold">{day.date}</div>
+                  <div className="text-xs opacity-80">1 winner</div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -166,7 +183,7 @@ const Poidh2Page: NextPage = () => {
           <div className="pop-card rounded-3xl bg-base-100 p-5">
             <h2 className="mb-1 font-display text-2xl font-bold tracking-tight">🏆 WINNING CRITERIA</h2>
             <p className="mb-4 text-sm opacity-70">
-              Organizers judge the day&apos;s entries on these dimensions:
+              Organizers judge each day&apos;s entries on these dimensions:
             </p>
             <div className="grid grid-cols-2 gap-3">
               {WINNING_CRITERIA.map((c) => (
@@ -224,7 +241,7 @@ const Poidh2Page: NextPage = () => {
                 "Submission is logged on logadog.xyz (onchain via Base)",
                 "Logged submission is shared on Farcaster or X",
                 "Social post link is submitted as a claim on poidh.xyz",
-                "Entry lands on August 14, 2026",
+                "Entry lands on a campaign day — August 14, 15, or 16, 2026",
               ].map((req) => (
                 <li key={req} className="flex items-start gap-2 text-sm">
                   <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
@@ -265,8 +282,9 @@ const Poidh2Page: NextPage = () => {
 
           {/* Fine print */}
           <p className="text-center text-xs opacity-40">
-            Campaign runs August 14, 2026. {POIDH2_WINNER_COUNT} × ${POIDH2_PRIZE_USD} ETH
-            prizes awarded. Winners selected by organizers based on quality and creativity.
+            Campaign runs Friday–Sunday, August 14–16, 2026. One ${POIDH2_PRIZE_USD} ETH
+            prize awarded per day. Winners selected by organizers based on quality and
+            creativity.
           </p>
 
         </div>
