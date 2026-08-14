@@ -9,13 +9,15 @@ import {
   CheckCircleIcon,
   StarIcon,
 } from "@heroicons/react/24/outline";
+import useMounted from "~/hooks/useMounted";
 import { FarcasterContext } from "~/providers/Farcaster";
 import { openMiniApp } from "~/utils/farcasterSdk";
 import {
-  POIDH2_BOUNTY_URL,
+  DEFAULT_POIDH2_BOUNTY_URL,
   POIDH2_CAMPAIGN_DAYS,
   POIDH2_PRIZE_USD,
   POIDH2_WINNER_COUNT,
+  getPoidh2BountyUrl,
 } from "~/utils/poidh2";
 
 const STEPS = [
@@ -61,6 +63,8 @@ const WINNING_CRITERIA = [
 const Poidh2Page: NextPage = () => {
   const farcaster = useContext(FarcasterContext);
   const isMiniApp = farcaster?.isMiniApp ?? false;
+  const mounted = useMounted();
+  const bountyUrl = mounted ? getPoidh2BountyUrl() : DEFAULT_POIDH2_BOUNTY_URL;
 
   const openPoidh = useCallback(
     async (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -68,13 +72,13 @@ const Poidh2Page: NextPage = () => {
 
       e.preventDefault();
       try {
-        await openMiniApp(POIDH2_BOUNTY_URL);
+        await openMiniApp(bountyUrl);
       } catch (err) {
         console.error("Failed to open POIDH mini app", err);
-        window.open(POIDH2_BOUNTY_URL, "_blank");
+        window.open(bountyUrl, "_blank");
       }
     },
-    [isMiniApp],
+    [isMiniApp, bountyUrl],
   );
 
   return (
@@ -117,7 +121,7 @@ const Poidh2Page: NextPage = () => {
                   One winner picked per day by the organizers.
                 </p>
                 <a
-                  href={POIDH2_BOUNTY_URL}
+                  href={bountyUrl}
                   target={isMiniApp ? undefined : "_blank"}
                   rel={isMiniApp ? undefined : "noopener noreferrer"}
                   onClick={openPoidh}
@@ -261,7 +265,7 @@ const Poidh2Page: NextPage = () => {
               LOG YOUR DOG 🌭
             </Link>
             <a
-              href={POIDH2_BOUNTY_URL}
+              href={bountyUrl}
               target={isMiniApp ? undefined : "_blank"}
               rel={isMiniApp ? undefined : "noopener noreferrer"}
               onClick={openPoidh}
