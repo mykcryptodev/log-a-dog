@@ -1117,12 +1117,16 @@ export const hotdogRouter = createTRPCRouter({
    */
   getGaslessLoggingStatus: publicProcedure
     .input(z.object({ chainId: z.number() }))
-    .query(async ({ input }) => {
-      // Carries a `reason` when unavailable ("not-configured", "invalid-key",
-      // "missing-operator-role", "check-failed"). The UI keeps its copy generic,
-      // but the reason rides along so a misconfigured sponsor is one network
-      // response away from being diagnosed instead of silently billing users.
-      return getSponsorStatus(input.chainId);
+    .query(async ({ ctx, input }) => {
+      // Carries a `reason` when unavailable ("not-signed-in", "not-configured",
+      // "invalid-key", "missing-operator-role", "check-failed"), so a sponsor
+      // that has quietly stopped sponsoring is one network response away from
+      // being diagnosed instead of silently billing users.
+      //
+      // Answers for THIS caller, not just the server: the relay reads `eater`
+      // off the session, so a signed-out visitor can't use it no matter how
+      // healthy the sponsor is.
+      return getSponsorStatus(input.chainId, !!ctx.session?.user?.address);
     }),
   /**
    * Relay a dog log for wallets that cannot sponsor their own gas (plain EOAs

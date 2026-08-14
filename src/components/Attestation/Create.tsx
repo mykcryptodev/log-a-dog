@@ -519,7 +519,9 @@ const CreateAttestationComponent: FC<Props> = ({ onAttestationCreated, showTrigg
                   ? "Checking gas sponsorship…"
                   : gasIsCovered
                     ? "⛽ Gas is on us — no ETH needed."
-                    : "Your wallet can't be sponsored right now, so you'll pay a small gas fee."}
+                    : gaslessStatus?.reason === "not-signed-in"
+                      ? "Sign in to log gas-free — otherwise you'll pay a small gas fee."
+                      : "Your wallet can't be sponsored right now, so you'll pay a small gas fee."}
               </p>
             )}
             <div className="collapse collapse-arrow w-full rounded-2xl bg-base-200/50">

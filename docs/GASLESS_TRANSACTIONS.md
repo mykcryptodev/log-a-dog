@@ -145,6 +145,7 @@ That is the fallback: the relay declined, so the client sent from the wallet.
 
 | `reason` | Meaning |
 | --- | --- |
+| `not-signed-in` | The visitor has a connected wallet but no next-auth session. `logGasless` is a `protectedProcedure` and reads `eater` from the session, so it can't relay for them. Note logging needed **no** session before the relay existed, so this is a real behaviour change: connect-only users silently pay their own gas until they sign in. |
 | `not-configured` | Neither `LOGADOG_SPONSOR_PK` nor `LOGADOG_KEEPER_PK` is set in this environment. |
 | `invalid-key` | A key is set but isn't a usable private key. |
 | `missing-operator-role` | The sponsor exists but can't call `logHotdogOnBehalf` — step 2 above. |

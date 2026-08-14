@@ -54,6 +54,7 @@ let cachedAccount: Account | null | undefined;
 
 /** Why sponsorship isn't working, for diagnosis — never shown verbatim to users. */
 export type SponsorUnavailableReason =
+  | "not-signed-in"
   | "not-configured"
   | "invalid-key"
   | "missing-operator-role"
@@ -98,11 +99,24 @@ export function getSponsorAccount(): Account | null {
  * Getting this wrong is invisible from the outside — the app keeps working and
  * simply bills users for gas — so the reason is worth carrying around.
  */
-export async function getSponsorStatus(chainId: number): Promise<{
+export async function getSponsorStatus(
+  chainId: number,
+  /**
+   * Whether the *caller* can use the relay at all. `logGasless` is a
+   * protectedProcedure that takes `eater` from the session, so a signed-out
+   * visitor gets no sponsorship however healthy the sponsor is — and logging
+   * needed no session before the relay existed, so this is easy to miss.
+   */
+  isSignedIn: boolean,
+): Promise<{
   available: boolean;
   sponsor: string | null;
   reason?: SponsorUnavailableReason;
 }> {
+  if (!isSignedIn) {
+    return { available: false, sponsor: null, reason: "not-signed-in" };
+  }
+
   const configured = env.LOGADOG_SPONSOR_PK ?? env.LOGADOG_KEEPER_PK;
   const sponsor = getSponsorAccount();
 
