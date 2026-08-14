@@ -94,13 +94,28 @@ plain EOA still pays gas to vote even though it logs for free.
 
 ## Setup
 
+Run `bun run script:gasless-sponsor` at any point to see exactly which of these
+steps is still outstanding. It derives the sponsor address from the configured
+key and reports its `OPERATOR_ROLE` and balance; it sends nothing unless you
+pass `--grant`.
+
 1. Create an EOA for sponsorship and fund it with Base ETH. (Each log deploys a
    Zora coin, so budget accordingly — the daily caps above bound the spend.)
-2. Grant it `OPERATOR_ROLE` on `LogADog` from an account holding
-   `DEFAULT_ADMIN_ROLE`:
+   0.01 ETH covers roughly 900 logs.
+2. Grant it `OPERATOR_ROLE` on `LogADog`. `addOperator` is
+   `onlyRole(DEFAULT_ADMIN_ROLE)`, and the constructor granted that role only to
+   the account that deployed the contract — so this must be signed by the
+   deployer key, not just any admin-ish key you have lying around:
 
    ```
-   cast send $LOG_A_DOG "addOperator(address)" $SPONSOR_ADDRESS \
+   bun run script:gasless-sponsor --grant     # signs with ADMIN_PRIVATE_KEY
+   ```
+
+   The script checks `hasRole(DEFAULT_ADMIN_ROLE, …)` first, so a wrong key is
+   reported as a wrong key instead of reverting on-chain. Equivalent by hand:
+
+   ```
+   cast send 0x6CfB88C8d0d7FFC563155e13C62b4Fa17bc25974 "addOperator(address)" $SPONSOR_ADDRESS \
      --rpc-url https://mainnet.base.org --private-key $ADMIN_PRIVATE_KEY
    ```
 
@@ -108,8 +123,13 @@ plain EOA still pays gas to vote even though it logs for free.
 
    | Variable | Purpose |
    | --- | --- |
-   | `LOGADOG_SPONSOR_PK` | sponsor private key (server-only). Falls back to `LOGADOG_KEEPER_PK` if unset — that key only works if it *also* holds `OPERATOR_ROLE`. |
+   | `LOGADOG_SPONSOR_PK` | sponsor private key (server-only). Accepts a bare or `0x`-prefixed key. Falls back to `LOGADOG_KEEPER_PK` if unset — that key only works if it *also* holds `OPERATOR_ROLE`, and it already signs the hourly resolve cron outside the relay's nonce lock, so prefer a dedicated key. |
    | `NEXT_PUBLIC_LOGADOG_SPONSOR_ADDRESS` | the matching address, so the feed can hide the "via &lt;relayer&gt;" byline without a request. Optional: `useSponsorAddress` asks the server when it's absent. |
+
+   On Vercel, set these for **every environment you test in** — a Preview
+   deployment does not inherit Production env vars. `NEXT_PUBLIC_*` values are
+   inlined at build time, and `getSponsorAccount` caches the key at module
+   scope, so **redeploy** after changing either.
 
 Keep the sponsor topped up. Every log costs it gas now, not just EOA logs.
 
@@ -117,6 +137,22 @@ Until this is configured, `hotdog.getGaslessLoggingStatus` reports
 `available: false`, every log falls back to the wallet's own rail, and the modal
 tells plain-EOA users they'll pay a small gas fee. In-app and EIP-5792 smart
 wallets stay gasless throughout — nothing breaks while you set this up.
+
+## When an EOA still gets a signature prompt
+
+That is the fallback: the relay declined, so the client sent from the wallet.
+`getGaslessLoggingStatus` returns a `reason` saying which:
+
+| `reason` | Meaning |
+| --- | --- |
+| `not-configured` | Neither `LOGADOG_SPONSOR_PK` nor `LOGADOG_KEEPER_PK` is set in this environment. |
+| `invalid-key` | A key is set but isn't a usable private key. |
+| `missing-operator-role` | The sponsor exists but can't call `logHotdogOnBehalf` — step 2 above. |
+| `check-failed` | The on-chain role read threw (RPC/`THIRDWEB_SECRET_KEY`). |
+
+It's logged to the browser console on open, and to the server log with the exact
+`addOperator` call needed. `TOO_MANY_REQUESTS` from `logGasless` is separate: a
+rate limit, which deliberately does *not* fall back to charging a plain EOA.
 
 ## Verifying
 

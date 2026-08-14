@@ -18,6 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run db:studio` - Open Prisma Studio for database inspection
 
 ### Scripts
+- `bun run script:gasless-sponsor` - Report whether sponsored logging is live (sponsor address, `OPERATOR_ROLE`, balance); `--grant` grants the role via `ADMIN_PRIVATE_KEY`
 - `bun run script:generate-merkle` - Generate the airdrop Merkle root (`airdrop/generate-merkle-root.ts`)
 - `bun run script:generate-merkle:base` - Generate Merkle root for Base Mainnet
 - `bun run script:generate-merkle:testnet` - Generate Merkle root for Base Sepolia
