@@ -18,7 +18,6 @@ import { useAuth } from "~/providers/AuthProvider";
 import { CHAIN_ID } from "~/constants";
 import { COLORS } from "~/constants/colors";
 import { uploadImageToIPFS, uploadMetadataToIPFS } from "~/utils/upload";
-import { pendingDogsStore } from "~/stores/pendingDogs";
 import { compressImageForUpload, normalizeImageUri } from "~/utils/image";
 import { PopButton, INK } from "~/components/ui/Pop";
 import { HotdogLoader } from "~/components/ui/HotdogLoader";
@@ -62,7 +61,6 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
   const successScale = useRef(new Animated.Value(0)).current;
 
   const checkSafetyMutation = trpc.hotdog.checkForSafety.useMutation();
-  const refreshFeed = trpc.indexer.refreshFeed.useMutation();
   const logMutation = trpc.hotdog.log.useMutation({
     onSuccess: () => {
       setStep("success");
@@ -168,37 +166,19 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         image: ipfsImageUri,
       });
 
-      // Log onchain via server wallet
+      // hotdog.log only preps the Zora coin metadata now — the thirdweb
+      // Engine server-wallet path it used to submit through is sunset. The
+      // web client submits `logHotdog` itself from the connected wallet
+      // (see Attestation/Create.tsx); the RN app doesn't do that yet, so
+      // there's no real transaction here to show an optimistic pending
+      // card for.
       setStep("logging");
-      const result = await logMutation.mutateAsync({
+      await logMutation.mutateAsync({
         chainId: CHAIN_ID,
         imageUri: ipfsImageUri,
         metadataUri,
         description: description.trim() || undefined,
       });
-
-      // Optimistically show a pending card in the feed until the real on-chain
-      // row indexes (deduped by imageUri in the feed).
-      const txId: string | undefined = result?.transactionId;
-      if (txId && session.address) {
-        pendingDogsStore.add({
-          transactionId: txId,
-          logId: `pending-${txId}`,
-          imageUri: ipfsImageUri,
-          eater: session.address,
-          logger: session.address,
-          timestamp:
-            (result?.optimisticData?.timestamp as string | undefined) ??
-            String(Math.floor(Date.now() / 1000)),
-          chainId: String(CHAIN_ID),
-          isPending: true,
-        });
-        // Pull the new log into the DB so the feed's next refetch replaces the
-        // optimistic card with the real row.
-        void refreshFeed.mutateAsync({ chainId: CHAIN_ID }).catch(() => {
-          /* cooldown / offline — the feed poll will still pick it up */
-        });
-      }
     } catch (err) {
       setStep("idle");
       const msg = err instanceof Error ? err.message : "Something went wrong.";
@@ -206,7 +186,7 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         Alert.alert("Error", msg);
       }
     }
-  }, [session, imageUri, description, checkSafetyMutation, refreshFeed, logMutation]);
+  }, [session, imageUri, description, checkSafetyMutation, logMutation]);
 
   const handleClose = useCallback(() => {
     setImageUri(null);
