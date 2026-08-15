@@ -19,7 +19,12 @@ export const POIDH2_CAMPAIGN_DAYS = [
     dayOfMonth: 14,
     bountyUrl: "https://poidh.xyz/base/bounty/1318",
   },
-  { label: "Saturday", date: "August 15", dayOfMonth: 15, bountyUrl: null },
+  {
+    label: "Saturday",
+    date: "August 15",
+    dayOfMonth: 15,
+    bountyUrl: "https://poidh.xyz/base/bounty/1319",
+  },
   { label: "Sunday", date: "August 16", dayOfMonth: 16, bountyUrl: null },
 ] as const;
 
