@@ -66,8 +66,8 @@ export const CELEBRITY_PAGES: Record<string, CelebrityPage> = {
     prizeUsd: 50,
     dogs: [
       { logId: "2498", name: "The Cat Café" },
-      { logId: "2501", name: "The Beggar's Banquet" },
-      { logId: "2493", name: "The Bear Market Glizzy" },
+      { logId: "2501", name: "Dylan's Dinger" },
+      { logId: "2493", name: "The Bear Market Beefstick" },
     ],
   },
 };
