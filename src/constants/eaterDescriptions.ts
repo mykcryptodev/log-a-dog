@@ -18,6 +18,9 @@ export const EATER_DESCRIPTIONS: Record<string, string> = {
   // bearded
   "0xbad134c2649747ac76351df711937a4638315cd6":
     "Bearded is a new contestant to Log a Dog and has made a splash in Season 3. Often seen sporting a tortilla for a bun (technically not Log a Dog regulation), Bearded has been slamming dogs in house like it's paying the rent (maybe it will!)",
+  // Dylan Tale (fid 816137)
+  "0xc151fe0d8dd6b852d75e29e18f4791b2f806f2a6":
+    "Dylan Tale is a brand new contestant on Log a Dog, logging his first dogs this season! When he's not eating dogs, Dylan is the founder of Chess Town. A newcomer playing the long game — will he checkmate the competition? Don't bet against a founder with a taste for dogs!",
   // Evan Mann
   "0x2f39d00a1fc21f2dc9eb5671147c7ae98f254b6a":
     "Evan is back for his third season of Log a Dog. Evan is the charming and charismatic host of The Rise Up Morning Show and leads Narrative Strategy at SuperTeam USA. He's also a TV show actor, musician, and very tall! But more than all of this, he's a fierce hotdog eater!!",
