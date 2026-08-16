@@ -25,7 +25,12 @@ export const POIDH2_CAMPAIGN_DAYS = [
     dayOfMonth: 15,
     bountyUrl: "https://poidh.xyz/base/bounty/1319",
   },
-  { label: "Sunday", date: "August 16", dayOfMonth: 16, bountyUrl: null },
+  {
+    label: "Sunday",
+    date: "August 16",
+    dayOfMonth: 16,
+    bountyUrl: "https://poidh.xyz/base/bounty/1320",
+  },
 ] as const;
 
 /** ETH prize (in USD) awarded to each day's winner. */
