@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { AI_AFFIRMATION, ATTESTATION_MANAGER, LOG_A_DOG, MODERATION, STAKING, MAKER_WALLET } from "~/constants/addresses";
-import { encode, getContract, getGasPrice, prepareTransaction } from "thirdweb";
+import { encode, getContract, getGasPrice, prepareTransaction, sendTransaction } from "thirdweb";
 import { DEFAULT_CHAIN, SUPPORTED_CHAINS } from "~/constants/chains";
 
 import {
@@ -11,6 +12,15 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { client, serverWallet } from "~/server/utils";
+import {
+  assertSponsorQuota,
+  getSponsorAccount,
+  getSponsorStatus,
+  SponsorRateLimitError,
+  sponsorHasOperatorRole,
+  withSponsorNonceLock,
+} from "~/server/utils/sponsor";
+import { logHotdogOnBehalf } from "~/thirdweb/8453/0x6cfb88c8d0d7ffc563155e13c62b4fa17bc25974";
 import { withBuilderCode } from "~/constants/builderCode";
 import { getRedactedLogIds } from "~/thirdweb/84532/0x22394188550a7e5b37485769f54653e3bc9c6674";
 import { attestToLogOnBehalf, MINIMUM_ATTESTATION_STAKE, resolveAttestationPeriod, getAttestationPeriod } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
@@ -1099,6 +1109,116 @@ export const hotdogRouter = createTRPCRouter({
         poolConfig: encodePoolConfig(),
         eater: ctx.session.user.address,
       };
+    }),
+  /**
+   * Is server-sponsored logging currently available? The client uses this to
+   * decide whether a plain EOA can log for free (relay) or has to pay its own
+   * gas, so it can say so up front instead of failing halfway through.
+   */
+  getGaslessLoggingStatus: publicProcedure
+    .input(z.object({ chainId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      // Carries a `reason` when unavailable ("not-signed-in", "not-configured",
+      // "invalid-key", "missing-operator-role", "check-failed"), so a sponsor
+      // that has quietly stopped sponsoring is one network response away from
+      // being diagnosed instead of silently billing users.
+      //
+      // Answers for THIS caller, not just the server: the relay reads `eater`
+      // off the session, so a signed-out visitor can't use it no matter how
+      // healthy the sponsor is.
+      return getSponsorStatus(input.chainId, !!ctx.session?.user?.address);
+    }),
+  /**
+   * Relay a dog log for wallets that cannot sponsor their own gas (plain EOAs
+   * like MetaMask/Rainbow — in-app EIP-7702 wallets and EIP-5792 smart wallets
+   * are sponsored client-side by the thirdweb bundler instead).
+   *
+   * The sponsor EOA holds OPERATOR_ROLE and calls `logHotdogOnBehalf`, so it
+   * pays the gas while the log stays attributed to the signed-in user: `eater`
+   * comes from the session, never from the request. Broadcasts and returns the
+   * hash without waiting for the receipt — the caller waits — so that a thrown
+   * error here reliably means nothing landed on-chain and it is safe to retry
+   * with a user-paid transaction.
+   */
+  logGasless: protectedProcedure
+    .input(z.object({
+      chainId: z.number(),
+      imageUri: z.string().min(1),
+      metadataUri: z.string().default(""),
+      coinUri: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { chainId, imageUri, metadataUri, coinUri } = input;
+      const eater = ctx.session?.user.address;
+      if (!eater) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User address not found",
+        });
+      }
+
+      const chain = SUPPORTED_CHAINS.find((c) => c.id === chainId);
+      const contractAddress = LOG_A_DOG[chainId];
+      if (!chain || !contractAddress) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Unsupported chain ${chainId}`,
+        });
+      }
+
+      const sponsor = getSponsorAccount();
+      if (!sponsor) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Gasless logging is not configured",
+        });
+      }
+
+      try {
+        if (!(await sponsorHasOperatorRole(chainId, sponsor.address))) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: `Gasless logging is unavailable: sponsor ${sponsor.address} does not hold OPERATOR_ROLE on LogADog`,
+          });
+        }
+
+        await assertSponsorQuota(eater);
+
+        const transaction = logHotdogOnBehalf({
+          contract: getContract({
+            address: contractAddress,
+            chain,
+            client,
+          }),
+          imageUri,
+          metadataUri,
+          coinUri,
+          eater: eater as `0x${string}`,
+          poolConfig: encodePoolConfig(),
+        });
+
+        const { transactionHash } = await withSponsorNonceLock(chainId, async () =>
+          sendTransaction({
+            account: sponsor,
+            transaction: await withBuilderCode(transaction),
+          }),
+        );
+
+        return { transactionHash, sponsor: sponsor.address };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        if (error instanceof SponsorRateLimitError) {
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: error.message,
+          });
+        }
+        console.error("Error relaying sponsored dog log:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Sponsored log failed",
+        });
+      }
     }),
   judge: protectedProcedure
     .input(z.object({

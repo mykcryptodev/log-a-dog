@@ -22,6 +22,7 @@
     "script:link-specific": "tsx src/scripts/link-specific-events.ts",
     "script:backfill-users": "bunx tsx src/scripts/backfill-users.ts",
     "script:backfill-dog-event-users": "bunx tsx src/scripts/backfill-dog-event-users.ts",
+    "script:gasless-sponsor": "bunx tsx scripts/setup-gasless-sponsor.ts",
     "script:generate-merkle": "npx tsx airdrop/generate-merkle-root.ts",
     "script:generate-merkle:base": "npx tsx airdrop/generate-merkle-root.ts --chain=base",
     "script:generate-merkle:testnet": "npx tsx airdrop/generate-merkle-root.ts --chain=baseSepolia"

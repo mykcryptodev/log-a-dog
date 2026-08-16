@@ -18,6 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run db:studio` - Open Prisma Studio for database inspection
 
 ### Scripts
+- `bun run script:gasless-sponsor` - Report whether sponsored logging is live (sponsor address, `OPERATOR_ROLE`, balance); `--grant` grants the role via `ADMIN_PRIVATE_KEY`
 - `bun run script:generate-merkle` - Generate the airdrop Merkle root (`airdrop/generate-merkle-root.ts`)
 - `bun run script:generate-merkle:base` - Generate Merkle root for Base Mainnet
 - `bun run script:generate-merkle:testnet` - Generate Merkle root for Base Sepolia
@@ -71,6 +72,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Chains**: Base Sepolia (development, chainId 84532), Base Mainnet (production, chainId 8453). Per-chain ABIs/addresses live in `src/constants/` and `src/thirdweb/{8453,84532}/`.
 - **Thirdweb Integration**: Contract interactions and wallet connections
 - **Thirdweb server wallet**: Backend-initiated transactions (logging on behalf of users via `hotdog.log`, attestations, resolving attestation periods, moderator-rewards cron) are sent through a **Thirdweb hosted server wallet** — `serverWallet.enqueueTransaction` in `src/server/utils.ts`, vault-backed via `THIRDWEB_SERVER_WALLET_VAULT_ACCESS_TOKEN`. The server wallet address (`NEXT_PUBLIC_THIRDWEB_SERVER_WALLET_ADDRESS`, `0x360E36…`) holds `OPERATOR_ROLE` on `LogADog`, authorizing the `*OnBehalf` calls. **Note:** the old self-hosted **Thirdweb Engine (Railway) is shut down** — `THIRDWEB_ENGINE_URL` is dead; do not route new writes through it. `engine.ts` only reads tx status (`Engine.getTransactionStatus`), which still works against Thirdweb's hosted infra.
+- **Gasless transactions**: users never need ETH to log a dog, whatever wallet they connect — see `docs/GASLESS_TRANSACTIONS.md` before touching any of it:
+  - **Every** log is relayed server-side by the `hotdog.logGasless` mutation: a sponsor EOA (`LOGADOG_SPONSOR_PK`, must hold `OPERATOR_ROLE` and be funded with Base ETH) calls `logHotdogOnBehalf`. One code path for all wallets. Rate-limited and nonce-locked in `src/server/utils/sponsor.ts`. Consequence: the sponsor is the on-chain `logger` for nearly every dog (`eater` is still the user), which is why the feed hides its "via" byline via `useSponsorAddress`.
+  - `src/utils/gasless.ts` resolves the wallet's own rail as a **fallback** for when the relay is down or capped: in-app wallets (EIP-7702, `sponsorGas: true` in `Connect.tsx`) and smart wallets sponsor themselves via plain `sendTransaction`; external EIP-5792 wallets advertising `paymasterService` (Coinbase Smart Wallet, Base App) use `sendAndConfirmCalls` with the thirdweb paymaster; plain EOAs pay, and the modal says so first.
+  - Voting/revoking are **not** relayed (the stake must come from the voter), so they use the fallback rails only.
+  - **Gotcha**: thirdweb's `getCapabilities` keys its result by DECIMAL chain id (`8453`), not the `0x2105` hex the RPC returns. Looking it up by hex silently disables sponsorship everywhere.
 - **Attestation System**: EAS (Ethereum Attestation Service) integration
 - **Zora Protocol**: Coin creation and trading functionality (`@zoralabs/coins-sdk`) — each dog log mints a Zora coin
 
@@ -135,7 +141,7 @@ The **Supabase/Postgres DB is a cache/read-model of on-chain state, not the sour
 - Uses `.env` files for configuration. **All env vars are validated by a Zod schema in `src/env.js`** (via `@t3-oss/env-nextjs`) — add new vars there or the build/runtime will reject them.
 - Prisma generates client on postinstall
 - Database URL (`DATABASE_URL`) and direct URL (`DIRECT_URL`) required for Prisma
-- Key secrets: `THIRDWEB_*` / wallet vars, `CDP_CLIENT_TOKEN` (indexer), `NEYNAR_API_KEY`, `BASE_NOTIFICATIONS_API_KEY` (Base App daily notification; optional), `GHOST_PROTOCOL_API_KEY`, `UPSTASH_REDIS_REST_*`, `GOOGLE_VISION_API_KEY`, `CRON_SECRET`, `NEXTAUTH_SECRET`
+- Key secrets: `THIRDWEB_*` / wallet vars, `CDP_CLIENT_TOKEN` (indexer), `NEYNAR_API_KEY`, `BASE_NOTIFICATIONS_API_KEY` (Base App daily notification; optional), `GHOST_PROTOCOL_API_KEY`, `UPSTASH_REDIS_REST_*`, `GOOGLE_VISION_API_KEY`, `CRON_SECRET`, `NEXTAUTH_SECRET`, `LOGADOG_SPONSOR_PK` + `NEXT_PUBLIC_LOGADOG_SPONSOR_ADDRESS` (gasless relay for plain EOAs; optional)
 
 ### Build Process
 - **IMPORTANT**: Always run `bun run build` before committing changes to ensure TypeScript and linting errors are caught

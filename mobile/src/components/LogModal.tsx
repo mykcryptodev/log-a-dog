@@ -18,6 +18,7 @@ import { useAuth } from "~/providers/AuthProvider";
 import { CHAIN_ID } from "~/constants";
 import { COLORS } from "~/constants/colors";
 import { uploadImageToIPFS, uploadMetadataToIPFS } from "~/utils/upload";
+import { pendingDogsStore } from "~/stores/pendingDogs";
 import { compressImageForUpload, normalizeImageUri } from "~/utils/image";
 import { PopButton, INK } from "~/components/ui/Pop";
 import { HotdogLoader } from "~/components/ui/HotdogLoader";
@@ -61,7 +62,15 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
   const successScale = useRef(new Animated.Value(0)).current;
 
   const checkSafetyMutation = trpc.hotdog.checkForSafety.useMutation();
-  const logMutation = trpc.hotdog.log.useMutation({
+  const refreshFeed = trpc.indexer.refreshFeed.useMutation();
+  // `hotdog.log` only uploads the Zora coin metadata now (Engine, which used
+  // to submit the on-chain write here, is sunset) — the actual log is a
+  // separate relayed call below.
+  const logMutation = trpc.hotdog.log.useMutation();
+  // Relays the on-chain write through the sponsor EOA (see
+  // `src/server/utils/sponsor.ts` on web), so logging needs no signer wallet
+  // and is gasless the same way the web app's default path is.
+  const logGaslessMutation = trpc.hotdog.logGasless.useMutation({
     onSuccess: () => {
       setStep("success");
       Animated.spring(successScale, {
@@ -166,19 +175,43 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         image: ipfsImageUri,
       });
 
-      // hotdog.log only preps the Zora coin metadata now — the thirdweb
-      // Engine server-wallet path it used to submit through is sunset. The
-      // web client submits `logHotdog` itself from the connected wallet
-      // (see Attestation/Create.tsx); the RN app doesn't do that yet, so
-      // there's no real transaction here to show an optimistic pending
-      // card for.
-      setStep("logging");
-      await logMutation.mutateAsync({
+      // Upload the Zora coin metadata for this log.
+      const { coinMetadataUri } = await logMutation.mutateAsync({
         chainId: CHAIN_ID,
         imageUri: ipfsImageUri,
         metadataUri,
         description: description.trim() || undefined,
       });
+
+      // Submit the on-chain write via the sponsor relay — gasless, and needs
+      // no signer wallet, so it works the same for a Farcaster-only session.
+      setStep("logging");
+      const { transactionHash } = await logGaslessMutation.mutateAsync({
+        chainId: CHAIN_ID,
+        imageUri: ipfsImageUri,
+        metadataUri,
+        coinUri: coinMetadataUri,
+      });
+
+      // Optimistically show a pending card in the feed until the real on-chain
+      // row indexes (deduped by imageUri in the feed).
+      if (session.address) {
+        pendingDogsStore.add({
+          transactionId: transactionHash,
+          logId: `pending-${transactionHash}`,
+          imageUri: ipfsImageUri,
+          eater: session.address,
+          logger: session.address,
+          timestamp: String(Math.floor(Date.now() / 1000)),
+          chainId: String(CHAIN_ID),
+          isPending: true,
+        });
+        // Pull the new log into the DB so the feed's next refetch replaces the
+        // optimistic card with the real row.
+        void refreshFeed.mutateAsync({ chainId: CHAIN_ID }).catch(() => {
+          /* cooldown / offline — the feed poll will still pick it up */
+        });
+      }
     } catch (err) {
       setStep("idle");
       const msg = err instanceof Error ? err.message : "Something went wrong.";
@@ -186,7 +219,7 @@ export function LogModal({ visible, onClose, onSuccess }: Props) {
         Alert.alert("Error", msg);
       }
     }
-  }, [session, imageUri, description, checkSafetyMutation, logMutation]);
+  }, [session, imageUri, description, checkSafetyMutation, refreshFeed, logMutation, logGaslessMutation]);
 
   const handleClose = useCallback(() => {
     setImageUri(null);

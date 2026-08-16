@@ -1,15 +1,14 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "react-toastify";
-import { getContract, sendTransaction, waitForReceipt } from "thirdweb";
+import { getContract } from "thirdweb";
 import { useActiveWallet } from "thirdweb/react";
-import { sendCalls, getCapabilities } from "thirdweb/wallets/eip5792";
+import { sendSponsoredTransaction } from "~/utils/gasless";
 import { api } from "~/utils/api";
 import { client } from "~/providers/Thirdweb";
 import { ATTESTATION_MANAGER } from "~/constants/addresses";
 import { SUPPORTED_CHAINS } from "~/constants/chains";
 import { attestToLog } from "~/thirdweb/84532/0xe8c7efdb27480dafe18d49309f4a5e72bdb917d9";
-import { DATA_SUFFIX, withBuilderCode } from "~/constants/builderCode";
 import { InsufficientStake } from "../Stake/InsufficientStake";
 import { Portal } from "../utils/Portal";
 import { useGhostVote } from "~/hooks/useGhostVote";
@@ -117,35 +116,10 @@ export const VoteBar = forwardRef<VoteBarHandle, Props>(function VoteBar(
       stakeAmount: BigInt(stakeInfo.minimumStake),
     });
 
-    // In-app wallets (Google/email/etc.) are EIP-7702 delegated with
-    // sponsorGas — sponsorship is baked into the account itself, not exposed
-    // as an explicit paymaster capability. Passing our own paymaster URL to
-    // them is at best redundant and at worst breaks their internal sendCalls;
-    // route them through the plain sendTransaction path below, which for a
-    // 7702 minimal account is already gasless.
-    const isInAppWallet = wallet.id === "inApp" || wallet.id === "embedded";
-    const chainIdAsHex = chainId.toString(16) as unknown as number;
-    const walletCapabilities = isInAppWallet
-      ? null
-      : await getCapabilities({ wallet }).catch(() => null);
-    if (!isInAppWallet && walletCapabilities?.[chainIdAsHex]) {
-      await sendCalls({
-        chain,
-        wallet,
-        calls: [transaction],
-        capabilities: {
-          paymasterService: {
-            url: `https://${chainId}.bundler.thirdweb.com/${client.clientId}`,
-          },
-          // Builder Code attribution on the outer userOp (EIP-5792). Optional so
-          // wallets that don't support it just ignore it instead of failing.
-          dataSuffix: { value: DATA_SUFFIX, optional: true },
-        },
-      });
-    } else {
-      const result = await sendTransaction({ account, transaction: await withBuilderCode(transaction) });
-      await waitForReceipt({ client, chain, transactionHash: result.transactionHash });
-    }
+    // Sponsored where the wallet supports it (in-app EIP-7702 accounts and
+    // EIP-5792 smart wallets), user-paid for plain EOAs — there is no
+    // `attestToLogOnBehalf` relay because the stake has to come from the voter.
+    await sendSponsoredTransaction({ wallet, chain, transaction });
   }, [chainId, logId, utils, wallet]);
 
   // Bust every read that feeds the voted/locked state. getById (dog page) is

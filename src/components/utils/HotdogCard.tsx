@@ -23,6 +23,7 @@ import Image from "next/image";
 import { FarcasterContext } from "~/providers/Farcaster";
 import EthCommentsModal from "../EthCommentsModal";
 import { useActiveAccount } from "thirdweb/react";
+import { useSponsorAddress } from "~/hooks/useSponsorAddress";
 import { getFarcasterSdk } from "~/utils/farcasterSdk";
 
 // Types
@@ -129,6 +130,7 @@ const HotdogCardComponent: FC<Props> = ({
 }) => {
   const account = useActiveAccount();
   const [flipped, setFlipped] = useState(false);
+  const sponsorAddress = useSponsorAddress();
 
   const showLoggedVia = (hotdog: { eater: string; logger: string }) => {
     const loggerIsNotEater = !isAddressEqual(
@@ -143,8 +145,19 @@ const HotdogCardComponent: FC<Props> = ({
       hotdog.logger as `0x${string}`,
       MAKER_WALLET,
     );
+    // Sponsored logs are relayed by the sponsor EOA, so it is the `logger` on
+    // nearly every dog. That's plumbing, not a person — don't credit it.
+    const loggerIsNotSponsorWallet =
+      !sponsorAddress ||
+      !isAddressEqual(
+        hotdog.logger as `0x${string}`,
+        sponsorAddress as `0x${string}`,
+      );
     return (
-      loggerIsNotEater && loggerIsNotBackendWallet && loggerIsNotMakerWallet
+      loggerIsNotEater &&
+      loggerIsNotBackendWallet &&
+      loggerIsNotMakerWallet &&
+      loggerIsNotSponsorWallet
     );
   };
 

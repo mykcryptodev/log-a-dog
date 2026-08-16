@@ -213,16 +213,11 @@ export const Connect: FC<Props> = ({ loginBtnLabel, className }) => {
         showThirdwebBranding: false,
       }}
       recommendedWallets={[createWallet("com.coinbase.wallet")]}
-      wallets={[
-        ...cryptoWallets,
-        ...inAppWallets.map((wallet) => ({
-          ...wallet,
-          accountAbstraction: {
-            chain: DEFAULT_CHAIN,
-            gasless: true,
-          },
-        })),
-      ]}
+      // Gas sponsorship for in-app wallets comes from their `executionMode`
+      // above. `accountAbstraction` is a ConnectButton-level option, not a
+      // per-wallet one, so spreading it onto each wallet (as this used to) did
+      // nothing except make the config look like it was doing the work.
+      wallets={[...cryptoWallets, ...inAppWallets]}
       showAllWallets={true}
     />
   );
