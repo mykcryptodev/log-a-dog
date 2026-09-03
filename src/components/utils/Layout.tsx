@@ -7,8 +7,10 @@ import useMounted from "~/hooks/useMounted";
 import { getSeasonInfo } from "~/helpers/season";
 import { PoidhBanner } from "./PoidhBanner";
 import { Poidh2Banner } from "./Poidh2Banner";
+import { Poidh3Banner } from "./Poidh3Banner";
 import { isPoidhCampaignLive } from "~/utils/poidh";
 import { isPoidh2CampaignLive } from "~/utils/poidh2";
+import { isPoidh3CampaignLive } from "~/utils/poidh3";
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,10 +20,11 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
   // Compute on the client to avoid a hydration mismatch on the day counter.
   const mounted = useMounted();
   const { day, isLive } = getSeasonInfo();
-  const poidh2Live = isPoidh2CampaignLive();
-  // Round two takes over the header slot and banner while it's running.
-  const poidhLive = isPoidhCampaignLive() && !poidh2Live;
-  const anyPoidhLive = poidhLive || poidh2Live;
+  const poidh3Live = isPoidh3CampaignLive();
+  // Round three takes over the header slot and banner while it's running.
+  const poidh2Live = isPoidh2CampaignLive() && !poidh3Live;
+  const poidhLive = isPoidhCampaignLive() && !poidh3Live && !poidh2Live;
+  const anyPoidhLive = poidhLive || poidh2Live || poidh3Live;
 
   return (
     <div className="app-bg block min-h-screen">
@@ -62,7 +65,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
               </Link>
               {anyPoidhLive && (
                 <Link
-                  href={poidh2Live ? "/poidh-2" : "/poidh"}
+                  href={poidh3Live ? "/poidh-3" : poidh2Live ? "/poidh-2" : "/poidh"}
                   className="rounded-full border-2 border-base-content bg-secondary px-2.5 py-1 text-secondary-content"
                 >
                   POIDH
@@ -77,6 +80,7 @@ export const Layout: FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
 
+        {poidh3Live && <Poidh3Banner />}
         {poidh2Live && <Poidh2Banner />}
         {poidhLive && <PoidhBanner />}
         <ToastProvider />
