@@ -29,7 +29,7 @@ export const POIDH3_CAMPAIGN_DAYS = [
     label: "Sunday",
     date: "September 6",
     dayOfMonth: 6,
-    bountyUrl: null,
+    bountyUrl: "https://poidh.xyz/base/bounty/1366",
   },
   {
     label: "Monday",
