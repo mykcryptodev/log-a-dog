@@ -118,7 +118,7 @@ const Poidh3Page: NextPage = () => {
                   FRI. SAT. SUN. MON. {POIDH3_WINNER_COUNT} WINNERS.
                 </h2>
                 <p className="mt-1 text-sm opacity-80">
-                  One winner picked per day by the organizers.
+                  Dawn of the final day! One winner picked by the organizers.
                 </p>
                 <a
                   href={bountyUrl}
